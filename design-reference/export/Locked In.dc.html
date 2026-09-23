@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#050506;color:#ECEBE6;-webkit-font-smoothing:antialiased}
+a{color:#ECEBE6;text-decoration:none}
+a:hover{color:var(--acc,#C6E07B)}
+button,input,textarea,select{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#5E5D59}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#1f1f22;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in oklab,var(--acc,#C6E07B) 55%,transparent)}100%{box-shadow:0 0 0 8px color-mix(in oklab,var(--acc,#C6E07B) 0%,transparent)}}
+@keyframes enter{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 1px color-mix(in oklab,var(--acc,#C6E07B) 18%,transparent),0 0 32px color-mix(in oklab,var(--acc,#C6E07B) 5%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in oklab,var(--acc,#C6E07B) 30%,transparent),0 0 56px color-mix(in oklab,var(--acc,#C6E07B) 12%,transparent)}}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:.8}}
+</style>
+</helmet>
+<div style="--acc:{{ acc }};min-height:100vh;background:#050506;display:flex;align-items:center;justify-content:center;padding:{{ frame.outerPad }};font-family:'Geist',system-ui,sans-serif;color:#ECEBE6">
+<div style="position:relative;width:{{ frame.w }};height:{{ frame.h }};border-radius:{{ frame.r }};border:{{ frame.bd }};overflow:hidden;background:#0A0A0B;display:flex;flex-direction:{{ frame.dir }}">
+
+<sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+<aside style="width:228px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:26px;padding:24px 12px 16px;overflow-y:auto">
+  <div style="display:flex;align-items:center;gap:10px;padding:0 10px">
+    <div style="width:15px;height:15px;border:2px solid var(--acc,#C6E07B);border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:5px;height:5px;background:var(--acc,#C6E07B);border-radius:1px"></div></div>
+    <span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.24em;font-weight:600">LOCKED IN</span>
+  </div>
+  <nav style="display:flex;flex-direction:column;gap:2px">
+    <sc-for list="{{ navMain }}" as="n" hint-placeholder-count="7">
+      <button onClick="{{ n.go }}" style="display:flex;align-items:center;gap:12px;height:36px;padding:0 10px;border:0;border-radius:8px;background:{{ n.bg }};color:{{ n.color }};font-size:13.5px;cursor:pointer;text-align:left" style-hover="color:#ECEBE6">
+        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#55544F;width:16px">{{ n.num }}</span>
+        <span style="flex:1">{{ n.label }}</span>
+        <span style="width:5px;height:5px;border-radius:50%;background:{{ n.dot }}"></span>
+      </button>
+    </sc-for>
+  </nav>
+  <nav style="display:flex;flex-direction:column;gap:2px">
+    <sc-for list="{{ navUtil }}" as="n" hint-placeholder-count="2">
+      <button onClick="{{ n.go }}" style="display:flex;align-items:center;gap:12px;height:34px;padding:0 10px;border:0;border-radius:8px;background:{{ n.bg }};color:{{ n.color }};font-size:13px;cursor:pointer;text-align:left" style-hover="color:#ECEBE6">{{ n.label }}</button>
+    </sc-for>
+  </nav>
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.18em;color:#55544F;padding:0 10px 8px">MOMENTS</span>
+    <sc-for list="{{ navMoments }}" as="n" hint-placeholder-count="6">
+      <button onClick="{{ n.go }}" style="display:flex;align-items:center;height:32px;padding:0 10px;border:0;border-radius:8px;background:{{ n.bg }};color:{{ n.color }};font-size:12.5px;cursor:pointer;text-align:left" style-hover="color:#ECEBE6">{{ n.label }}</button>
+    </sc-for>
+  </div>
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px;padding:14px 10px 0;border-top:1px solid rgba(255,255,255,0.06)">
+    <button onClick="{{ goPartner }}" style="display:flex;align-items:center;gap:10px;border:0;background:transparent;color:inherit;padding:0;cursor:pointer;text-align:left">
+      <span style="width:28px;height:28px;border-radius:50%;background:#1A1A1D;border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;position:relative">L<span style="position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:{{ ps.dot }};border:2px solid #0A0A0B;animation:{{ ps.anim }}"></span></span>
+      <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px">Lucas</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:{{ ps.textC }}">{{ ps.label }}</span></span>
+    </button>
+    <button onClick="{{ goSettings }}" style="display:flex;align-items:center;gap:10px;border:0;background:transparent;color:inherit;padding:0;cursor:pointer;text-align:left">
+      <span style="width:28px;height:28px;border-radius:50%;background:#ECEBE6;color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">B</span>
+      <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px">Brendon</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#7C7B76">@brendon</span></span>
+    </button>
+  </div>
+</aside>
+</sc-if>
+
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+<div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;height:{{ frame.topH }};padding:{{ frame.topPad }};border-bottom:1px solid rgba(255,255,255,0.06)">
+  <div style="display:flex;align-items:center;gap:9px">
+    <div style="width:14px;height:14px;border:2px solid var(--acc,#C6E07B);border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:4px;height:4px;background:var(--acc,#C6E07B);border-radius:1px"></div></div>
+    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.24em;font-weight:600">LOCKED IN</span>
+  </div>
+  <button onClick="{{ goPartner }}" style="display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;border:1px solid rgba(255,255,255,0.08);border-radius:999px;background:transparent;color:#A09F99;font-size:12px;cursor:pointer"><span style="width:7px;height:7px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span>Lucas</button>
+</div>
+</sc-if>
+
+<main ref="{{ mainRef }}" style="flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden">
+<div style="max-width:1180px;margin:0 auto;padding:{{ sz.pad }}">
+
+<!-- TODAY -->
+<sc-if value="{{ is.today }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em;line-height:1.05">GOOD MORNING, BRENDON.</h1>
+      <div style="display:flex;gap:10px;font-size:15px;color:#A09F99"><span style="color:#ECEBE6">Tuesday</span><span>September 23</span></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 13px;border:1px solid rgba(255,255,255,0.08);border-radius:999px;font-size:12.5px;color:#A09F99"><span style="width:7px;height:7px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span>{{ ps.pill }}</div>
+      <button onClick="{{ openEnd }}" style="height:34px;padding:0 14px;border:1px solid rgba(255,255,255,0.12);border-radius:999px;background:transparent;color:#ECEBE6;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.05)">Close day</button>
+    </div>
+  </header>
+
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:24px 28px">
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">DAY</span>
+        <span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">14</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">CURRENT STREAK</span>
+        <span style="display:flex;align-items:baseline;gap:6px"><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">13</span><span style="font-size:14px;color:#A09F99">days</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid var(--acc,#C6E07B)">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">TODAY'S COMPLETION</span>
+        <span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums;color:{{ me.pctC }}">{{ me.pct }}%</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">TASKS</span>
+        <span style="display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums"><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">{{ me.done }}</span><span style="font-size:{{ sz.bigHalf }};color:#5E5D59;letter-spacing:-0.02em">/ {{ me.total }}</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">FOCUS TIME</span>
+        <span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">{{ me.focus }}</span>
+      </div>
+    </div>
+    <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ me.pctW }};background:var(--acc,#C6E07B);border-radius:3px;transition:width .7s cubic-bezier(.2,.8,.2,1)"></div></div>
+  </div>
+
+  <sc-if value="{{ me.perfect }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 24px;border-radius:14px;background:color-mix(in oklab,var(--acc,#C6E07B) 5%,#0A0A0B);animation:glow 3.6s ease-in-out infinite">
+      <div style="display:flex;align-items:baseline;gap:18px"><span style="font-size:30px;font-weight:600;letter-spacing:-0.03em;color:var(--acc,#C6E07B)">100%</span><span style="font-family:'Geist Mono',monospace;font-size:13px;letter-spacing:.3em">STANDARD MET.</span></div>
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76;letter-spacing:.1em">DAY 14 · RECORDED</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ goPartner }}" style="display:flex;align-items:center;gap:14px;padding:16px;border:1px solid rgba(255,255,255,0.07);border-radius:16px;background:#111113;color:inherit;text-align:left;cursor:pointer;box-shadow:{{ pp.flash }};transition:box-shadow .6s">
+      <span style="width:40px;height:40px;border-radius:50%;background:#1A1A1D;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0">L</span>
+      <span style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">
+        <span style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;letter-spacing:.04em">LUCAS <span style="width:6px;height:6px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:{{ ps.textC }};font-weight:400">{{ ps.label }}</span></span>
+        <span style="font-size:12.5px;color:#A09F99;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pp.mobileLine }}</span>
+      </span>
+      <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span style="font-size:24px;font-weight:500;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ pp.pct }}%</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">{{ pp.done }} / {{ pp.total }}</span></span>
+    </button>
+  </sc-if>
+
+  <div style="display:grid;grid-template-columns:{{ sz.todayCols }};gap:{{ sz.gapL }};align-items:start">
+    <section style="display:flex;flex-direction:column;gap:36px;min-width:0">
+      <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)">
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">{{ sec.name }}</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76;font-variant-numeric:tabular-nums">{{ sec.count }}</span>
+          </div>
+          <sc-for list="{{ sec.tasks }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.toggle }}" style="display:flex;align-items:center;gap:16px;width:100%;min-height:68px;padding:12px 6px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);border-radius:0;background:transparent;color:inherit;text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,0.02)">
+              <span style="flex-shrink:0;width:30px;height:30px;border-radius:9px;border:1.5px solid {{ t.bd }};background:{{ t.bg }};display:flex;align-items:center;justify-content:center;transform:{{ t.sc }};transition:background .25s ease,border-color .25s ease,transform .22s cubic-bezier(.3,1.6,.5,1)">
+                <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:16;stroke-dashoffset:{{ t.dash }};transition:stroke-dashoffset .3s ease .06s"></path></svg>
+              </span>
+              <span style="width:42px;flex-shrink:0;font-family:'Geist Mono',monospace;font-size:12px;color:{{ t.timeC }};font-variant-numeric:tabular-nums">{{ t.timeL }}</span>
+              <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:16px;color:{{ t.nameC }};transition:color .3s ease">{{ t.name }}</span>
+                <sc-if value="{{ t.hasMeta }}"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#7C7B76">{{ t.meta }}</span></sc-if>
+              </span>
+              <span style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+                <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:{{ t.rightC }}">{{ t.right }}</span>
+                <span style="display:flex;gap:2px;align-items:flex-end"><span style="width:3px;height:6px;border-radius:1px;background:{{ t.d1 }}"></span><span style="width:3px;height:9px;border-radius:1px;background:{{ t.d2 }}"></span><span style="width:3px;height:12px;border-radius:1px;background:{{ t.d3 }}"></span></span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <sc-if value="{{ hasOff }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:#7C7B76"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em">NOT SCHEDULED TODAY</span><span>{{ offList }}</span></div>
+      </sc-if>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:32px;position:{{ sz.railPos }};top:0;min-width:0">
+      <sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:20px;box-shadow:{{ pp.flash }};transition:box-shadow .7s ease">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:50%;background:#1C1C1F;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">L</span><span style="font-size:15px;font-weight:600;letter-spacing:.06em">LUCAS</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:{{ ps.textC }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span>{{ ps.label }}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">TODAY</span>
+            <span style="font-size:52px;font-weight:500;letter-spacing:-0.045em;line-height:.9;font-variant-numeric:tabular-nums">{{ pp.pct }}%</span>
+            <span style="font-size:13px;color:#A09F99">{{ pp.done }} / {{ pp.total }} completed</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+            <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">CURRENT STREAK</span>
+            <span style="font-size:20px;font-weight:500;letter-spacing:-0.01em">8 DAYS</span>
+          </div>
+        </div>
+        <div style="height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden"><div style="height:100%;width:{{ pp.pctW }};background:#ECEBE6;transition:width .8s cubic-bezier(.2,.8,.2,1)"></div></div>
+        <sc-if value="{{ ps.focusing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:#0C0C0D;animation:fadeUp .4s ease">
+            <span style="display:flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:var(--acc,#C6E07B)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 1.6s ease-out infinite"></span>FOCUSING</span>
+            <span style="font-size:15px">{{ pp.focusLabel }}</span>
+            <span style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:24px;font-variant-numeric:tabular-nums">{{ pp.focusLeft }}</span><span style="font-size:12px;color:#7C7B76">remaining</span></span>
+          </div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)">
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">{{ pp.latestLabel }}</span>
+          <div style="display:flex;gap:12px;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#7C7B76">{{ pp.latestT }}</span><span style="font-size:14px">{{ pp.latestText }}</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 2.4s ease-out infinite"></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.2em">LIVE</span></div>
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76;letter-spacing:.08em">BRENDON · LUCAS</span>
+        </div>
+        <div style="display:flex;flex-direction:column-reverse">
+          <sc-for list="{{ feed }}" as="f" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid rgba(255,255,255,0.05);animation:enter .55s cubic-bezier(.2,.8,.2,1)">
+              <div style="display:flex;align-items:baseline;gap:12px">
+                <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7C7B76;width:38px;flex-shrink:0;font-variant-numeric:tabular-nums">{{ f.t }}</span>
+                <span style="width:6px;height:6px;border-radius:50%;background:{{ f.dot }};flex-shrink:0;transform:translateY(-1px)"></span>
+                <span style="flex:1;font-size:13.5px;color:#A09F99;line-height:1.4"><span style="color:#ECEBE6;font-weight:500">{{ f.name }}</span> {{ f.text }}</span>
+                <sc-if value="{{ f.canReact }}"><button onClick="{{ f.openReact }}" style="flex-shrink:0;height:24px;padding:0 9px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:transparent;color:{{ f.reactC }};font-size:11px;cursor:pointer" style-hover="border-color:rgba(255,255,255,0.2)">{{ f.reactLabel }}</button></sc-if>
+              </div>
+              <sc-if value="{{ f.reacting }}">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;padding-left:56px;animation:fadeUp .25s ease">
+                  <sc-for list="{{ f.opts }}" as="o"><button onClick="{{ o.send }}" style="height:32px;padding:0 11px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:#151517;color:#ECEBE6;font-size:12.5px;cursor:pointer" style-hover="background:#1E1E21">{{ o.label }}</button></sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</sc-if>
+
+<!-- PARTNER -->
+<sc-if value="{{ is.partner }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">WEEK 39 · SEP 21 – 27</span>
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">YOU &amp; LUCAS</h1>
+  </header>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:{{ sz.colGap }}">
+    <sc-for list="{{ cmpCols }}" as="c" hint-placeholder-count="2">
+      <div style="display:flex;flex-direction:column;gap:28px;padding-top:18px;border-top:2px solid {{ c.top }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:15px;font-weight:600;letter-spacing:.08em">{{ c.name }}</span><span style="display:flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:{{ c.stC }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ c.stDot }};animation:{{ c.stAnim }}"></span>{{ c.st }}</span></div>
+        <sc-for list="{{ c.metrics }}" as="m" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:{{ sz.cmp }};font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums;color:{{ m.c }}">{{ m.v }}</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">{{ m.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">WEEKLY PERFORMANCE</span>
+      <div style="display:flex;gap:18px;font-size:12px;color:#A09F99"><span style="display:flex;align-items:center;gap:8px"><span style="width:16px;height:2px;background:var(--acc,#C6E07B)"></span>You</span><span style="display:flex;align-items:center;gap:8px"><span style="width:16px;height:0;border-top:2px dashed #7C7B76"></span>Lucas</span></div>
+    </div>
+    <div style="position:relative;height:240px">
+      <div style="position:absolute;left:0;right:0;top:0;border-top:1px solid rgba(255,255,255,0.05)"></div>
+      <div style="position:absolute;left:0;right:0;top:calc((100% - 28px) / 2);border-top:1px solid rgba(255,255,255,0.05)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:28px;border-top:1px solid rgba(255,255,255,0.08)"></div>
+      <span style="position:absolute;left:0;top:4px;font-family:'Geist Mono',monospace;font-size:10px;color:#5E5D59">100</span>
+      <span style="position:absolute;left:0;top:calc((100% - 28px) / 2 + 4px);font-family:'Geist Mono',monospace;font-size:10px;color:#5E5D59">80</span>
+      <span style="position:absolute;left:0;bottom:32px;font-family:'Geist Mono',monospace;font-size:10px;color:#5E5D59">60</span>
+      <div style="position:absolute;left:40px;right:8px;top:0;bottom:28px">
+        <svg viewBox="0 0 600 200" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+          <path d="{{ wchart.lucas }}" fill="none" vector-effect="non-scaling-stroke" style="stroke:#7C7B76;stroke-width:1.5;stroke-dasharray:4 4"></path>
+          <path d="{{ wchart.you }}" fill="none" vector-effect="non-scaling-stroke" style="stroke:var(--acc,#C6E07B);stroke-width:2"></path>
+        </svg>
+        <sc-for list="{{ wchart.dots }}" as="d"><span style="position:absolute;left:{{ d.x }};top:{{ d.y }};width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:{{ d.c }};border:1.5px solid #0A0A0B"></span></sc-for>
+      </div>
+      <div style="position:absolute;left:40px;right:8px;bottom:0;height:20px">
+        <sc-for list="{{ wchart.labels }}" as="l"><span style="position:absolute;left:{{ l.x }};transform:translateX(-50%);font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:{{ l.c }}">{{ l.d }}</span></sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">LUCAS · TODAY</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">{{ pp.done }} / {{ pp.total }} · {{ pp.pct }}%</span>
+    </div>
+    <sc-for list="{{ lucasList }}" as="x" hint-placeholder-count="11">
+      <div style="display:flex;align-items:center;gap:14px;min-height:54px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.05)">
+        <span style="width:18px;height:18px;border-radius:6px;border:1.5px solid {{ x.bd }};background:{{ x.bg }};flex-shrink:0;transition:all .3s"></span>
+        <span style="flex:1;font-size:14.5px;color:{{ x.c }}">{{ x.name }}</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">{{ x.at }}</span>
+        <sc-if value="{{ x.done }}"><button onClick="{{ x.openReact }}" style="height:28px;padding:0 10px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:transparent;color:{{ x.reactC }};font-size:11.5px;cursor:pointer">{{ x.reactLabel }}</button></sc-if>
+      </div>
+      <sc-if value="{{ x.reacting }}">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 12px 32px;animation:fadeUp .25s ease">
+          <sc-for list="{{ x.opts }}" as="o"><button onClick="{{ o.send }}" style="height:34px;padding:0 12px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:#151517;color:#ECEBE6;font-size:13px;cursor:pointer" style-hover="background:#1E1E21">{{ o.label }}</button></sc-for>
+        </div>
+      </sc-if>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- BATTLE -->
+<sc-if value="{{ is.battle }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px">
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">WEEK 39</h1>
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7C7B76">ENDS SUNDAY · 5 DAYS LEFT</span>
+  </header>
+  <div style="display:flex;flex-direction:column;gap:26px">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:13px;font-weight:600;letter-spacing:.14em">BRENDON</span><span style="font-size:{{ sz.huge }};font-weight:500;letter-spacing:-0.05em;line-height:.85;font-variant-numeric:tabular-nums">87%</span></div>
+      <span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.2em;color:#5E5D59;padding-bottom:10px">VS</span>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-end"><span style="font-size:13px;font-weight:600;letter-spacing:.14em;color:#A09F99">LUCAS</span><span style="font-size:{{ sz.huge }};font-weight:500;letter-spacing:-0.05em;line-height:.85;color:#7C7B76;font-variant-numeric:tabular-nums">81%</span></div>
+    </div>
+    <div style="display:flex;gap:4px;height:6px"><div style="flex:87;background:var(--acc,#C6E07B);border-radius:3px"></div><div style="flex:81;background:#3A3A3D;border-radius:3px"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">DIFFERENCE</span><span style="font-size:22px;font-weight:500;color:var(--acc,#C6E07B)">+6%</span></span>
+      <span style="font-size:12.5px;color:#7C7B76">Ranked by percentage of planned tasks completed, not task count.</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:{{ sz.gapL }}">
+    <div style="display:flex;flex-direction:column">
+      <div style="display:grid;grid-template-columns:60px 1fr 1fr 24px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09);font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76"><span>THIS WEEK</span><span style="text-align:right">BRENDON</span><span style="text-align:right">LUCAS</span><span></span></div>
+      <sc-for list="{{ battleDays }}" as="d" hint-placeholder-count="7">
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr 24px;align-items:center;height:44px;border-bottom:1px solid rgba(255,255,255,0.05);font-variant-numeric:tabular-nums">
+          <span style="font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.1em;color:{{ d.dc }}">{{ d.day }}</span>
+          <span style="text-align:right;font-size:15px;color:{{ d.bc }}">{{ d.b }}</span>
+          <span style="text-align:right;font-size:15px;color:{{ d.lc }}">{{ d.l }}</span>
+          <span style="justify-self:end;width:6px;height:6px;border-radius:50%;background:{{ d.w }}"></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)">HEAD TO HEAD</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;letter-spacing:.14em;font-weight:600">BRENDON</span><span style="font-size:40px;font-weight:500;letter-spacing:-0.04em;line-height:1">5 <span style="font-size:14px;color:#A09F99;letter-spacing:.1em">WINS</span></span></div>
+        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76;padding-bottom:6px">8 WEEKS</span>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span style="font-size:12px;letter-spacing:.14em;font-weight:600;color:#A09F99">LUCAS</span><span style="font-size:40px;font-weight:500;letter-spacing:-0.04em;line-height:1;color:#A09F99">3 <span style="font-size:14px;letter-spacing:.1em">WINS</span></span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">
+        <sc-for list="{{ h2h }}" as="h" hint-placeholder-count="8"><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><div style="width:100%;height:28px;border-radius:5px;background:{{ h.c }}"></div><span style="font-family:'Geist Mono',monospace;font-size:9.5px;color:#7C7B76">{{ h.w }}</span></div></sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ prevWeeks }}" as="p" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;padding:14px 0;border-top:1px solid rgba(255,255,255,0.05)">
+            <span style="font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.08em;color:#A09F99">{{ p.label }}</span>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:14px"><span>{{ p.first }}</span><span style="color:#7C7B76">{{ p.second }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+      <button onClick="{{ openWeekly }}" style="align-self:flex-start;height:40px;padding:0 16px;border:1px solid rgba(255,255,255,0.12);border-radius:999px;background:transparent;color:#ECEBE6;font-size:13px;cursor:pointer" style-hover="background:rgba(255,255,255,0.05)">Review past weeks</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- STATS -->
+<sc-if value="{{ is.stats }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">STATS</h1>
+    <div style="display:flex;padding:3px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;gap:2px">
+      <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.pick }}" style="height:32px;padding:0 12px;border:0;border-radius:7px;background:{{ r.bg }};color:{{ r.c }};font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.1em;cursor:pointer">{{ r.label }}</button></sc-for>
+    </div>
+  </header>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:26px 28px">
+    <sc-for list="{{ st.metrics }}" as="m" hint-placeholder-count="7">
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">{{ m.label }}</span>
+        <span style="display:flex;align-items:baseline;gap:6px"><span style="font-size:{{ sz.stat }};font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">{{ m.v }}</span><span style="font-size:13px;color:#A09F99">{{ m.u }}</span></span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:{{ sz.gapL }}">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">COMPLETION</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">AVG {{ st.avg }}%</span></div>
+      <div style="height:180px;display:flex;align-items:flex-end;gap:{{ st.gap }};border-bottom:1px solid rgba(255,255,255,0.08)">
+        <sc-for list="{{ st.bars }}" as="b" hint-placeholder-count="7"><div title="{{ b.tip }}" style="flex:1;height:{{ b.h }};background:{{ b.c }};border-radius:3px 3px 0 0;transition:height .5s cubic-bezier(.2,.8,.2,1)"></div></sc-for>
+      </div>
+      <div style="display:flex;gap:{{ st.gap }}"><sc-for list="{{ st.labels }}" as="l"><span style="flex:1;text-align:center;font-family:'Geist Mono',monospace;font-size:9.5px;color:#7C7B76;white-space:nowrap;overflow:visible">{{ l }}</span></sc-for></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">FOCUS HOURS</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">TOTAL {{ st.focusTotal }}H</span></div>
+      <div style="position:relative;height:180px;border-bottom:1px solid rgba(255,255,255,0.08)">
+        <svg viewBox="0 0 600 180" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <path d="{{ st.area }}" style="fill:color-mix(in oklab,var(--acc,#C6E07B) 9%,transparent)"></path>
+          <path d="{{ st.line }}" fill="none" vector-effect="non-scaling-stroke" style="stroke:var(--acc,#C6E07B);stroke-width:1.75"></path>
+        </svg>
+      </div>
+      <div style="display:flex;gap:{{ st.gap }}"><sc-for list="{{ st.labels }}" as="l"><span style="flex:1;text-align:center;font-family:'Geist Mono',monospace;font-size:9.5px;color:#7C7B76;white-space:nowrap">{{ l }}</span></sc-for></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:6px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">HABIT CONSISTENCY · LAST 28 DAYS</span><span style="display:flex;gap:14px;font-size:11.5px;color:#7C7B76"><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:color-mix(in oklab,var(--acc,#C6E07B) 80%,#0A0A0B)"></span>Done</span><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:color-mix(in oklab,#E0715F 30%,#141416)"></span>Missed</span></span></div>
+    <sc-for list="{{ st.habits }}" as="h" hint-placeholder-count="8">
+      <div style="display:grid;grid-template-columns:{{ sz.habitCols }};align-items:center;gap:14px">
+        <span style="font-size:13px;color:#A09F99;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.name }}</span>
+        <div style="display:grid;grid-template-columns:repeat(28,minmax(0,1fr));gap:3px"><sc-for list="{{ h.cells }}" as="c"><span style="aspect-ratio:1;border-radius:2px;background:{{ c }}"></span></sc-for></div>
+        <span style="font-family:'Geist Mono',monospace;font-size:11.5px;text-align:right;color:{{ h.rc }}">{{ h.rate }}%</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:{{ sz.gapL }}">
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">CALENDAR · 26 WEEKS</span><span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#7C7B76">Less<sc-for list="{{ levels }}" as="lv"><span style="width:10px;height:10px;border-radius:2px;background:{{ lv }}"></span></sc-for>More</span></div>
+      <div style="overflow-x:auto"><div style="display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px">
+        <sc-for list="{{ st.cal }}" as="c"><span style="border-radius:2px;background:{{ c }}"></span></sc-for>
+      </div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99;padding-bottom:8px">MOST CONSISTENT</span>
+        <sc-for list="{{ best }}" as="b" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid rgba(255,255,255,0.05)"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:14px">{{ b.name }}</span><span style="font-size:18px;font-weight:500;font-variant-numeric:tabular-nums">{{ b.v }}%</span></div><div style="height:2px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:{{ b.w }};background:var(--acc,#C6E07B)"></div></div></div></sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99;padding-bottom:8px">MOST MISSED</span>
+        <sc-for list="{{ missed }}" as="b" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid rgba(255,255,255,0.05)"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:14px">{{ b.name }}</span><span style="font-size:18px;font-weight:500;color:#E0715F;font-variant-numeric:tabular-nums">{{ b.v }}%</span></div><div style="height:2px;background:rgba(255,255,255,0.06)"><div style="height:100%;width:{{ b.w }};background:#E0715F"></div></div></div></sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- FOCUS SETUP -->
+<sc-if value="{{ is.focus }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ sz.focusCols }};gap:{{ sz.gapL }};align-items:start;animation:fadeUp .45s ease">
+  <div style="display:flex;flex-direction:column;gap:34px">
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">START FOCUS SESSION</h1>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">TASK</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ focusTasks }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.pick }}" style="height:44px;padding:0 16px;border-radius:10px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.c }};font-size:14px;cursor:pointer;transition:all .2s">{{ t.label }}</button></sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">DURATION</span>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <sc-for list="{{ durs }}" as="d" hint-placeholder-count="4"><button onClick="{{ d.pick }}" style="height:84px;border-radius:12px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.c }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all .2s"><span style="font-size:{{ d.fs }};font-weight:500;letter-spacing:-0.03em">{{ d.n }}</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.16em;color:#7C7B76">{{ d.u }}</span></button></sc-for>
+      </div>
+      <sc-if value="{{ fxv.isCustom }}"><div style="display:flex;align-items:center;gap:12px;animation:fadeUp .25s ease"><input type="number" min="5" max="240" value="{{ fxv.custom }}" onChange="{{ onCustom }}" placeholder="45" style="width:120px;height:48px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#ECEBE6;font-size:18px;outline:none"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7C7B76">MINUTES</span></div></sc-if>
+    </div>
+    <button onClick="{{ lockIn }}" style="height:64px;border:0;border-radius:14px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:14px;font-weight:600;letter-spacing:.34em;cursor:pointer;transition:transform .15s" style-active="transform:scale(.985)">LOCK IN</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:30px">
+    <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">FOCUS TODAY</span>
+      <span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">{{ me.focus }}</span>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <sc-for list="{{ sessions }}" as="s" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:6px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05);animation:fadeUp .4s ease">
+          <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:14.5px">{{ s.task }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--acc,#C6E07B)">{{ s.min }} MIN</span></div>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">{{ s.from }} – {{ s.to }}</span>
+          <sc-if value="{{ s.hasNote }}"><span style="font-size:13px;color:#A09F99;line-height:1.45">{{ s.note }}</span></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:16px;border-radius:14px;background:#111113;border:1px solid rgba(255,255,255,0.06)">
+      <span style="width:8px;height:8px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }};flex-shrink:0"></span>
+      <span style="flex:1;font-size:13.5px;color:#A09F99"><span style="color:#ECEBE6">Lucas</span> {{ pp.focusLine }}</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ROUTINE -->
+<sc-if value="{{ is.routine }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">ROUTINE</h1>
+    <span style="font-size:15px;color:#A09F99">{{ me.total }} tasks today · {{ me.all }} in your standard</span>
+  </header>
+  <div style="display:grid;grid-template-columns:{{ sz.routineCols }};gap:{{ sz.gapL }};align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px;padding:22px;background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:16px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">NEW TASK</span>
+      <input value="{{ form.name }}" onChange="{{ onName }}" placeholder="Task name" style="height:50px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#ECEBE6;font-size:15px;outline:none" style-focus="border-color:rgba(255,255,255,0.28)">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">CATEGORY</span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ catOpts }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.pick }}" style="height:36px;padding:0 13px;border-radius:9px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:13px;cursor:pointer">{{ c.label }}</button></sc-for></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">SCHEDULE</span>
+        <div style="display:flex;padding:3px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;gap:2px">
+          <button onClick="{{ setEvery }}" style="flex:1;height:34px;border:0;border-radius:7px;background:{{ form.everyBg }};color:{{ form.everyC }};font-size:13px;cursor:pointer">Every day</button>
+          <button onClick="{{ setSpecific }}" style="flex:1;height:34px;border:0;border-radius:7px;background:{{ form.specBg }};color:{{ form.specC }};font-size:13px;cursor:pointer">Select days</button>
+        </div>
+        <sc-if value="{{ form.specific }}"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;animation:fadeUp .25s ease"><sc-for list="{{ dayOpts }}" as="d"><button onClick="{{ d.pick }}" style="height:38px;border-radius:8px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.c }};font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.06em;cursor:pointer;padding:0">{{ d.label }}</button></sc-for></div></sc-if>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">TIME · OPTIONAL</span>
+          <input type="time" value="{{ form.time }}" onChange="{{ onTime }}" style="height:42px;padding:0 12px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:#ECEBE6;font-size:14px;outline:none;color-scheme:dark">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">DIFFICULTY</span>
+          <div style="display:flex;gap:4px"><sc-for list="{{ diffOpts }}" as="d"><button onClick="{{ d.pick }}" style="flex:1;height:42px;border-radius:9px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.c }};font-size:12px;cursor:pointer;padding:0">{{ d.label }}</button></sc-for></div>
+        </div>
+      </div>
+      <button onClick="{{ addTask }}" style="height:52px;border:0;border-radius:12px;background:{{ form.addBg }};color:{{ form.addC }};font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.24em;cursor:pointer;transition:all .2s">ADD TO ROUTINE</button>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">YOUR STANDARD</span><span style="font-size:12px;color:#7C7B76">Drag to reorder</span></div>
+      <sc-for list="{{ rItems }}" as="r" hint-placeholder-count="10">
+        <div draggable="true" onDragStart="{{ r.onDragStart }}" onDragOver="{{ r.onDragOver }}" onDrop="{{ r.onDrop }}" onDragEnd="{{ r.onDragEnd }}" style="display:flex;align-items:center;gap:14px;min-height:58px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.05);border-top:2px solid {{ r.overC }};opacity:{{ r.op }};background:#0A0A0B;cursor:grab">
+          <span style="font-family:'Geist Mono',monospace;font-size:13px;color:#55544F;letter-spacing:-2px;width:14px">⋮⋮</span>
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px">{{ r.name }}</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:#7C7B76">{{ r.sched }}</span></span>
+          <span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#A09F99;padding:4px 8px;border:1px solid rgba(255,255,255,0.08);border-radius:6px">{{ r.catU }}</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76;width:40px;text-align:right">{{ r.timeL }}</span>
+          <button onClick="{{ r.del }}" style="width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#5E5D59;font-size:18px;cursor:pointer" style-hover="color:#E0715F;background:rgba(255,255,255,0.03)">×</button>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- CHALLENGES -->
+<sc-if value="{{ is.challenges }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">CHALLENGES</h1><span style="font-size:15px;color:#A09F99">Optional. Your routine comes first.</span></div>
+    <button style="height:40px;padding:0 16px;border:1px solid rgba(255,255,255,0.12);border-radius:999px;background:transparent;color:#ECEBE6;font-size:13px;cursor:pointer">New challenge</button>
+  </header>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px">
+    <div style="display:flex;flex-direction:column;gap:26px;padding:26px;background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><span style="font-size:19px;font-weight:600;letter-spacing:.02em">30 DAY — NO ZERO DAYS</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--acc,#C6E07B);white-space:nowrap">ACTIVE</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><span style="padding:6px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:7px;font-size:13px;color:#A09F99">Exercise</span><span style="padding:6px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:7px;font-size:13px;color:#A09F99">Read</span><span style="padding:6px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:7px;font-size:13px;color:#A09F99">Study</span><span style="padding:6px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:7px;font-size:13px;color:#A09F99">Wake before 06:30</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">DAY</span><span style="font-size:26px;font-weight:500;letter-spacing:-0.03em">18 <span style="color:#5E5D59">/ 30</span></span></div>
+        <div style="display:grid;grid-template-columns:repeat(30,1fr);gap:2px"><sc-for list="{{ segs }}" as="s"><span style="height:18px;border-radius:2px;background:{{ s }}"></span></sc-for></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.06)">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;letter-spacing:.14em;font-weight:600">BRENDON</span><span style="font-size:34px;font-weight:500;letter-spacing:-0.04em">94%</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;letter-spacing:.14em;font-weight:600;color:#A09F99">LUCAS</span><span style="font-size:34px;font-weight:500;letter-spacing:-0.04em;color:#A09F99">89%</span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:26px;padding:26px;background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><span style="font-size:19px;font-weight:600;letter-spacing:.02em">DEEP WORK WEEK</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C7B76;white-space:nowrap">ENDS SUN</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">GOAL</span><span style="font-size:26px;font-weight:500;letter-spacing:-0.03em">10 HOURS</span></div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between"><span style="font-size:14px">Brendon</span><span style="font-family:'Geist Mono',monospace;font-size:14px">8h42</span></div><div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="height:100%;width:87%;background:var(--acc,#C6E07B);border-radius:3px"></div></div></div>
+        <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between"><span style="font-size:14px;color:#A09F99">Lucas</span><span style="font-family:'Geist Mono',monospace;font-size:14px;color:#A09F99">6h10</span></div><div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="height:100%;width:62%;background:#5E5D59;border-radius:3px"></div></div></div>
+      </div>
+      <span style="font-size:13px;color:#7C7B76;margin-top:auto">1h 18m to goal. Counts sessions of 25 min or longer.</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- INVITE -->
+<sc-if value="{{ is.invite }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};max-width:720px;animation:fadeUp .45s ease">
+  <header style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">INVITE PARTNER</h1><span style="font-size:15px;color:#A09F99">Invite your accountability partner.</span></header>
+  <div style="display:flex;flex-direction:column;gap:20px;padding:28px;background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:18px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">YOUR CODE</span>
+    <span style="font-family:'Geist Mono',monospace;font-size:{{ sz.code }};font-weight:500;letter-spacing:.1em;line-height:1">LKD-8X29A</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ copyCode }}" style="height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--acc,#C6E07B);color:#0A0A0B;font-size:13.5px;font-weight:600;cursor:pointer">{{ copyLabel }}</button>
+      <button onClick="{{ copyCode }}" style="height:44px;padding:0 18px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:transparent;color:#ECEBE6;font-size:13.5px;cursor:pointer">Share link</button>
+    </div>
+    <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#7C7B76">lockedin.app/join/LKD-8X29A</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">HAVE A CODE?</span>
+    <div style="display:flex;gap:8px"><input value="{{ joinCode }}" onChange="{{ onJoin }}" placeholder="LKD-XXXXX" style="flex:1;min-width:0;height:48px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#ECEBE6;font-family:'Geist Mono',monospace;font-size:15px;letter-spacing:.1em;outline:none;text-transform:uppercase"><button style="height:48px;padding:0 20px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:transparent;color:#ECEBE6;font-size:13.5px;cursor:pointer">Join</button></div>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">LOCKED IN DUO</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">2 / 2</span></div>
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="width:36px;height:36px;border-radius:50%;background:#ECEBE6;color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-weight:600">B</span><span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px">Brendon</span><span style="font-size:12px;color:#7C7B76">@brendon · Owner</span></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">YOU</span></div>
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="width:36px;height:36px;border-radius:50%;background:#1C1C1F;display:flex;align-items:center;justify-content:center;font-weight:600">L</span><span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px">Lucas</span><span style="font-size:12px;color:#7C7B76">@lucas · Joined Mar 3</span></span><span style="display:flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:10.5px;color:{{ ps.textC }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ ps.dot }}"></span>{{ ps.label }}</span></div>
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 0"><div style="display:flex;gap:6px"><span style="width:36px;height:36px;border-radius:50%;border:1px dashed rgba(255,255,255,0.15)"></span><span style="width:36px;height:36px;border-radius:50%;border:1px dashed rgba(255,255,255,0.1)"></span><span style="width:36px;height:36px;border-radius:50%;border:1px dashed rgba(255,255,255,0.06)"></span></div><span style="font-size:13px;color:#7C7B76">Squads of up to 5 are coming later.</span></div>
+  </div>
+</div>
+</sc-if>
+
+<!-- SETTINGS -->
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};max-width:720px;animation:fadeUp .45s ease">
+  <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">SETTINGS</h1>
+  <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div style="width:84px;height:84px;border-radius:50%;background:repeating-linear-gradient(45deg,#151517 0 6px,#1B1B1E 6px 12px);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#7C7B76">PHOTO</div>
+    <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:24px;font-weight:600;letter-spacing:-0.02em">Brendon</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#7C7B76">@brendon</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <sc-for list="{{ profileRows }}" as="p" hint-placeholder-count="5"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:52px;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="font-size:14px;color:#A09F99">{{ p.k }}</span><span style="font-size:14px;text-align:right">{{ p.v }}</span></div></sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.09)">PREFERENCES</span>
+    <sc-for list="{{ prefRows }}" as="p" hint-placeholder-count="4">
+      <button onClick="{{ p.toggle }}" style="display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:62px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);background:transparent;color:inherit;text-align:left;cursor:pointer;padding:0">
+        <span style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14.5px">{{ p.k }}</span><span style="font-size:12.5px;color:#7C7B76">{{ p.d }}</span></span>
+        <span style="width:40px;height:24px;border-radius:12px;background:{{ p.track }};position:relative;flex-shrink:0;transition:background .2s"><span style="position:absolute;top:3px;left:{{ p.knob }};width:18px;height:18px;border-radius:50%;background:{{ p.knobC }};transition:left .2s ease"></span></span>
+      </button>
+    </sc-for>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button onClick="{{ openAuth }}" style="height:42px;padding:0 18px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:transparent;color:#ECEBE6;font-size:13.5px;cursor:pointer">Sign out</button>
+    <button style="height:42px;padding:0 18px;border:1px solid rgba(224,113,95,0.3);border-radius:10px;background:transparent;color:#E0715F;font-size:13.5px;cursor:pointer">Leave duo</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- EMPTY STATES -->
+<sc-if value="{{ is.empty }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">EMPTY STATES</h1><span style="font-size:15px;color:#A09F99">What a new account sees before there is any evidence.</span></header>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    <div style="display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:18px;min-height:320px;padding:30px;border:1px dashed rgba(255,255,255,0.1);border-radius:18px">
+      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">TODAY</span>
+      <span style="font-size:24px;font-weight:500;letter-spacing:-0.02em;line-height:1.25">No habits yet.<br><span style="color:#7C7B76">Build your standard.</span></span>
+      <button onClick="{{ goRoutine }}" style="height:46px;padding:0 20px;border:0;border-radius:10px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.2em;cursor:pointer">CREATE ROUTINE</button>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:18px;min-height:320px;padding:30px;border:1px dashed rgba(255,255,255,0.1);border-radius:18px">
+      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">PARTNER</span>
+      <span style="font-size:20px;font-weight:500;letter-spacing:-0.015em;line-height:1.35;text-wrap:pretty">Discipline is easier when somebody knows whether you showed up.</span>
+      <button onClick="{{ goInvite }}" style="height:46px;padding:0 20px;border:1px solid rgba(255,255,255,0.14);border-radius:10px;background:transparent;color:#ECEBE6;font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.2em;cursor:pointer">INVITE PARTNER</button>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:18px;min-height:320px;padding:30px;border:1px dashed rgba(255,255,255,0.1);border-radius:18px">
+      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">FOCUS</span>
+      <span style="font-size:56px;font-weight:500;letter-spacing:-0.045em;line-height:1">0 HOURS</span>
+      <span style="font-size:15px;color:#A09F99">Start your first focused session.</span>
+      <button onClick="{{ goFocus }}" style="height:46px;padding:0 20px;border:1px solid rgba(255,255,255,0.14);border-radius:10px;background:transparent;color:#ECEBE6;font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.2em;cursor:pointer">LOCK IN</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- LIVE STATES -->
+<sc-if value="{{ is.states }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .45s ease">
+  <header style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">LIVE STATES</h1><span style="font-size:15px;color:#A09F99">Every realtime event and how it appears on the partner's screen.</span></div>
+    <button onClick="{{ simNow }}" style="height:40px;padding:0 16px;border:1px solid rgba(255,255,255,0.12);border-radius:999px;background:transparent;color:#ECEBE6;font-size:13px;cursor:pointer">Trigger next partner event</button>
+  </header>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+    <div style="display:flex;flex-direction:column;gap:18px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">user_online</span><div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 2.4s ease-out infinite"></span><span style="font-size:14px">Partner Online</span></div><span style="font-size:12.5px;color:#7C7B76">Dot pulses once on arrival, then every 2.4s at low intensity.</span></div>
+    <div style="display:flex;flex-direction:column;gap:18px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">user_offline</span><div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#55544F"></span><span style="font-size:14px;color:#A09F99">Partner Offline</span></div><span style="font-size:12.5px;color:#7C7B76">Grey, static. Panel shows “Last seen 14:02”.</span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">focus_started</span><div style="display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:10px;background:#0C0C0D"><span style="display:flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:var(--acc,#C6E07B)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 1.6s ease-out infinite"></span>FOCUSING</span><span style="font-size:14px">Studying Mathematics</span><span style="font-family:'Geist Mono',monospace;font-size:20px">34:21 <span style="font-family:'Geist',sans-serif;font-size:12px;color:#7C7B76">remaining</span></span></div></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px;box-shadow:0 0 0 1px color-mix(in oklab,var(--acc,#C6E07B) 45%,transparent)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">task_completed · partner checking a task</span><div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:40px;font-weight:500;letter-spacing:-0.04em">73%</span><span style="font-size:13px;color:#A09F99">8 / 11</span></div><span style="font-size:12.5px;color:#7C7B76">Panel border glows for 2s, number and bar ease to the new value.</span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">task_uncompleted</span><div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7C7B76">14:20</span><span style="width:6px;height:6px;border-radius:50%;background:#55544F"></span><span style="font-size:13.5px;color:#A09F99"><span style="color:#ECEBE6">Lucas</span> unchecked Gym</span></div><span style="font-size:12.5px;color:#7C7B76">Neutral grey. Never red; it is a correction, not a failure.</span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">new live event</span><div style="display:flex;align-items:baseline;gap:12px;animation:enter .6s ease infinite alternate"><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7C7B76">07:26</span><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B)"></span><span style="font-size:13.5px;color:#A09F99"><span style="color:#ECEBE6">Lucas</span> completed Reading</span></div><span style="font-size:12.5px;color:#7C7B76">Slides 8px down and fades in at the top of the feed.</span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">reaction_sent</span><div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#18181B;border:1px solid rgba(255,255,255,0.1);border-radius:12px"><span style="font-size:20px">🫡</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px">Brendon reacted to your Morning Run.</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">JUST NOW</span></span></div></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">focus_completed</span><div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7C7B76">08:31</span><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B)"></span><span style="font-size:13.5px;color:#A09F99"><span style="color:#ECEBE6">Brendon</span> completed 50 min Focus Session</span></div><span style="font-size:12.5px;color:#7C7B76">Also adds to the partner's focus total and the Deep Work challenge.</span></div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</main>
+
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+<nav style="flex-shrink:0;display:flex;border-top:1px solid rgba(255,255,255,0.07);background:#0A0A0B;padding-bottom:{{ frame.botInset }}">
+  <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+    <button onClick="{{ t.go }}" style="flex:1;height:62px;border:0;background:transparent;color:{{ t.c }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;position:relative">
+      <span style="width:18px;height:2px;border-radius:2px;background:{{ t.bar }};transition:background .2s"></span>
+      <span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em">{{ t.label }}</span>
+    </button>
+  </sc-for>
+</nav>
+</sc-if>
+
+<sc-if value="{{ more }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeMore }}" style="position:absolute;inset:0;z-index:55;background:rgba(0,0,0,0.6);animation:fadeIn .2s ease"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:56;background:#111113;border-top:1px solid rgba(255,255,255,0.08);border-radius:22px 22px 0 0;padding:10px 18px 34px;animation:slideUp .3s cubic-bezier(.2,.8,.2,1);max-height:80%;overflow-y:auto">
+  <div style="width:36px;height:4px;border-radius:2px;background:#2A2A2D;margin:0 auto 12px"></div>
+  <sc-for list="{{ moreItems }}" as="m"><button onClick="{{ m.go }}" style="display:flex;justify-content:space-between;align-items:center;width:100%;height:52px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);background:transparent;color:#ECEBE6;font-size:15px;cursor:pointer;padding:0 4px"><span>{{ m.label }}</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C7B76">{{ m.tag }}</span></button></sc-for>
+</div>
+</sc-if>
+
+<!-- FOCUS RUNNING -->
+<sc-if value="{{ fxv.running }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:50;background:#060607;display:flex;flex-direction:column;animation:fadeIn .7s ease">
+  <div style="display:flex;justify-content:flex-end;padding:{{ frame.focusTop }}"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#55544F">ENDS {{ fxv.endsAt }}</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:0 24px;text-align:center">
+    <span style="display:flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.34em;color:var(--acc,#C6E07B)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 2.4s ease-out infinite"></span>LOCKED IN</span>
+    <span style="font-size:{{ sz.focusTask }};font-weight:500;letter-spacing:.14em">{{ fxv.taskU }}</span>
+    <span style="font-size:{{ sz.timer }};font-weight:300;letter-spacing:-0.045em;line-height:1;font-variant-numeric:tabular-nums;opacity:{{ fxv.op }};animation:{{ fxv.anim }};transition:opacity .8s ease">{{ fxv.clock }}</span>
+    <div style="width:220px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden"><div style="height:100%;width:{{ fxv.prog }};background:rgba(236,235,230,0.5);transition:width 1s linear"></div></div>
+    <div style="display:flex;gap:44px;margin-top:18px">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.2em;color:#55544F">YOU</span><span style="display:flex;align-items:center;gap:7px;font-size:13px;color:#A09F99"><span style="width:6px;height:6px;border-radius:50%;background:{{ fxv.youDot }}"></span>{{ fxv.youSt }}</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.2em;color:#55544F">PARTNER</span><span style="display:flex;align-items:center;gap:7px;font-size:13px;color:#A09F99"><span style="width:6px;height:6px;border-radius:50%;background:{{ ps.dot }}"></span>{{ ps.focusWord }}</span></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:12px;padding:{{ frame.focusBot }}">
+    <button onClick="{{ pauseFx }}" style="height:48px;padding:0 20px;border:0;background:transparent;color:#5E5D59;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.24em;cursor:pointer" style-hover="color:#ECEBE6">{{ fxv.pauseL }}</button>
+    <button onClick="{{ endFx }}" style="height:48px;padding:0 20px;border:0;background:transparent;color:#5E5D59;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.24em;cursor:pointer" style-hover="color:#ECEBE6">END SESSION</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ fxv.complete }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:50;background:#060607;overflow-y:auto;animation:fadeIn .5s ease">
+  <div style="min-height:100%;max-width:480px;margin:0 auto;padding:48px 24px;display:flex;flex-direction:column;justify-content:center;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.3em;color:var(--acc,#C6E07B)">SESSION COMPLETE</span>
+      <span style="font-size:{{ sz.done }};font-weight:300;letter-spacing:-0.045em;line-height:1;font-variant-numeric:tabular-nums">{{ fxv.elapsed }}</span>
+      <span style="font-size:14px;color:#7C7B76">{{ fxv.task }} · {{ fxv.range }}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span style="font-size:14px;color:#A09F99">What did you accomplish?</span>
+      <textarea value="{{ fxv.note }}" onChange="{{ onNote }}" rows="4" placeholder="Finished problem set 5. Reviewed torque." style="padding:14px;background:#0E0E10;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-size:15px;line-height:1.5;resize:none;outline:none" style-focus="border-color:rgba(255,255,255,0.25)"></textarea>
+    </div>
+    <button onClick="{{ completeFx }}" style="height:58px;border:0;border-radius:14px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.26em;cursor:pointer">COMPLETE SESSION</button>
+    <span style="font-size:12.5px;color:#5E5D59;text-align:center">Lucas sees this in his feed the moment you complete it.</span>
+  </div>
+</div>
+</sc-if>
+
+<!-- BRIEFING -->
+<sc-if value="{{ ov.briefing }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .6s ease">
+  <div style="min-height:100%;max-width:560px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:center;gap:48px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">TUESDAY · SEPTEMBER 23</span>
+      <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em;line-height:1.05">GOOD MORNING, BRENDON.</h1>
+      <span style="font-family:'Geist Mono',monospace;font-size:13px;letter-spacing:.24em;color:var(--acc,#C6E07B)">DAY 14</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:34px 24px">
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">YESTERDAY</span><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">92%</span><span style="font-size:13px;color:#A09F99">completion</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">CURRENT STREAK</span><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">13 <span style="font-size:15px;color:#A09F99;letter-spacing:.06em">DAYS</span></span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">YOUR PARTNER</span><span style="font-size:22px;font-weight:500;letter-spacing:-0.01em">10 DAY STREAK</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76;padding-bottom:4px">TODAY</span><span style="font-size:16px">12 TASKS</span><span style="font-size:16px">2 FOCUS SESSIONS</span><span style="font-size:16px">1 WORKOUT</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px;align-items:center">
+      <button onClick="{{ closeOv }}" style="width:100%;height:60px;border:0;border-radius:14px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer" style-hover="background:var(--acc,#C6E07B)">START DAY</button>
+      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#55544F">THE STANDARD DOESN'T CHANGE.</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- END OF DAY -->
+<sc-if value="{{ ov.endday }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease">
+  <div style="min-height:100%;max-width:600px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:center;gap:44px">
+    <div style="display:flex;flex-direction:column;gap:12px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">TUESDAY · DAY 14</span><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">DAY COMPLETE</h1></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px 24px">
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">10 <span style="color:#5E5D59">/ 12</span></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">TASKS</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">84%</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">COMPLETION</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">2H 15M</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">FOCUS</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--acc,#C6E07B)"><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1;color:var(--acc,#C6E07B)">+120 XP</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">EARNED</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;padding:22px;background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">YOUR PARTNER</span><span style="display:flex;gap:18px;font-variant-numeric:tabular-nums"><span style="font-size:18px">11 / 12</span><span style="font-size:18px;font-weight:600">92%</span></span></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:12px"><span style="width:64px;font-size:12px;color:#A09F99">You</span><div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px"><div style="width:84%;height:100%;background:var(--acc,#C6E07B);border-radius:2px"></div></div></div>
+        <div style="display:flex;align-items:center;gap:12px"><span style="width:64px;font-size:12px;color:#A09F99">Lucas</span><div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px"><div style="width:92%;height:100%;background:#ECEBE6;border-radius:2px"></div></div></div>
+      </div>
+      <span style="font-size:14px;color:#A09F99">Lucas finished 8% ahead today.</span>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ closeOv }}" style="height:58px;padding:0 22px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;background:transparent;color:#A09F99;font-size:13.5px;cursor:pointer">Not yet</button>
+      <button onClick="{{ closeDay }}" style="flex:1;height:58px;border:0;border-radius:14px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer">CLOSE DAY</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- WEEKLY REVIEW -->
+<sc-if value="{{ ov.weekly }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease">
+  <div style="min-height:100%;max-width:640px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:center;gap:44px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.24em;color:var(--acc,#C6E07B)">{{ wk.title }}</span>
+      <div style="display:flex;gap:6px"><button onClick="{{ wkOlder }}" style="width:40px;height:40px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:transparent;color:{{ wk.olderC }};font-size:16px;cursor:pointer">‹</button><button onClick="{{ wkNewer }}" style="width:40px;height:40px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:transparent;color:{{ wk.newerC }};font-size:16px;cursor:pointer">›</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:13px;font-weight:600;letter-spacing:.14em;color:{{ wk.bC }}">BRENDON</span><span style="font-size:{{ sz.huge }};font-weight:500;letter-spacing:-0.05em;line-height:.85;color:{{ wk.bC }}">{{ wk.b }}%</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-end"><span style="font-size:13px;font-weight:600;letter-spacing:.14em;color:{{ wk.lC }}">LUCAS</span><span style="font-size:{{ sz.huge }};font-weight:500;letter-spacing:-0.05em;line-height:.85;color:{{ wk.lC }}">{{ wk.l }}%</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
+      <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">WINNER</span><span style="font-size:24px;font-weight:600;letter-spacing:.06em">{{ wk.winner }}</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">DIFFERENCE</span><span style="font-size:24px;font-weight:500;color:var(--acc,#C6E07B)">+{{ wk.diff }}%</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">NEXT WEEK</span><span style="font-size:16px">MONDAY</span></div>
+      <button onClick="{{ closeOv }}" style="height:54px;padding:0 28px;border:0;border-radius:14px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.26em;cursor:pointer">CONTINUE</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- AUTH -->
+<sc-if value="{{ ov.auth }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease">
+  <div style="min-height:100%;max-width:400px;margin:0 auto;padding:56px 24px;display:flex;flex-direction:column;justify-content:center;gap:40px">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="width:26px;height:26px;border:2.5px solid var(--acc,#C6E07B);border-radius:5px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;background:var(--acc,#C6E07B);border-radius:1.5px"></div></div>
+      <div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:32px;font-weight:600;letter-spacing:.06em">LOCKED IN</span><span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.26em;color:#7C7B76;line-height:1.7">NO HYPE.<br>JUST PROOF.</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input placeholder="Email" style="height:52px;padding:0 16px;background:#0E0E10;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-size:15px;outline:none" style-focus="border-color:rgba(255,255,255,0.28)">
+      <button onClick="{{ closeOv }}" style="height:52px;border:0;border-radius:12px;background:#ECEBE6;color:#0A0A0B;font-size:14.5px;font-weight:600;cursor:pointer">Continue with email</button>
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0"><span style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:#55544F">OR</span><span style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></span></div>
+      <button onClick="{{ closeOv }}" style="height:52px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:14.5px;cursor:pointer">Continue with Google</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;font-size:13px;color:#7C7B76">
+      <span>Have an invite code? <a href="#" onClick="{{ authToInvite }}" style="color:#ECEBE6;text-decoration:underline;text-underline-offset:3px">Join a duo</a></span>
+      <span>Private by default. Only your partner sees your day.</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<div style="position:absolute;z-index:70;right:{{ tst.r }};left:{{ tst.l }};top:{{ tst.t }};bottom:{{ tst.b }};display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;align-items:{{ tst.align }}">
+  <sc-for list="{{ toasts }}" as="x">
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#18181B;border:1px solid rgba(255,255,255,0.1);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,0.5);animation:enter .45s cubic-bezier(.2,.8,.2,1);max-width:340px">
+      <sc-if value="{{ x.hasEmoji }}"><span style="font-size:20px;line-height:1">{{ x.emoji }}</span></sc-if>
+      <sc-if value="{{ x.noEmoji }}"><span style="width:7px;height:7px;border-radius:50%;background:var(--acc,#C6E07B);flex-shrink:0"></span></sc-if>
+      <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13.5px">{{ x.text }}</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76;letter-spacing:.04em">{{ x.sub }}</span></span>
+    </div>
+  </sc-for>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;viewport&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;mobile&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;'auto'|'mobile'&quot;,&quot;section&quot;:&quot;Preview&quot;},&quot;partnerState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;online&quot;,&quot;focusing&quot;,&quot;offline&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Realtime&quot;},&quot;showBriefing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Preview&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#C6E07B&quot;,&quot;#9FD4A8&quot;,&quot;#E6E3D8&quot;],&quot;default&quot;:&quot;#C6E07B&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Style&quot;}}">
+const DAYS=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+const TODAY='TUE';
+const p2=n=>String(n).padStart(2,'0');
+const hm=()=>{const d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes());};
+const fmtMin=m=>{const h=Math.floor(m/60),r=m%60;return h?h+'h '+p2(r)+'m':r+'m';};
+const clock=s=>{s=Math.max(0,Math.ceil(s));return p2(Math.floor(s/60))+':'+p2(s%60);};
+const SEC={Morning:'MORNING',Study:'WORK / STUDY',Work:'WORK / STUDY',Body:'BODY',Night:'NIGHT',Custom:'CUSTOM'};
+const ORDER=['MORNING','WORK / STUDY','BODY','NIGHT','CUSTOM'];
+const ACC='var(--acc,#C6E07B)',TXT='#ECEBE6',MUTE='#A09F99',DIM='#7C7B76',RED='#E0715F';
+const SEL_BG='#1A1A1D';
+let uid=1;const nid=()=>'k'+(uid++);
+const mk=(name,cat,time,meta,diff,doneAt,days)=>({id:nid(),name,cat,time,meta,diff,done:!!doneAt,doneAt,days:days||DAYS.slice()});
+const TASKS=[
+ mk('Wake up at 06:00','Morning','06:00','','Medium','05:58'),
+ mk('Make bed','Morning','06:05','','Easy','06:03'),
+ mk('Drink water','Morning','06:10','500 ML','Easy','06:06'),
+ mk('Morning Run','Morning','06:30','5 KM','Hard','07:12'),
+ mk('Cold shower','Morning','07:15','3 MIN','Medium','07:24'),
+ mk('Work','Work','09:00','4 H','Medium','12:30'),
+ mk('Study Physics','Study','07:40','45 MIN','Hard','08:31'),
+ mk('Read','Study','12:40','30 MIN','Easy','13:05'),
+ mk('Work on project','Work','19:00','1 H','Hard',null,['MON','WED','THU','SAT']),
+ mk('Gym','Body','17:30','PUSH DAY','Hard',null,['MON','WED','FRI','SAT']),
+ mk('Drink 3L water','Body','','3 L','Medium',null),
+ mk('Follow diet','Body','','','Medium',null),
+ mk('Prepare tomorrow','Night','22:00','','Easy',null),
+ mk('Sleep before 23:00','Night','22:45','','Hard',null)
+];
+const LUCAS=[['Wake up at 06:30','06:34'],['Morning Run','07:22'],['Reading','07:26'],['Meditate','07:40'],['Cold shower','07:52'],['Stretch','08:05'],['Journal','08:15'],['Work',null],['Study Mathematics',null],['Gym',null],['Sleep before 23:30',null]].map(([name,at])=>({id:nid(),name,at,done:!!at,reacted:null}));
+const FEED0=[['07:03','p','start','started his day'],['07:12','y','done','completed Morning Run'],['07:26','p','done','completed Reading'],['07:22','p','done','completed Morning Run'],['07:41','y','focus','started a Focus Session'],['08:31','y','focusdone','completed 50 min Focus Session']];
+FEED0.sort((a,b)=>a[0]<b[0]?-1:1);
+const FEED=FEED0.map(([t,who,kind,text])=>({id:nid(),t,who,kind,text,target:kind==='done'?text.replace('completed ',''):(kind==='focusdone'?'Focus Session':null),reacted:null}));
+const REACTS=['🔥','⚡','🫡','Respect.','Good work.','Keep going.'];
+const WEEKS=[{w:39,b:89,l:85},{w:38,b:88,l:91},{w:37,b:93,l:82},{w:36,b:89,l:84},{w:35,b:86,l:88},{w:34,b:90,l:85},{w:33,b:84,l:87},{w:32,b:91,l:80},{w:31,b:88,l:83}];
+const rng=s=>()=>((s=(s*16807)%2147483647)-1)/2147483646;
+const MET={'7':['87','13','21','64','11.7','2','06:02'],'30':['84','13','21','268','42.5','6','06:04'],'90':['81','13','21','741','118','14','06:09'],'Y':['79','13','21','1,912','318','29','06:12']};
+const MLAB=['COMPLETION RATE','CURRENT STREAK','LONGEST STREAK','TASKS COMPLETED','FOCUS HOURS','PERFECT DAYS','AVERAGE WAKE TIME'];
+const MUNIT=['%','days','days','','h','',''];
+const HABITS=[['Gym',96],['Reading',91],['Wake up at 06:00',90],['Morning Run',86],['Cold shower',84],['Study Physics',82],['Drink 3L water',74],['Sleep before 23:00',68]];
+const LV=['#18181B','color-mix(in oklab,var(--acc,#C6E07B) 22%,#141416)','color-mix(in oklab,var(--acc,#C6E07B) 45%,#141416)','color-mix(in oklab,var(--acc,#C6E07B) 70%,#141416)','var(--acc,#C6E07B)'];
+const YOU_W=[91,84,88,86,83,90,87],LUC_W=[82,79,85,76,80,84,81];
+
+class Component extends DCLogic {
+  mainRef=React.createRef();
+  state={screen:'today',tasks:TASKS,lucas:LUCAS,feed:FEED,toasts:[],
+    partner:{status:'online',focusLabel:null,focusEnd:0,flashAt:0,seenAt:null},
+    focusMin:94,sessions:[{id:'s1',task:'Study Physics',from:'07:41',to:'08:31',min:50,note:'Finished chapter 4 problem set.'},{id:'s2',task:'Work',from:'13:10',to:'13:54',min:44,note:''}],
+    fx:{phase:'setup',task:'Study Physics',dur:50,custom:'',total:0,left:0,paused:false,note:'',from:''},
+    overlay:null,more:false,range:'30',wk:0,form:{name:'',cat:'Morning',every:true,days:[],time:'',diff:null},
+    drag:null,over:null,copied:false,joinCode:'',w:typeof window!=='undefined'?window.innerWidth:1400,reactFor:null,now:Date.now(),pop:null,step:0,
+    prefs:{briefing:true,share:true,reactions:true,alerts:false}};
+  componentDidMount(){
+    if(this.props.showBriefing!==false) this.setState({overlay:'briefing'});
+    this.onResize=()=>this.setState({w:window.innerWidth});
+    window.addEventListener('resize',this.onResize);
+    this.tick=setInterval(()=>this.doTick(),1000);
+    this.sim=setInterval(()=>{if(!this.state.overlay||this.state.overlay!=='briefing')this.simStep();},9000);
+  }
+  componentWillUnmount(){clearInterval(this.tick);clearInterval(this.sim);window.removeEventListener('resize',this.onResize);}
+  doTick(){this.setState(s=>{const n={now:Date.now()};if(s.fx.phase==='running'&&!s.fx.paused){const left=s.fx.left-1;n.fx=left<=0?{...s.fx,left:0,phase:'complete',to:hm()}:{...s.fx,left};}return n;});}
+  pushFeed(ev){this.setState(s=>({feed:[...s.feed,{id:nid(),t:hm(),reacted:null,...ev}]}));}
+  toast(t){const id=nid();this.setState(s=>({toasts:[...s.toasts,{id,...t}]}));setTimeout(()=>this.setState(s=>({toasts:s.toasts.filter(x=>x.id!==id)})),4400);}
+  simStep(){const i=this.state.step;if(i>=9)return;this.setState({step:i+1});
+    [()=>this.lucasDone('Work'),()=>this.lucasReact('🔥','Morning Run'),()=>this.lucasFocus(true),()=>this.lucasReact('Keep going.','Study Physics'),()=>this.lucasFocus(false),()=>this.lucasDone('Study Mathematics'),()=>this.lucasPresence(false),()=>this.lucasPresence(true),()=>this.lucasDone('Gym')][i]();}
+  lucasDone(name){const at=hm();this.setState(s=>({lucas:s.lucas.map(x=>x.name===name?{...x,done:true,at}:x),partner:{...s.partner,flashAt:Date.now()}}));
+    this.pushFeed({who:'p',kind:'done',text:'completed '+name,target:name});
+    if(!['today','partner'].includes(this.state.screen))this.toast({text:'Lucas completed '+name+'.',sub:'JUST NOW'});}
+  lucasReact(r,target){const emoji=!r.endsWith('.');this.pushFeed({who:'p',kind:'react',text:emoji?`reacted ${r} to your ${target}`:`on your ${target}: “${r}”`});
+    this.toast(emoji?{emoji:r,text:`Lucas reacted to your ${target}.`,sub:'JUST NOW'}:{text:`Lucas: “${r}”`,sub:`ON YOUR ${target.toUpperCase()}`});}
+  lucasFocus(on){if(on){this.setState(s=>({partner:{...s.partner,status:'focusing',focusLabel:'Studying Mathematics',focusEnd:Date.now()+(34*60+21)*1000}}));this.pushFeed({who:'p',kind:'focus',text:'started a Focus Session'});this.toast({text:'Lucas locked in.',sub:'STUDYING MATHEMATICS · 35 MIN'});}
+    else{this.setState(s=>({partner:{...s.partner,status:'online',focusLabel:null}}));this.pushFeed({who:'p',kind:'focusdone',text:'completed 35 min Focus Session',target:'Focus Session'});}}
+  lucasPresence(on){const t=hm();this.setState(s=>({partner:{...s.partner,status:on?'online':'offline',seenAt:t}}));this.pushFeed({who:'p',kind:'presence',text:on?'is back online':'went offline'});}
+  go(k){if(['briefing','endday','weekly','auth'].includes(k)){this.setState({overlay:k,more:false,wk:0});return;}
+    this.setState({screen:k,more:false,reactFor:null});if(this.mainRef.current)this.mainRef.current.scrollTop=0;}
+  toggle(id){const t=this.state.tasks.find(x=>x.id===id);const done=!t.done;const at=hm();
+    this.setState(s=>({tasks:s.tasks.map(x=>x.id===id?{...x,done,doneAt:done?at:null}:x),pop:id}));setTimeout(()=>this.setState({pop:null}),170);
+    this.pushFeed(done?{who:'y',kind:'done',text:'completed '+t.name}:{who:'y',kind:'undo',text:'unchecked '+t.name});}
+  react(src,id,r,target){
+    if(src==='feed')this.setState(s=>({feed:s.feed.map(f=>f.id===id?{...f,reacted:r}:f),reactFor:null}));
+    else this.setState(s=>({lucas:s.lucas.map(f=>f.id===id?{...f,reacted:r}:f),reactFor:null}));
+    this.pushFeed({who:'y',kind:'react',text:`reacted ${r} to Lucas's ${target}`});
+    this.toast({text:'Sent to Lucas.',sub:`${r} · ${target.toUpperCase()}`});}
+  setFx(p){this.setState(s=>({fx:{...s.fx,...p}}));}
+  lockIn(){const f=this.state.fx;const dur=f.dur==='custom'?(parseInt(f.custom)||30):f.dur;
+    this.setFx({phase:'running',total:dur*60,left:dur*60,paused:false,from:hm(),note:''});
+    this.pushFeed({who:'y',kind:'focus',text:'started a Focus Session'});}
+  completeFx(){const f=this.state.fx;const min=Math.max(1,Math.round((f.total-f.left)/60));
+    this.setState(s=>({focusMin:s.focusMin+min,sessions:[...s.sessions,{id:nid(),task:f.task,from:f.from,to:f.to||hm(),min,note:f.note}],fx:{...s.fx,phase:'setup',note:''}}));
+    this.pushFeed({who:'y',kind:'focusdone',text:`completed ${min} min Focus Session`});
+    this.toast({text:'Session recorded.',sub:`${min} MIN · LUCAS CAN SEE IT NOW`});}
+  setForm(p){this.setState(s=>({form:{...s.form,...p}}));}
+  addTask(){const f=this.state.form;if(!f.name.trim())return;const days=f.every||!f.days.length?DAYS.slice():DAYS.filter(d=>f.days.includes(d));
+    this.setState(s=>({tasks:[...s.tasks,mk(f.name.trim(),f.cat,f.time,'',f.diff,null,days)],form:{...s.form,name:'',time:'',diff:null}}));
+    this.toast({text:'Added to your standard.',sub:f.name.trim().toUpperCase()});}
+  reorder(from,to){if(!from||from===to)return;this.setState(s=>{const a=s.tasks.slice();const i=a.findIndex(x=>x.id===from);const [m]=a.splice(i,1);const j=a.findIndex(x=>x.id===to);a.splice(j,0,m);return {tasks:a};});}
+  renderVals(){
+    const s=this.state,P=this.props;
+    const vp=P.viewport||'auto';const framed=vp==='mobile';const mobile=framed||s.w<780;
+    const frame=framed?{outerPad:'28px',w:'390px',h:'844px',r:'46px',bd:'1px solid #26262A',dir:'column',topH:'98px',topPad:'44px 18px 0',botInset:'20px',focusTop:'58px 24px 0',focusBot:'0 0 44px'}
+      :{outerPad:'0',w:'100%',h:'100vh',r:'0',bd:'0',dir:mobile?'column':'row',topH:'56px',topPad:'0 18px',botInset:'0',focusTop:'24px 28px',focusBot:'0 0 32px'};
+    const sz=mobile?{h1:'26px',big:'34px',bigHalf:'20px',huge:'64px',cmp:'32px',stat:'30px',code:'34px',todayCols:'minmax(0,1fr)',pad:'22px 18px 40px',railPos:'static',timer:'92px',done:'72px',focusTask:'17px',gapL:'36px',colGap:'20px',focusCols:'minmax(0,1fr)',routineCols:'minmax(0,1fr)',habitCols:'96px minmax(0,1fr) 34px',ovPad:'64px 22px 48px'}
+      :{h1:'38px',big:'46px',bigHalf:'26px',huge:'112px',cmp:'56px',stat:'40px',code:'56px',todayCols:'minmax(0,1fr) 340px',pad:'44px 52px 96px',railPos:'sticky',timer:'168px',done:'112px',focusTask:'22px',gapL:'48px',colGap:'48px',focusCols:'minmax(0,1.25fr) minmax(0,1fr)',routineCols:'360px minmax(0,1fr)',habitCols:'150px minmax(0,1fr) 40px',ovPad:'64px 32px'};
+    if(!mobile&&s.w<1180){sz.todayCols='minmax(0,1fr)';sz.railPos='static';sz.pad='36px 32px 80px';sz.focusCols='minmax(0,1fr)';sz.routineCols='minmax(0,1fr)';sz.huge='84px';sz.cmp='44px';}
+    // me
+    const todays=s.tasks.filter(t=>t.days.includes(TODAY)),off=s.tasks.filter(t=>!t.days.includes(TODAY));
+    const done=todays.filter(t=>t.done).length,total=todays.length,pct=total?Math.round(done/total*100):0;
+    const me={done,total,pct,pctW:pct+'%',focus:fmtMin(s.focusMin),perfect:total>0&&done===total,pctC:done===total&&total?ACC:TXT,all:s.tasks.length};
+    const lvl={Easy:1,Medium:2,Hard:3};
+    const tv=t=>{const L=lvl[t.diff]||0;const on=i=>i<=L?(t.done?'#3A3A38':'#8A8984'):'rgba(255,255,255,0.08)';
+      return {...t,toggle:()=>this.toggle(t.id),bg:t.done?ACC:'transparent',bd:t.done?ACC:'rgba(255,255,255,0.22)',dash:t.done?0:16,sc:s.pop===t.id?'scale(0.84)':'scale(1)',
+        nameC:t.done?'#6F6E6A':TXT,timeC:t.done?'#4E4D4A':DIM,timeL:t.time||'—',hasMeta:!!t.meta,right:t.done?'DONE '+t.doneAt:(t.diff||'').toUpperCase(),rightC:t.done?'#5E5D59':DIM,d1:on(1),d2:on(2),d3:on(3)};};
+    const sections=ORDER.map(name=>{const ts=todays.filter(t=>SEC[t.cat]===name);return {name,count:ts.filter(t=>t.done).length+' / '+ts.length,tasks:ts.map(tv)};}).filter(x=>x.tasks.length);
+    // partner
+    const forced=P.partnerState&&P.partnerState!=='live'?P.partnerState:null;const status=forced||s.partner.status;
+    const PS={online:{label:'ONLINE',pill:'Partner Online',dot:ACC,anim:'pulse 2.4s ease-out infinite',textC:ACC,focusWord:'Online'},
+      focusing:{label:'FOCUSING',pill:'Partner Focusing',dot:ACC,anim:'pulse 1.6s ease-out infinite',textC:ACC,focusWord:'Focusing'},
+      offline:{label:'OFFLINE',pill:'Partner Offline',dot:'#55544F',anim:'none',textC:DIM,focusWord:'Offline'}};
+    const ps={...PS[status],focusing:status==='focusing'};
+    const ld=s.lucas.filter(x=>x.done).length,lt=s.lucas.length,lpct=Math.round(ld/lt*100);
+    const lastP=[...s.feed].reverse().find(f=>f.who==='p'&&['done','focusdone','focus'].includes(f.kind));
+    const focusLeft=forced==='focusing'&&!s.partner.focusEnd?'34:21':clock(Math.max(0,(s.partner.focusEnd-s.now)/1000));
+    const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
+    const pp={pct:lpct,pctW:lpct+'%',done:ld,total:lt,focusLabel:s.partner.focusLabel||'Studying Mathematics',focusLeft,
+      latestLabel:status==='offline'?'LAST SEEN '+(s.partner.seenAt||'14:02'):'LATEST',latestT:lastP?lastP.t:'—',latestText:lastP?cap(lastP.text):'',
+      flash:s.now-s.partner.flashAt<2200?'0 0 0 1px color-mix(in oklab,var(--acc,#C6E07B) 50%,transparent),0 0 40px color-mix(in oklab,var(--acc,#C6E07B) 8%,transparent)':'0 0 0 1px transparent',
+      mobileLine:status==='focusing'?'Focusing · '+focusLeft+' remaining':(lastP?lastP.t+' · '+cap(lastP.text):''),
+      focusLine:status==='focusing'?'is focusing · '+(s.partner.focusLabel||'Studying Mathematics')+' · '+focusLeft+' left':status==='offline'?'is offline':'is online. Your session will appear in his feed.'};
+    const optsFor=(src,id,target)=>REACTS.map(r=>({label:r,send:()=>this.react(src,id,r,target)}));
+    const feed=s.feed.map(f=>{const canReact=f.who==='p'&&(f.kind==='done'||f.kind==='focusdone');
+      return {...f,name:f.who==='y'?'Brendon':'Lucas',dot:(f.kind==='done'||f.kind==='focusdone')?ACC:f.kind==='focus'?TXT:f.kind==='react'?MUTE:'#55544F',
+        canReact,reactLabel:f.reacted?f.reacted+' sent':'React',reactC:f.reacted?DIM:MUTE,reacting:s.reactFor===f.id&&!f.reacted,
+        openReact:()=>{if(!f.reacted)this.setState({reactFor:s.reactFor===f.id?null:f.id});},opts:canReact?optsFor('feed',f.id,f.target||''):[]};});
+    const lucasList=s.lucas.map(x=>({...x,at:x.at||'',bg:x.done?'#ECEBE6':'transparent',bd:x.done?'#ECEBE6':'rgba(255,255,255,0.2)',c:x.done?MUTE:TXT,
+      reactLabel:x.reacted?x.reacted+' sent':'React',reactC:x.reacted?DIM:MUTE,reacting:s.reactFor===x.id&&!x.reacted,
+      openReact:()=>{if(!x.reacted)this.setState({reactFor:s.reactFor===x.id?null:x.id});},opts:optsFor('lucas',x.id,x.name)}));
+    const cmpVals=[['87%','81%','WEEKLY COMPLETION',87,81],['64','59','TASKS COMPLETED',64,59],['11H 42M','9H 16M','FOCUS',702,556],['13 DAYS','8 DAYS','STREAK',13,8]];
+    const cmpCols=[{name:'YOU',top:ACC,st:'ONLINE',stC:ACC,stDot:ACC,stAnim:'none',metrics:cmpVals.map(m=>({v:m[0],label:m[2],c:m[3]>=m[4]?TXT:'#6F6E6A'}))},
+      {name:'LUCAS',top:'#3A3A3D',st:ps.label,stC:ps.textC,stDot:ps.dot,stAnim:ps.anim,metrics:cmpVals.map(m=>({v:m[1],label:m[2],c:m[4]>=m[3]?TXT:'#6F6E6A'}))}];
+    const Y=v=>(100-v)/40*200,X=i=>i/6*600;
+    const path=a=>a.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    const wchart={you:path(YOU_W),lucas:path(LUC_W),dots:[...LUC_W.map((v,i)=>({x:(i/6*100)+'%',y:((100-v)/40*100)+'%',c:'#7C7B76'})),...YOU_W.map((v,i)=>({x:(i/6*100)+'%',y:((100-v)/40*100)+'%',c:ACC}))],
+      labels:DAYS.map((d,i)=>({d,x:(i/6*100)+'%',c:d===TODAY?TXT:DIM}))};
+    // battle
+    const bd={MON:[91,82],TUE:[pct,lpct]};
+    const battleDays=DAYS.map(d=>{const v=bd[d];if(!v)return {day:d,b:'—',l:'—',bc:'#4E4D4A',lc:'#4E4D4A',dc:'#4E4D4A',w:'transparent'};
+      return {day:d,b:v[0]+'%',l:v[1]+'%',bc:v[0]>=v[1]?TXT:DIM,lc:v[1]>v[0]?TXT:DIM,dc:d===TODAY?TXT:MUTE,w:v[0]>=v[1]?ACC:'#7C7B76'};});
+    const h2h=WEEKS.slice(1).reverse().map(w=>({w:'W'+w.w,c:w.b>w.l?ACC:'#2E2E32'}));
+    const prevWeeks=WEEKS.slice(1,4).map(w=>{const b=w.b>w.l;return {label:'Week '+w.w,first:(b?'Brendon — '+w.b:'Lucas — '+w.l)+'%',second:(b?'Lucas — '+w.l:'Brendon — '+w.b)+'%'};});
+    // stats
+    const r=s.range;const R=rng({'7':3,'30':7,'90':11,'Y':17}[r]);
+    let labels;
+    if(r==='7')labels=['WED','THU','FRI','SAT','SUN','MON','TUE'];
+    else if(r==='30')labels=Array.from({length:30},(_,i)=>{const d=new Date(2026,7,25+i);return i%6===5?d.toLocaleString('en',{month:'short'}).toUpperCase()+' '+d.getDate():'';});
+    else if(r==='90')labels=Array.from({length:13},(_,i)=>'W'+(27+i));
+    else labels=['MAR','APR','MAY','JUN','JUL','AUG','SEP'];
+    const comp=labels.map(()=>Math.round(62+R()*37));
+    const fscale=r==='7'||r==='30'?3:r==='90'?14:55;const foc=labels.map(()=>+(fscale*(0.35+R()*0.65)).toFixed(1));
+    const fmax=Math.max(...foc)*1.1;const n=labels.length;
+    const fp=foc.map((v,i)=>[n>1?i/(n-1)*600:300,180-v/fmax*170]);
+    const line=fp.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    const st={metrics:MET[r].map((v,i)=>({label:MLAB[i],v,u:MUNIT[i]})),avg:Math.round(comp.reduce((a,b)=>a+b,0)/n),
+      bars:comp.map((v,i)=>({h:((v-40)/60*100)+'%',tip:v+'%',c:v<70?'color-mix(in oklab,#E0715F 55%,#17171A)':(i===n-1?ACC:'#35353A')})),
+      labels,gap:n>20?'3px':'8px',line,area:line+' L600 180 L0 180 Z',focusTotal:MET[r][4],
+      habits:HABITS.map(([name,rate],hi)=>{const rr=rng(31+hi*7);return {name,rate,rc:rate<75?RED:MUTE,cells:Array.from({length:28},()=>rr()*100<rate?'color-mix(in oklab,var(--acc,#C6E07B) 80%,#0A0A0B)':'color-mix(in oklab,#E0715F 30%,#141416)')};}),
+      cal:(()=>{const rc=rng(97);return Array.from({length:182},(_,i)=>{if(i>176)return 'transparent';const x=rc();return LV[x<.08?0:x<.2?1:x<.45?2:x<.75?3:4];});})()};
+    const ranges=[['7','7 DAYS'],['30','30 DAYS'],['90','90 DAYS'],['Y','YEAR']].map(([k,label])=>({label,pick:()=>this.setState({range:k}),bg:r===k?SEL_BG:'transparent',c:r===k?TXT:DIM}));
+    // focus
+    const f=s.fx;
+    const chip=(on)=>({bd:on?'color-mix(in oklab,var(--acc,#C6E07B) 60%,transparent)':'rgba(255,255,255,0.09)',bg:on?'color-mix(in oklab,var(--acc,#C6E07B) 7%,#0A0A0B)':'transparent',c:on?TXT:MUTE});
+    const focusTasks=['Study Physics','Read','Work','Work on project','Prepare tomorrow'].map(label=>({label,pick:()=>this.setFx({task:label}),...chip(f.task===label)}));
+    const durs=[[25,'25','MIN'],[50,'50','MIN'],[90,'90','MIN'],['custom','—','CUSTOM']].map(([k,nn,u])=>({n:k==='custom'&&f.custom?f.custom:nn,u,fs:'28px',pick:()=>this.setFx({dur:k}),...chip(f.dur===k)}));
+    const endsAt=(()=>{const d=new Date(s.now+f.left*1000);return p2(d.getHours())+':'+p2(d.getMinutes());})();
+    const fxv={running:f.phase==='running',complete:f.phase==='complete',isCustom:f.dur==='custom',custom:f.custom,taskU:f.task.toUpperCase(),task:f.task,clock:clock(f.left),
+      prog:f.total?((1-f.left/f.total)*100)+'%':'0%',op:f.paused?'.35':'1',anim:f.paused?'breathe 2.6s ease-in-out infinite':'none',pauseL:f.paused?'RESUME':'PAUSE',
+      youDot:f.paused?'#55544F':ACC,youSt:f.paused?'Paused':'Focusing',endsAt,elapsed:clock(f.total-f.left),range:f.from+' – '+(f.to||hm()),note:f.note};
+    const sessions=s.sessions.slice().reverse().map(x=>({...x,hasNote:!!x.note}));
+    // routine
+    const fm=s.form;
+    const form={...fm,specific:!fm.every,everyBg:fm.every?SEL_BG:'transparent',everyC:fm.every?TXT:DIM,specBg:!fm.every?SEL_BG:'transparent',specC:!fm.every?TXT:DIM,
+      addBg:fm.name.trim()?ACC:'#1A1A1D',addC:fm.name.trim()?'#0A0A0B':'#5E5D59'};
+    const catOpts=['Morning','Study','Work','Body','Night','Custom'].map(c=>({label:c,pick:()=>this.setForm({cat:c}),...chip(fm.cat===c)}));
+    const dayOpts=DAYS.map(d=>({label:d,pick:()=>this.setForm({days:fm.days.includes(d)?fm.days.filter(x=>x!==d):[...fm.days,d]}),...chip(fm.days.includes(d))}));
+    const diffOpts=['Easy','Medium','Hard'].map(d=>({label:d,pick:()=>this.setForm({diff:fm.diff===d?null:d}),...chip(fm.diff===d)}));
+    const rItems=s.tasks.map(t=>({...t,catU:t.cat.toUpperCase(),timeL:t.time||'—',sched:t.days.length===7?'EVERY DAY':t.days.join(' · '),
+      overC:s.over===t.id&&s.drag!==t.id?ACC:'transparent',op:s.drag===t.id?'.4':'1',
+      onDragStart:e=>{e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',t.id);}catch(_){}this.setState({drag:t.id});},
+      onDragOver:e=>{e.preventDefault();if(s.over!==t.id)this.setState({over:t.id});},
+      onDrop:e=>{e.preventDefault();this.reorder(this.state.drag,t.id);this.setState({drag:null,over:null});},
+      onDragEnd:()=>this.setState({drag:null,over:null}),
+      del:()=>this.setState(st=>({tasks:st.tasks.filter(x=>x.id!==t.id)}))}));
+    // nav
+    const nav=(list,num)=>list.map(([k,label],i)=>{const on=s.screen===k&&!s.overlay;return {label,num:num?p2(i+1):'',go:()=>this.go(k),bg:on?'#151517':'transparent',color:on?TXT:MUTE,dot:on?ACC:'transparent'};});
+    const navMain=nav([['today','Today'],['partner','Partner'],['battle','Battle'],['stats','Stats'],['focus','Focus'],['routine','Routine'],['challenges','Challenges']],true);
+    const navUtil=nav([['invite','Invite partner'],['settings','Settings']]);
+    const navMoments=[['briefing','Morning briefing'],['endday','End of day'],['weekly','Weekly review'],['auth','Sign in'],['empty','Empty states'],['states','Live states']].map(([k,label])=>{const on=s.overlay===k||(!s.overlay&&s.screen===k);return {label,go:()=>this.go(k),bg:on?'#151517':'transparent',color:on?TXT:DIM};});
+    const main4=['today','partner','focus','stats'];
+    const tabs=[['today','TODAY'],['partner','PARTNER'],['focus','FOCUS'],['stats','STATS'],['more','MORE']].map(([k,label])=>{const on=k==='more'?(s.more||!main4.includes(s.screen)):(!s.more&&s.screen===k);
+      return {label,c:on?TXT:DIM,bar:on?ACC:'transparent',go:()=>k==='more'?this.setState({more:!s.more}):this.go(k)};});
+    const moreItems=[['battle','Battle',''],['routine','Routine',''],['challenges','Challenges',''],['invite','Invite partner',''],['settings','Settings',''],['briefing','Morning briefing','MOMENT'],['endday','End of day','MOMENT'],['weekly','Weekly review','MOMENT'],['auth','Sign in','MOMENT'],['empty','Empty states','REF'],['states','Live states','REF']].map(([k,label,tag])=>({label,tag,go:()=>this.go(k)}));
+    const is={};['today','partner','battle','stats','focus','routine','challenges','invite','settings','empty','states'].forEach(k=>is[k]=s.screen===k);
+    const ov={briefing:s.overlay==='briefing',endday:s.overlay==='endday',weekly:s.overlay==='weekly',auth:s.overlay==='auth'};
+    const W=WEEKS[s.wk];const bw=W.b>=W.l;
+    const wk={title:'WEEK '+W.w+' COMPLETE',b:W.b,l:W.l,bC:bw?TXT:'#6F6E6A',lC:bw?'#6F6E6A':TXT,winner:bw?'BRENDON':'LUCAS',diff:Math.abs(W.b-W.l),olderC:s.wk<WEEKS.length-1?TXT:'#3A3A3D',newerC:s.wk>0?TXT:'#3A3A3D'};
+    const tst=mobile?{r:'14px',l:'14px',t:framed?'104px':'64px',b:'auto',align:'stretch'}:{r:'24px',l:'auto',t:'auto',b:'24px',align:'flex-end'};
+    const toasts=s.toasts.map(x=>({...x,hasEmoji:!!x.emoji,noEmoji:!x.emoji}));
+    const pr=s.prefs;
+    const prefRows=[['briefing','Morning briefing','Show the briefing the first time you open the app each day.'],['share','Share focus sessions live','Lucas sees when you lock in and when you finish.'],['reactions','Reaction notifications','Get notified when Lucas reacts to your work.'],['alerts','Partner completion alerts','Notify me each time Lucas completes a task.']]
+      .map(([k,label,d])=>({k:label,d,toggle:()=>this.setState(st=>({prefs:{...st.prefs,[k]:!st.prefs[k]}})),track:pr[k]?ACC:'#2A2A2D',knob:pr[k]?'19px':'3px',knobC:pr[k]?'#0A0A0B':'#7C7B76'}));
+    const profileRows=[{k:'Username',v:'@brendon'},{k:'Timezone',v:'Europe/London · GMT+1'},{k:'Current streak',v:'13 days'},{k:'Member since',v:'March 2, 2026'},{k:'Member of',v:'LOCKED IN DUO · Brendon & Lucas'}];
+    return {acc:P.accent||'#C6E07B',frame,sz,mobile,desktop:!mobile,is,ov,me,sections,hasOff:off.length>0,offList:off.map(t=>t.name).join(' · '),ps,pp,feed,lucasList,cmpCols,wchart,
+      battleDays,h2h,prevWeeks,st,ranges,levels:LV,best:[['Gym',96],['Reading',91],['Morning Run',86]].map(([name,v])=>({name,v,w:v+'%'})),missed:[['Sleep before 23:00',68],['Drink 3L',74]].map(([name,v])=>({name,v,w:v+'%'})),
+      focusTasks,durs,fxv,sessions,form,catOpts,dayOpts,diffOpts,rItems,segs:Array.from({length:30},(_,i)=>i<17?ACC:i===17?'color-mix(in oklab,var(--acc,#C6E07B) 45%,#141416)':'#1D1D20'),
+      navMain,navUtil,navMoments,tabs,moreItems,more:s.more,wk,tst,toasts,prefRows,profileRows,mainRef:this.mainRef,
+      copyLabel:s.copied?'Copied':'Copy code',joinCode:s.joinCode,
+      goPartner:()=>this.go('partner'),goSettings:()=>this.go('settings'),goRoutine:()=>this.go('routine'),goInvite:()=>this.go('invite'),goFocus:()=>this.go('focus'),
+      openEnd:()=>this.go('endday'),openWeekly:()=>this.go('weekly'),openAuth:()=>this.go('auth'),closeOv:()=>this.setState({overlay:null}),closeMore:()=>this.setState({more:false}),
+      closeDay:()=>{this.setState({overlay:null});this.toast({text:'Day 14 recorded.',sub:'LUCAS HAS BEEN NOTIFIED'});},
+      authToInvite:e=>{e.preventDefault();this.setState({overlay:null,screen:'invite'});},
+      wkOlder:()=>this.setState(st=>({wk:Math.min(WEEKS.length-1,st.wk+1)})),wkNewer:()=>this.setState(st=>({wk:Math.max(0,st.wk-1)})),
+      onCustom:e=>this.setFx({custom:e.target.value}),lockIn:()=>this.lockIn(),pauseFx:()=>this.setFx({paused:!f.paused}),endFx:()=>this.setFx({phase:'complete',to:hm()}),
+      onNote:e=>this.setFx({note:e.target.value}),completeFx:()=>this.completeFx(),
+      onName:e=>this.setForm({name:e.target.value}),onTime:e=>this.setForm({time:e.target.value}),setEvery:()=>this.setForm({every:true}),setSpecific:()=>this.setForm({every:false}),addTask:()=>this.addTask(),
+      copyCode:()=>{try{navigator.clipboard&&navigator.clipboard.writeText('LKD-8X29A');}catch(_){}this.setState({copied:true});setTimeout(()=>this.setState({copied:false}),1600);},
+      onJoin:e=>this.setState({joinCode:e.target.value}),simNow:()=>this.simStep()};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#050506;color:#ECEBE6;-webkit-font-smoothing:antialiased}
+a{color:#ECEBE6;text-decoration:none}
+a:hover{color:var(--acc,#C6E07B)}
+button,input,textarea{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#5E5D59}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#1f1f22;border-radius:8px}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in oklab,var(--acc,#C6E07B) 55%,transparent)}100%{box-shadow:0 0 0 8px color-mix(in oklab,var(--acc,#C6E07B) 0%,transparent)}}
+@keyframes enter{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 1px color-mix(in oklab,var(--acc,#C6E07B) 18%,transparent),0 0 32px color-mix(in oklab,var(--acc,#C6E07B) 5%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in oklab,var(--acc,#C6E07B) 30%,transparent),0 0 56px color-mix(in oklab,var(--acc,#C6E07B) 12%,transparent)}}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:.85}}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</helmet>
+<div style="--acc:{{ acc }};min-height:{{ frame.minH }};background:#050506;display:flex;align-items:center;justify-content:center;padding:{{ frame.outerPad }};font-family:'Geist',system-ui,sans-serif;color:#ECEBE6">
+<div style="position:relative;width:{{ frame.w }};height:{{ frame.h }};border-radius:{{ frame.r }};border:{{ frame.bd }};overflow:hidden;background:#0A0A0B;display:flex;flex-direction:{{ frame.dir }}">
+
+<sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+<aside style="width:228px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:26px;padding:24px 12px 16px;overflow-y:auto">
+  <div style="display:flex;align-items:center;gap:10px;padding:0 10px">
+    <div style="width:15px;height:15px;border:2px solid var(--acc,#C6E07B);border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:5px;height:5px;background:var(--acc,#C6E07B);border-radius:1px"></div></div>
+    <span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.24em;font-weight:600">LOCKED IN</span>
+  </div>
+  <nav style="display:flex;flex-direction:column;gap:2px">
+    <sc-for list="{{ navMain }}" as="n" hint-placeholder-count="4">
+      <button onClick="{{ n.go }}" style="display:flex;align-items:center;gap:12px;height:38px;padding:0 10px;border:0;border-radius:9px;background:{{ n.bg }};color:{{ n.color }};font-size:14px;cursor:pointer;text-align:left" style-hover="color:#ECEBE6">
+        <span style="flex:1">{{ n.label }}</span>
+        <span style="width:5px;height:5px;border-radius:50%;background:{{ n.dot }}"></span>
+      </button>
+    </sc-for>
+  </nav>
+  <nav style="display:flex;flex-direction:column;gap:2px">
+    <sc-for list="{{ navSub }}" as="n" hint-placeholder-count="4">
+      <button onClick="{{ n.go }}" style="display:flex;align-items:center;height:34px;padding:0 10px;border:0;border-radius:8px;background:{{ n.bg }};color:{{ n.color }};font-size:13px;cursor:pointer;text-align:left" style-hover="color:#ECEBE6">{{ n.label }}</button>
+    </sc-for>
+  </nav>
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.18em;color:#55544F;padding:0 10px 8px">PROTOTYPE FLOWS</span>
+    <sc-for list="{{ flows }}" as="n" hint-placeholder-count="8">
+      <button onClick="{{ n.go }}" style="display:flex;align-items:center;height:30px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#7C7B76;font-size:12.5px;cursor:pointer;text-align:left" style-hover="color:#ECEBE6">{{ n.label }}</button>
+    </sc-for>
+  </div>
+  <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:14px 10px 0;border-top:1px solid rgba(255,255,255,0.06)">
+    <span style="width:28px;height:28px;border-radius:50%;background:#ECEBE6;color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">B</span>
+    <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px">Brendon</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.1em;color:#7C7B76">LOCKED IN DUO</span></span>
+  </div>
+</aside>
+</sc-if>
+
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+<div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;height:{{ frame.topH }};padding:{{ frame.topPad }};background:#0A0A0B">
+  <div style="display:flex;align-items:center;gap:9px">
+    <div style="width:14px;height:14px;border:2px solid var(--acc,#C6E07B);border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:4px;height:4px;background:var(--acc,#C6E07B);border-radius:1px"></div></div>
+    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.24em;font-weight:600">LOCKED IN</span>
+  </div>
+  <sc-if value="{{ hasPartner }}"><button onClick="{{ goPartner }}" aria-label="Lucas status" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid rgba(255,255,255,0.08);border-radius:999px;background:transparent;color:#A09F99;font-size:12.5px;cursor:pointer"><span style="width:7px;height:7px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span>Lucas<span style="font-variant-numeric:tabular-nums;color:#ECEBE6">{{ pp.pct }}%</span></button></sc-if>
+</div>
+</sc-if>
+
+<main ref="{{ mainRef }}" style="flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden">
+<div style="max-width:1120px;margin:0 auto;padding:{{ sz.pad }}">
+
+<!-- TODAY -->
+<sc-if value="{{ is.today }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;animation:fadeUp .4s ease">
+<div style="display:grid;grid-template-columns:{{ sz.todayCols }};gap:{{ sz.gapL }};align-items:start">
+  <div style="display:flex;flex-direction:column;gap:{{ sz.gapToday }};min-width:0">
+    <header style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#7C7B76;letter-spacing:.06em">TUE, SEP 23</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.22em;color:var(--acc,#C6E07B)">{{ me.dayLabel }}</span></div>
+        <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em;line-height:1.1">GOOD MORNING, {{ me.nameU }}.</h1>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+        <span style="display:flex;align-items:baseline;font-size:{{ sz.hero }};font-weight:500;letter-spacing:-0.055em;line-height:.82;font-variant-numeric:tabular-nums;color:{{ me.pctC }};transition:color .4s">{{ me.pct }}<span style="font-size:{{ sz.heroPct }};letter-spacing:-0.02em;color:#6F6E6A;margin-left:2px">%</span></span>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;padding-bottom:2px">
+          <span style="font-size:15px;font-variant-numeric:tabular-nums">{{ me.done }} / {{ me.total }} <span style="color:#7C7B76">done</span></span>
+          <button onClick="{{ openStreak }}" style="height:28px;padding:0;border:0;background:transparent;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#A09F99;cursor:pointer;display:flex;align-items:center;gap:6px" style-hover="color:#ECEBE6">{{ me.streakLabel }}<span style="color:#55544F">›</span></button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div role="progressbar" aria-valuenow="{{ me.pct }}" aria-valuemin="0" aria-valuemax="100" style="position:relative;height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:visible"><div style="height:100%;width:{{ me.pctW }};background:var(--acc,#C6E07B);border-radius:4px;transition:width .7s cubic-bezier(.2,.8,.2,1)"></div><span style="position:absolute;top:-3px;left:{{ me.stdPos }};width:1.5px;height:10px;background:rgba(236,235,230,0.35)"></span></div>
+        <span style="font-size:13px;color:{{ me.nextC }}">{{ me.next }}</span>
+      </div>
+    </header>
+
+    <sc-if value="{{ me.perfect }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-radius:14px;background:color-mix(in oklab,var(--acc,#C6E07B) 5%,#0A0A0B);animation:glow 3.6s ease-in-out infinite">
+        <span style="display:flex;align-items:baseline;gap:16px"><span style="font-size:26px;font-weight:600;letter-spacing:-0.03em;color:var(--acc,#C6E07B)">100%</span><span style="font-family:'Geist Mono',monospace;font-size:12.5px;letter-spacing:.28em">STANDARD MET.</span></span>
+      </div>
+    </sc-if>
+
+    <section aria-label="Today's tasks" style="display:flex;flex-direction:column;gap:30px">
+      <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)">
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">{{ sec.name }}</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76;font-variant-numeric:tabular-nums">{{ sec.count }}</span>
+          </div>
+          <sc-for list="{{ sec.tasks }}" as="t" hint-placeholder-count="4">
+            <div style="position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <div style="position:absolute;inset:0;display:flex;justify-content:space-between">
+                <div style="flex:1;display:flex;align-items:center;padding-left:20px;background:{{ t.leftBg }};opacity:{{ t.leftOp }};font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--acc,#C6E07B)">{{ t.swipeLabel }}</div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;background:#151517;opacity:{{ t.rightOp }};font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.2em;color:#A09F99">OPTIONS</div>
+              </div>
+              <div role="checkbox" aria-checked="{{ t.aria }}" aria-label="{{ t.name }}" tabindex="0" onClick="{{ t.click }}" onPointerDown="{{ t.pd }}" onPointerMove="{{ t.pm }}" onPointerUp="{{ t.pu }}" onPointerCancel="{{ t.pu }}" onContextMenu="{{ t.ctx }}" style="position:relative;display:flex;align-items:center;gap:{{ sz.rowGap }};min-height:{{ sz.rowH }};padding:8px 0 8px 2px;background:{{ t.rowBg }};cursor:pointer;transform:translateX({{ t.dx }});transition:{{ t.tr }};touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">
+                <span style="flex-shrink:0;width:{{ sz.box }};height:{{ sz.box }};border-radius:10px;border:1.5px {{ t.bdStyle }} {{ t.bd }};background:{{ t.bg }};display:flex;align-items:center;justify-content:center;transform:{{ t.sc }};transition:background .25s ease,border-color .25s ease,transform .22s cubic-bezier(.3,1.6,.5,1)">
+                  <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:16;stroke-dashoffset:{{ t.dash }};transition:stroke-dashoffset .3s ease .06s"></path></svg>
+                </span>
+                <sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}"><span style="width:42px;flex-shrink:0;font-family:'Geist Mono',monospace;font-size:12px;color:{{ t.timeC }};font-variant-numeric:tabular-nums">{{ t.timeL }}</span></sc-if>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:{{ sz.taskFs }};color:{{ t.nameC }};text-decoration:{{ t.deco }};text-decoration-color:rgba(236,235,230,0.25);transition:color .3s ease">{{ t.name }}</span>
+                  <sc-if value="{{ t.hasMeta }}"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#7C7B76">{{ t.meta }}</span></sc-if>
+                </span>
+                <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:{{ t.rightC }}">
+                  <sc-if value="{{ t.unsynced }}"><span title="Will sync" style="width:7px;height:7px;border-radius:50%;border:1.5px solid #7C7B76"></span></sc-if>{{ t.right }}
+                </span>
+                <button onClick="{{ t.opts }}" aria-label="Task options" style="width:36px;height:44px;flex-shrink:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:0;border-radius:8px" style-hover="background:rgba(255,255,255,0.04)"><span style="width:3px;height:3px;border-radius:50%;background:#55544F"></span><span style="width:3px;height:3px;border-radius:50%;background:#55544F"></span><span style="width:3px;height:3px;border-radius:50%;background:#55544F"></span></button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}"><button onClick="{{ openAdd }}" style="align-self:flex-start;height:44px;padding:0 16px;border:1px dashed rgba(255,255,255,0.16);border-radius:12px;background:transparent;color:#A09F99;font-size:14px;cursor:pointer;margin-top:-14px" style-hover="color:#ECEBE6;border-color:rgba(255,255,255,0.3)">+ Add task</button></sc-if>
+      <sc-if value="{{ hasOff }}" hint-placeholder-val="{{ true }}"><span style="font-size:13px;color:#7C7B76">Rest today: {{ offList }}</span></sc-if>
+    </section>
+  </div>
+
+  <aside style="display:flex;flex-direction:column;gap:28px;position:{{ sz.railPos }};top:0;min-width:0">
+    <sc-if value="{{ hasPartner }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ goPartner }}" style="display:flex;flex-direction:column;gap:14px;padding:18px;border:1px solid rgba(255,255,255,0.07);border-radius:16px;background:#111113;color:inherit;text-align:left;cursor:pointer;box-shadow:{{ pp.flash }};transition:box-shadow .7s ease,transform .15s" style-active="transform:scale(.985)">
+        <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+          <span style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:50%;background:#1C1C1F;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">L</span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:600;letter-spacing:.06em">LUCAS</span><span style="display:flex;align-items:center;gap:6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:{{ ps.textC }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span>{{ ps.label }}</span></span></span>
+          <span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><span style="font-size:30px;font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">{{ pp.pct }}%</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">{{ pp.done }} / {{ pp.total }}</span></span>
+        </div>
+        <span style="font-size:13px;color:{{ pp.lineC }};font-variant-numeric:tabular-nums">{{ pp.line }}</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ noPartner }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:20px;border:1px dashed rgba(255,255,255,0.12);border-radius:16px">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">NO PARTNER YET</span>
+        <span style="font-size:15px;line-height:1.45;text-wrap:pretty">Invite someone you trust to keep you accountable.</span>
+        <button onClick="{{ goDuo }}" style="align-self:flex-start;height:44px;padding:0 18px;border:1px solid rgba(255,255,255,0.14);border-radius:12px;background:transparent;color:#ECEBE6;font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.2em;cursor:pointer">INVITE</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ openFocusSheet }}" style="height:56px;border:0;border-radius:14px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:transform .12s" style-active="transform:scale(.97)"><span style="width:13px;height:13px;border-radius:50%;border:2px solid #0A0A0B;display:flex;align-items:center;justify-content:center"><span style="width:3px;height:3px;border-radius:50%;background:#0A0A0B"></span></span>LOCK IN</button>
+    </sc-if>
+    <sc-if value="{{ hasFeed }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:4px">
+        <span style="display:flex;align-items:center;gap:9px"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 2.4s ease-out infinite"></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.2em">LIVE</span></span>
+        <button onClick="{{ goPartner }}" style="height:36px;padding:0;border:0;background:transparent;color:#7C7B76;font-size:12.5px;cursor:pointer" style-hover="color:#ECEBE6">See all</button>
+      </div>
+      <div style="display:flex;flex-direction:column-reverse">
+        <sc-for list="{{ feedShort }}" as="f" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.05);animation:enter .55s cubic-bezier(.2,.8,.2,1)">
+            <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7C7B76;width:38px;flex-shrink:0;font-variant-numeric:tabular-nums">{{ f.t }}</span>
+            <span style="width:6px;height:6px;border-radius:50%;background:{{ f.dot }};flex-shrink:0"></span>
+            <span style="flex:1;font-size:13.5px;color:#A09F99;line-height:1.4"><span style="color:#ECEBE6;font-weight:500">{{ f.name }}</span> {{ f.text }}</span>
+            <sc-if value="{{ f.canReact }}"><button onClick="{{ f.openReact }}" aria-label="React" style="flex-shrink:0;min-width:44px;height:36px;padding:0 10px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:transparent;color:{{ f.reactC }};font-size:12px;cursor:pointer">{{ f.reactLabel }}</button></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <button onClick="{{ openReview }}" style="display:flex;justify-content:space-between;align-items:center;height:48px;padding:0;border:0;border-top:1px solid rgba(255,255,255,0.06);background:transparent;color:#A09F99;font-size:13.5px;cursor:pointer" style-hover="color:#ECEBE6"><span>Review today</span><span style="color:#55544F">›</span></button>
+  </aside>
+</div>
+
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+  <div style="position:sticky;bottom:0;z-index:5;margin:0 -18px -28px;padding:18px 18px 14px;background:linear-gradient(to top,#0A0A0B 72%,rgba(10,10,11,0));display:flex;gap:10px">
+    <button onClick="{{ openAdd }}" aria-label="Add task" style="width:56px;height:56px;flex-shrink:0;border-radius:16px;border:1px solid rgba(255,255,255,0.12);background:#141416;color:#ECEBE6;font-size:26px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s" style-active="transform:scale(.92)">+</button>
+    <button onClick="{{ openFocusSheet }}" style="flex:1;height:56px;border:0;border-radius:16px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:transform .12s" style-active="transform:scale(.97)"><span style="width:13px;height:13px;border-radius:50%;border:2px solid #0A0A0B;display:flex;align-items:center;justify-content:center"><span style="width:3px;height:3px;border-radius:50%;background:#0A0A0B"></span></span>LOCK IN</button>
+  </div>
+</sc-if>
+
+</div>
+</sc-if>
+
+
+<!-- PARTNER -->
+<sc-if value="{{ is.partner }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .4s ease">
+  <sc-if value="{{ noPartner }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:20px;padding-top:40px;max-width:420px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">NO PARTNER YET</span>
+      <span style="font-size:26px;font-weight:500;letter-spacing:-0.02em;line-height:1.3;text-wrap:pretty">Discipline is easier when somebody knows whether you showed up.</span>
+      <button onClick="{{ goDuo }}" style="align-self:flex-start;height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.22em;cursor:pointer">INVITE PARTNER</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{ hasPartner }}" hint-placeholder-val="{{ true }}">
+  <header style="display:flex;align-items:center;gap:16px">
+    <span style="width:52px;height:52px;border-radius:50%;background:#1C1C1F;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;position:relative;box-shadow:{{ pp.flash }};transition:box-shadow .7s">L</span>
+    <span style="display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-size:{{ sz.h1 }};font-weight:600;letter-spacing:.02em;line-height:1">LUCAS</span><span style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#A09F99"><span style="width:7px;height:7px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }};flex-shrink:0"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pp.statusLine }}</span></span></span>
+  </header>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">TODAY</span>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px"><span style="font-size:{{ sz.hero }};font-weight:500;letter-spacing:-0.055em;line-height:.82;font-variant-numeric:tabular-nums">{{ pp.pct }}<span style="font-size:{{ sz.heroPct }};color:#6F6E6A">%</span></span><span style="font-size:15px;color:#A09F99;font-variant-numeric:tabular-nums;padding-bottom:2px">{{ pp.done }} / {{ pp.total }} done</span></div>
+    <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:{{ pp.pctW }};background:#ECEBE6;border-radius:4px;transition:width .8s cubic-bezier(.2,.8,.2,1)"></div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:{{ sz.gapL }}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">THIS WEEK · WEEK 39</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">5 DAYS LEFT</span></div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:600;letter-spacing:.14em">YOU</span><span style="font-size:34px;font-weight:500;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">87%</span></div><div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="height:100%;width:87%;background:var(--acc,#C6E07B);border-radius:3px"></div></div></div>
+        <div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:600;letter-spacing:.14em;color:#A09F99">LUCAS</span><span style="font-size:34px;font-weight:500;letter-spacing:-0.04em;line-height:1;color:#A09F99;font-variant-numeric:tabular-nums">81%</span></div><div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="height:100%;width:81%;background:#5E5D59;border-radius:3px"></div></div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.2em">YOU'RE AHEAD</span><span style="font-size:22px;font-weight:500;color:var(--acc,#C6E07B)">+6%</span></div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:44px;border-top:1px solid rgba(255,255,255,0.05);font-size:14px;font-variant-numeric:tabular-nums"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">FOCUS</span><span style="text-align:right">8h 42m</span><span style="text-align:right;color:#7C7B76">7h 18m</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;min-height:44px;border-top:1px solid rgba(255,255,255,0.05);font-size:14px;font-variant-numeric:tabular-nums"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">STREAK</span><span style="text-align:right">13 days</span><span style="text-align:right;color:#7C7B76">8 days</span></div>
+      </div>
+      <span style="font-size:12.5px;color:#7C7B76;line-height:1.5">The week is won on percentage of scheduled tasks completed. Task count and focus time are shown separately.</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">HEAD TO HEAD</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">LAST 8 WEEKS</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px"><span style="font-size:{{ sz.h2h }};font-weight:500;letter-spacing:-0.05em;line-height:.85;font-variant-numeric:tabular-nums">5<span style="color:#3A3A3D;padding:0 10px">—</span><span style="color:#7C7B76">3</span></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76;text-align:right;line-height:1.8">YOU — LUCAS</span></div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px"><sc-for list="{{ h2h }}" as="h" hint-placeholder-count="8"><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><div style="width:100%;height:30px;border-radius:6px;background:{{ h.c }};display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;color:{{ h.tc }}">{{ h.who }}</div><span style="font-family:'Geist Mono',monospace;font-size:9.5px;color:#7C7B76">{{ h.w }}</span></div></sc-for></div>
+      <div style="display:flex;flex-direction:column"><sc-for list="{{ pastWeeks }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.open }}" style="display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:10px;min-height:48px;border:0;border-top:1px solid rgba(255,255,255,0.05);background:transparent;color:#ECEBE6;font-size:14px;text-align:left;cursor:pointer;padding:0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A09F99">WEEK {{ p.w }}</span><span style="font-variant-numeric:tabular-nums">{{ p.line }}</span><span style="color:#55544F">›</span></button></sc-for></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:{{ sz.gapL }}">
+    <div style="display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">LUCAS · TODAY</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">{{ pp.done }} / {{ pp.total }}</span></div>
+      <sc-for list="{{ lucasList }}" as="x" hint-placeholder-count="11">
+        <div style="display:flex;align-items:center;gap:14px;min-height:52px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <span aria-hidden="true" style="width:20px;height:20px;border-radius:6px;border:1.5px solid {{ x.bd }};background:{{ x.bg }};flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .3s"><svg width="12" height="12" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ x.chk }}"></path></svg></span>
+          <span style="flex:1;font-size:14.5px;color:{{ x.c }}">{{ x.name }}</span>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">{{ x.at }}</span>
+          <sc-if value="{{ x.done }}"><button onClick="{{ x.openReact }}" style="min-width:44px;height:36px;padding:0 10px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:transparent;color:{{ x.reactC }};font-size:12px;cursor:pointer">{{ x.reactLabel }}</button></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:9px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 2.4s ease-out infinite"></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.2em">ACTIVITY</span></div>
+      <div style="display:flex;flex-direction:column-reverse">
+        <sc-for list="{{ feed }}" as="f" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.05);animation:enter .55s cubic-bezier(.2,.8,.2,1)">
+            <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7C7B76;width:38px;flex-shrink:0">{{ f.t }}</span>
+            <span style="width:6px;height:6px;border-radius:50%;background:{{ f.dot }};flex-shrink:0"></span>
+            <span style="flex:1;font-size:13.5px;color:#A09F99;line-height:1.4"><span style="color:#ECEBE6;font-weight:500">{{ f.name }}</span> {{ f.text }}</span>
+            <sc-if value="{{ f.canReact }}"><button onClick="{{ f.openReact }}" style="flex-shrink:0;min-width:44px;height:36px;padding:0 10px;border:1px solid rgba(255,255,255,0.09);border-radius:999px;background:transparent;color:{{ f.reactC }};font-size:12px;cursor:pointer">{{ f.reactLabel }}</button></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- FOCUS -->
+<sc-if value="{{ is.focus }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ sz.focusCols }};gap:{{ sz.gapL }};align-items:start;animation:fadeUp .4s ease">
+  <div style="display:flex;flex-direction:column;gap:26px">
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">WHAT ARE YOU WORKING ON?</h1>
+    <div style="display:flex;flex-direction:column"><sc-for list="{{ qTasks }}" as="q" hint-placeholder-count="4"><button onClick="{{ q.pick }}" style="display:flex;align-items:center;justify-content:space-between;height:56px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);background:transparent;color:{{ q.c }};font-size:17px;cursor:pointer;padding:0 2px;text-align:left"><span>{{ q.label }}</span><span style="width:22px;height:22px;border-radius:50%;border:1.5px solid {{ q.ring }};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:var(--acc,#C6E07B);transform:{{ q.dotS }};transition:transform .2s cubic-bezier(.3,1.6,.5,1)"></span></span></button></sc-for></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><sc-for list="{{ durs }}" as="d" hint-placeholder-count="4"><button onClick="{{ d.pick }}" style="height:76px;border-radius:14px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.c }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0;transition:all .15s" style-active="transform:scale(.95)"><span style="font-size:26px;font-weight:500;letter-spacing:-0.03em">{{ d.n }}</span><span style="font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#7C7B76">{{ d.u }}</span></button></sc-for></div>
+    <sc-if value="{{ fxv.isCustom }}"><div style="display:flex;align-items:center;gap:12px"><input type="number" inputmode="numeric" min="5" max="240" value="{{ fxv.custom }}" onChange="{{ onCustom }}" placeholder="45" aria-label="Custom minutes" style="width:110px;height:48px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#ECEBE6;font-size:18px;outline:none"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7C7B76">MINUTES</span></div></sc-if>
+    <button onClick="{{ lockIn }}" style="height:62px;border:0;border-radius:16px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:14px;font-weight:600;letter-spacing:.34em;cursor:pointer;transition:transform .12s" style-active="transform:scale(.97)">LOCK IN</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">FOCUS TODAY</span><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.04em;line-height:1">{{ me.focus }}</span></div>
+    <div style="display:flex;flex-direction:column"><sc-for list="{{ sessions }}" as="s" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:6px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05)"><div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:14.5px">{{ s.task }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#A09F99">{{ s.min }} MIN</span></div><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">{{ s.from }} – {{ s.to }}</span><sc-if value="{{ s.hasNote }}"><span style="font-size:13px;color:#A09F99;line-height:1.45">{{ s.note }}</span></sc-if></div></sc-for></div>
+    <sc-if value="{{ hasPartner }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:12px;font-size:13.5px;color:#A09F99"><span style="width:7px;height:7px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }};flex-shrink:0"></span><span><span style="color:#ECEBE6">Lucas</span> · {{ pp.statusLine }}</span></div></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- PROGRESS -->
+<sc-if value="{{ is.progress }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:{{ sz.gapL }};animation:fadeUp .4s ease">
+  <header style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+    <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">PROGRESS</h1>
+    <div style="display:flex;padding:3px;border:1px solid rgba(255,255,255,0.08);border-radius:11px;gap:2px"><sc-for list="{{ ranges }}" as="r" hint-placeholder-count="3"><button onClick="{{ r.pick }}" style="height:36px;padding:0 13px;border:0;border-radius:8px;background:{{ r.bg }};color:{{ r.c }};font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.1em;cursor:pointer">{{ r.label }}</button></sc-for></div>
+  </header>
+  <sc-if value="{{ firstDay }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:14px;padding:24px 0;border-top:1px solid rgba(255,255,255,0.08)"><span style="font-size:22px;font-weight:500;letter-spacing:-0.02em">Day 1 is today.</span><span style="font-size:14.5px;color:#A09F99;line-height:1.5">Completion, streak and your weekly chart appear after your first full day. Finish today to start your streak.</span></div>
+  </sc-if>
+  <sc-if value="{{ notFirstDay }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:{{ sz.hero }};font-weight:500;letter-spacing:-0.055em;line-height:.82;font-variant-numeric:tabular-nums">{{ pg.pct }}<span style="font-size:{{ sz.heroPct }};color:#6F6E6A">%</span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">{{ pg.label }}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <button onClick="{{ openStreak }}" style="display:flex;flex-direction:column;gap:8px;padding:14px 0 0;border:0;border-top:1px solid rgba(255,255,255,0.1);background:transparent;color:#ECEBE6;text-align:left;cursor:pointer"><span style="font-size:{{ sz.stat }};font-weight:500;letter-spacing:-0.03em;line-height:1">13 <span style="font-size:13px;color:#A09F99;letter-spacing:0">days</span></span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C7B76">STREAK ›</span></button>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-size:{{ sz.stat }};font-weight:500;letter-spacing:-0.03em;line-height:1">{{ pg.focus }}</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C7B76">FOCUS</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)"><span style="font-size:{{ sz.stat }};font-weight:500;letter-spacing:-0.03em;line-height:1">{{ pg.perfect }}</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:#7C7B76">PERFECT DAYS</span></div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">{{ pg.chartTitle }}</span>
+    <div style="height:170px;display:flex;align-items:flex-end;gap:{{ pg.gap }};border-bottom:1px solid rgba(255,255,255,0.08)">
+      <sc-for list="{{ pg.bars }}" as="b" hint-placeholder-count="7"><div title="{{ b.tip }}" style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:8px"><sc-if value="{{ pg.showV }}"><span style="text-align:center;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:{{ b.vc }}">{{ b.v }}</span></sc-if><div style="height:{{ b.h }};background:{{ b.c }};border-radius:4px 4px 0 0;transition:height .5s cubic-bezier(.2,.8,.2,1)"></div></div></sc-for>
+    </div>
+    <div style="display:flex;gap:{{ pg.gap }}"><sc-for list="{{ pg.labels }}" as="l"><span style="flex:1;text-align:center;font-family:'Geist Mono',monospace;font-size:10px;color:{{ l.c }};white-space:nowrap">{{ l.t }}</span></sc-for></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:{{ sz.gapL }}">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">SEPTEMBER</span><span style="font-size:12px;color:#7C7B76">Tap a day to review</span></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+        <sc-for list="{{ calHead }}" as="d"><span style="text-align:center;font-family:'Geist Mono',monospace;font-size:10px;color:#55544F;padding-bottom:4px">{{ d }}</span></sc-for>
+        <sc-for list="{{ cal }}" as="c" hint-placeholder-count="30"><button onClick="{{ c.open }}" aria-label="{{ c.aria }}" style="height:46px;border:{{ c.bd }};border-radius:10px;background:transparent;color:{{ c.nc }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:{{ c.cur }};padding:0;font-size:12.5px;font-variant-numeric:tabular-nums"><span>{{ c.n }}</span><span style="width:6px;height:6px;border-radius:50%;background:{{ c.dot }};border:{{ c.dotBd }};box-shadow:{{ c.ring }}"></span></button></sc-for>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:#7C7B76"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B)"></span>Standard met</span><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);box-shadow:0 0 0 2px #0A0A0B,0 0 0 3px var(--acc,#C6E07B)"></span>Perfect</span><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;border:1.5px solid #B8695C"></span>Missed</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)">WEEKLY REVIEWS</span>
+      <sc-for list="{{ pastWeeksAll }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.open }}" style="display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:10px;min-height:50px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);background:transparent;color:#ECEBE6;font-size:14px;text-align:left;cursor:pointer;padding:0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A09F99">WEEK {{ p.w }}</span><span style="font-variant-numeric:tabular-nums">{{ p.line }}</span><span style="color:#55544F">›</span></button></sc-for>
+    </div>
+  </div>
+  <button onClick="{{ toggleInsights }}" style="display:flex;justify-content:space-between;align-items:center;height:52px;padding:0;border:0;border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);background:transparent;color:#ECEBE6;font-size:14.5px;cursor:pointer"><span>{{ pg.insLabel }}</span><span style="color:#7C7B76;transform:{{ pg.insRot }};transition:transform .2s">›</span></button>
+  <sc-if value="{{ pg.insights }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:30px;animation:fadeUp .3s ease">
+      <div style="display:flex;flex-direction:column;gap:10px"><sc-for list="{{ insightLines }}" as="i"><span style="font-size:15px;line-height:1.5;padding-left:14px;border-left:2px solid rgba(255,255,255,0.12)">{{ i }}</span></sc-for></div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">CONSISTENCY · 30 DAYS</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#7C7B76">LONGEST STREAK 21 DAYS</span></div>
+        <sc-for list="{{ habits }}" as="hb" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:minmax(0,1fr) 90px 44px;align-items:center;gap:12px;min-height:46px;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hb.name }}</span><div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px"><div style="height:100%;width:{{ hb.w }};background:{{ hb.bc }};border-radius:2px"></div></div><span style="font-size:14px;text-align:right;font-variant-numeric:tabular-nums;color:{{ hb.c }}">{{ hb.v }}%</span></div></sc-for>
+      </div>
+    </div>
+  </sc-if>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- MORE -->
+<sc-if value="{{ is.more }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:30px;animation:fadeUp .4s ease">
+  <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">MORE</h1>
+  <div style="display:flex;flex-direction:column"><sc-for list="{{ moreRows }}" as="m" hint-placeholder-count="4"><button onClick="{{ m.go }}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:60px;border:0;border-bottom:1px solid rgba(255,255,255,0.06);background:transparent;color:#ECEBE6;text-align:left;cursor:pointer;padding:0"><span style="font-size:16px">{{ m.label }}</span><span style="display:flex;align-items:center;gap:10px;font-size:13px;color:#7C7B76">{{ m.sub }}<span style="color:#55544F">›</span></span></button></sc-for></div>
+  <div style="display:flex;flex-direction:column">
+    <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#55544F;padding-bottom:8px">PROTOTYPE FLOWS</span>
+    <sc-for list="{{ flows }}" as="m" hint-placeholder-count="8"><button onClick="{{ m.go }}" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;border:0;border-bottom:1px solid rgba(255,255,255,0.04);background:transparent;color:#A09F99;font-size:14.5px;text-align:left;cursor:pointer;padding:0"><span>{{ m.label }}</span><span style="color:#55544F">›</span></button></sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ROUTINE -->
+<sc-if value="{{ is.routine }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:26px;animation:fadeUp .4s ease">
+  <header style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">ROUTINE</h1><span style="font-size:14.5px;color:#A09F99">Repeats automatically. Tap to edit, hold the handle to reorder.</span></header>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button onClick="{{ openAddRepeat }}" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#ECEBE6;color:#0A0A0B;font-size:14px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">+ Add item</button>
+    <button onClick="{{ openTemplates }}" style="height:44px;padding:0 16px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:14px;cursor:pointer">Use template</button>
+  </div>
+  <div style="display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,0.09)">
+    <sc-for list="{{ rItems }}" as="r" hint-placeholder-count="12">
+      <div data-rid="{{ r.id }}" style="position:relative;z-index:{{ r.z }};display:flex;align-items:center;gap:8px;min-height:62px;border-bottom:1px solid rgba(255,255,255,0.05);border-top:2px solid {{ r.overC }};background:{{ r.bg }};transform:{{ r.tf }};box-shadow:{{ r.sh }};border-radius:{{ r.rad }};transition:background .2s,box-shadow .2s,transform .2s">
+        <span onPointerDown="{{ r.hd }}" onPointerMove="{{ hmove }}" onPointerUp="{{ hup }}" onPointerCancel="{{ hup }}" aria-label="Reorder" style="width:44px;height:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:grab;touch-action:none;border-radius:10px" style-hover="background:rgba(255,255,255,0.04)"><span style="width:16px;height:1.5px;border-radius:1px;background:{{ r.hc }}"></span><span style="width:16px;height:1.5px;border-radius:1px;background:{{ r.hc }}"></span><span style="width:16px;height:1.5px;border-radius:1px;background:{{ r.hc }}"></span></span>
+        <button onClick="{{ r.edit }}" style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:58px;border:0;background:transparent;color:#ECEBE6;text-align:left;cursor:pointer;padding:0 4px 0 0"><span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:15.5px">{{ r.name }}</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:#7C7B76;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sched }}</span></span><span style="color:#55544F">›</span></button>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- CHALLENGES -->
+<sc-if value="{{ is.challenges }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:26px;animation:fadeUp .4s ease">
+  <header style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">CHALLENGES</h1><span style="font-size:14.5px;color:#A09F99">Optional. Private to your Duo.</span></div><button onClick="{{ openChallenge }}" style="height:44px;padding:0 16px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:14px;cursor:pointer">New challenge</button></header>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+    <sc-for list="{{ challenges }}" as="c" hint-placeholder-count="2">
+      <div style="display:flex;flex-direction:column;gap:20px;padding:22px;background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:18px;animation:rise .4s ease">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><span style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:600;letter-spacing:.02em">{{ c.title }}</span><span style="font-size:13px;color:#7C7B76">{{ c.desc }}</span></span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.14em;color:{{ c.stC }};white-space:nowrap">{{ c.status }}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">{{ c.progLabel }}</span><span style="font-size:22px;font-weight:500;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ c.prog }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Brendon</span><span style="font-variant-numeric:tabular-nums">{{ c.b }}</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="height:100%;width:{{ c.bw }};background:var(--acc,#C6E07B);border-radius:3px"></div></div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;font-size:14px;color:#A09F99"><span>Lucas</span><span style="font-variant-numeric:tabular-nums">{{ c.l }}</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px"><div style="height:100%;width:{{ c.lw }};background:#5E5D59;border-radius:3px"></div></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- DUO -->
+<sc-if value="{{ is.duo }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:30px;max-width:620px;animation:fadeUp .4s ease">
+  <header style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">LOCKED IN DUO</h1><span style="font-size:14.5px;color:#A09F99">{{ duo.sub }}</span></header>
+  <div style="display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:14px;min-height:62px;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="width:36px;height:36px;border-radius:50%;background:#ECEBE6;color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-weight:600">B</span><span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px">Brendon</span><span style="font-size:12px;color:#7C7B76">@brendon</span></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">YOU</span></div>
+    <sc-if value="{{ hasPartner }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:14px;min-height:62px;border-bottom:1px solid rgba(255,255,255,0.05);animation:rise .4s ease"><span style="width:36px;height:36px;border-radius:50%;background:#1C1C1F;display:flex;align-items:center;justify-content:center;font-weight:600">L</span><span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px">Lucas</span><span style="font-size:12px;color:#7C7B76">@lucas</span></span><span style="display:flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:{{ ps.textC }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ ps.dot }}"></span>{{ ps.label }}</span></div></sc-if>
+    <sc-if value="{{ noPartner }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:14px;min-height:62px;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="width:36px;height:36px;border-radius:50%;border:1px dashed rgba(255,255,255,0.2)"></span><span style="font-size:14px;color:#7C7B76">{{ duo.waiting }}</span></div></sc-if>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <button onClick="{{ shareInvite }}" style="height:56px;border:0;border-radius:16px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.24em;cursor:pointer" style-active="transform:scale(.97)">SHARE INVITE</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:52px"><span style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">OR SHARE YOUR CODE</span><span style="font-family:'Geist Mono',monospace;font-size:22px;letter-spacing:.12em">LKD-8X29A</span></span><button onClick="{{ copyCode }}" style="height:44px;padding:0 16px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:13.5px;cursor:pointer">{{ copyLabel }}</button></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">JOIN WITH A CODE</span><div style="display:flex;gap:8px"><input value="{{ joinCode }}" onChange="{{ onJoin }}" placeholder="LKD-XXXXX" aria-label="Invite code" style="flex:1;min-width:0;height:48px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-family:'Geist Mono',monospace;font-size:16px;letter-spacing:.1em;outline:none;text-transform:uppercase"><button style="height:48px;padding:0 18px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:14px;cursor:pointer">Join</button></div></div>
+  <span style="font-size:12.5px;color:#7C7B76">Duos are two people. Small squads come later.</span>
+</div>
+</sc-if>
+
+<!-- SETTINGS -->
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:32px;max-width:620px;animation:fadeUp .4s ease">
+  <h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">SETTINGS</h1>
+  <div style="display:flex;align-items:center;gap:16px"><div style="width:64px;height:64px;border-radius:50%;background:repeating-linear-gradient(45deg,#151517 0 6px,#1B1B1E 6px 12px);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7C7B76">PHOTO</div><span style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:600">{{ me.name }}</span><span style="font-size:13px;color:#7C7B76">@brendon · Europe/London · since Mar 2, 2026</span></span></div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">YOUR STANDARD</span>
+    <span style="font-size:13.5px;color:#7C7B76;line-height:1.5">A day counts toward your streak when you complete this share of scheduled tasks.</span>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ stdOpts }}" as="o"><button onClick="{{ o.pick }}" style="height:46px;border-radius:12px;border:1px solid {{ o.bd }};background:{{ o.bg }};color:{{ o.c }};font-size:15px;font-weight:500;cursor:pointer">{{ o.label }}</button></sc-for></div>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.09)">NOTIFICATIONS</span>
+    <sc-for list="{{ prefRows }}" as="p" hint-placeholder-count="7">
+      <button onClick="{{ p.toggle }}" role="switch" aria-checked="{{ p.aria }}" style="display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:62px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);background:transparent;color:inherit;text-align:left;cursor:pointer;padding:0">
+        <span style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14.5px">{{ p.k }}</span><span style="font-size:12.5px;color:#7C7B76">{{ p.d }}</span></span>
+        <span style="width:44px;height:26px;border-radius:13px;background:{{ p.track }};position:relative;flex-shrink:0;transition:background .2s"><span style="position:absolute;top:3px;left:{{ p.knob }};width:20px;height:20px;border-radius:50%;background:{{ p.knobC }};transition:left .2s ease"></span></span>
+      </button>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">PRIVACY</span><span style="font-size:13.5px;color:#7C7B76;line-height:1.5">Tasks are shared with your Duo. Hide a single task from its options under “More options”. Lucas only sees Online, Focusing or Offline.</span></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button onClick="{{ startOnboard }}" style="height:44px;padding:0 18px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:14px;cursor:pointer">Sign out</button><button style="height:44px;padding:0 18px;border:1px solid rgba(224,113,95,0.3);border-radius:12px;background:transparent;color:#E0715F;font-size:14px;cursor:pointer">Leave duo</button></div>
+</div>
+</sc-if>
+
+<!-- STATES -->
+<sc-if value="{{ is.states }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:26px;animation:fadeUp .4s ease">
+  <header style="display:flex;flex-direction:column;gap:10px"><h1 style="margin:0;font-size:{{ sz.h1 }};font-weight:600;letter-spacing:-0.025em">LIVE STATES</h1><span style="font-size:14.5px;color:#A09F99">Reference for engineering. Every realtime and system state, as the user sees it.</span></header>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+    <sc-for list="{{ stateCards }}" as="c" hint-placeholder-count="8">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px;background:#111113;border:1px solid rgba(255,255,255,0.06);border-radius:14px">
+        <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">{{ c.k }}</span>
+        <div style="display:flex;align-items:center;gap:10px;min-height:36px;padding:0 12px;border-radius:10px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.06);font-size:13.5px;color:{{ c.tc }};align-self:flex-start"><span style="width:7px;height:7px;border-radius:50%;background:{{ c.dot }};border:{{ c.dotBd }};animation:{{ c.anim }};flex-shrink:0"></span>{{ c.ui }}</div>
+        <span style="font-size:12.5px;color:#7C7B76;line-height:1.5">{{ c.d }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px">
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--acc,#C6E07B)">IN THE FEED</span><span style="font-size:13.5px;color:#A09F99;line-height:1.7">Task completed · Focus started · Focus finished · Reaction received · Started the day</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">NEVER IN THE FEED</span><span style="font-size:13.5px;color:#7C7B76;line-height:1.7">Unchecks (the original event is withdrawn) · Edits · Moves · Renames · App opens · Presence changes · Profile views</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:420px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76">loading skeleton · Today</span><sc-for list="{{ skel }}" as="k"><div style="display:flex;align-items:center;gap:14px;animation:breathe 1.6s ease-in-out infinite"><span style="width:32px;height:32px;border-radius:10px;background:#1C1C1F"></span><span style="flex:1;display:flex;flex-direction:column;gap:7px"><span style="height:10px;width:{{ k }};border-radius:4px;background:#1C1C1F"></span><span style="height:8px;width:34%;border-radius:4px;background:#18181B"></span></span></div></sc-for></div>
+</div>
+</sc-if>
+
+</div>
+</main>
+
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Main" style="flex-shrink:0;display:flex;border-top:1px solid rgba(255,255,255,0.06);background:#0A0A0B;padding:4px 6px {{ frame.botInset }}">
+  <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+    <button onClick="{{ t.go }}" aria-label="{{ t.label }}" aria-current="{{ t.cur }}" style="flex:1;height:58px;border:0;background:transparent;color:{{ t.c }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0;transition:color .2s,transform .12s;-webkit-tap-highlight-color:transparent" style-active="transform:scale(.92)">
+      <span style="height:28px;padding:0 14px;border-radius:10px;background:{{ t.iconBg }};color:{{ t.iconC }};display:flex;align-items:center;justify-content:center;transition:background .2s">
+        <sc-if value="{{ t.i.today }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="stroke:currentColor;stroke-width:1.6"><rect x="3.5" y="3.5" width="15" height="15" rx="4.5"></rect><path d="M7.6 11.2l2.4 2.4 4.5-5" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+        <sc-if value="{{ t.i.partner }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="stroke:currentColor;stroke-width:1.6"><circle cx="8" cy="8.5" r="3"></circle><circle cx="15" cy="8.5" r="3"></circle><path d="M2.8 18c.6-2.6 2.6-4 5.2-4s4.6 1.4 5.2 4M14.2 14c.3 0 .5 0 .8 0 2.6 0 4.6 1.4 5.2 4" stroke-linecap="round"></path></svg></sc-if>
+        <sc-if value="{{ t.i.focus }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="stroke:currentColor;stroke-width:1.6"><circle cx="11" cy="11" r="7.5"></circle><circle cx="11" cy="11" r="2.6" fill="currentColor" stroke="none"></circle></svg></sc-if>
+        <sc-if value="{{ t.i.progress }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="stroke:currentColor;stroke-width:1.6"><path d="M5 18v-6M11 18V5M17 18v-9" stroke-linecap="round" stroke-width="2"></path></svg></sc-if>
+        <sc-if value="{{ t.i.more }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="5" cy="11" r="1.6" fill="currentColor"></circle><circle cx="11" cy="11" r="1.6" fill="currentColor"></circle><circle cx="17" cy="11" r="1.6" fill="currentColor"></circle></svg></sc-if>
+      </span>
+      <span style="font-size:10px;font-weight:{{ t.fw }};letter-spacing:.08em">{{ t.label }}</span>
+    </button>
+  </sc-for>
+</nav>
+</sc-if>
+
+<!-- FOCUS RUNNING -->
+<sc-if value="{{ fxv.running }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:50;background:#060607;display:flex;flex-direction:column;animation:fadeIn .7s ease">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:{{ frame.focusTop }};text-align:center">
+    <span style="display:flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.34em;color:var(--acc,#C6E07B)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B);animation:pulse 2.4s ease-out infinite"></span>LOCKED IN</span>
+    <span style="font-size:{{ sz.focusTask }};font-weight:500;letter-spacing:.14em">{{ fxv.taskU }}</span>
+    <div style="position:relative;width:{{ sz.ring }};height:{{ sz.ring }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+      <svg viewBox="0 0 296 296" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)"><circle cx="148" cy="148" r="146" fill="none" style="stroke:rgba(255,255,255,0.06);stroke-width:1.5"></circle><circle cx="148" cy="148" r="146" fill="none" stroke-linecap="round" style="stroke:var(--acc,#C6E07B);stroke-width:2;stroke-dasharray:917.35;stroke-dashoffset:{{ fxv.ringOff }};transition:stroke-dashoffset 1s linear"></circle></svg>
+      <span role="timer" style="font-size:{{ sz.timer }};font-weight:300;letter-spacing:-0.045em;line-height:1;font-variant-numeric:tabular-nums;opacity:{{ fxv.op }};animation:{{ fxv.anim }};transition:opacity .8s ease">{{ fxv.clock }}</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.24em;color:#55544F">{{ fxv.sub }}</span>
+    </div>
+    <sc-if value="{{ hasPartner }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:8px;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.2em;color:#55544F">PARTNER</span><span style="display:flex;align-items:center;gap:7px;font-size:13px;color:#A09F99"><span style="width:6px;height:6px;border-radius:50%;background:{{ ps.dot }};animation:{{ ps.anim }}"></span>{{ ps.focusWord }}</span></div></sc-if>
+  </div>
+  <div style="display:flex;justify-content:center;gap:12px;padding:{{ frame.focusBot }}">
+    <button onClick="{{ pauseFx }}" style="height:48px;min-width:96px;padding:0 20px;border:0;background:transparent;color:#5E5D59;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.24em;cursor:pointer" style-hover="color:#ECEBE6">{{ fxv.pauseL }}</button>
+    <button onClick="{{ endFx }}" style="height:48px;min-width:96px;padding:0 20px;border:0;background:transparent;color:#5E5D59;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.24em;cursor:pointer" style-hover="color:#ECEBE6">END</button>
+  </div>
+</div>
+</sc-if>
+<sc-if value="{{ fxv.complete }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:50;background:#060607;overflow-y:auto;animation:fadeIn .5s ease">
+  <div style="min-height:100%;max-width:460px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:center;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center">
+      <span style="font-size:{{ sz.done }};font-weight:300;letter-spacing:-0.045em;line-height:1;font-variant-numeric:tabular-nums">{{ fxv.elapsedMin }}</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.3em;color:var(--acc,#C6E07B)">MIN COMPLETE</span>
+      <span style="font-size:14px;color:#7C7B76">{{ fxv.task }} · {{ fxv.range }}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;color:#A09F99">What did you accomplish? <span style="color:#5E5D59">Optional</span></span><textarea value="{{ fxv.note }}" onChange="{{ onNote }}" rows="3" placeholder="Finished problem set 5." style="padding:14px;background:#0E0E10;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-size:16px;line-height:1.5;resize:none;outline:none" style-focus="border-color:rgba(255,255,255,0.25)"></textarea></div>
+    <button onClick="{{ completeFx }}" style="height:58px;border:0;border-radius:16px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer" style-active="transform:scale(.97)">DONE</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- BRIEFING -->
+<sc-if value="{{ ov.briefing }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease;opacity:{{ ovFx.op }};transform:{{ ovFx.tf }};transition:opacity .45s ease,transform .45s ease">
+  <div style="min-height:100%;max-width:480px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:space-between;gap:36px">
+    <div style="display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:14px;color:#7C7B76;font-variant-numeric:tabular-nums">06:02 · TUESDAY</span><button onClick="{{ closeOv }}" style="height:44px;padding:0 4px;border:0;background:transparent;color:#7C7B76;font-size:14px;cursor:pointer">Skip</button></div>
+      <div style="display:flex;flex-direction:column;gap:16px"><h1 style="margin:0;font-size:{{ sz.brief }};font-weight:600;letter-spacing:-0.035em;line-height:1">GOOD MORNING,<br>BRENDON.</h1><span style="font-family:'Geist Mono',monospace;font-size:13px;letter-spacing:.26em;color:var(--acc,#C6E07B)">DAY 14</span></div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:16px 0;border-top:1px solid rgba(255,255,255,0.07)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#7C7B76">TODAY</span><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.045em;line-height:1">12 <span style="font-size:15px;letter-spacing:.06em;color:#A09F99">TASKS</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:16px 0;border-top:1px solid rgba(255,255,255,0.07)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#7C7B76">YESTERDAY</span><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.045em;line-height:1">92%</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:16px 0;border-top:1px solid rgba(255,255,255,0.07)"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#7C7B76">STREAK</span><span style="font-size:{{ sz.big }};font-weight:500;letter-spacing:-0.045em;line-height:1">13 <span style="font-size:15px;letter-spacing:.06em;color:#A09F99">DAYS</span></span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px;align-items:center">
+      <button onClick="{{ closeOv }}" style="width:100%;height:60px;border:0;border-radius:16px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer;transition:transform .12s" style-active="transform:scale(.97)">START DAY</button>
+      <button onClick="{{ toggleBriefAuto }}" role="switch" aria-checked="{{ brief.aria }}" style="display:flex;align-items:center;gap:10px;height:44px;border:0;background:transparent;color:#7C7B76;font-size:13px;cursor:pointer"><span style="width:18px;height:18px;border-radius:5px;border:1.5px solid {{ brief.bd }};background:{{ brief.bg }};display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ brief.chk }}"></path></svg></span>Show automatically each morning</button>
+      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.28em;color:#55544F;text-align:center;line-height:1.9">NO HYPE.<br>JUST PROOF.</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- REVIEW DAY -->
+<sc-if value="{{ ov.review }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease;opacity:{{ ovFx.op }};transform:{{ ovFx.tf }};transition:opacity .45s ease,transform .45s ease">
+  <div style="min-height:100%;max-width:520px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:space-between;gap:36px">
+    <div style="display:flex;flex-direction:column;gap:34px">
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;color:#7C7B76">TUESDAY · DAY 14 · 22:41</span><h1 style="margin:0;font-size:{{ sz.brief }};font-weight:600;letter-spacing:-0.035em;line-height:1">TODAY<br>COMPLETE</h1></div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px"><span style="font-size:{{ sz.hero }};font-weight:500;letter-spacing:-0.055em;line-height:.82">84<span style="font-size:{{ sz.heroPct }};color:#6F6E6A">%</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-size:15px;font-variant-numeric:tabular-nums">10 / 12 <span style="color:#7C7B76">done</span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#A09F99">2H 15M FOCUS</span></span></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#A09F99"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc,#C6E07B)"></span>Standard met. Streak is now 14 days.</div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.07)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:600;letter-spacing:.16em">LUCAS</span><span style="display:flex;align-items:baseline;gap:14px;font-variant-numeric:tabular-nums"><span style="font-size:15px;color:#A09F99">11 / 12</span><span style="font-size:28px;font-weight:500;letter-spacing:-0.03em">92%</span></span></div>
+        <span style="font-size:14px;color:#A09F99">Lucas finished 8% ahead today.</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#7C7B76">NOT DONE</span><span style="font-size:14px;color:#A09F99">Drink 3L water · Sleep before 23:00</span></div>
+    </div>
+    <button onClick="{{ closeOv }}" style="height:60px;border:0;border-radius:16px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.3em;cursor:pointer" style-active="transform:scale(.97)">DONE</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- WEEKLY REVIEW -->
+<sc-if value="{{ ov.weekly }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease;opacity:{{ ovFx.op }};transition:opacity .45s ease">
+  <div style="min-height:100%;max-width:560px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:space-between;gap:32px">
+    <div style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.22em;color:var(--acc,#C6E07B)">{{ wk.title }}</span><div style="display:flex;gap:6px"><button onClick="{{ wkOlder }}" aria-label="Older week" style="width:44px;height:44px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;background:transparent;color:{{ wk.olderC }};font-size:16px;cursor:pointer">‹</button><button onClick="{{ wkNewer }}" aria-label="Newer week" style="width:44px;height:44px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;background:transparent;color:{{ wk.newerC }};font-size:16px;cursor:pointer">›</button></div></div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:6px"><span style="font-size:13px;font-weight:600;letter-spacing:.16em;color:{{ wk.bC }}">YOU</span><span style="font-size:{{ sz.weekNum }};font-weight:500;letter-spacing:-0.06em;line-height:.8;color:{{ wk.bC }};font-variant-numeric:tabular-nums">{{ wk.b }}%</span></div>
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 0"><span style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.2em;color:#A09F99">{{ wk.verdict }}</span><span style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px"><span style="font-size:13px;font-weight:600;letter-spacing:.16em;color:{{ wk.lC }}">LUCAS</span><span style="font-size:{{ sz.weekNum }};font-weight:500;letter-spacing:-0.06em;line-height:.8;color:{{ wk.lC }};font-variant-numeric:tabular-nums">{{ wk.l }}%</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ wk.rows }}" as="r"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0;border-top:1px solid rgba(255,255,255,0.06)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">{{ r.k }}</span><span style="font-size:15px;text-align:right;color:{{ r.c }}">{{ r.v }}</span></div></sc-for>
+      </div>
+    </div>
+    <button onClick="{{ closeOv }}" style="height:58px;border:0;border-radius:16px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.26em;cursor:pointer" style-active="transform:scale(.97)">{{ wk.cta }}</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ONBOARDING -->
+<sc-if value="{{ ov.onboard }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:60;background:#070708;overflow-y:auto;animation:fadeIn .5s ease;opacity:{{ ovFx.op }};transition:opacity .45s ease">
+  <div style="min-height:100%;max-width:440px;margin:0 auto;padding:{{ sz.ovPad }};display:flex;flex-direction:column;justify-content:space-between;gap:36px">
+    <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px">
+      <div style="display:flex;gap:6px"><sc-for list="{{ ob.dots }}" as="d"><span style="width:{{ d.w }};height:4px;border-radius:2px;background:{{ d.c }};transition:all .3s"></span></sc-for></div>
+      <sc-if value="{{ ob.canBack }}"><button onClick="{{ obBack }}" style="height:44px;padding:0 4px;border:0;background:transparent;color:#7C7B76;font-size:14px;cursor:pointer">Back</button></sc-if>
+    </div>
+
+    <sc-if value="{{ ob.s0 }}"><div style="display:flex;flex-direction:column;gap:22px;animation:rise .4s ease">
+      <div style="width:28px;height:28px;border:2.5px solid var(--acc,#C6E07B);border-radius:6px;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;background:var(--acc,#C6E07B);border-radius:2px"></div></div>
+      <span style="font-size:40px;font-weight:600;letter-spacing:.04em;line-height:1">LOCKED IN</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:13px;letter-spacing:.28em;color:#7C7B76;line-height:1.8">NO HYPE.<br>JUST PROOF.</span>
+    </div></sc-if>
+    <sc-if value="{{ ob.s1 }}"><div style="display:flex;flex-direction:column;gap:18px;animation:rise .4s ease">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#7C7B76">YOUR NAME</span>
+      <input value="{{ ob.name }}" onChange="{{ obName }}" placeholder="Name" aria-label="Your name" style="height:60px;padding:0 18px;background:#0E0E10;border:1px solid rgba(255,255,255,0.12);border-radius:14px;color:#ECEBE6;font-size:22px;outline:none" style-focus="border-color:rgba(255,255,255,0.3)">
+      <span style="font-size:13px;color:#7C7B76">Your partner will see this name.</span>
+    </div></sc-if>
+    <sc-if value="{{ ob.s2 }}"><div style="display:flex;flex-direction:column;gap:18px;animation:rise .4s ease">
+      <span style="font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.2">BUILD YOUR<br>FIRST ROUTINE</span>
+      <sc-for list="{{ ob.paths }}" as="p"><button onClick="{{ p.pick }}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:76px;padding:0 18px;border:1px solid {{ p.bd }};border-radius:16px;background:{{ p.bg }};color:#ECEBE6;text-align:left;cursor:pointer;transition:all .15s"><span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:16.5px;font-weight:500">{{ p.label }}</span><span style="font-size:13px;color:#7C7B76">{{ p.sub }}</span></span><span style="width:22px;height:22px;border-radius:50%;border:1.5px solid {{ p.ring }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="width:10px;height:10px;border-radius:50%;background:var(--acc,#C6E07B);transform:{{ p.dotS }};transition:transform .2s"></span></span></button></sc-for>
+    </div></sc-if>
+    <sc-if value="{{ ob.s3 }}"><div style="display:flex;flex-direction:column;gap:16px;animation:rise .4s ease">
+      <span style="font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.2">{{ ob.s3Title }}</span>
+      <sc-if value="{{ ob.isTpl }}"><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ ob.tpls }}" as="c"><button onClick="{{ c.pick }}" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:14px;cursor:pointer">{{ c.label }}</button></sc-for></div></sc-if>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ ob.items }}" as="it"><div style="display:flex;align-items:center;gap:12px;min-height:54px;border-bottom:1px solid rgba(255,255,255,0.06)"><button onClick="{{ it.toggle }}" role="checkbox" aria-checked="{{ it.aria }}" aria-label="{{ it.name }}" style="width:44px;height:44px;flex-shrink:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0"><span style="width:24px;height:24px;border-radius:7px;border:1.5px solid {{ it.bd }};background:{{ it.bg }};display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ it.chk }}"></path></svg></span></button><span style="font-size:15.5px;color:{{ it.c }}">{{ it.name }}</span></div></sc-for>
+        <div style="display:flex;gap:8px;padding-top:12px"><input value="{{ ob.draft }}" onChange="{{ obDraft }}" onKeyDown="{{ obKey }}" placeholder="Add your own" aria-label="Add item" style="flex:1;min-width:0;height:48px;padding:0 14px;background:#0E0E10;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-size:16px;outline:none"><button onClick="{{ obAdd }}" aria-label="Add" style="width:48px;height:48px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:transparent;color:#ECEBE6;font-size:22px;cursor:pointer">+</button></div>
+      </div>
+      <span style="font-size:13px;color:#7C7B76">Every item repeats daily. Change schedules any time.</span>
+    </div></sc-if>
+    <sc-if value="{{ ob.s4 }}"><div style="display:flex;flex-direction:column;gap:18px;animation:rise .4s ease">
+      <span style="font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.2">INVITE YOUR<br>PARTNER</span>
+      <span style="font-size:16px;color:#A09F99;line-height:1.5;text-wrap:pretty">Discipline is easier when somebody knows whether you showed up.</span>
+      <div style="display:flex;flex-direction:column;gap:4px;padding:16px 0;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07)"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#7C7B76">YOUR CODE</span><span style="font-family:'Geist Mono',monospace;font-size:24px;letter-spacing:.12em">LKD-8X29A</span></div>
+    </div></sc-if>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onClick="{{ obNext }}" style="height:58px;border:0;border-radius:16px;background:{{ ob.ctaBg }};color:{{ ob.ctaC }};font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.26em;cursor:pointer;transition:all .2s" style-active="transform:scale(.97)">{{ ob.cta }}</button>
+      <sc-if value="{{ ob.hasAlt }}"><button onClick="{{ obAlt }}" style="height:48px;border:0;background:transparent;color:#A09F99;font-size:14px;cursor:pointer">{{ ob.alt }}</button></sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- SHEETS -->
+<sc-if value="{{ sheet.open }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:65;background:rgba(0,0,0,0.62);animation:fadeIn .2s ease"></div>
+<div style="position:absolute;inset:0;z-index:66;display:flex;align-items:{{ shp.ai }};justify-content:center;pointer-events:none">
+  <div role="dialog" aria-modal="true" style="pointer-events:auto;width:{{ shp.w }};max-height:88%;overflow-y:auto;background:#121214;border:1px solid rgba(255,255,255,0.08);border-radius:{{ shp.rad }};padding:10px 20px {{ shp.pb }};animation:{{ shp.anim }};box-shadow:0 -20px 60px rgba(0,0,0,0.5)">
+    <div style="width:38px;height:5px;border-radius:3px;background:#2C2C30;margin:0 auto 18px"></div>
+
+    <sc-if value="{{ sheet.task }}">
+      <sc-if value="{{ tf.confirm }}"><div style="display:flex;flex-direction:column;gap:8px;animation:fadeUp .2s ease">
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99;padding-bottom:8px">APPLY CHANGE TO</span>
+        <button onClick="{{ applyToday }}" style="height:56px;border:1px solid rgba(255,255,255,0.1);border-radius:14px;background:#18181B;color:#ECEBE6;font-size:16px;cursor:pointer">Today only</button>
+        <button onClick="{{ applyFuture }}" style="height:56px;border:0;border-radius:14px;background:#ECEBE6;color:#0A0A0B;font-size:16px;font-weight:600;cursor:pointer">Today and future days</button>
+        <button onClick="{{ cancelConfirm }}" style="height:48px;border:0;background:transparent;color:#7C7B76;font-size:14px;cursor:pointer">Cancel</button>
+      </div></sc-if>
+      <sc-if value="{{ tf.form }}"><div style="display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;min-height:32px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">{{ tf.title }}</span><sc-if value="{{ tf.editing }}"><button onClick="{{ deleteEditing }}" style="height:36px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#E0715F;font-size:14px;cursor:pointer">Delete</button></sc-if></div>
+        <input value="{{ form.name }}" onChange="{{ onName }}" onKeyDown="{{ onNameKey }}" placeholder="Finish Physics exercise" aria-label="Task name" style="height:56px;padding:0 16px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.12);border-radius:14px;color:#ECEBE6;font-size:17px;outline:none" style-focus="border-color:rgba(255,255,255,0.3)">
+        <sc-if value="{{ tf.isAdd }}"><div style="display:flex;gap:6px"><sc-for list="{{ whenOpts }}" as="c"><button onClick="{{ c.pick }}" style="flex:1;height:44px;border-radius:12px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:14px;cursor:pointer">{{ c.label }}</button></sc-for></div></sc-if>
+        <sc-if value="{{ tf.showRepeat }}"><div style="display:flex;flex-direction:column;gap:10px;animation:fadeUp .2s ease">
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">REPEAT</span>
+          <div style="display:flex;gap:6px"><sc-for list="{{ repOpts }}" as="c"><button onClick="{{ c.pick }}" style="flex:1;height:44px;border-radius:12px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:14px;cursor:pointer">{{ c.label }}</button></sc-for></div>
+          <sc-if value="{{ tf.customDays }}"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px"><sc-for list="{{ dayBtns }}" as="d"><button onClick="{{ d.pick }}" aria-label="{{ d.full }}" aria-pressed="{{ d.aria }}" style="height:48px;border-radius:12px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.c }};font-size:15px;font-weight:600;cursor:pointer;padding:0" style-active="transform:scale(.92)">{{ d.label }}</button></sc-for></div></sc-if>
+        </div></sc-if>
+        <button onClick="{{ toggleMoreOpts }}" style="display:flex;justify-content:space-between;align-items:center;height:48px;padding:0;border:0;border-top:1px solid rgba(255,255,255,0.06);background:transparent;color:#A09F99;font-size:14px;cursor:pointer"><span>More options</span><span style="font-size:12px;color:#7C7B76">{{ tf.moreSummary }} <span style="display:inline-block;transform:{{ tf.moreRot }};transition:transform .2s">›</span></span></button>
+        <sc-if value="{{ tf.more }}"><div style="display:flex;flex-direction:column;gap:16px;animation:fadeUp .2s ease">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">TIME</span><input type="time" value="{{ form.time }}" onChange="{{ onTime }}" aria-label="Time" style="height:46px;padding:0 12px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-size:16px;outline:none;color-scheme:dark;min-width:0"></div>
+            <button onClick="{{ toggleReminder }}" role="switch" aria-checked="{{ tf.remAria }}" style="display:flex;flex-direction:column;gap:8px;border:0;background:transparent;color:#ECEBE6;text-align:left;cursor:pointer;padding:0"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">REMINDER</span><span style="display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 12px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:14px;width:100%">{{ tf.remLabel }}<span style="width:36px;height:22px;border-radius:11px;background:{{ tf.remTrack }};position:relative"><span style="position:absolute;top:3px;left:{{ tf.remKnob }};width:16px;height:16px;border-radius:50%;background:{{ tf.remKnobC }};transition:left .2s"></span></span></span></button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">SECTION</span><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ catOpts }}" as="c"><button onClick="{{ c.pick }}" style="height:38px;padding:0 13px;border-radius:10px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:13.5px;cursor:pointer">{{ c.label }}</button></sc-for></div></div>
+          <button onClick="{{ toggleVisible }}" role="switch" aria-checked="{{ tf.visAria }}" style="display:flex;justify-content:space-between;align-items:center;min-height:52px;border:0;background:transparent;color:#ECEBE6;text-align:left;cursor:pointer;padding:0"><span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px">Visible to Lucas</span><span style="font-size:12px;color:#7C7B76">Hidden tasks still count toward your score.</span></span><span style="width:44px;height:26px;border-radius:13px;background:{{ tf.visTrack }};position:relative;flex-shrink:0"><span style="position:absolute;top:3px;left:{{ tf.visKnob }};width:20px;height:20px;border-radius:50%;background:{{ tf.visKnobC }};transition:left .2s"></span></span></button>
+          <input value="{{ form.notes }}" onChange="{{ onNotes }}" placeholder="Notes" aria-label="Notes" style="height:46px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#ECEBE6;font-size:16px;outline:none">
+        </div></sc-if>
+        <button onClick="{{ saveTask }}" style="height:56px;border:0;border-radius:16px;background:{{ tf.btnBg }};color:{{ tf.btnC }};font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.28em;cursor:pointer;transition:all .2s" style-active="transform:scale(.97)">{{ tf.btn }}</button>
+      </div></sc-if>
+    </sc-if>
+
+    <sc-if value="{{ sheet.opts }}"><div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:19px;font-weight:500">{{ ot.name }}</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#7C7B76">{{ ot.meta }}</span></div>
+      <sc-if value="{{ ot.canSkip }}"><div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">SKIP TODAY</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><sc-for list="{{ ot.reasons }}" as="r"><button onClick="{{ r.pick }}" style="height:48px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:#18181B;color:#ECEBE6;font-size:14px;cursor:pointer" style-active="transform:scale(.96)">{{ r.label }}</button></sc-for></div><span style="font-size:12px;color:#7C7B76">Skipped tasks leave today's total. They don't count for or against you.</span></div></sc-if>
+      <sc-if value="{{ ot.isSkipped }}"><button onClick="{{ ot.unskip }}" style="height:52px;border:1px solid rgba(255,255,255,0.1);border-radius:14px;background:#18181B;color:#ECEBE6;font-size:15px;cursor:pointer">Unskip · {{ ot.reason }}</button></sc-if>
+      <div style="display:flex;flex-direction:column">
+        <button onClick="{{ ot.edit }}" style="display:flex;justify-content:space-between;align-items:center;height:54px;border:0;border-top:1px solid rgba(255,255,255,0.06);background:transparent;color:#ECEBE6;font-size:15.5px;cursor:pointer;padding:0"><span>Edit</span><span style="color:#55544F">›</span></button>
+        <button onClick="{{ ot.del }}" style="display:flex;align-items:center;height:54px;border:0;border-top:1px solid rgba(255,255,255,0.06);background:transparent;color:#E0715F;font-size:15.5px;cursor:pointer;padding:0">Delete</button>
+      </div>
+    </div></sc-if>
+
+    <sc-if value="{{ sheet.react }}"><div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">REACT</span><span style="font-size:17px">{{ sheet.title }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><sc-for list="{{ sheet.reacts }}" as="e"><button onClick="{{ e.send }}" aria-label="{{ e.aria }}" style="height:72px;border:1px solid rgba(255,255,255,0.08);border-radius:18px;background:#18181B;font-size:{{ e.fs }};color:#ECEBE6;cursor:pointer;transition:transform .12s;padding:0" style-active="transform:scale(.88)">{{ e.label }}</button></sc-for></div>
+    </div></sc-if>
+
+    <sc-if value="{{ sheet.focus }}"><div style="display:flex;flex-direction:column;gap:20px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">WHAT ARE YOU WORKING ON?</span>
+      <div style="display:flex;flex-direction:column"><sc-for list="{{ qTasks }}" as="q"><button onClick="{{ q.pick }}" style="display:flex;align-items:center;justify-content:space-between;height:54px;border:0;border-bottom:1px solid rgba(255,255,255,0.05);background:transparent;color:{{ q.c }};font-size:16px;cursor:pointer;padding:0 2px;text-align:left"><span>{{ q.label }}</span><span style="width:22px;height:22px;border-radius:50%;border:1.5px solid {{ q.ring }};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:var(--acc,#C6E07B);transform:{{ q.dotS }};transition:transform .2s cubic-bezier(.3,1.6,.5,1)"></span></span></button></sc-for></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><sc-for list="{{ durs }}" as="d"><button onClick="{{ d.pick }}" style="height:68px;border-radius:14px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:{{ d.c }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0;transition:all .15s" style-active="transform:scale(.95)"><span style="font-size:23px;font-weight:500;letter-spacing:-0.03em">{{ d.n }}</span><span style="font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#7C7B76">{{ d.u }}</span></button></sc-for></div>
+      <sc-if value="{{ fxv.isCustom }}"><div style="display:flex;align-items:center;gap:12px"><input type="number" inputmode="numeric" min="5" max="240" value="{{ fxv.custom }}" onChange="{{ onCustom }}" placeholder="45" aria-label="Custom minutes" style="width:110px;height:48px;padding:0 14px;background:#0A0A0B;border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#ECEBE6;font-size:18px;outline:none"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7C7B76">MINUTES</span></div></sc-if>
+      <button onClick="{{ lockIn }}" style="height:58px;border:0;border-radius:16px;background:var(--acc,#C6E07B);color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.32em;cursor:pointer" style-active="transform:scale(.97)">START</button>
+    </div></sc-if>
+
+    <sc-if value="{{ sheet.streak }}"><div style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:56px;font-weight:500;letter-spacing:-0.05em;line-height:.9">{{ sk.n }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.16em;color:#A09F99">{{ sk.unit }}</span></div>
+      <div style="display:flex;flex-direction:column"><sc-for list="{{ sk.rules }}" as="r"><div style="display:flex;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);font-size:14.5px;line-height:1.45"><span style="width:6px;height:6px;border-radius:50%;background:{{ r.dot }};border:{{ r.dotBd }};margin-top:7px;flex-shrink:0"></span><span>{{ r.t }}</span></div></sc-for></div>
+      <div style="padding:14px 16px;border-radius:12px;background:#18181B;font-size:14px;color:#A09F99;line-height:1.5">{{ sk.today }}</div>
+      <button onClick="{{ closeSheet }}" style="height:52px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;background:transparent;color:#ECEBE6;font-size:15px;cursor:pointer">Got it</button>
+    </div></sc-if>
+
+    <sc-if value="{{ sheet.day }}"><div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px"><span style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.16em;color:#A09F99">{{ dd.title }}</span><span style="font-size:15px;color:{{ dd.sumC }}">{{ dd.summary }}</span></span><span style="font-size:44px;font-weight:500;letter-spacing:-0.045em;line-height:.85;font-variant-numeric:tabular-nums">{{ dd.pct }}%</span></div>
+      <div style="display:flex;flex-direction:column"><sc-for list="{{ dd.items }}" as="it"><button onClick="{{ it.fix }}" style="display:flex;align-items:center;gap:12px;min-height:48px;border:0;border-top:1px solid rgba(255,255,255,0.05);background:transparent;color:#ECEBE6;text-align:left;cursor:{{ it.cur }};padding:0"><span style="width:18px;height:18px;border-radius:6px;border:1.5px {{ it.bdS }} {{ it.bd }};background:{{ it.bg }};flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ it.chk }}"></path></svg></span><span style="flex:1;font-size:14.5px;color:{{ it.c }}">{{ it.name }}</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:{{ it.sc }}">{{ it.state }}</span></button></sc-for></div>
+      <span style="font-size:12px;color:#7C7B76">Tap a missed task to correct it. Corrections are marked as edited.</span>
+    </div></sc-if>
+
+    <sc-if value="{{ sheet.template }}"><div style="display:flex;flex-direction:column;gap:18px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">USE A TEMPLATE</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ tplOpts }}" as="c"><button onClick="{{ c.pick }}" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:14px;cursor:pointer">{{ c.label }}</button></sc-for></div>
+      <div style="display:flex;flex-direction:column"><sc-for list="{{ tplItems }}" as="it"><div style="display:flex;justify-content:space-between;align-items:center;min-height:46px;border-top:1px solid rgba(255,255,255,0.05);font-size:15px"><span>{{ it.name }}</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#7C7B76">{{ it.tag }}</span></div></sc-for></div>
+      <span style="font-size:12.5px;color:#7C7B76">Items you already have are skipped. Everything stays editable.</span>
+      <button onClick="{{ useTemplate }}" style="height:56px;border:0;border-radius:16px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.26em;cursor:pointer">USE ROUTINE</button>
+    </div></sc-if>
+
+    <sc-if value="{{ sheet.challenge }}"><div style="display:flex;flex-direction:column;gap:18px">
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;color:#A09F99">NEW CHALLENGE</span>
+      <sc-for list="{{ chOpts }}" as="c"><button onClick="{{ c.pick }}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:70px;padding:0 16px;border:1px solid {{ c.bd }};border-radius:14px;background:{{ c.bg }};color:#ECEBE6;text-align:left;cursor:pointer"><span style="display:flex;flex-direction:column;gap:4px"><span style="font-size:15.5px;font-weight:500">{{ c.label }}</span><span style="font-size:12.5px;color:#7C7B76">{{ c.sub }}</span></span><span style="width:20px;height:20px;border-radius:50%;border:1.5px solid {{ c.ring }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="width:9px;height:9px;border-radius:50%;background:var(--acc,#C6E07B);transform:{{ c.dotS }}"></span></span></button></sc-for>
+      <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#7C7B76">{{ chLenLabel }}</span><div style="display:flex;gap:6px"><sc-for list="{{ chLens }}" as="c"><button onClick="{{ c.pick }}" style="flex:1;height:46px;border-radius:12px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.c }};font-size:14.5px;cursor:pointer">{{ c.label }}</button></sc-for></div></div>
+      <button onClick="{{ createChallenge }}" style="height:56px;border:0;border-radius:16px;background:#ECEBE6;color:#0A0A0B;font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.26em;cursor:pointer">START WITH LUCAS</button>
+    </div></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ snack.show }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;z-index:68;left:{{ snack.l }};right:{{ snack.r }};bottom:{{ snack.b }};width:{{ snack.w }};display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 6px 6px 16px;background:#1B1B1E;border:1px solid rgba(255,255,255,0.1);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,0.5);animation:rise .3s cubic-bezier(.2,.8,.2,1)">
+  <span style="width:18px;height:18px;border-radius:6px;background:var(--acc,#C6E07B);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="#0A0A0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  <span style="flex:1;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ snack.text }}</span>
+  <sc-if value="{{ snack.hasAct }}"><button onClick="{{ snack.act }}" style="height:40px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--acc,#C6E07B);font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.2em;cursor:pointer">{{ snack.actL }}</button></sc-if>
+</div>
+</sc-if>
+
+<div style="position:absolute;z-index:70;right:{{ tst.r }};left:{{ tst.l }};top:{{ tst.t }};bottom:{{ tst.b }};display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;align-items:{{ tst.align }}">
+  <sc-for list="{{ toasts }}" as="x">
+    <div role="status" style="display:flex;align-items:center;gap:12px;padding:10px 10px 10px 16px;min-height:56px;background:#18181B;border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,0.5);animation:enter .45s cubic-bezier(.2,.8,.2,1);max-width:{{ tst.maxW }}">
+      <sc-if value="{{ x.hasEmoji }}"><span style="font-size:20px;line-height:1">{{ x.emoji }}</span></sc-if>
+      <sc-if value="{{ x.noEmoji }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ x.dot }};flex-shrink:0"></span></sc-if>
+      <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span style="font-size:13.5px">{{ x.text }}</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#7C7B76;letter-spacing:.04em">{{ x.sub }}</span></span>
+      <sc-if value="{{ x.hasActs }}"><span style="display:flex;gap:6px;pointer-events:auto"><sc-for list="{{ x.acts }}" as="a"><button onClick="{{ a.run }}" aria-label="{{ a.aria }}" style="min-width:44px;height:44px;padding:0 {{ a.px }};border-radius:22px;border:1px solid rgba(255,255,255,0.1);background:#222225;color:{{ a.c }};font-size:{{ a.fs }};font-family:{{ a.ff }};letter-spacing:{{ a.ls }};cursor:pointer;transition:transform .12s" style-active="transform:scale(.86)">{{ a.label }}</button></sc-for></span></sc-if>
+    </div>
+  </sc-for>
+</div>
+
+<sc-if value="{{ conn.show }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;z-index:72;left:0;right:0;top:{{ conn.top }};display:flex;justify-content:center;pointer-events:none"><div role="status" style="display:flex;align-items:center;gap:9px;height:32px;padding:0 14px;border-radius:999px;background:#17171A;border:1px solid rgba(255,255,255,0.1);font-size:12.5px;color:#A09F99;animation:fadeUp .3s ease;white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:{{ conn.dot }};animation:{{ conn.anim }}"></span>{{ conn.text }}</div></div>
+</sc-if>
+
+<sc-if value="{{ frame.status }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:0;left:0;right:0;height:54px;z-index:90;display:flex;align-items:center;justify-content:space-between;padding:4px 30px 0 36px;pointer-events:none">
+  <span style="font-size:16px;font-weight:600;letter-spacing:-0.01em">07:14</span>
+  <div style="position:absolute;left:50%;top:11px;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#000"></div>
+  <div style="display:flex;align-items:center;gap:7px"><div style="display:flex;align-items:flex-end;gap:2px"><span style="width:3px;height:4px;border-radius:1px;background:#ECEBE6"></span><span style="width:3px;height:6px;border-radius:1px;background:#ECEBE6"></span><span style="width:3px;height:8px;border-radius:1px;background:{{ frame.sig }}"></span><span style="width:3px;height:10px;border-radius:1px;background:{{ frame.sig }}"></span></div><div style="width:25px;height:12px;border-radius:4px;border:1.2px solid rgba(236,235,230,0.5);padding:1.5px"><div style="width:72%;height:100%;border-radius:2px;background:#ECEBE6"></div></div></div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:rgba(236,235,230,0.85);z-index:90;pointer-events:none"></div>
+</sc-if>
+
+</div>
+</div></x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>
