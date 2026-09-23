@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/*
+ * Core LOCKED IN tokens, taken from the approved Claude Design
+ * (design-reference/export/Locked In v3.dc.html). Stage 2 extends this set.
+ */
+@theme {
+  --color-bg: #050506;
+  --color-surface: #0a0a0b;
+  --color-card: #111113;
+  --color-text: #ecebe6;
+  --color-muted: #a09f99;
+  --color-dim: #7c7b76;
+  --color-faint: #55544f;
+  --color-accent: #c6e07b;
+  --color-danger: #e0715f;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
