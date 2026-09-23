@@ -13,14 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LOCKED IN",
+  title: { default: "LOCKED IN", template: "%s · LOCKED IN" },
   description: "No hype. Just proof.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050506",
+  themeColor: "#0a0a0b",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="min-h-full font-sans">{children}</body>
     </html>
   );
 }

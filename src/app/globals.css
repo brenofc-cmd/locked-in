@@ -1,28 +1,182 @@
 @import "tailwindcss";
 
 /*
- * Core LOCKED IN tokens, taken from the approved Claude Design
- * (design-reference/export/Locked In v3.dc.html). Stage 2 extends this set.
+ * LOCKED IN tokens, taken from the approved Claude Design
+ * (design-reference/export/Locked In v3.dc.html). See docs/DESIGN_REFERENCE.md.
  */
 @theme {
-  --color-bg: #050506;
-  --color-surface: #0a0a0b;
+  /* 780px: sidebar layout. 1180px: two-column Today / Focus. */
+  --breakpoint-desk: 48.75rem;
+  --breakpoint-wide: 73.75rem;
+
+  --color-page: #050506;
+  --color-bg: #0a0a0b;
+  --color-overlay: #070708;
+  --color-focus: #060607;
   --color-card: #111113;
+  --color-sheet: #121214;
+  --color-chip: #151517;
+  --color-raised: #18181b;
+  --color-selected: #1a1a1d;
+  --color-avatar: #1c1c1f;
+  --color-field: #0e0e10;
+
   --color-text: #ecebe6;
   --color-muted: #a09f99;
   --color-dim: #7c7b76;
+  --color-quiet: #6f6e6a;
+  --color-ghost: #5e5d59;
   --color-faint: #55544f;
+  --color-off: #3a3a3d;
+
   --color-accent: #c6e07b;
   --color-danger: #e0715f;
+  --color-missed: #b8695c;
+
+  --color-accent-wash: color-mix(in oklab, #c6e07b 5%, #0a0a0b);
+  --color-accent-soft: color-mix(in oklab, #c6e07b 8%, #0a0a0b);
+  --color-accent-swipe: color-mix(in oklab, #c6e07b 9%, #0a0a0b);
+  --color-accent-strong: color-mix(in oklab, #c6e07b 24%, #0a0a0b);
+  --color-accent-tab: color-mix(in oklab, #c6e07b 14%, transparent);
+  --color-accent-line: color-mix(in oklab, #c6e07b 60%, transparent);
+}
+
+@theme inline {
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-html {
-  color-scheme: dark;
+/* Element defaults live in the base layer so Tailwind utilities can override them. */
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  input,
+  textarea {
+    font-family: inherit;
+  }
+
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #5e5d59;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1f1f22;
+    border-radius: 8px;
+  }
 }
 
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
+/* Keyframes from the design, prefixed to avoid clashing with Tailwind's own. */
+@keyframes li-pulse {
+  0% {
+    box-shadow: 0 0 0 0
+      color-mix(in oklab, var(--color-accent) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 8px
+      color-mix(in oklab, var(--color-accent) 0%, transparent);
+  }
+}
+@keyframes li-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes li-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes li-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes li-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes li-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes li-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent),
+      0 0 32px color-mix(in oklab, var(--color-accent) 5%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent),
+      0 0 56px color-mix(in oklab, var(--color-accent) 12%, transparent);
+  }
+}
+@keyframes li-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
