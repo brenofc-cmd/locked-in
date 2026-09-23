@@ -1,43 +1,54 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-1 — Foundation — VERIFIED / COMPLETE (2026-09-23)
+2 — UI Implementation — VERIFIED / COMPLETE (2026-09-23)
 
-Completed:
+Previous Stages:
 
-- Claude Design exports inspected (2 ZIPs; newer one has v1, v2, v3, Breakpoints canvas, support.js, thumbnail)
-- Primary reference identified: `Locked In v3.dc.html` (visual); `Locked In v2.dc.html` (behaviour, since v3 logic is a stub)
-- Originals preserved byte-identical in `design-reference/original-zips/`; unzipped copy in `design-reference/export/`
-- Next.js 16.3.6 App Router app with TypeScript strict, Tailwind CSS 4, ESLint + Prettier
-- Base structure: `src/{app,components,hooks,lib/supabase,types,styles}`, `supabase/{migrations,tests}`, `tests/{unit,e2e}`, `docs/`, `design-reference/`, `public/`
-- `@supabase/supabase-js` and `@supabase/ssr` installed (no clients, schema or auth yet, by design)
-- Vitest (jsdom + Testing Library) and Playwright (mobile profile) configured with one test each
-- Temporary Stage 1 screen ("LOCKED IN / Foundation ready. / STAGE 1 / 10") using the design's tokens and Geist fonts
-- Docs: CLAUDE.md, README, PRODUCT, ARCHITECTURE, DESIGN_REFERENCE, ROADMAP, DECISIONS, PROGRESS
-- `.env.example` with the two public Supabase variables; `.gitignore` ignores `.env*` except the template
-- Git repository initialised with logical commits
+- 1 — Foundation — VERIFIED / COMPLETE (2026-09-23)
+
+Completed (Stage 2):
+
+- v3 design converted to Next.js + React + TypeScript + Tailwind with mock data (no backend)
+- Shared shell: mobile top bar + bottom tabs (< 780px), 228px sidebar (≥ 780px), two-column Today/Focus (≥ 1180px)
+- Routes: `/` → `/today`; `/today`, `/partner`, `/focus`, `/progress`, `/more`; `/routine`, `/challenges`, `/duo`, `/settings`, `/onboarding`
+- Today: header, hero %, count, streak, progress bar with standard marker, sections, task rows (tap / keyboard / swipe right to complete, swipe left or long-press for options), perfect-day banner, partner card, live feed, review today, mobile Quick Add + LOCK IN bar
+- Undo snackbar; unchecking withdraws the feed event
+- Quick Add / edit sheet (today or repeat, days, time, reminder, section, visible to Lucas, notes); "apply change to" prompt for routine items
+- Task options: skip with reason (leaves the total), unskip, edit, delete
+- Partner: status, today %, this week (87% vs 81%), focus / streak comparison, head to head (5 — 3), past weeks, Lucas' tasks, activity, reactions
+- Focus: activity + duration picker (25 / 50 / 90 / custom), LOCK IN, running overlay (ring timer, pause / resume, end), complete screen with note, session recorded in list and feed
+- Progress: ranges 7D / 30D / 90D / YEAR, completion rate, streak, focus, perfect days, bar chart (today is live), September calendar with day detail + corrections, weekly reviews overlay, insights + 30-day consistency
+- More, Routine (add, edit, drag + keyboard reorder, templates), Challenges (list + new challenge), Duo (share / copy code / join placeholder), Settings (standard 70–100% drives Today, notification switches), Onboarding (5 steps → Today, name updates greeting)
+- Review day, weekly review and morning briefing overlays
+- Toasts, snackbar, connection pill, unsynced marker, empty states (no partner)
+- Dev-only simulation panel (`/today?dev=1` in `npm run dev`): Lucas online / focusing / offline, completes a task, reacts; remove partner; connection states; briefing
+- Centralised mocks in `src/lib/mock-data.ts`; state in `src/components/app-state.tsx`
+- Accessibility: semantic buttons / links / nav landmarks, checkbox / radio / switch roles, aria-labels on icon buttons, focus-visible ring, Escape closes sheets, state never by colour alone (strike-through, labels), `prefers-reduced-motion`
+- Docs: DECISIONS ADR-007…013, DESIGN_REFERENCE implementation notes, ARCHITECTURE and CLAUDE.md updated
 
 Pending:
 
-- Nothing for Stage 1
+- Nothing for Stage 2
 
-Verified:
+Verified (2026-09-23, clean `.next`):
 
-- `npm install` — 0 vulnerabilities
-- `npm run lint` — pass, no warnings
-- `npm run typecheck` — pass (also from a clean `.next`)
-- `npm test` — 1 file, 1 test passed
-- `npm run build` — pass, `/` prerendered static
-- `npm run test:e2e` — 1 passed (Chromium, Pixel 7 profile)
-- `npm run dev` — boots, `/` returns 200 with the foundation screen
+- `npm run lint` — pass
+- `npm run typecheck` — pass
+- `npm test` — 2 files, 9 tests passed
+- `npm run build` — pass, all routes static
+- `npm run format:check` — pass
+- `npm run test:e2e` — 24 passed (mobile-390 and desktop-1440 full suite; mobile-375 and mobile-430 layout)
+- Visual inspection with screenshots at 375, 390, 430, 768, 1180, 1440 on every screen: no horizontal overflow, no console errors; compared against the v2 prototype and the Breakpoints canvas rendered from `design-reference/`
+- Scripted manual pass (dev server): swipe both directions, skip / unskip, edit with scope prompt, streak / day / template / challenge sheets, Escape to close, dev simulation (focusing, reaction, completion toast with quick react, offline + unsynced marker, reconnect, empty partner), weekly review navigation, insights, keyboard and drag reorder, onboarding → Today with new name, standard change reflected on Today, copy code
 
 Known Issues:
 
-- `Locked In v3.dc.html` has an empty logic script: opened alone in Claude Design it shows placeholders. Use v2 for behaviour and sizing values. The live Claude Design project may hold newer logic; the ZIP is what was inspected.
-- Desktop sidebar item labels in v3 are generated by logic and therefore inferred (see DESIGN_REFERENCE.md).
-- npm reports `unrs-resolver` postinstall blocked by the local npm `allowScripts` policy; lint/build are unaffected.
-- `create-next-app` pins ESLint 9, which npm marks as deprecated; kept for `eslint-config-next` compatibility (ADR-002).
-- Project lives in `C:\Users\brendon.castellani\locked-in`; the home folder contains an unrelated `package.json`/lockfile, so `turbopack.root` is pinned in `next.config.ts`.
+- Mock only: nothing persists across reloads; "Today only" and "Today and future days" apply the same edit; Visible to Lucas / reminder / notes have no effect; Join and Leave duo show a Stage 3 toast
+- Morning briefing is not shown automatically (needs persistence; ADR-013)
+- The 🫡 emoji renders as an empty box in headless Chromium without an emoji font; fine on real devices
+- A focus session ended within the first minute is recorded as 1 minute
+- Differences from the reference are listed in `docs/DESIGN_REFERENCE.md` → "Stage 2 implementation notes"
 
 Next Stage:
-2 — UI Implementation — PENDING (not started)
+3 — Supabase Auth, database foundation and Duo system — PENDING (not started)

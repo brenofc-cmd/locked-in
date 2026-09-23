@@ -40,6 +40,49 @@ Status: Accepted.
 
 # ADR-006 — Tests: Vitest (jsdom) + Playwright on a mobile profile
 
-Decision: Unit/component tests with Vitest + Testing Library in jsdom (`tests/unit`). E2E with Playwright against a production build (`next build && next start` on port 3100), default project = Pixel 7 emulation.
+Decision: Unit/component tests with Vitest + Testing Library in jsdom (`tests/unit`). E2E with Playwright against a production build (`next build && next start` on port 3100). Projects: `mobile-390` and `desktop-1440` run the full suite; `mobile-375` and `mobile-430` run the `@layout` tests (Stage 2).
 Reason: Mobile-first product; testing the production build catches build-only issues.
 Status: Accepted.
+
+# ADR-007 — Breakpoints follow the reference: sidebar from 780px, two columns from 1180px
+
+Decision: `< 780px` = mobile shell (top bar + bottom tabs). `≥ 780px` = desktop shell (228px sidebar, no tabs). `≥ 1180px` = Today and Focus switch to two columns and the Today rail becomes sticky. Implemented as Tailwind breakpoints `desk` (48.75rem) and `wide` (73.75rem) in `globals.css`.
+Reason: v2 logic (`mobile = width < 780`, single column below 1180) and the Breakpoints canvas (tablet 834 renders with the sidebar) both say so. The Stage 2 brief suggested the sidebar at 1180, but the approved design wins.
+Status: Accepted.
+
+# ADR-008 — Mock state in one React context
+
+Decision: All Stage 2 state (tasks, feed, partner, focus timer, sheets, overlays, toasts, snackbar) lives in `src/components/app-state.tsx`, provided by the `(app)` layout. Mock data only in `src/lib/mock-data.ts`. Pure derivations in `src/lib/today.ts` and `src/lib/partner.ts` (unit-tested).
+Reason: One small provider is enough for two users. No Redux/Zustand. Stage 3+ replaces the initial data and mutations with Supabase calls behind the same shape.
+Alternatives considered: per-page state (loses state between tabs), a store library (not needed).
+Status: Accepted.
+
+# ADR-009 — Routes for screens; sheets and overlays are state
+
+Decision: Screens are routes: `/today`, `/partner`, `/focus`, `/progress`, `/more` (main) and `/routine`, `/challenges`, `/duo`, `/settings`, `/onboarding` (secondary, from More / sidebar). `/` redirects to `/today`. Bottom sheets and full-screen moments (focus running/complete, review day, weekly review, briefing) are UI state, not routes.
+Reason: Matches the design's navigation; keeps the focus timer alive while navigating.
+Status: Accepted.
+
+# ADR-010 — Dev simulation only in development with ?dev=1
+
+Decision: `DevPanel` renders only when `NODE_ENV === "development"` and the URL had `?dev=1` (remembered in sessionStorage). It simulates Lucas online / focusing / offline, Lucas completing a task, Lucas reacting, removing the partner (empty states), connection reconnecting / offline / back online, and opens the morning briefing.
+Reason: Lets the partner and realtime states be exercised without a backend, without polluting production UI.
+Status: Accepted. Remove or replace with real events in Stage 5.
+
+# ADR-011 — No new dependencies in Stage 2
+
+Decision: Charts are CSS/SVG, icons are the design's inline SVGs, animations are CSS keyframes/transitions. `lucide-react`, `date-fns` and `recharts` remain deferred (ADR-005).
+Reason: Nothing in the v3 design needs them yet; fidelity is higher with the design's own SVGs.
+Status: Accepted.
+
+# ADR-012 — Filling values v3 leaves undefined
+
+Decision: v3's logic script is empty, so some sizes/copy are not defined anywhere. Chosen values (all listed in `docs/DESIGN_REFERENCE.md` → "Stage 2 implementation notes"): hero `%` sign 26/40px, focus ring 296px mobile and `min(520px, 58dvh)` desktop with timer `min(168px, 17dvh)`, head-to-head number 56/72px, weekly-review number 64/96px, reactions 🔥 ⚡ 🫡 "Respect." (4 columns as in v3), skip reasons Rest/Sick/Travel/Other, repeat options Every day/Weekdays/Custom, "next" line copy, More row subtitles, onboarding CTAs.
+Reason: Simplest values consistent with the surrounding v3 tokens and v2 behaviour.
+Status: Accepted; revisit if the design is updated.
+
+# ADR-013 — Morning briefing is not shown automatically yet
+
+Decision: The briefing overlay exists but opens only from the dev panel.
+Reason: "Show the first time you open the app each day" needs persisted state (Stage 3+). Showing it on every load would block OPEN → UNDERSTAND → ACT.
+Status: Accepted; implement the daily trigger with persistence.

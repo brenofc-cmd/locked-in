@@ -90,8 +90,8 @@ Transient: **snackbar** (undo-style), **toasts** (partner events with quick reac
   scrolling main, bottom tab bar of 5 (icon in a 28px pill + 10px label), height 58px + safe-area inset.
 - **Desktop (≥ 780px)**: 228px left sidebar — logo, main nav (4 items with a
   status dot), sub nav (4 items), "Prototype flows", user footer. No bottom bar. Item labels are
-  produced by the (empty) v3 logic; inferred as Today/Partner/Focus/Progress and
-  Routine/Challenges/Duo/Settings from the v3 screens and mobile tabs. Confirm in Stage 2.
+  produced by the (empty) v3 logic; implemented in Stage 2 as Today/Partner/Focus/Progress and
+  Routine/Challenges/Duo/Settings (inferred from the v3 screens and mobile tabs).
 - Content max-width 1120px, centred.
 
 ## Breakpoints
@@ -201,3 +201,34 @@ reactions, no exclamation marks, no motivational fluff.
 
 User **Brendon**, partner **Lucas**, date **Tue, Sep 23**, week 39, streak 13, duo code `LKD-8X29A`.
 These are mock values — Stage 2 may use them as mock data, Stage 3+ replaces them.
+
+## Stage 2 implementation notes
+
+Where each part of the reference lives in the app:
+
+| Reference                                                              | Implementation                                                                                                   |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Frame, top bar, sidebar, tab bar                                       | `src/components/shell/AppShell.tsx`                                                                              |
+| Snackbar, toasts, connection pill                                      | `src/components/shell/Feedback.tsx`                                                                              |
+| Today                                                                  | `src/components/screens/TodayScreen.tsx`, `today/TaskRow.tsx`, `today/PartnerCard.tsx`, `today/ActivityItem.tsx` |
+| Partner / Focus / Progress / More                                      | `src/components/screens/*Screen.tsx`                                                                             |
+| Routine / Challenges / Duo / Settings / Onboarding                     | `src/components/screens/*Screen.tsx`                                                                             |
+| Sheets (task, options, react, focus, streak, day, template, challenge) | `src/components/sheets/*`                                                                                        |
+| Focus running / complete                                               | `src/components/overlays/FocusOverlay.tsx`                                                                       |
+| Review day / weekly review / briefing                                  | `src/components/overlays/MomentOverlays.tsx`                                                                     |
+| Colour tokens, keyframes, breakpoints                                  | `src/app/globals.css`                                                                                            |
+
+Known differences from the reference (deliberate, see `DECISIONS.md` ADR-007…013):
+
+- "Prototype flows" (sidebar and More) and the "Live states" screen are design tooling, not product
+  screens; not implemented. Overlays are reached from their real entry points instead (Review today,
+  weekly reviews, Sign out → onboarding); the briefing opens from the dev panel.
+- Overlays close instantly (v2 faded them out over ~430ms).
+- Reactions sheet shows 4 options (🔥 ⚡ 🫡 "Respect.") to fit v3's 4-column grid; v2 had 6. On desktop
+  it opens as the centred dialog (v2 used an inline popover; v3 only has the sheet).
+- Values v3 does not define were chosen (ADR-012): `%` sign 26/40px, focus ring 296px /
+  `min(520px,58dvh)`, desktop timer `min(168px,17dvh)`, head-to-head 56/72px, weekly number 64/96px.
+- Mock-only behaviour: "Today only" and "Today and future days" apply the same edit; "Visible to Lucas",
+  reminder and notes are stored but have no effect; Join / Leave duo show a "Stage 3" toast.
+- Focus complete records at least 1 minute.
+- The date is fixed to Tue, Sep 23 (mock); completion times use the real clock.

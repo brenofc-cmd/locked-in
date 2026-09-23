@@ -34,10 +34,16 @@ Not used, by decision: Prisma, Drizzle, Express, NestJS, Redis, Firebase, Redux,
 ```
 locked-in/
 ├── src/
-│   ├── app/            # routes (App Router), layout, globals.css
-│   ├── components/     # UI components (Stage 2+)
+│   ├── app/            # routes: (app)/today, partner, focus, progress, more, routine,
+│   │                   #   challenges, duo, settings, onboarding; `/` redirects to /today
+│   ├── components/     # app-state.tsx (mock state), shell/, screens/, today/, sheets/,
+│   │                   #   overlays/, focus/, ui.tsx, icons.tsx
 │   ├── hooks/          # client hooks, e.g. realtime subscriptions (Stage 5+)
 │   ├── lib/
+│   │   ├── mock-data.ts   # ALL Stage 2 mock data (user, partner, tasks, activity, focus, stats, challenges)
+│   │   ├── today.ts       # pure Today derivations (stats, sections, schedule labels)
+│   │   ├── partner.ts     # pure partner status view
+│   │   ├── format.ts      # time formatting
 │   │   └── supabase/   # Supabase clients: client.ts (browser), server.ts (server) — Stage 3
 │   ├── types/          # shared TS types, generated DB types (Stage 3+)
 │   └── styles/         # extra CSS if globals.css grows too large
@@ -64,6 +70,10 @@ Empty folders hold a `.gitkeep` until they get real code.
   would be a Route Handler or Supabase Edge Function, never client code).
 
 ## Client / server separation
+
+Stage 2: route `page.tsx` files are Server Components that render one client screen. Client state is a
+single context (`src/components/app-state.tsx`, ADR-008) mounted by `src/app/(app)/layout.tsx`, so state
+survives navigation between tabs. Everything is mock data; nothing is persisted.
 
 - Default to **Server Components**; add `"use client"` only for interactivity (checkboxes, timers,
   realtime subscriptions, sheets).

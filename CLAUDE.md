@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working in Stage 1 (Windows, Node 22):
+All verified working (Windows, Node 22; last run at the end of Stage 2):
 
 ```bash
 npm install
@@ -71,9 +71,17 @@ npm run lint           # ESLint
 npm run typecheck      # next typegen && tsc --noEmit
 npm test               # Vitest, tests/unit
 npm run build          # production build
-npm run test:e2e       # Playwright, builds and serves on :3100 (first run: npx playwright install chromium)
+npm run test:e2e       # Playwright, builds and serves on :3100; 390 + 1440 full suite, 375 + 430 layout
+                       #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 ```
 
 Run lint, typecheck, test and build before declaring any stage complete; run test:e2e when UI or
 routing changed.
+
+## Working with the mock UI (Stage 2)
+
+- Mock data: only `src/lib/mock-data.ts`. Mock state: only `src/components/app-state.tsx`.
+- Dev simulation of the partner / connection: `npm run dev`, open `/today?dev=1`, use the DEV button.
+- Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without
+  checking `design-reference/`.
