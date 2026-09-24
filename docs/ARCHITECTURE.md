@@ -35,20 +35,25 @@ Not used, by decision: Prisma, Drizzle, Express, NestJS, Redis, Firebase, Redux,
 locked-in/
 ├── src/
 │   ├── app/            # (app)/ private screens: today, partner, focus, progress, more, routine,
-│   │                   #   challenges, duo, settings, onboarding; (app)/actions.ts (duo, profile)
+│   │                   #   challenges, duo, settings, onboarding; (app)/actions.ts (duo, profile),
+│   │                   #   (app)/task-actions.ts (tasks, routine)
 │   │                   # (auth)/ login, signup, forgot-password, reset-password; (auth)/actions.ts
 │   │                   # auth/confirm (email links), auth/signout (POST); `/` redirects to /today
 │   ├── proxy.ts        # Next 16 proxy: session refresh + route protection
-│   ├── components/     # session.tsx (real identity), app-state.tsx (mock product state), auth/,
+│   ├── components/     # session.tsx (real identity), use-tasks.ts (real tasks / routine),
+│   │                   #   app-state.tsx (mock product state + composes the real parts), auth/,
 │   │                   #   shell/, screens/, today/, sheets/, overlays/, focus/, ui.tsx, icons.tsx
 │   ├── hooks/          # client hooks, e.g. realtime subscriptions (Stage 5+)
 │   ├── lib/
-│   │   ├── mock-data.ts   # ALL remaining mock data (stats, partner presence, tasks, activity, focus, challenges)
-│   │   ├── session.ts     # getSession(): user + profile + duo + partner, server only
+│   │   ├── mock-data.ts   # ALL remaining mock data (partner presence / tasks / activity, focus, stats, streak, challenges)
+│   │   ├── session.ts     # loadAppData(): session + today's tasks + routine, server only
+│   │   ├── local-date.ts  # local dates, ISO weekdays (1 = Mon … 7 = Sun), labels
+│   │   ├── task-model.ts  # row <-> UI mapping, categories, validation, task error copy
+│   │   ├── templates.ts   # routine templates (product constants)
 │   │   ├── auth-routes.ts # public / guest-only paths, safe `next` redirects
 │   │   ├── auth-errors.ts # Supabase Auth error codes -> friendly copy, password rules
 │   │   ├── invite-code.ts # invite code normalisation, duo RPC error copy
-│   │   ├── today.ts       # pure Today derivations (stats, sections, schedule labels)
+│   │   ├── today.ts       # pure Today derivations (completion, sections, schedule labels)
 │   │   ├── partner.ts     # pure partner status view
 │   │   ├── format.ts      # time formatting
 │   │   └── supabase/   # client.ts (browser), server.ts (server), proxy.ts (session refresh), env.ts
@@ -57,10 +62,11 @@ locked-in/
 ├── supabase/
 │   ├── migrations/     # SQL migrations (source of truth, see docs/DATABASE.md)
 │   ├── tests/          # pgTAP security tests
-│   └── dev/            # DEV-only helpers (test users)
+│   └── dev/            # DEV-only helpers (create / reset test users)
 ├── tests/
 │   ├── unit/           # Vitest
-│   └── e2e/            # Playwright: auth.setup.ts (real sign-in), app.spec.ts, stage3.spec.ts
+│   ├── e2e/            # Playwright: auth.setup.ts (seed + sign-in), app.spec.ts, stage3/4.spec.ts
+│   └── fixtures/       # test fixtures (the design's Today)
 ├── docs/               # product, architecture, design reference, roadmap, decisions, progress
 ├── design-reference/   # Claude Design export — read-only
 └── public/             # static assets
@@ -80,13 +86,21 @@ Empty folders hold a `.gitkeep` until they get real code.
 ## Client / server separation
 
 Route `page.tsx` files are Server Components that render one client screen. `src/app/(app)/layout.tsx`
-(Server Component) loads the real session with `getSession()` and mounts two client contexts:
+(Server Component, dynamic because it reads cookies) calls `loadAppData()`: `getClaims()`, then in
+parallel the profile / duo / member queries and `ensure_my_daily_tasks()` → today's `daily_tasks` +
+active `routine_items`. It mounts:
 
 - `SessionProvider` (`src/components/session.tsx`) — **real**: user id / email, profile (name,
   timezone, since), duo (invite code) and partner (name). Refreshed by Server Actions that revalidate
   the layout.
-- `AppStateProvider` (`src/components/app-state.tsx`, ADR-008) — **mock** product state (tasks, feed,
-  focus, stats, challenges, presence, reactions); reads identity from `useSession()` (ADR-017).
+- `AppStateProvider` (`src/components/app-state.tsx`, ADR-008) with `initialTasks`. It composes:
+  - `useTasks()` (`src/components/use-tasks.ts`, ADR-024) — **real**: today's tasks and the routine,
+    optimistic updates + Server Actions (`task-actions.ts`) + rollback on error;
+  - **mock** product state: partner presence / tasks / activity, reactions, focus sessions, standard,
+    stats, streak, challenges. Identity comes from `useSession()` (ADR-017).
+
+A reload always renders from the database; there is no client cache of tasks. No realtime yet: a
+partner sees changes on their next load (Stage 5).
 
 - Default to **Server Components**; add `"use client"` only for interactivity (checkboxes, timers,
   realtime subscriptions, sheets).

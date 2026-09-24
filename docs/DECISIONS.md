@@ -116,3 +116,51 @@ Status: Accepted.
 Decision: Playwright's `setup` project signs in through `/login` as the Brendon test user (duo with Lucas, rebuilt each run through the RPCs) and saves the cookies; the Stage 2 UI suite reuses that state. Stage 3 flows (`tests/e2e/stage3.spec.ts`) use Alice / Bruno / Carla in their own serial project. Test users are created confirmed with `supabase/dev/create_test_users.sql`; the password lives only in `.env.test.local` (git-ignored). pgTAP runs locally with `supabase test db` when Docker is available, otherwise on DEV inside an aborted transaction (docs/DATABASE.md).
 Reason: Real auth and RLS must be exercised end to end; fake email addresses must never trigger confirmation emails.
 Status: Accepted. A separate test project or local stack is preferable once available.
+
+# ADR-019 — Routine template + materialised daily snapshot; status on the task
+
+Decision: `routine_items` is the recurring template; `daily_tasks` holds one row per task per local date, copying title, category, time, order, visibility, notes and reminder (a snapshot). A one-off task is a `daily_tasks` row with `routine_item_id` null. Status (`pending` / `completed` / `skipped`, with `completed_at` / `skipped_at` / `skip_reason`) lives on the task row: no separate `task_checkins` table. Missed is derived (`task_date < today` and pending), never stored. Extra columns beyond the Stage 4 brief, each required by the approved UI: `skip_reason` (row shows "SKIPPED · SICK"), `notes` (the "5 KM" line and the Notes field), `reminder` (the switch must not lie after a reload; notifications come later).
+Reason: History must not be rewritten when a routine changes (Gym MON/WED/FRI becoming MON/TUE/THU/SAT keeps the old days in the past). One task has exactly one state per day, so a check-ins table would add joins and no information.
+Status: Accepted.
+
+# ADR-020 — On-demand, idempotent materialisation with SECURITY INVOKER functions
+
+Decision: No cron, worker or Edge Function. `ensure_my_daily_tasks()` runs when the app loads and at the start of every routine-changing function; it fills every scheduled date from `materialized_through + 1` (or `start_date`) to the owner's today, so days the app was not opened are caught up. `unique (routine_item_id, task_date)` + `ON CONFLICT DO NOTHING` makes it idempotent and safe under concurrency. All Stage 4 functions are SECURITY INVOKER with `search_path = ''`, identity from `auth.uid()` only, EXECUTE revoked from public / anon and granted to `authenticated`; column grants limit what clients can write. The composite FK `(routine_item_id, owner_id)` makes a cross-owner link impossible, and it also blocks hard-deleting a routine with history (clients have no DELETE on `routine_items`; "Delete" archives with `end_date`).
+Reason: Two users do not need infrastructure; invoker functions keep RLS as the single security model (no definer escape hatches added in this stage).
+Status: Accepted.
+
+# ADR-021 — "Today" is the owner's local date, defined once in the database
+
+Decision: `public.my_today()` = `(now() at time zone profiles.timezone)::date`. It drives materialisation, the `task_date` default for Quick Add, and is returned to the app by `ensure_my_daily_tasks()`. The client never derives the day from UTC; `src/lib/local-date.ts` formats and does calendar arithmetic on the database's `YYYY-MM-DD` strings (ISO weekdays 1 = Monday … 7 = Sunday everywhere). "DAY N" on Today counts local days since the profile was created.
+Reason: One semantics for Today, Quick Add, routine and tests; no timezone logic spread across the code.
+Status: Accepted.
+
+# ADR-022 — Completion counts skipped tasks in the total (supersedes Stage 2 rule)
+
+Decision: Completion % = completed / all tasks of the day. A skipped task stays in the total and is not completed: 10 tasks, 8 completed, 1 skipped, 1 pending → 80% (not 89%). Perfect day = every task completed. Copy updated in the options and streak sheets; PRODUCT.md principle 5 updated.
+Reason: Explicit product instruction for Stage 4. It replaces the Stage 2 rule "skipped tasks leave the total", which made skipping a way to raise the score.
+Status: Accepted.
+
+# ADR-023 — Five stored categories; UI chips follow them
+
+Decision: Stored categories are `morning`, `work_study`, `body`, `night`, `custom` (the five Today sections). The Section chips in the task sheet show Morning, Work / Study, Body, Night, Custom — the previous separate "Study" and "Work" chips already mapped to the same section.
+Reason: One value per section; a chip that cannot round-trip through the database would lie.
+Status: Accepted.
+
+# ADR-024 — Real task state: server-loaded, optimistic, no revalidation
+
+Decision: `(app)/layout.tsx` loads session and today's tasks together (`loadAppData()`: ensure + two queries, in parallel with the profile / duo queries). Client state for tasks and routine lives in `src/components/use-tasks.ts`, separate from the mock product state in `app-state.tsx`. Every change updates the UI first (tap → check in ~10 ms, no spinner), then calls a Server Action (`src/app/(app)/task-actions.ts`); success reconciles with the returned row, failure rolls back and shows a toast. A per-task version counter drops stale responses so fast repeated taps never flicker. Task actions do not revalidate the layout; a reload always renders from the database (the layout is dynamic: it reads cookies).
+Reason: The daily core loop must feel instant; the server stays the source of truth on every load.
+Status: Accepted. Stage 5 adds realtime on top.
+
+# ADR-025 — Sign-out ends only this browser's session
+
+Decision: `/auth/signout` calls `signOut({ scope: "local" })`. Test helpers also sign out locally.
+Reason: Supabase's default scope is global: signing out on a laptop would silently end the session on the phone. Found by the Stage 4 E2E suite.
+Status: Accepted.
+
+# ADR-026 — E2E: one seeded user per Playwright project
+
+Decision: The Stage 2 UI suite runs on real data: `auth.setup.ts` seeds the design's Today (12 routine items, 8 completed; `tests/fixtures/design-day.ts`) for three users — one per project group (390, 1440, 375 + 430) — so parallel projects never share mutable rows; `app.spec.ts` runs serially inside a project and restores what it changes. The `stage4` project depends on `stage3` because both use Alice / Bruno / Carla. `mockTasks` was removed from the app.
+Reason: Real persistence makes shared test users race; per-project users keep the suite parallel and deterministic.
+Status: Accepted.

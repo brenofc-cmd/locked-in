@@ -28,8 +28,9 @@ serious tool where **one trusted person** sees whether you actually showed up to
    **3 seconds**.
 3. **Proof over hype.** Numbers, times and completed tasks. No streak confetti, no motivational copy.
 4. **Two people, not a network.** Private to the duo. No public profiles, no followers.
-5. **Honest scoring.** The day is judged on the percentage of scheduled tasks completed. Skipped tasks
-   leave the total (neither for nor against). Unchecking withdraws the feed event.
+5. **Honest scoring.** The day is judged on the percentage of scheduled tasks completed. A skipped
+   task stays in the total and does not count as completed (ADR-022). Unchecking withdraws the feed
+   event.
 6. **Minimal privacy leakage.** The partner sees Online / Focusing / Offline, never more. Individual tasks
    can be hidden but still count.
 7. **Dark, serious, minimal, premium.** No generic dashboard aesthetic, few cards, thumb-friendly controls.

@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working (Windows, Node 22; last run at the end of Stage 3):
+All verified working (Windows, Node 22; last run at the end of Stage 4):
 
 ```bash
 npm install
@@ -72,10 +72,11 @@ npm run typecheck      # next typegen && tsc --noEmit
 npm test               # Vitest, tests/unit
 npm run build          # production build
 npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.local + .env.test.local.
-                       #   setup (real sign-in) → 390 + 1440 full suite, 375 + 430 layout, stage3 (serial)
+                       #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
+                       #   stage3 then stage4 (serial, shared DEV users)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
-npx supabase test db   # pgTAP (supabase/tests), needs Docker; DEV fallback in docs/DATABASE.md
+npx supabase test db   # pgTAP (supabase/tests: stage3 + stage4), needs Docker; DEV fallback in docs/DATABASE.md
 ```
 
 Run lint, typecheck, test and build before declaring any stage complete; run test:e2e when UI or
@@ -94,12 +95,21 @@ routing changed; run the pgTAP suite when a migration changed.
 - Test users and credentials: `docs/DATABASE.md` → "Test users". `.env*` and `tests/e2e/.auth/` are
   git-ignored and must stay that way.
 
-## Real vs mock state (Stage 3)
+## Real vs mock state (Stage 4)
 
 - Real: auth session, profile (name, timezone), duo (invite code), partner name →
-  `useSession()` (`src/components/session.tsx`), loaded by `src/lib/session.ts`.
-- Mock: tasks, routine, feed, focus, stats, streaks, challenges, presence, reactions → only
+  `useSession()`; routine items and today's tasks → `useTasks()` (`src/components/use-tasks.ts`)
+  via `useApp()`. All loaded by `loadAppData()` in `src/lib/session.ts`.
+- Mock: partner presence / completion / tasks, activity feed (except the user's own live
+  completions), reactions, focus sessions, standard, stats, streak, competition, challenges → only
   `src/lib/mock-data.ts` and `src/components/app-state.tsx`.
+- "Today" is `public.my_today()` (profiles.timezone). Never compute the day from UTC; use
+  `src/lib/local-date.ts` on the `YYYY-MM-DD` strings the database returns. Weekdays are ISO
+  (1 = Monday … 7 = Sunday) everywhere.
+- Task writes are optimistic: update state, call a Server Action in `src/app/(app)/task-actions.ts`,
+  reconcile or roll back with a toast. Never show a spinner on the checkbox.
+- Routine history is immutable: edit the template with `update_routine_item`, never rewrite past
+  `daily_tasks`; "Delete" archives (`archive_routine_item`).
 - Dev simulation of the partner / connection: `npm run dev`, open `/today?dev=1`, use the DEV button
   (partner simulations appear only when you really have a partner).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without

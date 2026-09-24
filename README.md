@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 3 — Auth + Duo verified; Stage 4 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 4 — real Today, routine and tasks verified; Stage 5 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 

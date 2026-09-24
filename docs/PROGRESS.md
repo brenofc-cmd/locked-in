@@ -1,7 +1,69 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-3 — Supabase Auth, database foundation and Duo — VERIFIED / COMPLETE (2026-09-24)
+4 — Real Today, recurring routines, one-off tasks and task check-ins — VERIFIED / COMPLETE (2026-09-24)
+
+Previous Stages:
+
+- 1 — Foundation — VERIFIED / COMPLETE (2026-09-23)
+- 2 — UI Implementation — VERIFIED / COMPLETE (2026-09-23)
+- 3 — Supabase Auth, database foundation and Duo — VERIFIED / COMPLETE (2026-09-24)
+
+Completed (Stage 4):
+
+- Schema (DEV, 3 migrations): `routine_items` (recurring template) and `daily_tasks` (materialised snapshot per local date, or one-off); status on the task (pending / completed / skipped, database-owned timestamps, missed derived); details in `docs/DATABASE.md`
+- Guarantees in the database: one occurrence per routine per date, same-owner composite FK, no hard delete of routines with history, no impossible status rows, ISO weekdays 1..7 sorted / de-duplicated, title / notes / category / date checks
+- `my_today()` from `profiles.timezone` is the single definition of the day; `ensure_my_daily_tasks()` materialises on demand with catch-up of unopened days, idempotent under concurrency (no cron)
+- Routine functions (all SECURITY INVOKER): create (starts today), update "Today and future days" (history untouched, today's occurrence added / refreshed / removed by the documented rule), archive (= Delete), reorder
+- RLS: owner full control; duo partner reads only `visible_to_partner` rows and writes nothing; outsider and anon nothing; column grants keep ids, dates and timestamps server-owned
+- Today real: tasks from the database grouped by section in manual order, real local date and DAY N, NO ROUTINE YET empty state, Rest today from the real routine, completion = completed / all tasks (skipped stays in the total, ADR-022)
+- Task actions real and optimistic (tap → check ≈ 7 ms, no spinner): complete, undo (snackbar), skip with reason, unskip, Quick Add one-off, Edit → Today only / Today and future days, Delete (one-off deleted, routine item archived); failures roll back with a toast
+- Routine screen real: add, edit (today and future), archive, drag / keyboard reorder persisted, templates create real routine items; onboarding's chosen items too
+- Review today / morning briefing / streak sheet use today's real tasks; Progress "today" bar is real
+- Sign-out now ends only the current browser session (ADR-025)
+- Mock feed keeps only partner events; the user's own events come from real completions
+- Docs: DATABASE.md (tables, materialisation, timezone, status, RLS, snapshots), ADR-019…026, ARCHITECTURE, CLAUDE.md, PRODUCT (principle 5)
+
+Verified (2026-09-24, clean `.next`):
+
+- `npm run lint` — pass
+- `npm run typecheck` — pass
+- `npm test` — 4 files, 32 tests passed
+- `npm run build` — pass
+- `npm run format:check` — pass
+- `npm run test:e2e` — 34 passed: setup (seeds 3 users with the design's Today as real data), 24 Stage 2 tests on real data (390, 1440, 375, 430), 5 Stage 3, 4 Stage 4
+- Database: pgTAP on the DEV database — `stage3_auth_duo` 51/51, `stage4_tasks` 71/71 (aborted-transaction method; DEV verified free of fixtures afterwards)
+- Concurrency: 5 simultaneous `ensure_my_daily_tasks()` calls → no duplicates; catch-up of 3 unopened days; snapshot rename (past keeps the old title)
+- Clean clone (`git clone` + `npm ci`): lint, typecheck, unit and build pass without any secrets
+- Manual acceptance (production build, fresh browser context at 390px, user Alice): created Wake Up (every day, 06:00), Gym (MON / WED / FRI) and Read (every day); on Thursday Gym correctly rests ("Rest today: Gym"); Quick Add "Finish Physics Assignment"; completed Wake Up (tap → check 7 ms); skipped Read (Rest); reload → identical (1 / 3, 33%); sign out → /today redirects to /login; sign in → identical; no console errors
+- Responsive smoke: /today, /routine, /partner, /progress, /settings at 375, 390, 430, 768, 1180, 1440 — no horizontal overflow; screenshots checked against the design at 390 and 1440
+- Security review: RLS on all five tables, anon has no grants, owner_id spoofing and cross-owner links rejected, partner read-only and private tasks hidden, outsider blocked (pgTAP + API), no SECURITY DEFINER added, every new function with `search_path = ''` and EXECUTE only for `authenticated`, no service role in client code, no secrets committed
+
+Pending:
+
+- Nothing for Stage 4
+
+Known Issues:
+
+- `npx supabase test db` still cannot run locally (Docker Desktop's VM does not start); pgTAP was run on DEV instead (docs/DATABASE.md → Tests)
+- No realtime: the partner sees changes on their next load (Stage 5)
+- Streak (13 days), yesterday %, Progress history / calendar, weekly and head-to-head numbers, partner completion / tasks / presence, focus sessions and challenges are still mock (Stages 5–8)
+- Past-day corrections in the Progress calendar are still local mock (Stage 7 reads `daily_tasks` history)
+- The standard (70–100%) is still local state, not persisted
+- Reminders are stored but no notification is sent yet
+- The live feed is local: the user's own completions appear there but are not persisted (Stage 5)
+- Day rollover while the app stays open needs a reload to show the new day
+- E2E resets archive routine items, so archived rows accumulate for test users; `supabase/dev/reset_test_users.sql` cleans them
+- Supabase advisors: accepted definer-RPC notice (ADR-015), leaked-password protection off in DEV Auth (enable before production), INFO about the composite FK index (docs/DATABASE.md → Indexes)
+
+Next Stage:
+5 — Realtime Partner, Presence and live activity — PENDING (not started)
+
+---
+
+# Stage 3 record
+
+Stage 3 — Supabase Auth, database foundation and Duo — VERIFIED / COMPLETE (2026-09-24)
 
 Previous Stages:
 
@@ -51,8 +113,8 @@ Known Issues:
 - Leaked password protection (HaveIBeenPwned) is off in DEV Auth settings; enable before production
 - DEV contains the five `@example.com` test users and one real account created during the email check
 
-Next Stage:
-4 — Real Today, recurring routines, one-off tasks and task check-ins — PENDING (not started)
+Next Stage (at the end of Stage 3):
+4 — Real Today, recurring routines, one-off tasks and task check-ins
 
 ---
 
