@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
+import { useSession } from "@/components/session";
 import { Avatar, StatusDot, cx } from "@/components/ui";
 import { partnerView } from "@/lib/partner";
 
@@ -63,21 +64,39 @@ export function PartnerCard() {
   );
 }
 
+const CARD_LINK =
+  "flex h-11 items-center self-start rounded-xl border border-white/14 px-[18px] font-mono text-[11.5px] font-semibold tracking-[.2em]";
+
+/** Real state: no duo yet, or a duo still waiting for the partner. */
 export function NoPartnerCard() {
+  const { duo } = useSession();
+  const waiting = duo !== null;
   return (
     <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-white/12 p-5">
       <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-        NO PARTNER YET
+        {waiting ? "WAITING FOR YOUR PARTNER" : "NO PARTNER YET"}
       </span>
       <span className="text-[15px] leading-[1.45] text-pretty">
-        Invite someone you trust to keep you accountable.
+        {waiting
+          ? `Share your code ${duo.inviteCode} with someone you trust.`
+          : "Invite someone you trust to keep you accountable."}
       </span>
-      <Link
-        href="/duo"
-        className="flex h-11 items-center self-start rounded-xl border border-white/14 px-[18px] font-mono text-[11.5px] font-semibold tracking-[.2em]"
-      >
-        INVITE
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        {waiting ? (
+          <Link href="/duo" className={CARD_LINK}>
+            SHARE CODE
+          </Link>
+        ) : (
+          <>
+            <Link href="/duo" className={CARD_LINK}>
+              CREATE DUO
+            </Link>
+            <Link href="/duo#join-code" className={CARD_LINK}>
+              JOIN DUO
+            </Link>
+          </>
+        )}
+      </div>
     </div>
   );
 }

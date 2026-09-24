@@ -316,7 +316,9 @@ export function TaskFormSheet({
             className="flex min-h-[52px] items-center justify-between text-left"
           >
             <span className="flex flex-col gap-[3px]">
-              <span className="text-[14.5px]">Visible to Lucas</span>
+              <span className="text-[14.5px]">
+                Visible to {app.partner.name}
+              </span>
               <span className="text-xs text-dim">
                 Hidden tasks still count toward your score.
               </span>

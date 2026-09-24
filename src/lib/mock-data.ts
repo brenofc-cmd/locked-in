@@ -29,22 +29,18 @@ export const mockToday = {
   daysLeftInWeek: 5,
 };
 
+/** Mock stats for the signed-in user. Identity (name, email, timezone) is real: see useSession(). */
 export const mockUser = {
-  name: "Brendon",
-  handle: "@brendon",
-  initial: "B",
   streak: 13,
   longestStreak: 21,
-  timezone: "Europe/London",
-  since: "Mar 2, 2026",
-  inviteCode: "LKD-8X29A",
   /** Share of scheduled tasks needed for a day to count. */
   standard: 80,
 };
 
+/** Mock presence / focus / streak. name, initial and handle are replaced by the real partner in app-state. */
 export const mockPartner: Partner = {
   name: "Lucas",
-  handle: "@lucas",
+  handle: "",
   initial: "L",
   status: "online",
   focusLabel: "Studying Mathematics",

@@ -238,7 +238,7 @@ export function ProgressScreen() {
                 WEEK {w.week}
               </span>
               <span className="tabular-nums">
-                You {w.me}% · Lucas {w.partner}%
+                You {w.me}% · {app.partner.name} {w.partner}%
               </span>
               <span aria-hidden="true" className="text-faint">
                 ›

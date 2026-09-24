@@ -1,10 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { leaveDuo } from "@/app/(app)/actions";
 import { useApp } from "@/components/app-state";
+import { useSession } from "@/components/session";
 import { SwitchTrack, cx } from "@/components/ui";
-import { STANDARD_OPTIONS, mockUser } from "@/lib/mock-data";
+import { STANDARD_OPTIONS } from "@/lib/mock-data";
+
+const since = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
 const PREFS = [
   {
@@ -15,17 +23,17 @@ const PREFS = [
   {
     k: "share",
     label: "Share focus sessions live",
-    d: "Lucas sees when you lock in and when you finish.",
+    d: "Your partner sees when you lock in and when you finish.",
   },
   {
     k: "reactions",
     label: "Reaction notifications",
-    d: "Get notified when Lucas reacts to your work.",
+    d: "Get notified when your partner reacts to your work.",
   },
   {
     k: "alerts",
     label: "Partner completion alerts",
-    d: "Notify me each time Lucas completes a task.",
+    d: "Notify me each time your partner completes a task.",
   },
   {
     k: "reminders",
@@ -48,6 +56,22 @@ type PrefKey = (typeof PREFS)[number]["k"];
 
 export function SettingsScreen() {
   const app = useApp();
+  const { me, duo } = useSession();
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaving, startLeave] = useTransition();
+
+  function onLeave() {
+    if (!confirmLeave) return setConfirmLeave(true);
+    startLeave(async () => {
+      const res = await leaveDuo();
+      setConfirmLeave(false);
+      app.toast(
+        res.ok
+          ? { text: "You left the duo.", sub: "DUO ENDED FOR BOTH" }
+          : { text: res.error, sub: "DUO" },
+      );
+    });
+  }
   const [prefs, setPrefs] = useState<Record<PrefKey, boolean>>({
     briefing: true,
     share: true,
@@ -73,7 +97,7 @@ export function SettingsScreen() {
         <span className="flex flex-col gap-1">
           <span className="text-xl font-semibold">{app.userName}</span>
           <span className="text-[13px] text-dim">
-            {mockUser.handle} · {mockUser.timezone} · since {mockUser.since}
+            {me.email} · {me.timezone} · since {since(me.createdAt)}
           </span>
         </span>
       </div>
@@ -151,29 +175,34 @@ export function SettingsScreen() {
         </h2>
         <span className="text-[13.5px] leading-[1.5] text-dim">
           Tasks are shared with your Duo. Hide a single task from its options
-          under “More options”. Lucas only sees Online, Focusing or Offline.
+          under “More options”. Your partner only sees Online, Focusing or
+          Offline.
         </span>
       </section>
 
       <div className="flex flex-wrap gap-2.5">
-        <Link
-          href="/onboarding"
-          className="flex h-11 items-center rounded-xl border border-white/12 px-[18px] text-sm"
-        >
-          Sign out
-        </Link>
-        <button
-          type="button"
-          onClick={() =>
-            app.toast({
-              text: "Leaving a duo arrives with accounts.",
-              sub: "STAGE 3",
-            })
-          }
-          className="h-11 rounded-xl border border-danger/30 px-[18px] text-sm text-danger"
-        >
-          Leave duo
-        </button>
+        <form action="/auth/signout" method="post">
+          <button
+            type="submit"
+            className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
+          >
+            Sign out
+          </button>
+        </form>
+        {duo && (
+          <button
+            type="button"
+            onClick={onLeave}
+            disabled={leaving}
+            className="h-11 rounded-xl border border-danger/30 px-[18px] text-sm text-danger disabled:opacity-60"
+          >
+            {leaving
+              ? "Leaving…"
+              : confirmLeave
+                ? "Tap again: ends the duo for both"
+                : "Leave duo"}
+          </button>
+        )}
       </div>
     </div>
   );

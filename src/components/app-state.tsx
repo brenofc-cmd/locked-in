@@ -1,10 +1,15 @@
 "use client";
 
 /**
- * Stage 2 mock state. Plain React state shared through one context.
- * Nothing here is persisted; Stage 3+ replaces the data with Supabase.
+ * Product state shared through one context.
+ * Stage 3: identity (your name, whether you have a partner, the partner's
+ * name) is real and comes from useSession(). Tasks, feed, focus, stats,
+ * challenges, presence and reactions are still mock and not persisted;
+ * Stage 4+ replaces them with Supabase.
  */
 import { usePathname } from "next/navigation";
+import { updateDisplayName } from "@/app/(app)/actions";
+import { useSession } from "@/components/session";
 import {
   createContext,
   useCallback,
@@ -72,15 +77,26 @@ const INITIAL_FOCUS: FocusState = {
 
 function useAppStateValue() {
   const pathname = usePathname();
+  const session = useSession();
 
-  const [userName, setUserName] = useState(mockUser.name);
+  // ---- real identity (Stage 3) ----------------------------------------------
+  const userName = session.me.displayName;
+  const realPartner = session.duo?.partner ?? null;
+  const hasPartner = realPartner !== null;
+  const partnerName = realPartner?.displayName ?? "Your partner";
   const [standard, setStandard] = useState(mockUser.standard);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [feed, setFeed] = useState<FeedEvent[]>(mockActivity);
-  const [partner, setPartner] = useState<Partner>(mockPartner);
+  // Mock presence / focus / streak; name and initial are the real partner's.
+  const [partnerMock, setPartner] = useState<Partner>(mockPartner);
+  const partner: Partner = {
+    ...partnerMock,
+    name: partnerName,
+    initial: partnerName.charAt(0).toUpperCase(),
+    handle: "",
+  };
   const [partnerTasks, setPartnerTasks] =
     useState<PartnerTask[]>(mockPartnerTasks);
-  const [hasPartner, setHasPartner] = useState(true);
   const [focus, setFocus] = useState<FocusState>(INITIAL_FOCUS);
   const [sessions, setSessions] = useState<FocusSession[]>(mockFocus.sessions);
   const [challenges, setChallenges] = useState<Challenge[]>(mockChallenges);
@@ -378,15 +394,15 @@ function useAppStateValue() {
       pushFeed({
         who: "me",
         kind: "react",
-        text: `reacted ${reaction} to Lucas's ${target}`,
+        text: `reacted ${reaction} to ${partnerName}'s ${target}`,
       });
       setSheet(null);
       toast({
-        text: "Sent to Lucas.",
+        text: `Sent to ${partnerName}.`,
         sub: `${reaction} · ${target.toUpperCase()}`,
       });
     },
-    [feed, partnerTasks, pushFeed, toast],
+    [feed, partnerTasks, partnerName, pushFeed, toast],
   );
 
   // ---- focus --------------------------------------------------------------
@@ -455,14 +471,16 @@ function useAppStateValue() {
     });
     toast({
       text: "Session recorded.",
-      sub: `${min} MIN · LUCAS CAN SEE IT NOW`,
+      sub: hasPartner
+        ? `${min} MIN · ${partnerName.toUpperCase()} CAN SEE IT NOW`
+        : `${min} MIN`,
     });
-  }, [focus, pushFeed, toast]);
+  }, [focus, hasPartner, partnerName, pushFeed, toast]);
 
   // 1s tick while a timer is visible.
   const ticking =
     (focus.phase === "running" && !focus.paused) ||
-    partner.status === "focusing";
+    partnerMock.status === "focusing";
   useEffect(() => {
     if (!ticking) return;
     const id = setInterval(() => {
@@ -498,9 +516,12 @@ function useAppStateValue() {
         ...c,
       ]);
       setSheet(null);
-      toast({ text: "Challenge sent to Lucas.", sub: title.toUpperCase() });
+      toast({
+        text: `Challenge sent to ${partnerName}.`,
+        sub: title.toUpperCase(),
+      });
     },
-    [toast],
+    [partnerName, toast],
   );
 
   // ---- dev simulation (?dev=1 in development) -------------------------------
@@ -531,7 +552,7 @@ function useAppStateValue() {
   const simulatePartnerDone = useCallback(() => {
     const next = partnerTasks.find((p) => !p.done);
     if (!next) {
-      toast({ text: "Lucas has finished every task.", sub: "DEV" });
+      toast({ text: `${partnerName} has finished every task.`, sub: "DEV" });
       return;
     }
     const at = nowHM();
@@ -559,7 +580,7 @@ function useAppStateValue() {
       const toastId = uid("toast");
       toast({
         id: toastId,
-        text: `Lucas completed ${next.name}`,
+        text: `${partnerName} completed ${next.name}`,
         sub: at,
         actions: ["🔥", "🫡"].map((r) => ({
           label: r,
@@ -571,14 +592,14 @@ function useAppStateValue() {
             pushFeed({
               who: "me",
               kind: "react",
-              text: `reacted ${r} to Lucas's ${next.name}`,
+              text: `reacted ${r} to ${partnerName}'s ${next.name}`,
             });
             dismissToast(toastId);
           },
         })),
       });
     }
-  }, [partnerTasks, pathname, toast, pushFeed, dismissToast]);
+  }, [partnerTasks, partnerName, pathname, toast, pushFeed, dismissToast]);
 
   const simulatePartnerReaction = useCallback(() => {
     const mine = [...tasks].reverse().find((t) => t.done);
@@ -590,10 +611,10 @@ function useAppStateValue() {
     });
     toast({
       emoji: "🔥",
-      text: `Lucas reacted to your ${target}.`,
+      text: `${partnerName} reacted to your ${target}.`,
       sub: "JUST NOW",
     });
-  }, [tasks, pushFeed, toast]);
+  }, [tasks, partnerName, pushFeed, toast]);
 
   const setConnection = useCallback(
     (c: ConnectionState) => {
@@ -604,6 +625,15 @@ function useAppStateValue() {
         );
         toast({ text: "Back online.", sub: "ALL CHANGES SYNCED" });
       }
+    },
+    [toast],
+  );
+
+  /** Real: writes profiles.display_name, then the layout reloads the session. */
+  const setUserName = useCallback(
+    async (name: string) => {
+      const res = await updateDisplayName(name);
+      if (!res.ok) toast({ text: res.error, sub: "PROFILE" });
     },
     [toast],
   );
@@ -626,7 +656,6 @@ function useAppStateValue() {
     partner,
     partnerTasks,
     hasPartner,
-    setHasPartner,
     react,
     focus,
     focusMin,

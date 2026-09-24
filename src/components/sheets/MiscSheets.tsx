@@ -306,7 +306,7 @@ export function TemplateSheet() {
 }
 
 export function ChallengeSheet() {
-  const { addChallenge } = useApp();
+  const { addChallenge, partner } = useApp();
   const [pick, setPick] = useState(mockChallengeOptions[0].id);
   const [len, setLen] = useState(30);
   const option =
@@ -381,7 +381,7 @@ export function ChallengeSheet() {
         onClick={() => addChallenge(option.label, len)}
         className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg"
       >
-        START WITH LUCAS
+        START WITH {partner.name.toUpperCase()}
       </button>
     </div>
   );

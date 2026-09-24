@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useApp } from "@/components/app-state";
+import { useSession } from "@/components/session";
 import { LogoMark, MiniCheck, chipTone, cx } from "@/components/ui";
-import { mockTemplates, mockUser } from "@/lib/mock-data";
+import { mockTemplates } from "@/lib/mock-data";
 
 const PATHS = [
   {
@@ -16,11 +17,13 @@ const PATHS = [
 ] as const;
 
 /**
- * Mock onboarding: Welcome → Name → Routine path → Items → Invite → Today.
- * Only the name is kept (it changes the greeting); nothing is persisted.
+ * Onboarding: Welcome → Name → Routine path → Items → Invite.
+ * Stage 3: the name is saved to the real profile and the invite step goes to
+ * the real Duo screen. Routine choices are still mock (Stage 4).
  */
 export function OnboardingScreen() {
   const app = useApp();
+  const { duo } = useSession();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -32,15 +35,17 @@ export function OnboardingScreen() {
   );
   const [draft, setDraft] = useState("");
 
-  function finish() {
-    if (name.trim()) app.setUserName(name.trim());
-    router.push("/today");
+  async function finish(to: "/today" | "/duo") {
+    if (name.trim() && name.trim() !== app.userName) {
+      await app.setUserName(name.trim());
+    }
+    router.push(to);
   }
 
   function next() {
     if (step === 1 && !name.trim()) return;
     if (step === 2 && path === "scratch") setItems([]);
-    if (step === 4) return finish();
+    if (step === 4) return finish("/duo");
     setStep((s) => s + 1);
   }
 
@@ -125,7 +130,7 @@ export function OnboardingScreen() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && next()}
-              placeholder={mockUser.name}
+              placeholder={app.userName}
               autoComplete="given-name"
               className="h-[60px] rounded-[14px] border border-white/12 bg-field px-[18px] text-[22px] outline-none focus:border-white/30"
             />
@@ -283,14 +288,16 @@ export function OnboardingScreen() {
             <span className="text-base leading-[1.5] text-pretty text-muted">
               Discipline is easier when somebody knows whether you showed up.
             </span>
-            <div className="flex flex-col gap-1 border-y border-white/7 py-4">
-              <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
-                YOUR CODE
-              </span>
-              <span className="font-mono text-2xl tracking-[.12em]">
-                {mockUser.inviteCode}
-              </span>
-            </div>
+            {duo && (
+              <div className="flex flex-col gap-1 border-y border-white/7 py-4">
+                <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+                  YOUR CODE
+                </span>
+                <span className="font-mono text-2xl tracking-[.12em]">
+                  {duo.inviteCode}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -313,7 +320,7 @@ export function OnboardingScreen() {
           {step === 4 && (
             <button
               type="button"
-              onClick={finish}
+              onClick={() => finish("/today")}
               className="h-12 text-sm text-muted"
             >
               I&apos;ll do it later

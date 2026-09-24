@@ -39,16 +39,18 @@ export function DevPanel() {
 
   if (!enabled) return null;
 
+  // Partner simulations need a real partner (Stage 3: the duo is real).
+  const p = app.partner.name;
   const actions: [string, () => void][] = [
-    ["Lucas online", () => app.setPartnerStatus("online")],
-    ["Lucas focusing", () => app.setPartnerStatus("focusing")],
-    ["Lucas offline", () => app.setPartnerStatus("offline")],
-    ["Lucas completes a task", app.simulatePartnerDone],
-    ["Lucas sends a reaction", app.simulatePartnerReaction],
-    [
-      app.hasPartner ? "Remove partner (empty state)" : "Restore partner",
-      () => app.setHasPartner(!app.hasPartner),
-    ],
+    ...(app.hasPartner
+      ? ([
+          [`${p} online`, () => app.setPartnerStatus("online")],
+          [`${p} focusing`, () => app.setPartnerStatus("focusing")],
+          [`${p} offline`, () => app.setPartnerStatus("offline")],
+          [`${p} completes a task`, app.simulatePartnerDone],
+          [`${p} sends a reaction`, app.simulatePartnerReaction],
+        ] as [string, () => void][])
+      : []),
     ["Connection: reconnecting", () => app.setConnection("reconnecting")],
     ["Connection: offline", () => app.setConnection("offline")],
     ["Connection: back online", () => app.setConnection("connected")],

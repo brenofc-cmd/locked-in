@@ -139,7 +139,7 @@ function ReviewDay() {
 }
 
 function WeeklyReview({ start }: { start: number }) {
-  const { closeOverlay } = useApp();
+  const { closeOverlay, partner } = useApp();
   const [i, setI] = useState(start);
   const w = mockWeeks[i];
   const meWon = w.me >= w.partner;
@@ -203,7 +203,8 @@ function WeeklyReview({ start }: { start: number }) {
           <div className="flex items-center gap-3.5 py-3.5">
             <span className="h-px flex-1 bg-white/8" />
             <span className="font-mono text-[11px] tracking-[.2em] text-muted">
-              {meWon ? "YOU WON" : "LUCAS WON"} BY {Math.abs(w.me - w.partner)}%
+              {meWon ? "YOU WON" : `${partner.name.toUpperCase()} WON`} BY{" "}
+              {Math.abs(w.me - w.partner)}%
             </span>
             <span className="h-px flex-1 bg-white/8" />
           </div>
@@ -214,7 +215,7 @@ function WeeklyReview({ start }: { start: number }) {
             )}
           >
             <span className="text-[13px] font-semibold tracking-[.16em]">
-              LUCAS
+              {partner.name.toUpperCase()}
             </span>
             <span className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]">
               {w.partner}%
