@@ -22,6 +22,7 @@ export type Database = {
           actor_id: string;
           created_at: string;
           duo_id: string;
+          duration_seconds: number | null;
           event_type: string;
           id: string;
           target_id: string | null;
@@ -32,6 +33,7 @@ export type Database = {
           actor_id: string;
           created_at?: string;
           duo_id: string;
+          duration_seconds?: number | null;
           event_type: string;
           id?: string;
           target_id?: string | null;
@@ -42,6 +44,7 @@ export type Database = {
           actor_id?: string;
           created_at?: string;
           duo_id?: string;
+          duration_seconds?: number | null;
           event_type?: string;
           id?: string;
           target_id?: string | null;
@@ -208,6 +211,85 @@ export type Database = {
           },
         ];
       };
+      focus_sessions: {
+        Row: {
+          accumulated_pause_seconds: number;
+          actual_focus_seconds: number | null;
+          created_at: string;
+          daily_task_id: string | null;
+          duo_id: string | null;
+          ended_at: string | null;
+          id: string;
+          paused_at: string | null;
+          planned_seconds: number;
+          reflection: string | null;
+          started_at: string;
+          status: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+          visible_to_partner: boolean;
+        };
+        Insert: {
+          accumulated_pause_seconds?: number;
+          actual_focus_seconds?: number | null;
+          created_at?: string;
+          daily_task_id?: string | null;
+          duo_id?: string | null;
+          ended_at?: string | null;
+          id?: string;
+          paused_at?: string | null;
+          planned_seconds: number;
+          reflection?: string | null;
+          started_at?: string;
+          status?: string;
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+          visible_to_partner?: boolean;
+        };
+        Update: {
+          accumulated_pause_seconds?: number;
+          actual_focus_seconds?: number | null;
+          created_at?: string;
+          daily_task_id?: string | null;
+          duo_id?: string | null;
+          ended_at?: string | null;
+          id?: string;
+          paused_at?: string | null;
+          planned_seconds?: number;
+          reflection?: string | null;
+          started_at?: string;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+          visible_to_partner?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "focus_sessions_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "focus_sessions_task_same_owner_fkey";
+            columns: ["daily_task_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "daily_tasks";
+            referencedColumns: ["id", "owner_id"];
+          },
+          {
+            foreignKeyName: "focus_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -303,6 +385,10 @@ export type Database = {
     };
     Functions: {
       archive_routine_item: { Args: { p_id: string }; Returns: undefined };
+      complete_focus_session: {
+        Args: { p_id: string; p_reflection?: string };
+        Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
       create_duo: {
         Args: never;
         Returns: {
@@ -325,8 +411,26 @@ export type Database = {
       ensure_my_daily_tasks: { Args: never; Returns: string };
       join_duo: { Args: { p_code: string }; Returns: string };
       leave_duo: { Args: never; Returns: undefined };
+      my_active_focus: {
+        Args: never;
+        Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
       my_today: { Args: never; Returns: string };
       normalize_invite_code: { Args: { p_code: string }; Returns: string };
+      partner_current_focus: {
+        Args: never;
+        Returns: {
+          accumulated_pause_seconds: number;
+          id: string;
+          paused_at: string | null;
+          planned_seconds: number;
+          started_at: string;
+          status: string;
+          title: string | null;
+          user_id: string;
+        }[];
+      };
+      server_now: { Args: never; Returns: string };
       partner_today: {
         Args: never;
         Returns: {
@@ -335,7 +439,29 @@ export type Database = {
           total: number;
         }[];
       };
+      pause_focus_session: {
+        Args: { p_id: string };
+        Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
+      reconcile_my_focus: { Args: never; Returns: undefined };
       reorder_routine_items: { Args: { p_ids: string[] }; Returns: undefined };
+      resume_focus_session: {
+        Args: { p_id: string };
+        Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
+      save_focus_reflection: {
+        Args: { p_id: string; p_reflection: string };
+        Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
+      start_focus_session: {
+        Args: {
+          p_daily_task_id?: string;
+          p_planned_seconds: number;
+          p_title: string;
+          p_visible?: boolean;
+        };
+        Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
       update_routine_item: {
         Args: {
           p_category: string;
