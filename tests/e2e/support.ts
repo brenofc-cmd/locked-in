@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, type Page } from "@playwright/test";
 import type { Database } from "@/types/database";
+import { DESIGN_DAY } from "../fixtures/design-day";
 
 /** Loaded by playwright.config.ts from .env.local and .env.test.local (git-ignored). */
 function env(name: string): string {
@@ -16,6 +17,9 @@ export const users = {
   a: { email: () => env("E2E_A_EMAIL"), name: "Alice" },
   b: { email: () => env("E2E_B_EMAIL"), name: "Bruno" },
   c: { email: () => env("E2E_C_EMAIL"), name: "Carla" },
+  desk: { email: () => env("E2E_DESK_EMAIL"), name: "Brendon" },
+  lucas2: { email: () => env("E2E_LUCAS2_EMAIL"), name: "Lucas" },
+  layout: { email: () => env("E2E_LAYOUT_EMAIL"), name: "Brendon" },
 };
 export type TestUser = (typeof users)[keyof typeof users];
 
@@ -42,8 +46,92 @@ export async function resetDuo(...users: TestUser[]) {
   for (const u of users) {
     const c = await apiAs(u);
     await c.rpc("leave_duo");
-    await c.auth.signOut();
+    // "local": a global sign-out would revoke the user's browser sessions too.
+    await c.auth.signOut({ scope: "local" });
   }
+}
+
+export type Api = Awaited<ReturnType<typeof apiAs>>;
+
+/**
+ * Test users only: archive every routine item and delete every task, so a
+ * run starts from an empty day. (Archived routine rows stay; see
+ * supabase/dev/reset_test_users.sql for a full DEV cleanup.)
+ */
+export async function resetTasks(api: Api) {
+  const { data: me } = await api.auth.getUser();
+  const id = me.user!.id;
+  const active = await api
+    .from("routine_items")
+    .select("id, end_date")
+    .eq("owner_id", id);
+  const today = (await api.rpc("my_today")).data!;
+  for (const r of active.data ?? []) {
+    if (r.end_date === null || r.end_date >= today) {
+      await api.rpc("archive_routine_item", { p_id: r.id });
+    }
+  }
+  const del = await api.from("daily_tasks").delete().eq("owner_id", id);
+  if (del.error) throw new Error(`reset failed: ${del.error.message}`);
+}
+
+export const isoWeekday = (dateISO: string) => {
+  const d = new Date(`${dateISO}T00:00:00Z`).getUTCDay();
+  return d === 0 ? 7 : d;
+};
+
+/** Seeds the approved design's Today (12 tasks, 8 done = 67%) as real data. */
+export async function seedDesignDay(api: Api) {
+  await resetTasks(api);
+  const today = (await api.rpc("my_today")).data!;
+  const restDay = (isoWeekday(today) % 7) + 1; // "Long run" rests today
+  for (const item of DESIGN_DAY) {
+    const { error } = await api.rpc("create_routine_item", {
+      p_title: item.name,
+      p_days: item.today === false ? [restDay] : [1, 2, 3, 4, 5, 6, 7],
+      p_category: item.category,
+      p_time: item.time || undefined,
+      p_notes: item.notes,
+    });
+    if (error) throw new Error(`seed failed: ${error.message}`);
+  }
+  const done = DESIGN_DAY.filter((d) => d.done).map((d) => d.name);
+  const upd = await api
+    .from("daily_tasks")
+    .update({ status: "completed" })
+    .eq("task_date", today)
+    .in("title", done);
+  if (upd.error) throw new Error(`seed failed: ${upd.error.message}`);
+}
+
+/** Two users form a fresh duo through the real RPCs. */
+export async function makeDuo(a: Api, b: Api) {
+  await a.rpc("leave_duo");
+  await b.rpc("leave_duo");
+  const { data, error } = await a.rpc("create_duo");
+  if (error || !data?.[0])
+    throw new Error(`create_duo failed: ${error?.message}`);
+  const joined = await b.rpc("join_duo", { p_code: data[0].invite_code });
+  if (joined.error) throw new Error(`join_duo failed: ${joined.error.message}`);
+}
+
+/**
+ * Tracks Server Action requests (POSTs) on a page. `idle()` resolves once
+ * every write started so far has finished, i.e. it is in the database.
+ */
+export function trackWrites(page: Page) {
+  let pending = 0;
+  const done = (r: { method(): string }) => {
+    if (r.method() === "POST") pending--;
+  };
+  page.on("request", (r) => {
+    if (r.method() === "POST") pending++;
+  });
+  page.on("requestfinished", done);
+  page.on("requestfailed", done);
+  return {
+    idle: () => expect.poll(() => pending, { timeout: 15_000 }).toBe(0),
+  };
 }
 
 export async function signInUI(page: Page, user: TestUser, next = "/today") {

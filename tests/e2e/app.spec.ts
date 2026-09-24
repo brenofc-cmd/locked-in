@@ -1,4 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
+import { trackWrites } from "./support";
+
+/**
+ * Stage 2 UI suite, now on REAL data: each project's user is seeded with the
+ * design's Today (tests/e2e/auth.setup.ts). Tests that write restore what they
+ * changed and wait for the write to reach the database, so the file runs
+ * serially within a project.
+ */
+test.describe.configure({ mode: "serial" });
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 780;
 
@@ -78,6 +87,7 @@ test("navigation reaches every main section", async ({ page }) => {
 test("completing a task updates row, count, percentage and bar; undo reverts", async ({
   page,
 }) => {
+  const writes = trackWrites(page);
   await openToday(page);
   const run = page.getByRole("checkbox", { name: "Morning Run" });
   await expect(run).toHaveAttribute("aria-checked", "false");
@@ -99,11 +109,17 @@ test("completing a task updates row, count, percentage and bar; undo reverts", a
   await expect(page.getByTestId("today-pct")).toHaveAccessibleName(
     "67% complete",
   );
+  await writes.idle();
+  // Persisted: a reload shows the same state.
+  await page.reload();
+  await expect(run).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByTestId("today-count")).toHaveText("8 / 12 done");
 });
 
 test("a completed task can be unchecked with the keyboard", async ({
   page,
 }) => {
+  const writes = trackWrites(page);
   await openToday(page);
   const gym = page.getByRole("checkbox", { name: "Gym" });
   await expect(gym).toHaveAttribute("aria-checked", "true");
@@ -111,9 +127,14 @@ test("a completed task can be unchecked with the keyboard", async ({
   await page.keyboard.press("Space");
   await expect(gym).toHaveAttribute("aria-checked", "false");
   await expect(page.getByTestId("today-count")).toHaveText("7 / 12 done");
+  // Restore the seeded state for the next tests.
+  await page.keyboard.press("Space");
+  await expect(gym).toHaveAttribute("aria-checked", "true");
+  await writes.idle();
 });
 
 test("quick add puts a new task on Today", async ({ page }) => {
+  const writes = trackWrites(page);
   await openToday(page);
   await page
     .getByRole("button", { name: isMobile(page) ? "Add task" : "+ Add task" })
@@ -129,6 +150,22 @@ test("quick add puts a new task on Today", async ({ page }) => {
     page.getByRole("checkbox", { name: "Revisar Física" }),
   ).toBeVisible();
   await expect(page.getByTestId("today-count")).toHaveText("8 / 13 done");
+  await writes.idle();
+
+  // Persisted, then removed again (keeps the seeded day for the next tests).
+  await page.reload();
+  const added = page.getByRole("checkbox", { name: "Revisar Física" });
+  await expect(added).toBeVisible();
+  await page
+    .getByRole("button", { name: "Options for Revisar Física" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Task options" })
+    .getByRole("button", { name: "Delete" })
+    .click();
+  await expect(added).toBeHidden();
+  await expect(page.getByTestId("today-count")).toHaveText("8 / 12 done");
+  await writes.idle();
 });
 
 test("partner page shows the duo comparison and live activity; reactions work", async ({

@@ -1,20 +1,45 @@
 import { test as setup } from "@playwright/test";
-import { apiAs, resetDuo, signInUI, users } from "./support";
+import {
+  apiAs,
+  makeDuo,
+  seedDesignDay,
+  signInUI,
+  users,
+  type TestUser,
+} from "./support";
 
 /**
- * Real sign-in for the UI suite: Brendon and Lucas (DEV test users) form a
- * fresh duo, then Brendon signs in through /login and the cookies are saved.
+ * Real data for the Stage 2 UI suite. Each Playwright project has its own
+ * user so parallel projects never share mutable tasks:
+ *   mobile-390   -> Brendon (duo with Lucas)
+ *   desktop-1440 -> "Brendon" desk user (duo with a second "Lucas")
+ *   mobile-375 / mobile-430 -> "Brendon" layout user (read-only tests)
+ * Each gets the approved design's Today (12 tasks, 8 done) as real routine
+ * items and daily tasks, then signs in through /login; cookies are saved.
  */
-setup("sign in as Brendon with Lucas as partner", async ({ page }) => {
-  await resetDuo(users.brendon, users.lucas);
-  const brendon = await apiAs(users.brendon);
-  const { data, error } = await brendon.rpc("create_duo");
-  if (error || !data?.[0])
-    throw new Error(`create_duo failed: ${error?.message}`);
-  const lucas = await apiAs(users.lucas);
-  const joined = await lucas.rpc("join_duo", { p_code: data[0].invite_code });
-  if (joined.error) throw new Error(`join_duo failed: ${joined.error.message}`);
+async function prepare(
+  page: import("@playwright/test").Page,
+  user: TestUser,
+  partner: TestUser | null,
+  state: string,
+) {
+  const api = await apiAs(user);
+  await seedDesignDay(api);
+  if (partner) await makeDuo(api, await apiAs(partner));
+  else await api.rpc("leave_duo");
+  await signInUI(page, user);
+  await page.context().storageState({ path: state });
+  await page.context().clearCookies();
+}
 
-  await signInUI(page, users.brendon);
-  await page.context().storageState({ path: "tests/e2e/.auth/brendon.json" });
+setup("seed and sign in the UI suite users", async ({ page }) => {
+  setup.setTimeout(120_000);
+  await prepare(
+    page,
+    users.brendon,
+    users.lucas,
+    "tests/e2e/.auth/brendon.json",
+  );
+  await prepare(page, users.desk, users.lucas2, "tests/e2e/.auth/desk.json");
+  await prepare(page, users.layout, null, "tests/e2e/.auth/layout.json");
 });

@@ -8,15 +8,15 @@ for (const f of [".env.local", ".env.test.local"]) {
 }
 
 const PORT = 3100;
-const BRENDON_STATE = "tests/e2e/.auth/brendon.json";
+/** One real user per project (tests/e2e/auth.setup.ts). */
+const state = (name: "brendon" | "desk" | "layout") => ({
+  storageState: `tests/e2e/.auth/${name}.json`,
+});
 
 const phone = (width: number, height: number) => ({
   ...devices["Pixel 7"],
   viewport: { width, height },
 });
-
-/** The Stage 2 UI suite runs signed in as the Brendon test user (duo with Lucas). */
-const signedIn = { storageState: BRENDON_STATE };
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -30,40 +30,47 @@ export default defineConfig({
   },
   // Mobile-first: the full suite runs at 390 (primary) and 1440 (desktop).
   // 375 and 430 run the tests tagged @layout. Stage 3 auth / duo flows use
-  // shared DEV users, so they run once, serially, in their own project.
+  // shared DEV users, so they run once, serially, in their own projects.
   projects: [
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "mobile-390",
-      testIgnore: /stage3/,
+      testIgnore: /stage\d/,
       dependencies: ["setup"],
-      use: { ...phone(390, 844), ...signedIn },
+      use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "desktop-1440",
-      testIgnore: /stage3/,
+      testIgnore: /stage\d/,
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 900 },
-        ...signedIn,
+        ...state("desk"),
       },
     },
     {
       name: "mobile-375",
       grep: /@layout/,
-      testIgnore: /stage3/,
+      testIgnore: /stage\d/,
       dependencies: ["setup"],
-      use: { ...phone(375, 812), ...signedIn },
+      use: { ...phone(375, 812), ...state("layout") },
     },
     {
       name: "mobile-430",
       grep: /@layout/,
-      testIgnore: /stage3/,
+      testIgnore: /stage\d/,
       dependencies: ["setup"],
-      use: { ...phone(430, 932), ...signedIn },
+      use: { ...phone(430, 932), ...state("layout") },
     },
     { name: "stage3", testMatch: /stage3\.spec\.ts/, use: phone(390, 844) },
+    // Same shared users as stage3 (Alice / Bruno / Carla): runs after it.
+    {
+      name: "stage4",
+      testMatch: /stage4\.spec\.ts/,
+      dependencies: ["stage3"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
