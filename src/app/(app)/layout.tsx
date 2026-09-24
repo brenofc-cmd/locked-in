@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppStateProvider } from "@/components/app-state";
+import { DuoRealtimeProvider } from "@/components/duo-realtime";
 import { SessionProvider } from "@/components/session";
 import { AppShell } from "@/components/shell/AppShell";
 import { loadAppData } from "@/lib/session";
@@ -15,9 +16,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SessionProvider value={data.session}>
-      <AppStateProvider initialTasks={data.tasks}>
-        <AppShell>{children}</AppShell>
-      </AppStateProvider>
+      <DuoRealtimeProvider initial={data.duo}>
+        <AppStateProvider initialTasks={data.tasks}>
+          <AppShell>{children}</AppShell>
+        </AppStateProvider>
+      </DuoRealtimeProvider>
     </SessionProvider>
   );
 }

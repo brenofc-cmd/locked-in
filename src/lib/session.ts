@@ -1,3 +1,4 @@
+import { loadDuoData, type DuoData } from "@/lib/duo-data";
 import { createClient } from "@/lib/supabase/server";
 import type { DailyTaskRow, RoutineRow } from "@/lib/task-model";
 
@@ -26,7 +27,7 @@ export type TasksData = {
   routines: RoutineRow[];
 };
 
-export type AppData = { session: SessionData; tasks: TasksData };
+export type AppData = { session: SessionData; tasks: TasksData; duo: DuoData };
 
 /**
  * Everything the (app) layout needs, in few round trips: the session queries
@@ -67,11 +68,12 @@ export async function loadAppData(): Promise<AppData | null> {
     return { today, tasks: tasks.data, routines: routines.data };
   }
 
-  const [profiles, duos, members, tasks] = await Promise.all([
+  const [profiles, duos, members, tasks, duo] = await Promise.all([
     supabase.from("profiles").select("id, display_name, timezone, created_at"),
     supabase.from("duos").select("id, invite_code").maybeSingle(),
     supabase.from("duo_members").select("user_id"),
     loadTasks(),
+    loadDuoData(supabase, userId),
   ]);
   if (profiles.error || duos.error || members.error) {
     throw new Error("Could not load your account. Try again.");
@@ -104,5 +106,6 @@ export async function loadAppData(): Promise<AppData | null> {
         : null,
     },
     tasks,
+    duo,
   };
 }
