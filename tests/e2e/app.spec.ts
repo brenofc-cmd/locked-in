@@ -173,7 +173,8 @@ test("partner page shows the duo comparison and live activity; reactions work", 
 }) => {
   await openToday(page);
   if (isMobile(page)) {
-    await page.getByRole("link", { name: /Lucas is online/ }).click();
+    // Lucas's presence is real now; in the suite nobody is signed in as Lucas.
+    await page.getByRole("link", { name: /Lucas is (online|offline)/ }).click();
   } else {
     await page.getByRole("link", { name: /Open partner/ }).click();
   }

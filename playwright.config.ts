@@ -71,6 +71,13 @@ export default defineConfig({
       dependencies: ["stage3"],
       use: phone(390, 844),
     },
+    // Two / three real browser contexts on the same users: runs after stage4.
+    {
+      name: "stage5",
+      testMatch: /stage5\.spec\.ts/,
+      dependencies: ["stage4"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,

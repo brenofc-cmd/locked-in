@@ -104,6 +104,37 @@ export async function seedDesignDay(api: Api) {
   if (upd.error) throw new Error(`seed failed: ${upd.error.message}`);
 }
 
+/**
+ * The partner's real day for the UI suite: a few shared items, "Reading" and
+ * then "Morning Run" completed (so the latest activity is Morning Run). Run
+ * after makeDuo: completions only become duo activity inside a duo.
+ */
+export async function seedPartnerDay(api: Api) {
+  await resetTasks(api);
+  const today = (await api.rpc("my_today")).data!;
+  for (const title of [
+    "Wake up at 06:30",
+    "Reading",
+    "Morning Run",
+    "Gym",
+    "Study Mathematics",
+  ]) {
+    const { error } = await api.rpc("create_routine_item", {
+      p_title: title,
+      p_days: [1, 2, 3, 4, 5, 6, 7],
+    });
+    if (error) throw new Error(`seed failed: ${error.message}`);
+  }
+  for (const title of ["Wake up at 06:30", "Reading", "Morning Run"]) {
+    const upd = await api
+      .from("daily_tasks")
+      .update({ status: "completed" })
+      .eq("task_date", today)
+      .eq("title", title);
+    if (upd.error) throw new Error(`seed failed: ${upd.error.message}`);
+  }
+}
+
 /** Two users form a fresh duo through the real RPCs. */
 export async function makeDuo(a: Api, b: Api) {
   await a.rpc("leave_duo");
