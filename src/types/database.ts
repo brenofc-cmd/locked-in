@@ -17,6 +17,54 @@ export type Database = {
   };
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          actor_id: string;
+          created_at: string;
+          duo_id: string;
+          event_type: string;
+          id: string;
+          target_id: string | null;
+          target_type: string | null;
+          title_snapshot: string | null;
+        };
+        Insert: {
+          actor_id: string;
+          created_at?: string;
+          duo_id: string;
+          event_type: string;
+          id?: string;
+          target_id?: string | null;
+          target_type?: string | null;
+          title_snapshot?: string | null;
+        };
+        Update: {
+          actor_id?: string;
+          created_at?: string;
+          duo_id?: string;
+          event_type?: string;
+          id?: string;
+          target_id?: string | null;
+          target_type?: string | null;
+          title_snapshot?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activity_events_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       daily_tasks: {
         Row: {
           category: string;
@@ -279,6 +327,14 @@ export type Database = {
       leave_duo: { Args: never; Returns: undefined };
       my_today: { Args: never; Returns: string };
       normalize_invite_code: { Args: { p_code: string }; Returns: string };
+      partner_today: {
+        Args: never;
+        Returns: {
+          done: number;
+          task_date: string;
+          total: number;
+        }[];
+      };
       reorder_routine_items: { Args: { p_ids: string[] }; Returns: undefined };
       update_routine_item: {
         Args: {
