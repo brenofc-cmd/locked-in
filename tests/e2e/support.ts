@@ -59,6 +59,7 @@ export type Api = Awaited<ReturnType<typeof apiAs>>;
  * supabase/dev/reset_test_users.sql for a full DEV cleanup.)
  */
 export async function resetTasks(api: Api) {
+  await finishFocus(api);
   const { data: me } = await api.auth.getUser();
   const id = me.user!.id;
   const active = await api
@@ -133,6 +134,13 @@ export async function seedPartnerDay(api: Api) {
       .eq("title", title);
     if (upd.error) throw new Error(`seed failed: ${upd.error.message}`);
   }
+}
+
+/** Completes the user's unfinished focus session, if any (clean slate for tests). */
+export async function finishFocus(api: Api) {
+  const { data } = await api.rpc("my_active_focus");
+  for (const s of data ?? [])
+    await api.rpc("complete_focus_session", { p_id: s.id });
 }
 
 /** Two users form a fresh duo through the real RPCs. */

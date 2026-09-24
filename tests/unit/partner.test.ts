@@ -45,28 +45,57 @@ describe("partner view", () => {
     expect(pv.line).toBe("09:27 · Completed Morning Run");
   });
 
-  it("counts down while focusing from the shared start, without per-second updates", () => {
-    const now = 1_000_000;
+  it("counts down from the partner's persistent session, never from streamed ticks", () => {
+    const start = Date.parse("2026-09-24T12:00:00Z");
+    const session = {
+      status: "active",
+      started_at: new Date(start).toISOString(),
+      planned_seconds: 50 * 60,
+      paused_at: null,
+      accumulated_pause_seconds: 0,
+    };
+    const at = start + (15 * 60 + 39) * 1000; // 15:39 in -> 34:21 left
     const focusing = partnerView(
       {
         ...online,
         status: "focusing",
         focusLabel: "Mathematics",
-        focusEnd: now + (34 * 60 + 21) * 1000,
+        focusSession: session,
       },
       { done: 0, total: 0 },
       feed,
-      now,
+      at,
     );
     expect(focusing.label).toBe("FOCUSING");
     expect(focusing.line).toBe("Mathematics · 34:21");
-    const noEnd = partnerView(
-      { ...online, status: "focusing", focusLabel: "Reading", focusEnd: 0 },
+
+    // Paused 2 minutes later: the clock stays where the pause happened.
+    const paused = partnerView(
+      {
+        ...online,
+        status: "focusing",
+        focusLabel: "Mathematics",
+        focusSession: {
+          ...session,
+          status: "paused",
+          paused_at: new Date(at).toISOString(),
+        },
+      },
       { done: 0, total: 0 },
       feed,
-      now,
+      at + 120_000,
     );
-    expect(noEnd.line).toBe("Reading");
+    expect(paused.line).toBe("Mathematics · paused 34:21");
+
+    // Private session: no title, only that they are focusing.
+    const privateFocus = partnerView(
+      { ...online, status: "focusing", focusLabel: "", focusSession: session },
+      { done: 0, total: 0 },
+      feed,
+      at,
+    );
+    expect(privateFocus.line).toBe("Focus · 34:21");
+    expect(privateFocus.statusLine).toBe("Focusing · 34:21 left");
   });
 
   it("offline has no last seen", () => {

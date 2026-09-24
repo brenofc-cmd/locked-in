@@ -18,6 +18,12 @@ const phone = (width: number, height: number) => ({
   viewport: { width, height },
 });
 
+const desk = {
+  ...devices["Desktop Chrome"],
+  viewport: { width: 1440, height: 900 },
+  ...state("desk"),
+};
+
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
@@ -36,18 +42,32 @@ export default defineConfig({
     {
       name: "mobile-390",
       testIgnore: /stage\d/,
+      grepInvert: /@focus/,
       dependencies: ["setup"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "desktop-1440",
       testIgnore: /stage\d/,
+      grepInvert: /@focus/,
       dependencies: ["setup"],
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 1440, height: 900 },
-        ...state("desk"),
-      },
+      use: desk,
+    },
+    // A running Focus session overlays every screen of its user: the @focus
+    // tests run once the other tests of the same users have finished.
+    {
+      name: "focus-390",
+      grep: /@focus/,
+      testIgnore: /stage\d/,
+      dependencies: ["mobile-390", "desktop-1440"],
+      use: { ...phone(390, 844), ...state("brendon") },
+    },
+    {
+      name: "focus-1440",
+      grep: /@focus/,
+      testIgnore: /stage\d/,
+      dependencies: ["mobile-390", "desktop-1440"],
+      use: desk,
     },
     {
       name: "mobile-375",
@@ -76,6 +96,13 @@ export default defineConfig({
       name: "stage5",
       testMatch: /stage5\.spec\.ts/,
       dependencies: ["stage4"],
+      use: phone(390, 844),
+    },
+    // Persistent focus with two browsers on the same users: runs after stage5.
+    {
+      name: "stage6",
+      testMatch: /stage6\.spec\.ts/,
+      dependencies: ["stage5"],
       use: phone(390, 844),
     },
   ],

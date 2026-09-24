@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   FEED_LIMIT,
-  aggregatePresence,
   connectionFrom,
   eventFromActivity,
+  focusMinutes,
   mergeFeed,
+  presenceOnline,
   removeFromFeed,
   type LiveEvent,
   type PresenceMeta,
@@ -13,46 +14,22 @@ import {
 const ME = "me-id";
 const LUCAS = "lucas-id";
 
-describe("presence aggregation", () => {
-  it("no presence at all means offline", () => {
-    expect(aggregatePresence({}, LUCAS).status).toBe("offline");
-    expect(aggregatePresence({ [LUCAS]: [] }, LUCAS).status).toBe("offline");
+describe("presence", () => {
+  it("no presence entry means offline", () => {
+    expect(presenceOnline({}, LUCAS)).toBe(false);
+    expect(presenceOnline({ [LUCAS]: [] }, LUCAS)).toBe(false);
   });
 
   it("several tabs of the same user are one online user", () => {
     const tab: PresenceMeta = { user_id: LUCAS, state: "online" };
-    expect(aggregatePresence({ [LUCAS]: [tab, tab] }, LUCAS).status).toBe(
-      "online",
-    );
-    // One tab closed: still online.
-    expect(aggregatePresence({ [LUCAS]: [tab] }, LUCAS).status).toBe("online");
+    expect(presenceOnline({ [LUCAS]: [tab, tab] }, LUCAS)).toBe(true);
+    expect(presenceOnline({ [LUCAS]: [tab] }, LUCAS)).toBe(true); // one tab closed
   });
 
-  it("focusing in any tab wins over online, with the countdown end from start + minutes", () => {
-    const state = {
-      [LUCAS]: [
-        { user_id: LUCAS, state: "online" as const },
-        {
-          user_id: LUCAS,
-          state: "focusing" as const,
-          focus_title: "Physics",
-          focus_started_at: "2026-09-24T12:00:00.000Z",
-          focus_planned_minutes: 50,
-        },
-      ],
-    };
-    expect(aggregatePresence(state, LUCAS)).toEqual({
-      status: "focusing",
-      focusTitle: "Physics",
-      focusEnd: Date.parse("2026-09-24T12:50:00.000Z"),
-    });
-  });
-
-  it("ignores other users' presence", () => {
+  it("ignores other users", () => {
     expect(
-      aggregatePresence({ [ME]: [{ user_id: ME, state: "online" }] }, LUCAS)
-        .status,
-    ).toBe("offline");
+      presenceOnline({ [ME]: [{ user_id: ME, state: "online" }] }, LUCAS),
+    ).toBe(false);
   });
 });
 
@@ -82,6 +59,74 @@ describe("activity feed", () => {
       eventFromActivity(row("e2", ME, "t2", "2026-09-24T12:27:00Z"), ME, "UTC")
         .who,
     ).toBe("me");
+  });
+
+  it("maps focus events; a private session stays generic; minutes are real", () => {
+    const base = {
+      id: "f1",
+      actor_id: LUCAS,
+      target_id: "s1",
+      created_at: "2026-09-24T12:00:00Z",
+    };
+    expect(
+      eventFromActivity(
+        { ...base, event_type: "focus_started", title: "Project" },
+        ME,
+        "UTC",
+      ),
+    ).toMatchObject({
+      kind: "focus",
+      text: "started Focus — Project",
+    });
+    expect(
+      eventFromActivity(
+        { ...base, event_type: "focus_started", title: null },
+        ME,
+        "UTC",
+      ).text,
+    ).toBe("started Focus");
+    expect(
+      eventFromActivity(
+        {
+          ...base,
+          id: "f2",
+          event_type: "focus_completed",
+          title: "Project",
+          duration_seconds: 1934,
+        },
+        ME,
+        "UTC",
+      ),
+    ).toMatchObject({ kind: "focusdone", text: "completed 32 min Focus" });
+    expect(focusMinutes(3)).toBe("<1 min");
+  });
+
+  it("keeps started and completed lines of the same session", () => {
+    const base = { actor_id: LUCAS, target_id: "s1", title: "Project" };
+    const started = eventFromActivity(
+      {
+        ...base,
+        id: "a",
+        event_type: "focus_started",
+        created_at: "2026-09-24T12:00:00Z",
+      },
+      ME,
+      "UTC",
+    );
+    const done = eventFromActivity(
+      {
+        ...base,
+        id: "b",
+        event_type: "focus_completed",
+        duration_seconds: 600,
+        created_at: "2026-09-24T12:10:00Z",
+      },
+      ME,
+      "UTC",
+    );
+    expect(
+      mergeFeed(mergeFeed([], [started]), [done]).map((e) => e.id),
+    ).toEqual(["a", "b"]);
   });
 
   it("never duplicates an event delivered twice (reconnect / refetch)", () => {

@@ -201,7 +201,9 @@ test("partner page shows the duo comparison and live activity; reactions work", 
   await expect(activity.getByRole("button", { name: "🔥 sent" })).toBeVisible();
 });
 
-test("focus: pick duration, start, pause, resume, end and record", async ({
+// @focus: a running session covers every screen of that user, so this runs
+// after the rest of the suite for the same user (playwright.config.ts).
+test("focus: pick duration, start, pause, resume, end and record @focus", async ({
   page,
 }) => {
   await page.goto("/focus");
@@ -216,14 +218,16 @@ test("focus: pick duration, start, pause, resume, end and record", async ({
     "aria-checked",
     "false",
   );
-  await page.getByRole("radio", { name: "Physics" }).click();
+  await page.getByRole("radio", { name: "Physics", exact: true }).click();
 
   await page.getByRole("button", { name: "LOCK IN" }).click();
   const session = page.getByRole("dialog", { name: "Focus session" });
   await expect(session).toBeVisible();
   await expect(session.getByText("PHYSICS")).toBeVisible();
   const clock = session.getByTestId("focus-clock");
-  await expect(clock).toHaveText(/^2[45]:\d\d$/);
+  // Database-clock aligned: right after the start, within a few seconds of
+  // 25:00 (a device / app-server clock offset must not show up here).
+  await expect(clock).toHaveText(/^(25:00|24:5[5-9])$/);
   await expect(clock).not.toHaveText("25:00", { timeout: 3000 });
 
   await session.getByRole("button", { name: "PAUSE" }).click();
@@ -241,8 +245,10 @@ test("focus: pick duration, start, pause, resume, end and record", async ({
   await done.getByRole("textbox").fill("Problem set 6.");
   await done.getByRole("button", { name: "DONE" }).click();
   await expect(done).toBeHidden();
-  await expect(page.getByTestId("focus-today")).toHaveText("1h 11m");
-  await expect(page.getByText("Problem set 6.")).toBeVisible();
+  // Real sessions now (Stage 6): the reflection is saved and listed; the
+  // total is the real sum for today.
+  await expect(page.getByText("Problem set 6.").first()).toBeVisible();
+  await expect(page.getByTestId("focus-today")).toHaveText(/^(\d+h )?\d+m$/);
 });
 
 test("progress opens and the range switch changes the numbers", async ({
