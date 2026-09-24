@@ -41,12 +41,15 @@ locked-in/
 │   │                   # auth/confirm (email links), auth/signout (POST); `/` redirects to /today
 │   ├── proxy.ts        # Next 16 proxy: session refresh + route protection
 │   ├── components/     # session.tsx (real identity), use-tasks.ts (real tasks / routine),
+│   │                   #   duo-realtime.tsx (private duo channel: presence, feed, partner day),
 │   │                   #   app-state.tsx (mock product state + composes the real parts), auth/,
 │   │                   #   shell/, screens/, today/, sheets/, overlays/, focus/, ui.tsx, icons.tsx
-│   ├── hooks/          # client hooks, e.g. realtime subscriptions (Stage 5+)
+│   ├── hooks/          # client hooks (empty so far)
 │   ├── lib/
-│   │   ├── mock-data.ts   # ALL remaining mock data (partner presence / tasks / activity, focus, stats, streak, challenges)
-│   │   ├── session.ts     # loadAppData(): session + today's tasks + routine, server only
+│   │   ├── mock-data.ts   # ALL remaining mock data (focus sessions, stats, streak, competition, challenges)
+│   │   ├── session.ts     # loadAppData(): session + today's tasks + routine + duo data, server only
+│   │   ├── duo-data.ts    # loadDuoData(): feed + partner's day (server and browser clients)
+│   │   ├── realtime-model.ts # presence aggregation, feed merge / dedupe, connection state (pure)
 │   │   ├── local-date.ts  # local dates, ISO weekdays (1 = Mon … 7 = Sun), labels
 │   │   ├── task-model.ts  # row <-> UI mapping, categories, validation, task error copy
 │   │   ├── templates.ts   # routine templates (product constants)
@@ -87,20 +90,25 @@ Empty folders hold a `.gitkeep` until they get real code.
 
 Route `page.tsx` files are Server Components that render one client screen. `src/app/(app)/layout.tsx`
 (Server Component, dynamic because it reads cookies) calls `loadAppData()`: `getClaims()`, then in
-parallel the profile / duo / member queries and `ensure_my_daily_tasks()` → today's `daily_tasks` +
-active `routine_items`. It mounts:
+parallel the profile / duo / member queries, `ensure_my_daily_tasks()` → today's `daily_tasks` +
+active `routine_items`, and `loadDuoData()` → the duo feed (20) + `partner_today()` + the partner's
+shared tasks. It mounts:
 
 - `SessionProvider` (`src/components/session.tsx`) — **real**: user id / email, profile (name,
   timezone, since), duo (invite code) and partner (name). Refreshed by Server Actions that revalidate
   the layout.
+- `DuoRealtimeProvider` (`src/components/duo-realtime.tsx`, ADR-031) with the duo data — **real**:
+  the private `duo:<id>` channel, partner presence, connection state, feed and partner's day
+  ([REALTIME.md](REALTIME.md)).
 - `AppStateProvider` (`src/components/app-state.tsx`, ADR-008) with `initialTasks`. It composes:
   - `useTasks()` (`src/components/use-tasks.ts`, ADR-024) — **real**: today's tasks and the routine,
     optimistic updates + Server Actions (`task-actions.ts`) + rollback on error;
-  - **mock** product state: partner presence / tasks / activity, reactions, focus sessions, standard,
-    stats, streak, challenges. Identity comes from `useSession()` (ADR-017).
+  - `useDuoRealtime()` for the partner / feed / connection;
+  - **mock** product state: reactions, focus sessions and totals, standard, stats, streak,
+    challenges. Identity comes from `useSession()` (ADR-017).
 
-A reload always renders from the database; there is no client cache of tasks. No realtime yet: a
-partner sees changes on their next load (Stage 5).
+A reload always renders from the database; there is no client cache of tasks. Realtime only makes
+the partner's changes arrive without a reload (ADR-030).
 
 - Default to **Server Components**; add `"use client"` only for interactivity (checkboxes, timers,
   realtime subscriptions, sheets).
@@ -127,13 +135,15 @@ through an invite code (`LKD-XXXXXX`). Schema, RLS and functions: [DATABASE.md](
 
 ## Realtime strategy (Stage 5)
 
-- **Postgres Changes** on task check-ins / feed events, filtered to the duo, so the partner's Today and
-  activity feed update live.
-- **Presence** on a per-duo channel for Online / Focusing / Offline (the only status the partner sees).
-- **Broadcast** for ephemeral events such as reactions if they don't need persistence.
-- The client shows connection state (connected / reconnecting / offline) as in the design and queues
-  unsynced check-ins ("Will sync" marker).
-- Realtime must be verified with **two real users** before being called done.
+Implemented; details in [REALTIME.md](REALTIME.md).
+
+- One **private** channel per duo, `duo:<duo_id>`, authorized by RLS on `realtime.messages`.
+- **Broadcast from the database** (`realtime.send` in the `daily_tasks` trigger) for feed changes —
+  not Postgres Changes, and never full rows.
+- **Presence** on the same channel for Online / Focusing / Offline (key = user id).
+- Connection state (connected / reconnecting / offline) in the Stage 2 pill. No offline write queue:
+  a write that fails while offline is rolled back with a message.
+- Verified with two and three real browser contexts (Playwright) and real sockets.
 
 ## Mobile-first strategy
 

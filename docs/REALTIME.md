@@ -1,0 +1,119 @@
+# Realtime
+
+Stage 5. How two people see each other's day live. **Postgres is the source of truth; Realtime is
+only the delivery mechanism.** Anything missed over the socket comes back from the database.
+
+```
+Brendon taps ✓ Morning Run
+  → UI: optimistic check (≈ 10 ms)            src/components/use-tasks.ts
+  → Server Action: update daily_tasks          src/app/(app)/task-actions.ts
+  → trigger private.sync_task_activity()       supabase/migrations/…_activity_events.sql
+      → insert activity_events (the feed row)
+      → realtime.send(payload, 'activity', 'duo:<duo_id>', private)
+  → Lucas's open tab: broadcast received        src/components/duo-realtime.tsx
+      → feed line + toast + partner card flash (≈ 150 ms end to end in tests)
+      → refetch partner's day (counts + shared list)
+```
+
+## Topic and channel
+
+- One **private** channel per duo: topic `duo:<duo_id>` (`config: { private: true }`).
+- The same channel carries Presence and database Broadcasts. No other channels.
+- Created by `DuoRealtimeProvider` (`src/components/duo-realtime.tsx`), mounted once by
+  `(app)/layout.tsx`, only when the user has a duo.
+- Lifecycle: removed on unmount, on sign-out (full navigation) and when the duo changes (the effect
+  depends on the duo id). realtime-js reuses a channel with the same topic until its leave completes,
+  so a new subscription waits for the previous removal (`pendingRemoval`) — no duplicate channels,
+  including React Strict Mode's double effect in development.
+
+## Authorization (Realtime RLS on `realtime.messages`)
+
+Migration `…_realtime_duo_authorization.sql`. Realtime sets `realtime.topic()` to the channel topic
+and evaluates these policies with the user's JWT:
+
+| Policy                                            | Operation        | Rule                                                                                                  |
+| ------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `duo members receive duo broadcasts and presence` | SELECT (receive) | `extension in ('broadcast','presence')` and `realtime.topic() = 'duo:' \|\| private.current_duo_id()` |
+| `duo members publish presence`                    | INSERT (send)    | `extension = 'presence'` and the same topic rule                                                      |
+
+- Members of the duo join; anyone else (other duo, no duo, fake UUID, anon) gets
+  `Unauthorized: You do not have permissions to read from this Channel topic`.
+- Clients may publish **presence only**. Broadcasts come from the database (`realtime.send` in a
+  SECURITY DEFINER trigger); a client cannot forge "Brendon completed 100 tasks".
+- Tested in pgTAP (`stage5_realtime.test.sql`) and with real sockets (`tests/e2e/stage5.spec.ts`).
+
+**Token refresh.** supabase-js 2.117 calls `realtime.setAuth(token)` on `SIGNED_IN`,
+`TOKEN_REFRESHED` and `INITIAL_SESSION`, so the socket keeps a valid JWT after the access token
+rotates. The provider also calls `setAuth()` before subscribing.
+
+**Membership changes.** Authorization is evaluated when a client joins (and again when it rejoins
+after a reconnect or token refresh). A user who leaves the duo keeps an already-joined socket until
+it reconnects: a short transitional window. After the duo ends there is nothing left to receive —
+the duo, its feed rows and future broadcasts (sent to members of existing duos only) are gone — and
+the next join is refused. The app also removes the channel as soon as the layout reloads without a
+duo.
+
+**Public channels.** LOCKED IN never uses them. Recommended for production (Stage 10), in the
+Supabase Dashboard: _Project Settings → Realtime → disable "Allow public access"_, so only private
+channels can be joined at all. Not changed in DEV (it cannot be verified or reverted from the tools
+used here); it does not affect security of duo data, which lives only in private channels.
+
+## Broadcast events (database → duo)
+
+Sent by `private.sync_task_activity()` on `daily_tasks` changes. Payloads are minimal — never
+notes, timezone, email or private tasks.
+
+| Event              | When                                                                 | Payload                                                  |
+| ------------------ | -------------------------------------------------------------------- | -------------------------------------------------------- |
+| `activity`         | a shared task becomes completed (or a completed task becomes shared) | `id, actor_id, event_type, target_id, title, created_at` |
+| `activity_removed` | a completed shared task is undone, skipped, made private or deleted  | `id, actor_id`                                           |
+| `tasks_changed`    | a shared task changes state without a feed change (skip / unskip)    | `actor_id`                                               |
+
+Private tasks (`visible_to_partner = false`) emit nothing at all — no title, no timing. Edits,
+reorders, archives, renames, settings and page views emit nothing ("magical, not noisy").
+
+## Presence
+
+Key = the user id, so every tab / device of a user is one entry. Payload (one `track()` per state
+change, never per second):
+
+```
+{ user_id, state: "online" }
+{ user_id, state: "focusing", focus_title, focus_started_at, focus_planned_minutes }
+```
+
+- `aggregatePresence()` (`src/lib/realtime-model.ts`): no entries → **OFFLINE**; any tab focusing →
+  **FOCUSING**; otherwise **ONLINE**. Offline is never published; it is the absence of presence.
+- Closing one of two tabs keeps the user online; closing the last makes them offline within a few
+  seconds (≈ 3 s measured).
+- Focusing is ephemeral (Stage 6 persists focus): the viewer computes the countdown from
+  `focus_started_at + focus_planned_minutes`. No timer ticks cross the network.
+- No "last seen" by design.
+
+## Connection state
+
+`connectionFrom(channelStatus, navigator.onLine)`: `SUBSCRIBED` → connected, `CHANNEL_ERROR` /
+`TIMED_OUT` / `CLOSED` → reconnecting (supabase-js rejoins with backoff), browser offline → offline.
+The Stage 2 pill shows "Reconnecting…" or "Offline" — no technical messages. The first join of a day
+can hit a transient `MissingPartition` error while Realtime creates the day's message partition; the
+client retries by itself.
+
+## Recovery (source of truth)
+
+The feed and the partner's day are loaded by the server on every page load (`loadDuoData`) and
+refetched by the provider after: every partner event, every re-`SUBSCRIBED` after a disconnect,
+the browser coming back online, and the tab becoming visible again. So a completion that happened
+while a user was offline (or a lost message) appears as soon as they are back. Events are keyed by
+`activity_events.id`; a refetch or a redelivery never duplicates a line, and my own optimistic line
+is replaced by the real event for the same task.
+
+## Feed
+
+`activity_events` (see DATABASE.md): newest 20 of the duo, `created_at desc`, shown in the viewer's
+timezone. One live event per task; undo removes it, so the feed never shows "completed" for
+something that was undone. Both members' shared completions appear. No pagination in V1.
+
+## Still mock after Stage 5
+
+Focus sessions / totals / history, streaks, weekly competition, head-to-head, final stats,
+challenges, reaction persistence (reactions are marked locally only), notifications.

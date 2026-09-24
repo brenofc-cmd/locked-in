@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working (Windows, Node 22; last run at the end of Stage 4):
+All verified working (Windows, Node 22; last run at the end of Stage 5):
 
 ```bash
 npm install
@@ -73,10 +73,10 @@ npm test               # Vitest, tests/unit
 npm run build          # production build
 npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.local + .env.test.local.
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
-                       #   stage3 then stage4 (serial, shared DEV users)
+                       #   stage3 → stage4 → stage5 (serial, shared DEV users; stage5 = 2-3 browsers)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
-npx supabase test db   # pgTAP (supabase/tests: stage3 + stage4), needs Docker; DEV fallback in docs/DATABASE.md
+npx supabase test db   # pgTAP (supabase/tests: stage3, stage4, stage5), needs Docker; DEV fallback in docs/DATABASE.md
 ```
 
 Run lint, typecheck, test and build before declaring any stage complete; run test:e2e when UI or
@@ -95,14 +95,16 @@ routing changed; run the pgTAP suite when a migration changed.
 - Test users and credentials: `docs/DATABASE.md` → "Test users". `.env*` and `tests/e2e/.auth/` are
   git-ignored and must stay that way.
 
-## Real vs mock state (Stage 4)
+## Real vs mock state (Stage 5)
 
-- Real: auth session, profile (name, timezone), duo (invite code), partner name →
-  `useSession()`; routine items and today's tasks → `useTasks()` (`src/components/use-tasks.ts`)
-  via `useApp()`. All loaded by `loadAppData()` in `src/lib/session.ts`.
-- Mock: partner presence / completion / tasks, activity feed (except the user's own live
-  completions), reactions, focus sessions, standard, stats, streak, competition, challenges → only
-  `src/lib/mock-data.ts` and `src/components/app-state.tsx`.
+- Real: auth session, profile, duo, partner identity → `useSession()`; routine items and today's
+  tasks → `useTasks()`; partner presence (online / focusing / offline), partner's day (counts +
+  shared tasks), activity feed and connection state → `useDuoRealtime()`
+  (`src/components/duo-realtime.tsx`). All reached through `useApp()`; initial data from
+  `loadAppData()`.
+- Mock: focus sessions / totals / history, standard, streak, weekly competition, head-to-head,
+  stats, challenges, reaction persistence, notifications → only `src/lib/mock-data.ts` and
+  `src/components/app-state.tsx`.
 - "Today" is `public.my_today()` (profiles.timezone). Never compute the day from UTC; use
   `src/lib/local-date.ts` on the `YYYY-MM-DD` strings the database returns. Weekdays are ISO
   (1 = Monday … 7 = Sunday) everywhere.
@@ -110,7 +112,10 @@ routing changed; run the pgTAP suite when a migration changed.
   reconcile or roll back with a toast. Never show a spinner on the checkbox.
 - Routine history is immutable: edit the template with `update_routine_item`, never rewrite past
   `daily_tasks`; "Delete" archives (`archive_routine_item`).
-- Dev simulation of the partner / connection: `npm run dev`, open `/today?dev=1`, use the DEV button
-  (partner simulations appear only when you really have a partner).
+- Realtime: one private channel per duo, Postgres is the source of truth (docs/REALTIME.md). Never
+  add polling, per-second presence updates, client-sent broadcasts or extra channels; new feed
+  events come from database triggers.
+- Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button (briefing only; partner and
+  connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without
   checking `design-reference/`.

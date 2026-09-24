@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 4 — real Today, routine and tasks verified; Stage 5 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 5 — realtime partner, presence and live feed verified; Stage 6 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 
@@ -39,6 +39,7 @@ npm run dev                  # http://localhost:3000
 - [Product](docs/PRODUCT.md) — vision, principles, core loop
 - [Architecture](docs/ARCHITECTURE.md) — stack, structure, Supabase, realtime, env
 - [Database](docs/DATABASE.md) — schema, RLS, functions, migrations, tests, test users
+- [Realtime](docs/REALTIME.md) — private duo channel, presence, broadcasts, recovery
 - [Design reference](docs/DESIGN_REFERENCE.md) — the approved Claude Design and how to read it
 - [Roadmap](docs/ROADMAP.md) — the 10 stages
 - [Decisions](docs/DECISIONS.md) — ADRs

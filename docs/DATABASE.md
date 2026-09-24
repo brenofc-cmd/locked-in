@@ -1,8 +1,10 @@
 # Database
 
 Supabase Postgres 17. Schema lives in `supabase/migrations/` (the only source of truth); security
-tests in `supabase/tests/`. Tables so far: **profiles, duos, duo_members** (Stage 3) and
-**routine_items, daily_tasks** (Stage 4), plus the functions / triggers they need.
+tests in `supabase/tests/`. Tables so far: **profiles, duos, duo_members** (Stage 3),
+**routine_items, daily_tasks** (Stage 4) and **activity_events** (Stage 5), plus the functions /
+triggers they need and the Realtime Authorization policies on `realtime.messages` (see
+[REALTIME.md](REALTIME.md)).
 
 ## Projects
 
@@ -23,6 +25,8 @@ Migrations applied to DEV (`supabase_migrations.schema_migrations`):
 | `20260924110034` | `…_tasks_schema.sql`                  | `routine_items`, `daily_tasks`, constraints, normalisation / status triggers     |
 | `20260924110146` | `…_tasks_functions.sql`               | `my_today`, `ensure_my_daily_tasks`, routine create / update / archive / reorder |
 | `20260924110212` | `…_tasks_rls_and_grants.sql`          | RLS on, column grants, owner / partner policies                                  |
+| `20260924125209` | `…_activity_events.sql`               | `activity_events`, feed trigger + database broadcasts, `partner_today()`         |
+| `20260924125222` | `…_realtime_duo_authorization.sql`    | Realtime RLS on `realtime.messages` for private `duo:<id>` channels              |
 
 ## Tables
 
@@ -111,6 +115,46 @@ Integrity guaranteed by the database:
 | A routine with history cannot be hard-deleted                            | that FK is NO ACTION; clients have no DELETE on `routine_items`                                                     |
 | No impossible status rows                                                | check `daily_tasks_status_timestamps` (pending ⇒ no timestamps, completed ⇒ `completed_at`, skipped ⇒ `skipped_at`) |
 | Timestamps are server-owned                                              | trigger `private.normalize_daily_task()`; no client grant on them                                                   |
+
+### `public.activity_events` (Stage 5) — the duo's feed
+
+Proof of work, not an audit log. Maintained only by the database; clients can read their own duo's
+rows and nothing else.
+
+| Column           | Type        | Rule                                                        |
+| ---------------- | ----------- | ----------------------------------------------------------- |
+| `id`             | uuid PK     | identity used by the client to de-duplicate                 |
+| `duo_id`         | uuid        | → `duos(id)` on delete cascade (ending a duo ends its feed) |
+| `actor_id`       | uuid        | → `profiles(id)` on delete cascade; always the task owner   |
+| `event_type`     | text        | `task_completed` (Stage 6 / 8 add focus / reaction types)   |
+| `target_type`    | text        | `daily_task`                                                |
+| `target_id`      | uuid        | the task; `unique (event_type, target_id)`                  |
+| `title_snapshot` | text        | task title at completion time (≤ 80)                        |
+| `created_at`     | timestamptz | the completion time                                         |
+
+Trigger `private.sync_task_activity()` (SECURITY DEFINER, AFTER INSERT / UPDATE OF status,
+visible_to_partner / DELETE on `daily_tasks`) keeps the invariant **"an event exists exactly while
+its task is completed and shared, and its owner is in a duo"**:
+
+| Change on the task                        | Feed                                        | Broadcast on `duo:<id>`    |
+| ----------------------------------------- | ------------------------------------------- | -------------------------- |
+| becomes completed (shared)                | event inserted (re-completion refreshes it) | `activity`                 |
+| completed → pending / skipped, or deleted | event deleted (undo never leaves a lie)     | `activity_removed`         |
+| shared → private while completed          | event deleted                               | `activity_removed`         |
+| private → shared while completed          | event inserted                              | `activity`                 |
+| shared skip / unskip                      | —                                           | `tasks_changed` (no title) |
+| private task, any change                  | —                                           | nothing                    |
+| title, notes, order, time edits           | — (the snapshot keeps the old title)        | nothing                    |
+
+Indexes: `activity_events_duo_created_idx (duo_id, created_at desc)` (feed query and RLS),
+`activity_events_actor_idx (actor_id)` (FK cascade), unique `(event_type, target_id)`.
+
+`public.partner_today()` (SECURITY DEFINER, `authenticated` only) returns the duo partner's local
+date and `done` / `total` for that day, **private tasks included in the counts** (they count toward
+the score) but never listed. It returns nothing for outsiders or users without a partner. Accepted
+under advisor 0029 like the duo RPCs (ADR-028). Partner counts refresh on the partner's shared
+events, on reconnect and on page load; a private completion does not notify (that would reveal
+timing), so counts can lag until one of those.
 
 ## Status semantics (Stage 4)
 
@@ -211,6 +255,8 @@ FK is only checked when a routine is hard-deleted, which clients cannot do.
 | `public.reorder_routine_items(ids)`  | invoker  | `authenticated`                      | persist manual order                                            |
 | `private.normalize_routine_item()`   | invoker  | trigger only                         | trims title / notes, sorts and de-duplicates weekdays           |
 | `private.normalize_daily_task()`     | invoker  | trigger only                         | trims, owns status timestamps                                   |
+| `private.sync_task_activity()`       | DEFINER  | trigger only                         | feed events + `realtime.send` broadcasts (Stage 5)              |
+| `public.partner_today()`             | DEFINER  | `authenticated`                      | partner's local date + done / total (Stage 5)                   |
 
 Stage 4 functions are all SECURITY INVOKER (ADR-020): they run as the caller, so RLS and column
 grants apply exactly as for direct API calls, and none of them takes an owner id. Errors:
@@ -247,18 +293,24 @@ the RPCs.
 | `anon`          | —                                                                                                                                         | —                                                                                                                                                                                                                                   |
 | `authenticated` | SELECT; INSERT (template columns, `owner_id`, `start_date`); UPDATE (template columns, `end_date`, `materialized_through`); **no DELETE** | SELECT, DELETE; INSERT (snapshot columns, `owner_id`, `routine_item_id`, `task_date`, `status`, `skip_reason`); UPDATE (snapshot columns, `status`, `skip_reason`) — never `task_date`, `owner_id`, `routine_item_id` or timestamps |
 
-RLS is enabled on all five tables.
+`activity_events`: `authenticated` SELECT only (no INSERT / UPDATE / DELETE); `anon` nothing.
 
-| Policy                                                  | Table         | Rule                                                        |
-| ------------------------------------------------------- | ------------- | ----------------------------------------------------------- |
-| `profiles: read own or duo partner`                     | profiles      | SELECT: `id = auth.uid()` or id is a member of my duo       |
-| `profiles: update own`                                  | profiles      | UPDATE: `id = auth.uid()` (using + with check)              |
-| `duos: read own duo`                                    | duos          | SELECT: `id = private.current_duo_id()`                     |
-| `duo_members: read own duo`                             | duo_members   | SELECT: `duo_id = private.current_duo_id()`                 |
-| `routine_items: read own or shared by duo partner`      | routine_items | SELECT: own, or `visible_to_partner` and owner is in my duo |
-| `routine_items: insert own` / `update own`              | routine_items | `owner_id = auth.uid()` (with check blocks spoofing)        |
-| `daily_tasks: read own or shared by duo partner`        | daily_tasks   | SELECT: own, or `visible_to_partner` and owner is in my duo |
-| `daily_tasks: insert own` / `update own` / `delete own` | daily_tasks   | `owner_id = auth.uid()`                                     |
+RLS is enabled on all six tables, and on `realtime.messages` (Realtime Authorization, see
+REALTIME.md).
+
+| Policy                                                  | Table             | Rule                                                        |
+| ------------------------------------------------------- | ----------------- | ----------------------------------------------------------- |
+| `profiles: read own or duo partner`                     | profiles          | SELECT: `id = auth.uid()` or id is a member of my duo       |
+| `profiles: update own`                                  | profiles          | UPDATE: `id = auth.uid()` (using + with check)              |
+| `duos: read own duo`                                    | duos              | SELECT: `id = private.current_duo_id()`                     |
+| `duo_members: read own duo`                             | duo_members       | SELECT: `duo_id = private.current_duo_id()`                 |
+| `routine_items: read own or shared by duo partner`      | routine_items     | SELECT: own, or `visible_to_partner` and owner is in my duo |
+| `routine_items: insert own` / `update own`              | routine_items     | `owner_id = auth.uid()` (with check blocks spoofing)        |
+| `daily_tasks: read own or shared by duo partner`        | daily_tasks       | SELECT: own, or `visible_to_partner` and owner is in my duo |
+| `daily_tasks: insert own` / `update own` / `delete own` | daily_tasks       | `owner_id = auth.uid()`                                     |
+| `activity_events: read own duo`                         | activity_events   | SELECT: `duo_id = private.current_duo_id()`                 |
+| `duo members receive duo broadcasts and presence`       | realtime.messages | SELECT: broadcast / presence on topic `duo:<my duo>`        |
+| `duo members publish presence`                          | realtime.messages | INSERT: presence only, topic `duo:<my duo>`                 |
 
 Partner = read-only and only shared rows; private tasks (`visible_to_partner = false`) are invisible
 to them at the database level. Outsiders read and write nothing. Queries in the app still filter
@@ -280,7 +332,14 @@ migrations already grant explicitly; keep doing so.
   reorder, constraints, partner shared-only read and no writes, private tasks, outsider, anon,
   `owner_id` spoofing, cross-owner routine link, admin-level backstops.
 
-Each file runs in one transaction and rolls back.
+- `supabase/tests/stage5_realtime.test.sql` — pgTAP, 40 assertions: event on completion (actor,
+  duo, title snapshot, time), no event on unrelated updates, undo / re-completion, private tasks,
+  shared ↔ private, skip, delete, feed read by partner / not by outsider or anon, clients cannot
+  insert / edit / delete events, `partner_today` counts incl. private, Realtime Authorization
+  (receive / publish presence for A and B; denied for the other duo, no-duo user, fake topic,
+  another duo's topic, anon; clients cannot send broadcasts), duo break removes feed and access.
+
+Each file runs in one transaction and rolls back (broadcasts sent inside it are never delivered).
 
 How to run:
 
@@ -289,8 +348,8 @@ How to run:
   machine): run the file's statements in one transaction against DEV, with each
   `select <assertion>(…)` captured into a temp table and a final `raise exception` that prints the
   TAP lines. The exception aborts the transaction, so users, rows and the pgtap extension are all
-  rolled back. Results on 2026-09-24 (after the Stage 4 migrations): stage 3 `51/51 ok`, stage 4
-  `71/71 ok`, `FAILED=0`; DEV verified free of fixtures afterwards.
+  rolled back. Results on 2026-09-24 (after the Stage 5 migrations): stage 3 `51/51 ok`, stage 4
+  `71/71 ok`, stage 5 `40/40 ok`, `FAILED=0`.
 
 End-to-end coverage of the same rules through the public API (publishable key, real sessions):
 `tests/e2e/stage3.spec.ts` → "database rules hold through the public API" and

@@ -1,7 +1,71 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-4 — Real Today, recurring routines, one-off tasks and task check-ins — VERIFIED / COMPLETE (2026-09-24)
+5 — Realtime partner, presence and live activity — VERIFIED / COMPLETE (2026-09-24)
+
+Previous Stages:
+
+- 1 — Foundation — VERIFIED / COMPLETE (2026-09-23)
+- 2 — UI Implementation — VERIFIED / COMPLETE (2026-09-23)
+- 3 — Supabase Auth, database foundation and Duo — VERIFIED / COMPLETE (2026-09-24)
+- 4 — Real Today, recurring routines, one-off tasks and task check-ins — VERIFIED / COMPLETE (2026-09-24)
+
+Completed (Stage 5):
+
+- One private Realtime channel per duo (`duo:<duo_id>`) for Presence + database Broadcasts; architecture in `docs/REALTIME.md`
+- Realtime Authorization (RLS on `realtime.messages`): duo members receive broadcast / presence and publish presence only; other duo, no duo, fake topic and anon refused at join
+- `activity_events` feed maintained by a trigger on `daily_tasks` (exists exactly while a task is completed and shared; undo / skip / private / delete remove it; title snapshot); broadcasts `activity`, `activity_removed`, `tasks_changed` with minimal payloads; clients cannot write the feed
+- `partner_today()`: the partner's local date and done / total (private tasks counted, never listed)
+- `DuoRealtimeProvider`: presence (key = user id, multi-tab safe), connection state (connected / reconnecting / offline pill), feed (20, newest first, de-duplicated by event id, optimistic own line replaced by the real event), partner's day; refetch from Postgres after events, reconnect, online and tab visible; serialized channel teardown; JWT kept current by supabase-js on token refresh
+- Partner real: name, ONLINE / FOCUSING / OFFLINE (no last seen), countdown from shared start + planned minutes (no per-second updates), today's % and counts, shared task list with "+ N private", live feed and toasts, card / avatar flash
+- Removed: mock feed, mock partner tasks, dev simulation of partner / connection, fake feed lines from reactions and focus; head-to-head uses real initials
+- Docs: REALTIME.md (new), DATABASE.md, ADR-027…032, ARCHITECTURE, CLAUDE.md, README
+
+Verified (2026-09-24, clean `.next`):
+
+- `npm run lint` — pass
+- `npm run typecheck` — pass
+- `npm test` — 5 files, 44 tests passed
+- `npm run build` — pass
+- `npm run format:check` — pass
+- `npm run test:e2e` — 38 passed: setup, 24 UI tests on real data (partners with a real day and feed), 5 Stage 3, 4 Stage 4, 4 Stage 5 (two / three real browser contexts, no reload on the watching side)
+- Database: pgTAP on DEV — stage 3 51/51, stage 4 71/71, stage 5 40/40 (162/162; aborted-transaction method, broadcasts inside never delivered)
+- Realtime integration with real sockets: A and B `SUBSCRIBED`; C, fake topic and anon refused (`Unauthorized`); B received `activity` ≈ 150–180 ms after A's update; private completion sent nothing; payload without notes / timezone / email
+- Manual two-browser acceptance (production build, Brendon = A, Lucas = B, isolated contexts at 390px): 1 both see each other ONLINE; 2 A taps Morning Run → B's toast "Brendon completed Morning Run" in 124–147 ms without reload, feed line on /partner; 3 B starts focus → A sees LUCAS FOCUSING (≈ 1–3 s); 4 B ends → ONLINE (≈ 3 s); 5 B closes → OFFLINE (≈ 3 s); 6 B reopens → ONLINE; 7 A completes a private task → B sees nothing (0 matches, 0 toasts); 8 B closed, A completes Gym, B reopens → "Brendon completed Gym" from the persisted feed; no console errors
+- Multi-tab: B with two tabs, one closed → still ONLINE after 5 s; last closed → OFFLINE (E2E)
+- Responsive smoke: /today and /partner at 375, 390, 430, 768, 1180, 1440 — no horizontal overflow
+- Clean clone (`npm ci`): lint, typecheck, unit, build pass without secrets
+- Security review: one channel, no client broadcast, no polling, presence only on state change, no service role in client code, no secrets committed, new SECURITY DEFINER functions reviewed (`search_path = ''`, minimal EXECUTE)
+
+Pending:
+
+- Nothing for Stage 5
+
+Known Issues:
+
+- `npx supabase test db` still cannot run locally (Docker Desktop VM does not start); pgTAP ran on DEV
+- Realtime settings "Allow public access" not changed in DEV (not verifiable from the tools used); disable it in the Dashboard before production (REALTIME.md)
+- A user who leaves a duo keeps an already-joined socket until it reconnects (join-time authorization); after the duo ends there is nothing left to receive and the next join is refused
+- Partner counts can lag after a private completion (it sends nothing, by design) until the next shared event, reconnect or load
+- Presence depends on the browser keeping the socket alive; backgrounded mobile tabs may show OFFLINE
+- First channel join of a day can log a transient `MissingPartition` error that the client retries
+- Still mock: focus sessions / totals / history, standard, streak, weekly competition, head-to-head, stats, challenges, reaction persistence, notifications
+- Supabase advisors: definer RPCs incl. `partner_today` (ADR-015 / ADR-028), leaked-password protection off in DEV, INFO about the composite FK index and an unused `activity_events_actor_idx` (FK cascade)
+
+Next Stage:
+6 — Persistent Focus Sessions and live Focus synchronization — PENDING (not started)
+
+---
+
+# Stage 5 start
+
+Stage 5 — started 2026-09-24
+
+---
+
+# Stage 4 record
+
+Stage 4 — Real Today, recurring routines, one-off tasks and task check-ins — VERIFIED / COMPLETE (2026-09-24)
 
 Previous Stages:
 
@@ -56,8 +120,8 @@ Known Issues:
 - E2E resets archive routine items, so archived rows accumulate for test users; `supabase/dev/reset_test_users.sql` cleans them
 - Supabase advisors: accepted definer-RPC notice (ADR-015), leaked-password protection off in DEV Auth (enable before production), INFO about the composite FK index (docs/DATABASE.md → Indexes)
 
-Next Stage:
-5 — Realtime Partner, Presence and live activity — PENDING (not started)
+Next Stage (at the end of Stage 4):
+5 — Realtime Partner, Presence and live activity
 
 ---
 

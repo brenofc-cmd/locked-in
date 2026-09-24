@@ -164,3 +164,39 @@ Status: Accepted.
 Decision: The Stage 2 UI suite runs on real data: `auth.setup.ts` seeds the design's Today (12 routine items, 8 completed; `tests/fixtures/design-day.ts`) for three users — one per project group (390, 1440, 375 + 430) — so parallel projects never share mutable rows; `app.spec.ts` runs serially inside a project and restores what it changes. The `stage4` project depends on `stage3` because both use Alice / Bruno / Carla. `mockTasks` was removed from the app.
 Reason: Real persistence makes shared test users race; per-project users keep the suite parallel and deterministic.
 Status: Accepted.
+
+# ADR-027 — One private Realtime channel per duo, authorized by RLS
+
+Decision: Topic `duo:<duo_id>`, `private: true`, carrying Presence and database Broadcasts; no public channels and no other channels. Realtime Authorization policies on `realtime.messages`: members of the duo (`private.current_duo_id()`) may receive broadcast / presence and may publish **presence only**. Everyone else — the other duo, users without a duo, fake topics, anon — is refused at join time. supabase-js refreshes the socket's JWT on every token refresh. Recommended for production: disable "Allow public access" in Realtime settings (Stage 10).
+Reason: Server-enforced isolation between duos; least privilege (clients never need to broadcast).
+Status: Accepted. Known window: a user who leaves a duo keeps an already-joined socket until it reconnects (REALTIME.md).
+
+# ADR-028 — Activity feed and broadcasts are produced by the database
+
+Decision: `activity_events` is maintained by a SECURITY DEFINER trigger on `daily_tasks`: an event exists exactly while a task is completed and shared (undo / skip / private / delete remove it), with a title snapshot and the completion time. The same trigger sends minimal broadcasts with `realtime.send` (`activity`, `activity_removed`, `tasks_changed`). `realtime.broadcast_changes()` was not used because it ships whole rows (notes etc.). Clients cannot insert, edit or delete events. Skips are not proof of work and never enter the feed. `public.partner_today()` (SECURITY DEFINER) returns only the partner's date and done / total, private tasks included in the counts, never listed; accepted under advisor 0029 like the duo RPCs.
+Reason: Events cannot be forged, cannot survive an undo, and cannot leak private tasks, whatever the client does.
+Status: Accepted.
+
+# ADR-029 — Presence is ephemeral: online / focusing / offline only
+
+Decision: Presence key = user id (tabs and devices collapse into one user); payload `{ user_id, state }` plus, while focusing, `focus_title`, `focus_started_at`, `focus_planned_minutes`, tracked once per state change. Offline = no presence. Focusing wins over online. The viewer computes the countdown locally; no timer ticks over the network. No "last seen".
+Reason: Minimal data, no battery / network noise, correct with multiple tabs.
+Status: Accepted. Stage 6 makes focus durable.
+
+# ADR-030 — Postgres is the source of truth; Realtime only delivers sooner
+
+Decision: The server renders the feed and the partner's day on every load; the client refetches them (debounced) after partner events, after every re-subscribe following a disconnect, when the browser comes back online and when the tab becomes visible. Feed lines are keyed by `activity_events.id`; my optimistic line is replaced by the real event for the same task, so reconnects and refetches never duplicate. No polling.
+Reason: Lost messages must never leave the UI wrong; refresh always shows the truth.
+Status: Accepted.
+
+# ADR-031 — Realtime state lives in its own provider
+
+Decision: `DuoRealtimeProvider` (`src/components/duo-realtime.tsx`) owns the channel, presence, connection state, feed and partner's day; `app-state.tsx` composes it and keeps only mock product state (reactions, focus sessions, stats, streak, challenges). The Stage 2 dev simulator no longer fakes partner status, partner completions, reactions or connection (it would fight real state); it keeps the briefing shortcut. Reactions stay local (Stage 8) and no longer add fake feed lines; focus sessions no longer add feed lines (Stage 6).
+Reason: Clear boundary between real and mock; no monster context.
+Status: Accepted.
+
+# ADR-032 — E2E: real partners and a two-browser Stage 5 project
+
+Decision: `auth.setup.ts` gives each UI-suite partner (Lucas) a real day whose last completion is in the duo feed, so the Partner screen tests run on real data. `tests/e2e/stage5.spec.ts` (project `stage5`, after `stage4`) opens two or three isolated browser contexts: live completion / undo / private task without reload, presence online → focusing → online → offline, multiple tabs, missed-while-offline recovery, connection loss, and socket-level authorization for members, outsider, fake topic and anon.
+Reason: The stage is only done when two users see each other live.
+Status: Accepted.

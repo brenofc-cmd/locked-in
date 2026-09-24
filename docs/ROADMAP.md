@@ -8,7 +8,7 @@ Ten stages. Each stage ends only when its behaviour is verified and `docs/PROGRE
 | 2   | UI real                | **VERIFIED / COMPLETE** | Convert the approved Claude Design (v3) into mobile-first Next.js components with mock data             |
 | 3   | Supabase + Auth + Duo  | **VERIFIED / COMPLETE** | Schema + RLS, Supabase Auth, profiles, duo invite/join codes                                            |
 | 4   | Today + Routine        | **VERIFIED / COMPLETE** | Real tasks, recurring routines, check-offs, skip/move, sections                                         |
-| 5   | Realtime + Partner     | PENDING                 | Partner view live, activity feed, Presence (online/focusing/offline), connection state                  |
+| 5   | Realtime + Partner     | **VERIFIED / COMPLETE** | Partner view live, activity feed, Presence (online/focusing/offline), connection state                  |
 | 6   | Focus                  | PENDING                 | Focus Mode, timer, sessions, notes, partner sees focusing                                               |
 | 7   | Progress + Competition | PENDING                 | Streaks, standard, progress stats and charts, weekly comparison, head-to-head                           |
 | 8   | Produto completo       | PENDING                 | Reactions, challenges, briefing, review day, weekly review, onboarding, settings, history               |
