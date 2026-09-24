@@ -2,7 +2,6 @@
 
 import { useApp } from "@/components/app-state";
 import { chipTone, cx } from "@/components/ui";
-import { mockFocus } from "@/lib/mock-data";
 import type { FocusDuration } from "@/types";
 
 const DURATIONS: { value: FocusDuration; n: string; u: string }[] = [
@@ -12,9 +11,13 @@ const DURATIONS: { value: FocusDuration; n: string; u: string }[] = [
   { value: "custom", n: "—", u: "CUSTOM" },
 ];
 
-/** Activity radio list + duration tiles. Used on /focus and in the Lock In sheet. */
+/**
+ * Activity radio list + duration tiles. Used on /focus and in the Lock In sheet.
+ * Today's open tasks come first (the session links to the task), then presets.
+ */
 export function FocusPicker({ compact = false }: { compact?: boolean }) {
-  const { focus, setFocusTask, setFocusDur, setFocusCustom } = useApp();
+  const { focus, focusOptions, setFocusTask, setFocusDur, setFocusCustom } =
+    useApp();
 
   return (
     <>
@@ -23,15 +26,15 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
         aria-label="What are you working on?"
         className="flex flex-col"
       >
-        {mockFocus.activities.map((label) => {
-          const on = focus.task === label;
+        {focusOptions.map(({ title: label, taskId }) => {
+          const on = focus.task === label && focus.taskId === taskId;
           return (
             <button
-              key={label}
+              key={`${taskId ?? "preset"}:${label}`}
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => setFocusTask(label)}
+              onClick={() => setFocusTask(label, taskId)}
               className={cx(
                 "flex items-center justify-between border-b border-white/5 px-0.5 text-left",
                 compact ? "h-[54px] text-base" : "h-14 text-[17px]",

@@ -1,4 +1,5 @@
 import { loadDuoData, type DuoData } from "@/lib/duo-data";
+import { loadFocusData, type FocusData } from "@/lib/focus-data";
 import { createClient } from "@/lib/supabase/server";
 import type { DailyTaskRow, RoutineRow } from "@/lib/task-model";
 
@@ -27,7 +28,12 @@ export type TasksData = {
   routines: RoutineRow[];
 };
 
-export type AppData = { session: SessionData; tasks: TasksData; duo: DuoData };
+export type AppData = {
+  session: SessionData;
+  tasks: TasksData;
+  duo: DuoData;
+  focus: FocusData & { serverNow: number };
+};
 
 /**
  * Everything the (app) layout needs, in few round trips: the session queries
@@ -68,12 +74,13 @@ export async function loadAppData(): Promise<AppData | null> {
     return { today, tasks: tasks.data, routines: routines.data };
   }
 
-  const [profiles, duos, members, tasks, duo] = await Promise.all([
+  const [profiles, duos, members, tasks, duo, focus] = await Promise.all([
     supabase.from("profiles").select("id, display_name, timezone, created_at"),
     supabase.from("duos").select("id, invite_code").maybeSingle(),
     supabase.from("duo_members").select("user_id"),
     loadTasks(),
     loadDuoData(supabase, userId),
+    loadFocusData(supabase),
   ]);
   if (profiles.error || duos.error || members.error) {
     throw new Error("Could not load your account. Try again.");
@@ -107,5 +114,7 @@ export async function loadAppData(): Promise<AppData | null> {
     },
     tasks,
     duo,
+    // Database clock at render: the client derives its display offset from it.
+    focus: { ...focus, serverNow: Date.now() + focus.dbOffset },
   };
 }

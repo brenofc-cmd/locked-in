@@ -4,17 +4,20 @@
  * Product state shared through one context.
  *
  * REAL: identity and duo (useSession(), Stage 3); routine and today's tasks
- *   (useTasks(), Stage 4); partner presence (online / focusing / offline),
- *   partner's day, activity feed and connection state (useDuoRealtime(),
- *   Stage 5).
- * MOCK (not persisted): reactions, focus sessions and totals, standard,
- *   stats, streak and challenges.
+ *   (useTasks(), Stage 4); partner presence, partner's day, activity feed and
+ *   connection state (useDuoRealtime(), Stage 5); focus sessions, timer,
+ *   focus today and the partner's focus (useFocus(), Stage 6).
+ * MOCK (not persisted): reactions, standard, stats, streak, competition and
+ *   challenges.
  */
 import { usePathname } from "next/navigation";
 import { updateDisplayName } from "@/app/(app)/actions";
 import { useDuoRealtime } from "@/components/duo-realtime";
 import { useSession } from "@/components/session";
+import { useFocus } from "@/components/use-focus";
 import { useTasks } from "@/components/use-tasks";
+import { partnerStatus } from "@/lib/focus";
+import type { FocusData } from "@/lib/focus-data";
 import type { TasksData } from "@/lib/session";
 import {
   createContext,
@@ -26,18 +29,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { nowHM } from "@/lib/format";
-import {
-  mockChallenges,
-  mockFocus,
-  mockPartner,
-  mockUser,
-} from "@/lib/mock-data";
+import { mockChallenges, mockPartner, mockUser } from "@/lib/mock-data";
 import type {
   Challenge,
-  FocusDuration,
-  FocusSession,
-  FocusState,
   Overlay,
   Partner,
   Sheet,
@@ -51,20 +45,9 @@ const uid = (prefix: string) => `${prefix}${Date.now().toString(36)}${++seq}`;
 
 export type { TaskInput } from "@/lib/task-model";
 
-const INITIAL_FOCUS: FocusState = {
-  phase: "setup",
-  task: mockFocus.defaultActivity,
-  dur: 50,
-  custom: "",
-  total: 0,
-  left: 0,
-  paused: false,
-  note: "",
-  from: "",
-  to: "",
-};
+type InitialFocus = FocusData & { serverNow: number };
 
-function useAppStateValue(initialTasks: TasksData) {
+function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
   const pathname = usePathname();
   const session = useSession();
 
@@ -78,6 +61,9 @@ function useAppStateValue(initialTasks: TasksData) {
 
   // ---- real duo side (Stage 5, duo-realtime.tsx) ----------------------------
   const rt = useDuoRealtime();
+  // Server-corrected clock: starts at the server's render time (identical on
+  // server and client, so no hydration mismatch), then device time + offset.
+  const [now, setNow] = useState(() => initialFocus.serverNow);
   const conn = rt.conn;
   const partnerCounts = rt.partnerCounts;
   // Reactions are still mock (Stage 8): marked locally, never sent.
@@ -104,24 +90,20 @@ function useAppStateValue(initialTasks: TasksData) {
     name: partnerName,
     initial: partnerName.charAt(0).toUpperCase(),
     handle: "",
-    status: rt.presence.status,
-    focusLabel: rt.presence.focusTitle,
-    focusEnd: rt.presence.focusEnd,
+    // Persistent focus wins over presence (FOCUSING even with the app closed).
+    status: partnerStatus(rt.partnerOnline, rt.partnerFocus, now),
+    focusLabel: rt.partnerFocus?.title ?? "",
+    focusSession: rt.partnerFocus,
     seenAt: "",
     flashAt: rt.flashAt,
   };
-  const [focus, setFocus] = useState<FocusState>(INITIAL_FOCUS);
-  const [sessions, setSessions] = useState<FocusSession[]>(mockFocus.sessions);
   const [challenges, setChallenges] = useState<Challenge[]>(mockChallenges);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [snack, setSnack] = useState<Snack | null>(null);
-  const [now, setNow] = useState(() => Date.now());
 
   const snackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const focusMin = sessions.reduce((sum, s) => sum + s.min, 0);
 
   // ---- feedback -----------------------------------------------------------
 
@@ -274,104 +256,45 @@ function useAppStateValue(initialTasks: TasksData) {
     [onPartnerActivity, partnerName, toast, dismissToast],
   );
 
-  // ---- focus --------------------------------------------------------------
+  // ---- focus: REAL (Stage 6, use-focus.ts) ---------------------------------
 
-  const setFocusTask = useCallback((task: string) => {
-    setFocus((f) => ({ ...f, task }));
-  }, []);
-  const setFocusDur = useCallback((dur: FocusDuration) => {
-    setFocus((f) => ({ ...f, dur }));
-  }, []);
-  const setFocusCustom = useCallback((custom: string) => {
-    setFocus((f) => ({ ...f, custom }));
-  }, []);
-  const setFocusNote = useCallback((note: string) => {
-    setFocus((f) => ({ ...f, note }));
-  }, []);
-
+  const fx = useFocus({
+    initial: initialFocus,
+    today: real.today,
+    timeZone: session.me.timezone,
+    now,
+    serverNow: initialFocus.serverNow,
+    tasks,
+    toast,
+    onMyFocus: rt.onMyFocus,
+  });
+  const { startFocus: start, checkExpiry, clockNow } = fx;
   const startFocus = useCallback(() => {
-    setFocus((f) => {
-      const min =
-        f.dur === "custom"
-          ? Math.min(240, Math.max(5, parseInt(f.custom, 10) || 30))
-          : f.dur;
-      return {
-        ...f,
-        phase: "running",
-        total: min * 60,
-        left: min * 60,
-        paused: false,
-        note: "",
-        from: nowHM(),
-        to: "",
-      };
-    });
     setSheet(null);
-  }, []);
+    void start();
+  }, [start]);
 
-  const togglePause = useCallback(() => {
-    setFocus((f) => ({ ...f, paused: !f.paused }));
-  }, []);
-
-  const endFocus = useCallback(() => {
-    setFocus((f) => ({ ...f, phase: "complete", to: nowHM() }));
-  }, []);
-
-  const completeFocus = useCallback(() => {
-    const min = Math.max(1, Math.round((focus.total - focus.left) / 60));
-    setSessions((s) => [
-      ...s,
-      {
-        id: uid("s"),
-        task: focus.task,
-        from: focus.from,
-        to: focus.to || nowHM(),
-        min,
-        note: focus.note.trim(),
-      },
-    ]);
-    setFocus((f) => ({ ...f, phase: "setup", note: "" }));
-    // Focus sessions are local until Stage 6 (not persisted, not in the feed).
-    toast({ text: "Session recorded.", sub: `${min} MIN` });
-  }, [focus, toast]);
-
-  // Presence: "focusing" while a session runs, shared once with its start and
-  // planned length (the partner computes the countdown; no per-second updates).
-  const { setMyPresence } = rt;
-  const focusRunning = focus.phase === "running";
-  const focusTitle = focus.task;
-  const focusTotal = focus.total;
-  useEffect(() => {
-    setMyPresence(
-      focusRunning
-        ? {
-            state: "focusing",
-            title: focusTitle,
-            startedAt: new Date().toISOString(),
-            plannedMinutes: Math.round(focusTotal / 60),
-          }
-        : { state: "online" },
-    );
-  }, [focusRunning, focusTitle, focusTotal, setMyPresence]);
-
-  // 1s tick while a timer is visible.
-  const ticking =
-    (focus.phase === "running" && !focus.paused) ||
-    rt.presence.status === "focusing";
+  // Local 1 s tick only while a clock is on screen (my running session or the
+  // partner's). Each tick recomputes from timestamps; nothing is sent.
+  const ticking = fx.focusRunning || partner.status === "focusing";
   useEffect(() => {
     if (!ticking) return;
     const id = setInterval(() => {
-      setNow(Date.now());
-      setFocus((f) => {
-        if (f.phase !== "running" || f.paused) return f;
-        const left = f.left - 1;
-        return left <= 0
-          ? { ...f, left: 0, phase: "complete", to: nowHM() }
-          : { ...f, left };
-      });
+      const t = clockNow();
+      setNow(t);
+      checkExpiry(t);
     }, 1000);
     return () => clearInterval(id);
-  }, [ticking]);
+  }, [ticking, checkExpiry, clockNow]);
+
+  // Back from background / sleep: redraw from the current time at once.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setNow(clockNow());
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [clockNow]);
 
   // ---- challenges ---------------------------------------------------------
 
@@ -434,17 +357,18 @@ function useAppStateValue(initialTasks: TasksData) {
     partnerCounts,
     hasPartner,
     react,
-    focus,
-    focusMin,
-    sessions,
-    setFocusTask,
-    setFocusDur,
-    setFocusCustom,
-    setFocusNote,
+    focus: fx.focus,
+    focusMin: Math.floor(fx.focusSeconds / 60),
+    sessions: fx.sessions,
+    focusOptions: fx.options,
+    setFocusTask: fx.setFocusTask,
+    setFocusDur: fx.setFocusDur,
+    setFocusCustom: fx.setFocusCustom,
+    setFocusNote: fx.setFocusNote,
     startFocus,
-    togglePause,
-    endFocus,
-    completeFocus,
+    togglePause: fx.togglePause,
+    endFocus: fx.endFocus,
+    completeFocus: fx.completeFocus,
     challenges,
     addChallenge,
     sheet,
@@ -477,12 +401,14 @@ const AppStateContext = createContext<AppState | null>(null);
 
 export function AppStateProvider({
   initialTasks,
+  initialFocus,
   children,
 }: {
   initialTasks: TasksData;
+  initialFocus: InitialFocus;
   children: ReactNode;
 }) {
-  const value = useAppStateValue(initialTasks);
+  const value = useAppStateValue(initialTasks, initialFocus);
   return (
     <AppStateContext.Provider value={value}>
       {children}

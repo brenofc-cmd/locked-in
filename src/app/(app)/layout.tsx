@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SessionProvider value={data.session}>
       <DuoRealtimeProvider initial={data.duo}>
-        <AppStateProvider initialTasks={data.tasks}>
+        <AppStateProvider initialTasks={data.tasks} initialFocus={data.focus}>
           <AppShell>{children}</AppShell>
         </AppStateProvider>
       </DuoRealtimeProvider>
