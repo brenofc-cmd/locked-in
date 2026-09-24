@@ -17,6 +17,81 @@ export type Database = {
   };
   public: {
     Tables: {
+      daily_tasks: {
+        Row: {
+          category: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          notes: string;
+          owner_id: string;
+          reminder: boolean;
+          routine_item_id: string | null;
+          scheduled_time: string | null;
+          skip_reason: string | null;
+          skipped_at: string | null;
+          sort_order: number;
+          status: string;
+          task_date: string;
+          title: string;
+          updated_at: string;
+          visible_to_partner: boolean;
+        };
+        Insert: {
+          category?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          notes?: string;
+          owner_id?: string;
+          reminder?: boolean;
+          routine_item_id?: string | null;
+          scheduled_time?: string | null;
+          skip_reason?: string | null;
+          skipped_at?: string | null;
+          sort_order?: number;
+          status?: string;
+          task_date?: string;
+          title: string;
+          updated_at?: string;
+          visible_to_partner?: boolean;
+        };
+        Update: {
+          category?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          notes?: string;
+          owner_id?: string;
+          reminder?: boolean;
+          routine_item_id?: string | null;
+          scheduled_time?: string | null;
+          skip_reason?: string | null;
+          skipped_at?: string | null;
+          sort_order?: number;
+          status?: string;
+          task_date?: string;
+          title?: string;
+          updated_at?: string;
+          visible_to_partner?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "daily_tasks_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "daily_tasks_routine_same_owner_fkey";
+            columns: ["routine_item_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "routine_items";
+            referencedColumns: ["id", "owner_id"];
+          },
+        ];
+      };
       duo_members: {
         Row: {
           duo_id: string;
@@ -112,11 +187,74 @@ export type Database = {
         };
         Relationships: [];
       };
+      routine_items: {
+        Row: {
+          category: string;
+          created_at: string;
+          days_of_week: number[];
+          end_date: string | null;
+          id: string;
+          materialized_through: string | null;
+          notes: string;
+          owner_id: string;
+          reminder: boolean;
+          scheduled_time: string | null;
+          sort_order: number;
+          start_date: string;
+          title: string;
+          updated_at: string;
+          visible_to_partner: boolean;
+        };
+        Insert: {
+          category?: string;
+          created_at?: string;
+          days_of_week: number[];
+          end_date?: string | null;
+          id?: string;
+          materialized_through?: string | null;
+          notes?: string;
+          owner_id?: string;
+          reminder?: boolean;
+          scheduled_time?: string | null;
+          sort_order?: number;
+          start_date: string;
+          title: string;
+          updated_at?: string;
+          visible_to_partner?: boolean;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          days_of_week?: number[];
+          end_date?: string | null;
+          id?: string;
+          materialized_through?: string | null;
+          notes?: string;
+          owner_id?: string;
+          reminder?: boolean;
+          scheduled_time?: string | null;
+          sort_order?: number;
+          start_date?: string;
+          title?: string;
+          updated_at?: string;
+          visible_to_partner?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "routine_items_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      archive_routine_item: { Args: { p_id: string }; Returns: undefined };
       create_duo: {
         Args: never;
         Returns: {
@@ -124,9 +262,37 @@ export type Database = {
           invite_code: string;
         }[];
       };
+      create_routine_item: {
+        Args: {
+          p_category?: string;
+          p_days: number[];
+          p_notes?: string;
+          p_reminder?: boolean;
+          p_time?: string;
+          p_title: string;
+          p_visible?: boolean;
+        };
+        Returns: string;
+      };
+      ensure_my_daily_tasks: { Args: never; Returns: string };
       join_duo: { Args: { p_code: string }; Returns: string };
       leave_duo: { Args: never; Returns: undefined };
+      my_today: { Args: never; Returns: string };
       normalize_invite_code: { Args: { p_code: string }; Returns: string };
+      reorder_routine_items: { Args: { p_ids: string[] }; Returns: undefined };
+      update_routine_item: {
+        Args: {
+          p_category: string;
+          p_days: number[];
+          p_id: string;
+          p_notes: string;
+          p_reminder: boolean;
+          p_time: string;
+          p_title: string;
+          p_visible: boolean;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -11,7 +11,12 @@ with u(email, name) as (
     ('li-e2e-lucas@example.com', 'Lucas'),
     ('li-e2e-a@example.com', 'Alice'),
     ('li-e2e-b@example.com', 'Bruno'),
-    ('li-e2e-c@example.com', 'Carla')
+    ('li-e2e-c@example.com', 'Carla'),
+    -- Stage 4: one user per Playwright project so parallel projects never
+    -- share mutable task data.
+    ('li-e2e-desk@example.com', 'Brendon'),
+    ('li-e2e-lucas2@example.com', 'Lucas'),
+    ('li-e2e-layout@example.com', 'Brendon')
 ),
 new_users as (
   insert into auth.users (
