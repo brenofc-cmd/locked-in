@@ -14,6 +14,8 @@
 /coverage
 /playwright-report/
 /test-results/
+# Playwright signed-in sessions (cookies): never commit
+/tests/e2e/.auth/
 /blob-report/
 /playwright/.cache/
 
