@@ -1,16 +1,10 @@
 /**
- * All remaining mock data lives here (Stage 5): focus sessions, stats,
- * streak, competition and challenges. Nothing else in the app defines sample
+ * All remaining mock data lives here (Stage 6): stats, streak, weekly
+ * competition, head-to-head and challenges. Nothing else in the app defines sample
  * data. Real data: identity, duo, routine, tasks, partner presence, partner's
  * day and the activity feed (Supabase).
  */
-import type {
-  Challenge,
-  Day,
-  FocusSession,
-  Partner,
-  WeekResult,
-} from "@/types";
+import type { Challenge, Day, Partner, WeekResult } from "@/types";
 
 /** Calendar of the mock Progress / Partner screens (Stage 7). Today itself is real. */
 export const mockToday = {
@@ -39,36 +33,13 @@ export const mockPartner: Partner = {
   initial: "L",
   status: "online",
   focusLabel: "Studying Mathematics",
-  focusEnd: 0,
+  focusSession: null,
   seenAt: "14:02",
   flashAt: 0,
   streak: 8,
 };
 
 /** Lucas: 11 tasks, 7 done → 64%. */
-export const mockFocus = {
-  activities: ["Project", "Physics", "Reading", "Study"],
-  defaultActivity: "Project",
-  sessions: [
-    {
-      id: "s1",
-      task: "Physics",
-      from: "07:41",
-      to: "08:31",
-      min: 50,
-      note: "Finished chapter 4 problem set.",
-    },
-    {
-      id: "s2",
-      task: "Project",
-      from: "08:50",
-      to: "09:10",
-      min: 20,
-      note: "",
-    },
-  ] satisfies FocusSession[],
-};
-
 /** Week 39 so far (Partner → THIS WEEK). */
 export const mockWeek = {
   me: 87,

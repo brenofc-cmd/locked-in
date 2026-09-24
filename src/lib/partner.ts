@@ -1,3 +1,4 @@
+import { remainingSeconds } from "@/lib/focus";
 import { formatClock } from "@/lib/format";
 import type { FeedEvent, Partner } from "@/types";
 
@@ -39,9 +40,13 @@ export function partnerView(
       (f) =>
         f.who === "partner" && (f.kind === "done" || f.kind === "focusdone"),
     );
-  // Countdown computed locally from the start instant shared once via Presence.
-  const timed = partner.focusEnd > 0;
-  const left = formatClock(Math.max(0, (partner.focusEnd - now) / 1000));
+  // Countdown derived locally from the partner's persistent session
+  // (started_at, planned_seconds, pauses); nothing is streamed.
+  const session = partner.focusSession;
+  const timed = session !== null;
+  const paused = session?.status === "paused";
+  const left = session ? formatClock(remainingSeconds(session, now)) : "";
+  const label = partner.focusLabel || "Focus";
   const flashing = now - partner.flashAt < 2200;
 
   if (partner.status === "focusing") {
@@ -53,9 +58,15 @@ export function partnerView(
       done,
       total,
       pct,
-      line: [partner.focusLabel, timed ? left : ""].filter(Boolean).join(" · "),
+      line: [label, timed ? (paused ? `paused ${left}` : left) : ""]
+        .filter(Boolean)
+        .join(" · "),
       lineTone: "text",
-      statusLine: ["Focusing", partner.focusLabel, timed ? `${left} left` : ""]
+      statusLine: [
+        paused ? "Focusing (paused)" : "Focusing",
+        partner.focusLabel,
+        timed ? `${left} left` : "",
+      ]
         .filter(Boolean)
         .join(" · "),
       flashing,

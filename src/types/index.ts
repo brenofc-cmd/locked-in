@@ -61,8 +61,14 @@ export type Partner = {
   initial: string;
   status: PartnerStatus;
   focusLabel: string;
-  /** epoch ms when the partner's focus session ends */
-  focusEnd: number;
+  /** The partner's persistent focus session (timer fields only), or null. */
+  focusSession: {
+    status: string;
+    started_at: string;
+    planned_seconds: number;
+    paused_at: string | null;
+    accumulated_pause_seconds: number;
+  } | null;
   seenAt: string;
   /** epoch ms of the last completion, drives the card flash */
   flashAt: number;
@@ -105,15 +111,6 @@ export type FocusState = {
   note: string;
   from: string;
   to: string;
-};
-
-export type FocusSession = {
-  id: string;
-  task: string;
-  from: string;
-  to: string;
-  min: number;
-  note: string;
 };
 
 export type Challenge = {

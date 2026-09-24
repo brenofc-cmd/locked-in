@@ -3,10 +3,11 @@
 /**
  * REAL duo realtime (Stage 5). One private Supabase channel per duo,
  * topic "duo:<duo_id>", carrying:
- *   - Presence: this user's { user_id, state, focus... } (key = user id, so
- *     several tabs / devices are one user; offline = no presence at all);
+ *   - Presence: this user is here { user_id, state: "online" } (key = user
+ *     id, so several tabs / devices are one user; offline = no presence);
  *   - Broadcast from the database: "activity", "activity_removed",
- *     "tasks_changed" (sent by private.sync_task_activity, never by clients).
+ *     "tasks_changed" (daily_tasks trigger) and "focus" (one per focus
+ *     session transition); never sent by clients.
  * Postgres is the source of truth: initial data comes from the server, and
  * after every event, reconnect or return to the tab the feed and the
  * partner's day are refetched. Realtime only makes updates arrive sooner.
@@ -23,34 +24,24 @@ import {
   type ReactNode,
 } from "react";
 import { useSession } from "@/components/session";
-import { loadDuoData, type DuoData } from "@/lib/duo-data";
+import { loadDuoData, type DuoData, type PartnerFocus } from "@/lib/duo-data";
 import { localTimeHM } from "@/lib/local-date";
 import {
-  OFFLINE,
-  aggregatePresence,
   connectionFrom,
   eventFromActivity,
   mergeFeed,
+  presenceOnline,
   removeFromFeed,
   type ActivityRecord,
   type LiveEvent,
-  type PartnerPresence,
   type PresenceMeta,
 } from "@/lib/realtime-model";
 import { createClient } from "@/lib/supabase/client";
 import type { ConnectionState, PartnerTask } from "@/types";
 
-/** What this user shares about themselves (never a ticking timer). */
-export type MyPresence =
-  | { state: "online" }
-  | {
-      state: "focusing";
-      title: string;
-      startedAt: string;
-      plannedMinutes: number;
-    };
-
 type ActivityListener = (event: LiveEvent) => void;
+/** A focus state change of MY session (another tab / device), from the database. */
+type MyFocusListener = (focus: PartnerFocus) => void;
 
 /** Serialises channel teardown and re-creation (see the lifecycle effect). */
 let pendingRemoval: Promise<unknown> = Promise.resolve();
@@ -89,21 +80,28 @@ function useDuoRealtimeValue(initial: DuoData) {
   const [partnerTasks, setPartnerTasks] = useState<PartnerTask[]>(() =>
     toTasks(initial.partnerTasks),
   );
-  const [presence, setPresence] = useState<PartnerPresence>(OFFLINE);
+  const [partnerOnline, setPartnerOnline] = useState(false);
+  // The partner's persistent focus (Postgres), not presence.
+  const [partnerFocus, setPartnerFocus] = useState<PartnerFocus | null>(
+    initial.partnerFocus,
+  );
   const [conn, setConn] = useState<ConnectionState>("connected");
   const [flashAt, setFlashAt] = useState(0);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const myPresenceRef = useRef<MyPresence>({ state: "online" });
   const listeners = useRef(new Set<ActivityListener>());
+  const myFocusListeners = useRef(new Set<MyFocusListener>());
 
   /** Re-read feed + partner's day from Postgres (the source of truth). */
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Bumped by each partner "focus" broadcast: a read that raced one is stale. */
+  const focusSeq = useRef(0);
   const refetch = useCallback(() => {
     if (refetchTimer.current) clearTimeout(refetchTimer.current);
     // Coalesce bursts (e.g. several events after a reconnect) into one read.
     refetchTimer.current = setTimeout(async () => {
       try {
+        const seq = focusSeq.current;
         const data = await loadDuoData(createClient(), me.id);
         setFeed((f) => {
           // Keep optimistic local lines that the database has not confirmed yet.
@@ -115,6 +113,7 @@ function useDuoRealtimeValue(initial: DuoData) {
           total: data.partnerDay?.total ?? 0,
         });
         setPartnerTasks(toTasks(data.partnerTasks));
+        if (seq === focusSeq.current) setPartnerFocus(data.partnerFocus);
       } catch {
         // Offline or transient: the next reconnect / event retries.
       }
@@ -123,17 +122,8 @@ function useDuoRealtimeValue(initial: DuoData) {
 
   const publishPresence = useCallback(
     (ch: RealtimeChannel) => {
-      const p = myPresenceRef.current;
-      const meta: PresenceMeta =
-        p.state === "focusing"
-          ? {
-              user_id: me.id,
-              state: "focusing",
-              focus_title: p.title,
-              focus_started_at: p.startedAt,
-              focus_planned_minutes: p.plannedMinutes,
-            }
-          : { user_id: me.id, state: "online" };
+      // Once per join: presence only says "here". No timers, no focus.
+      const meta: PresenceMeta = { user_id: me.id, state: "online" };
       void ch.track(meta).catch(() => {
         // Not joined yet or reconnecting: tracked again on the next SUBSCRIBED.
       });
@@ -168,16 +158,19 @@ function useDuoRealtimeValue(initial: DuoData) {
       channelRef.current = ch;
       ch.on("presence", { event: "sync" }, () => {
         if (!partnerId) return;
-        setPresence(
-          aggregatePresence(ch.presenceState<PresenceMeta>(), partnerId),
-        );
+        setPartnerOnline(presenceOnline(ch.presenceState(), partnerId));
       })
         .on("broadcast", { event: "activity" }, ({ payload }) => {
           const record: ActivityRecord = {
             id: String(payload.id),
             actor_id: String(payload.actor_id),
+            event_type: payload.event_type ? String(payload.event_type) : null,
             target_id: payload.target_id ? String(payload.target_id) : null,
             title: payload.title ? String(payload.title) : null,
+            duration_seconds:
+              typeof payload.duration_seconds === "number"
+                ? payload.duration_seconds
+                : null,
             created_at: String(payload.created_at),
           };
           const event = eventFromActivity(record, me.id, tz);
@@ -191,6 +184,27 @@ function useDuoRealtimeValue(initial: DuoData) {
         .on("broadcast", { event: "activity_removed" }, ({ payload }) => {
           setFeed((f) => removeFromFeed(f, { id: String(payload.id) }));
           if (payload.actor_id !== me.id) refetch();
+        })
+        .on("broadcast", { event: "focus" }, ({ payload }) => {
+          // One message per transition (start / pause / resume / complete).
+          const f: PartnerFocus = {
+            id: String(payload.id),
+            user_id: String(payload.user_id),
+            title: payload.title ? String(payload.title) : null,
+            status: String(payload.status),
+            started_at: String(payload.started_at),
+            planned_seconds: Number(payload.planned_seconds),
+            paused_at: payload.paused_at ? String(payload.paused_at) : null,
+            accumulated_pause_seconds: Number(
+              payload.accumulated_pause_seconds,
+            ),
+          };
+          if (f.user_id === me.id) {
+            myFocusListeners.current.forEach((l) => l(f));
+          } else {
+            focusSeq.current++;
+            setPartnerFocus(f.status === "completed" ? null : f);
+          }
         })
         .on("broadcast", { event: "tasks_changed" }, ({ payload }) => {
           if (payload.actor_id !== me.id) refetch();
@@ -227,7 +241,7 @@ function useDuoRealtimeValue(initial: DuoData) {
       pendingRemoval = ready
         .then(() => (channel ? supabase.removeChannel(channel) : undefined))
         .catch(() => undefined);
-      setPresence(OFFLINE);
+      setPartnerOnline(false);
       setConn("connected");
     };
   }, [duoId, partnerId, me.id, tz, publishPresence, refetch]);
@@ -240,6 +254,7 @@ function useDuoRealtimeValue(initial: DuoData) {
     setFeed([]);
     setPartnerTasks([]);
     setPartnerCounts({ done: 0, total: 0 });
+    setPartnerFocus(null);
   }
   const loadedDuo = useRef(duoId);
   useEffect(() => {
@@ -247,15 +262,6 @@ function useDuoRealtimeValue(initial: DuoData) {
     loadedDuo.current = duoId;
     if (duoId) refetch();
   }, [duoId, refetch]);
-
-  /** Called by the app when this user starts / ends a focus session. */
-  const setMyPresence = useCallback(
-    (p: MyPresence) => {
-      myPresenceRef.current = p;
-      if (channelRef.current) publishPresence(channelRef.current);
-    },
-    [publishPresence],
-  );
 
   /** Optimistic line for my own shared completion (replaced by the real event). */
   const addLocalCompletion = useCallback(
@@ -285,6 +291,13 @@ function useDuoRealtimeValue(initial: DuoData) {
     setFeed((f) => removeFromFeed(f, { taskId }));
   }, []);
 
+  const onMyFocus = useCallback((listener: MyFocusListener) => {
+    myFocusListeners.current.add(listener);
+    return () => {
+      myFocusListeners.current.delete(listener);
+    };
+  }, []);
+
   const onPartnerActivity = useCallback((listener: ActivityListener) => {
     listeners.current.add(listener);
     return () => {
@@ -295,11 +308,12 @@ function useDuoRealtimeValue(initial: DuoData) {
   return {
     conn,
     feed,
-    presence,
+    partnerOnline,
+    partnerFocus,
     partnerCounts,
     partnerTasks,
     flashAt,
-    setMyPresence,
+    onMyFocus,
     addLocalCompletion,
     removeLocalCompletion,
     onPartnerActivity,
