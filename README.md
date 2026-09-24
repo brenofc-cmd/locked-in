@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 5 — realtime partner, presence and live feed verified; Stage 6 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 6 — persistent Focus sessions and live Focus sync verified; Stage 7 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 

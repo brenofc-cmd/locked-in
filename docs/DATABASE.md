@@ -121,16 +121,17 @@ Integrity guaranteed by the database:
 Proof of work, not an audit log. Maintained only by the database; clients can read their own duo's
 rows and nothing else.
 
-| Column           | Type        | Rule                                                        |
-| ---------------- | ----------- | ----------------------------------------------------------- |
-| `id`             | uuid PK     | identity used by the client to de-duplicate                 |
-| `duo_id`         | uuid        | → `duos(id)` on delete cascade (ending a duo ends its feed) |
-| `actor_id`       | uuid        | → `profiles(id)` on delete cascade; always the task owner   |
-| `event_type`     | text        | `task_completed` (Stage 6 / 8 add focus / reaction types)   |
-| `target_type`    | text        | `daily_task`                                                |
-| `target_id`      | uuid        | the task; `unique (event_type, target_id)`                  |
-| `title_snapshot` | text        | task title at completion time (≤ 80)                        |
-| `created_at`     | timestamptz | the completion time                                         |
+| Column             | Type        | Rule                                                        |
+| ------------------ | ----------- | ----------------------------------------------------------- |
+| `id`               | uuid PK     | identity used by the client to de-duplicate                 |
+| `duo_id`           | uuid        | → `duos(id)` on delete cascade (ending a duo ends its feed) |
+| `actor_id`         | uuid        | → `profiles(id)` on delete cascade; always the task owner   |
+| `event_type`       | text        | `task_completed`, `focus_started`, `focus_completed`        |
+| `target_type`      | text        | `daily_task` or `focus_session` (Stage 6)                   |
+| `target_id`        | uuid        | the task; `unique (event_type, target_id)`                  |
+| `title_snapshot`   | text        | task / focus title at event time (≤ 80); null if private    |
+| `duration_seconds` | integer     | focus_completed only: actual focus seconds (Stage 6)        |
+| `created_at`       | timestamptz | the completion time (focus: start / end time)               |
 
 Trigger `private.sync_task_activity()` (SECURITY DEFINER, AFTER INSERT / UPDATE OF status,
 visible_to_partner / DELETE on `daily_tasks`) keeps the invariant **"an event exists exactly while
@@ -155,6 +156,63 @@ the score) but never listed. It returns nothing for outsiders or users without a
 under advisor 0029 like the duo RPCs (ADR-028). Partner counts refresh on the partner's shared
 events, on reconnect and on page load; a private completion does not notify (that would reveal
 timing), so counts can lag until one of those.
+
+### `public.focus_sessions` (Stage 6) — persistent Focus
+
+A Focus session is database state. The browser never saves a timer; it derives the clock from these
+timestamps. Owner-only table (RLS); the partner sees a limited projection, never the row.
+
+| Column                      | Type        | Rule                                                                             |
+| --------------------------- | ----------- | -------------------------------------------------------------------------------- |
+| `id`                        | uuid PK     |                                                                                  |
+| `user_id`                   | uuid        | default `auth.uid()`, → `profiles(id)` on delete cascade                         |
+| `duo_id`                    | uuid        | duo at start (from membership, set by the trigger), → `duos` on delete set null  |
+| `daily_task_id`             | uuid        | optional; composite FK `(daily_task_id, user_id)` → `daily_tasks(id, owner_id)`  |
+| `title`                     | text        | 1–80 chars (task title or a preset: Project, Physics, Reading, Study)            |
+| `planned_seconds`           | integer     | 1…43200 (the UI offers 25 / 50 / 90 / custom 5–240 min)                          |
+| `status`                    | text        | `active`, `paused`, `completed` (no "cancelled": ending early is a real session) |
+| `started_at`                | timestamptz | database `now()` at insert                                                       |
+| `paused_at`                 | timestamptz | set while paused, null otherwise                                                 |
+| `accumulated_pause_seconds` | integer     | ≥ 0, sum of finished pauses                                                      |
+| `ended_at`                  | timestamptz | set on completion                                                                |
+| `actual_focus_seconds`      | integer     | 0…planned, set on completion                                                     |
+| `reflection`                | text        | ≤ 1000, optional, **owner only**                                                 |
+| `visible_to_partner`        | boolean     | false → partner and feed never see the title (forced false for a private task)   |
+
+Constraints: a state check (active ⇒ no `paused_at` / `ended_at`; paused ⇒ `paused_at`; completed ⇒
+`ended_at` + `actual_focus_seconds`); partial unique index `focus_sessions_one_unfinished (user_id)
+where status in ('active','paused')` — **one unfinished session per user**, so a double tap, two tabs
+or two devices cannot start two. `daily_tasks` gained `unique (id, owner_id)` as the FK target.
+
+## Focus lifecycle and timer maths (Stage 6)
+
+Trigger `private.focus_lifecycle()` (BEFORE INSERT / UPDATE) owns every timestamp; clients only send
+the status they want (column grants: INSERT `title, planned_seconds, daily_task_id,
+visible_to_partner`; UPDATE `status, reflection`).
+
+```
+active seconds = (coalesce(paused_at, now()) - started_at) - accumulated_pause_seconds
+remaining      = planned_seconds - active seconds            (never below 0)
+```
+
+| Transition           | Database does                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| insert               | `status = active`, `started_at = now()`, `duo_id` from membership, private task ⇒ private   |
+| active → paused      | `paused_at = now()`                                                                         |
+| paused → active      | `accumulated_pause_seconds += round(now() - paused_at)`, `paused_at = null`                 |
+| active/paused → done | `actual = min(active seconds, planned)`, `ended_at = now()` — or the planned end if expired |
+| completed → anything | refused (`LI_FOCUS_FINISHED`); only `reflection` may still be written                       |
+
+Example: start 10:00, pause 10:10–10:20, end 10:40 → `actual_focus_seconds = 1800` (30 min).
+
+**Expiry / reconciliation (no cron).** An `active` session whose planned time has passed (the app
+may have been closed) is completed on demand by `public.reconcile_my_focus()`, called by
+`my_active_focus()` on every load and by every transition. It stores `actual = planned` and
+`ended_at = started_at + pauses + planned` — the real end, not the time the app was reopened. The
+open app also ends the session itself at 00:00. A **paused** session never expires.
+
+**Focus today** = completed sessions + the running one, attributed to the local day (profile
+timezone) the session **started** on; a session across midnight stays with its start day.
 
 ## Status semantics (Stage 4)
 
@@ -230,9 +288,15 @@ requests (B and C racing for the same code, 10 + 5 rounds: always exactly one wi
 | `daily_tasks_owner_date_idx (owner_id, task_date)`                 | Today query, RLS, future history (Stage 7)       |
 | `daily_tasks_routine_date_key (routine_item_id, task_date)` unique | one occurrence per date, routine lookups         |
 
-Advisor 0001 reports the composite FK `(routine_item_id, owner_id)` as not covered by an exact index.
-Accepted: the unique `(routine_item_id, task_date)` index already serves lookups by routine, and the
-FK is only checked when a routine is hard-deleted, which clients cannot do.
+| `focus_sessions_one_unfinished (user_id)` unique partial | one active / paused session per user |
+| `focus_sessions_user_started_idx (user_id, started_at desc)` | active session, recent sessions, focus today |
+| `focus_sessions_task_idx (daily_task_id)` | FK set-null when a task is deleted |
+| `focus_sessions_duo_idx (duo_id)` | FK set-null when a duo ends |
+
+Advisor 0001 reports the composite FKs `(routine_item_id, owner_id)` and `(daily_task_id, user_id)`
+(focus_sessions) as not covered by an exact index. Accepted: the leading-column indexes serve them.
+For routines, the unique `(routine_item_id, task_date)` index serves lookups by routine and the FK is only
+checked when a routine is hard-deleted, which clients cannot do.
 
 ## Functions
 
@@ -257,6 +321,17 @@ FK is only checked when a routine is hard-deleted, which clients cannot do.
 | `private.normalize_daily_task()`     | invoker  | trigger only                         | trims, owns status timestamps                                   |
 | `private.sync_task_activity()`       | DEFINER  | trigger only                         | feed events + `realtime.send` broadcasts (Stage 5)              |
 | `public.partner_today()`             | DEFINER  | `authenticated`                      | partner's local date + done / total (Stage 5)                   |
+| `public.reconcile_my_focus()`        | invoker  | `authenticated`                      | complete my expired session (Stage 6)                           |
+| `public.my_active_focus()`           | invoker  | `authenticated`                      | reconcile, then my unfinished session                           |
+| `public.start_focus_session(...)`    | invoker  | `authenticated`                      | title, planned seconds, optional task, visibility               |
+| `public.pause_focus_session(id)`     | invoker  | `authenticated`                      | idempotent; returns the row                                     |
+| `public.resume_focus_session(id)`    | invoker  | `authenticated`                      | idempotent; returns the row                                     |
+| `public.complete_focus_session(...)` | invoker  | `authenticated`                      | end (early or on time), optional reflection                     |
+| `public.save_focus_reflection(...)`  | invoker  | `authenticated`                      | reflection after completion                                     |
+| `public.partner_current_focus()`     | DEFINER  | `authenticated`                      | partner's unfinished, unexpired session: limited projection     |
+| `public.server_now()`                | invoker  | `authenticated`                      | database clock: the timers' reference on page load (Stage 6)    |
+| `private.focus_lifecycle()`          | invoker  | trigger only                         | owns status timestamps and duration maths                       |
+| `private.sync_focus_activity()`      | DEFINER  | trigger only                         | focus feed events + `focus` broadcasts                          |
 
 Stage 4 functions are all SECURITY INVOKER (ADR-020): they run as the caller, so RLS and column
 grants apply exactly as for direct API calls, and none of them takes an owner id. Errors:
@@ -295,7 +370,16 @@ the RPCs.
 
 `activity_events`: `authenticated` SELECT only (no INSERT / UPDATE / DELETE); `anon` nothing.
 
-RLS is enabled on all six tables, and on `realtime.messages` (Realtime Authorization, see
+`focus_sessions`: `authenticated` SELECT; INSERT (`user_id`, `title`, `planned_seconds`,
+`daily_task_id`, `visible_to_partner`); UPDATE (`status`, `reflection`); **no DELETE**; `anon`
+nothing. Policies: read / insert / update **own** only (`user_id = auth.uid()`). The partner never
+reads the table; `partner_current_focus()` (SECURITY DEFINER, accepted under advisor 0029 like
+`partner_today`, ADR-034) returns only `id, user_id, title (null if private), status, started_at,
+planned_seconds, paused_at, accumulated_pause_seconds` — never the reflection, the task id or
+history. Outsiders get nothing. Focus errors: `LI_FOCUS_RUNNING`, `LI_FOCUS_FINISHED`,
+`LI_NOT_FOUND`, `LI_NOT_AUTHENTICATED` (mapped by `focusErrorMessage()` in `src/lib/focus.ts`).
+
+RLS is enabled on all seven tables, and on `realtime.messages` (Realtime Authorization, see
 REALTIME.md).
 
 | Policy                                                  | Table             | Rule                                                        |
@@ -339,6 +423,14 @@ migrations already grant explicitly; keep doing so.
   (receive / publish presence for A and B; denied for the other duo, no-duo user, fake topic,
   another duo's topic, anon; clients cannot send broadcasts), duo break removes feed and access.
 
+- `supabase/tests/stage6_focus.test.sql` — pgTAP, 63 assertions: anon denied; start sets database
+  timestamps and duo; one unfinished session per user (`LI_FOCUS_RUNNING`, index backstop); pause /
+  resume maths (pauses excluded); complete early; completed immutable except reflection; expired
+  session reconciled with `actual = planned` and the planned end; paused never expires; linked task
+  must be mine; private task ⇒ private session; partner projection (no reflection, no private title,
+  no history) and no table read / write; outsider nothing; feed events `focus_started` /
+  `focus_completed` only (no pause / resume), private without title; column-grant spoofing refused; `server_now()` returns the database clock, anon denied.
+
 Each file runs in one transaction and rolls back (broadcasts sent inside it are never delivered).
 
 How to run:
@@ -348,8 +440,8 @@ How to run:
   machine): run the file's statements in one transaction against DEV, with each
   `select <assertion>(…)` captured into a temp table and a final `raise exception` that prints the
   TAP lines. The exception aborts the transaction, so users, rows and the pgtap extension are all
-  rolled back. Results on 2026-09-24 (after the Stage 5 migrations): stage 3 `51/51 ok`, stage 4
-  `71/71 ok`, stage 5 `40/40 ok`, `FAILED=0`.
+  rolled back. Results on 2026-09-24 (after the Stage 6 migrations): stage 3 `51/51 ok`, stage 4
+  `71/71 ok`, stage 5 `40/40 ok`, stage 6 `63/63 ok` (225/225), `FAILED=0`.
 
 End-to-end coverage of the same rules through the public API (publishable key, real sessions):
 `tests/e2e/stage3.spec.ts` → "database rules hold through the public API" and

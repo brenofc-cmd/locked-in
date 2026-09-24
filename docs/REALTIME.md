@@ -1,6 +1,6 @@
 # Realtime
 
-Stage 5. How two people see each other's day live. **Postgres is the source of truth; Realtime is
+Stages 5–6. How two people see each other's day and Focus live. **Postgres is the source of truth; Realtime is
 only the delivery mechanism.** Anything missed over the socket comes back from the database.
 
 ```
@@ -60,35 +60,64 @@ used here); it does not affect security of duo data, which lives only in private
 
 ## Broadcast events (database → duo)
 
-Sent by `private.sync_task_activity()` on `daily_tasks` changes. Payloads are minimal — never
-notes, timezone, email or private tasks.
+Sent by `private.sync_task_activity()` on `daily_tasks` changes and by
+`private.sync_focus_activity()` on `focus_sessions` status changes (Stage 6). Payloads are minimal —
+never notes, reflections, timezone, email or private titles.
 
-| Event              | When                                                                 | Payload                                                  |
-| ------------------ | -------------------------------------------------------------------- | -------------------------------------------------------- |
-| `activity`         | a shared task becomes completed (or a completed task becomes shared) | `id, actor_id, event_type, target_id, title, created_at` |
-| `activity_removed` | a completed shared task is undone, skipped, made private or deleted  | `id, actor_id`                                           |
-| `tasks_changed`    | a shared task changes state without a feed change (skip / unskip)    | `actor_id`                                               |
+| Event              | When                                                                                                      | Payload                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `activity`         | a shared task becomes completed (or a completed task becomes shared); a focus session starts or completes | `id, actor_id, event_type, target_id, title, duration_seconds, created_at`                                        |
+| `focus`            | a focus session is started, paused, resumed or completed (one message per transition)                     | `id, user_id, title (null if private), status, started_at, planned_seconds, paused_at, accumulated_pause_seconds` |
+| `activity_removed` | a completed shared task is undone, skipped, made private or deleted                                       | `id, actor_id`                                                                                                    |
+| `tasks_changed`    | a shared task changes state without a feed change (skip / unskip)                                         | `actor_id`                                                                                                        |
 
 Private tasks (`visible_to_partner = false`) emit nothing at all — no title, no timing. Edits,
 reorders, archives, renames, settings and page views emit nothing ("magical, not noisy").
 
 ## Presence
 
-Key = the user id, so every tab / device of a user is one entry. Payload (one `track()` per state
-change, never per second):
+Key = the user id, so every tab / device of a user is one entry. Payload `{ user_id, state:
+"online" }`, tracked once per join — never per second, never focus data (Stage 6 removed the Stage
+5 "focusing" presence).
 
-```
-{ user_id, state: "online" }
-{ user_id, state: "focusing", focus_title, focus_started_at, focus_planned_minutes }
-```
-
-- `aggregatePresence()` (`src/lib/realtime-model.ts`): no entries → **OFFLINE**; any tab focusing →
-  **FOCUSING**; otherwise **ONLINE**. Offline is never published; it is the absence of presence.
+- `presenceOnline()` (`src/lib/realtime-model.ts`): no entries → offline; any tab → online.
+  Offline is never published; it is the absence of presence.
 - Closing one of two tabs keeps the user online; closing the last makes them offline within a few
   seconds (≈ 3 s measured).
-- Focusing is ephemeral (Stage 6 persists focus): the viewer computes the countdown from
-  `focus_started_at + focus_planned_minutes`. No timer ticks cross the network.
 - No "last seen" by design.
+
+## Focus (Stage 6)
+
+Focus is **persistent** (`focus_sessions`, DATABASE.md), not presence. Partner status:
+
+```
+partner has an active or paused, unexpired session  → FOCUSING   (even with the app closed)
+else presence online                                → ONLINE
+else                                                → OFFLINE
+```
+
+- **Initial state**: the server renders my session (`my_active_focus()`, which first reconciles an
+  expired one) and the partner's (`partner_current_focus()`, limited projection).
+- **Transitions**: each start / pause / resume / complete sends one `focus` broadcast (and start /
+  complete one `activity` feed event). The partner's card switches without reload; my other tabs /
+  devices receive the same message and refetch my session from Postgres.
+- **Clock**: every viewer computes `remaining = planned - ((paused_at ?? now) - started_at -
+pauses)` locally, once a second, only while a clock is on screen. `now` is the device clock
+  corrected by an offset to the **database** clock (measured with `server_now()` on every page
+  load and refined by every row the database writes; a device or app-server clock can be seconds
+  off). **No timer value ever crosses the network**: during a running session there are
+  no requests, no broadcasts and no presence updates (E2E test measures 12 s of silence; only the
+  socket heartbeat).
+- **Ordering**: broadcasts are treated as "something changed". The owner's tab refetches the truth;
+  a refetch that raced a local transition is discarded, and transitions are queued in order (a quick
+  END after RESUME is never lost). The partner's refetch (after feed events / reconnect) never
+  overwrites a newer `focus` broadcast.
+- **Expiry**: the running tab ends the session at 00:00; with the app closed, the next load
+  reconciles it in the database. The partner stops seeing FOCUSING when the planned end passes
+  (computed locally), and the session's `focus_completed` event appears when it is reconciled.
+- **Privacy**: a private session (or one on a private task) shows the partner only "Focusing" and
+  the feed "started Focus" / "completed N min Focus". Reflections never leave the owner.
+- Outside a duo there is no channel: other tabs of the same user sync when they become visible.
 
 ## Connection state
 
@@ -113,7 +142,7 @@ is replaced by the real event for the same task.
 timezone. One live event per task; undo removes it, so the feed never shows "completed" for
 something that was undone. Both members' shared completions appear. No pagination in V1.
 
-## Still mock after Stage 5
+## Still mock after Stage 6
 
-Focus sessions / totals / history, streaks, weekly competition, head-to-head, final stats,
-challenges, reaction persistence (reactions are marked locally only), notifications.
+Streaks, standard, weekly competition, head-to-head, final stats, challenges, reaction persistence
+(reactions are marked locally only), notifications.

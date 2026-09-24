@@ -200,3 +200,27 @@ Status: Accepted.
 Decision: `auth.setup.ts` gives each UI-suite partner (Lucas) a real day whose last completion is in the duo feed, so the Partner screen tests run on real data. `tests/e2e/stage5.spec.ts` (project `stage5`, after `stage4`) opens two or three isolated browser contexts: live completion / undo / private task without reload, presence online → focusing → online → offline, multiple tabs, missed-while-offline recovery, connection loss, and socket-level authorization for members, outsider, fake topic and anon.
 Reason: The stage is only done when two users see each other live.
 Status: Accepted.
+
+# ADR-033 — Focus sessions are persistent; Postgres owns every timestamp
+
+Decision: `focus_sessions` stores `started_at`, `paused_at`, `accumulated_pause_seconds`, `ended_at` and `actual_focus_seconds`, all set by a BEFORE trigger with `now()`; clients send only the status they want (column grants). The clock is derived: `remaining = planned - ((paused_at ?? now) - started_at - pauses)`, never decremented, never saved per second. Status is `active | paused | completed` — no "cancelled": ending early is a valid session with its real duration. One unfinished session per user is a partial unique index (double tap, two tabs, two devices). A linked task must belong to the same user (composite FK); a private task makes the session private. Focus today counts sessions on the local day they started.
+Reason: Refresh, closing the app, sleep and background tabs cannot lose or distort a session; there is nothing to fake from the client.
+Status: Accepted.
+
+# ADR-034 — Expiry is reconciled on demand; partner sees a limited projection
+
+Decision: No cron. `reconcile_my_focus()` (called by `my_active_focus()` on every load and by every transition) completes an active session whose planned time has passed, storing `actual = planned` and `ended_at = started_at + pauses + planned` (the real end, not the reopening time). A paused session never expires. The partner never reads `focus_sessions`; `partner_current_focus()` (SECURITY DEFINER, `search_path = ''`, EXECUTE for `authenticated` only, accepted under advisor 0029 like `partner_today`) returns the partner's unfinished, unexpired session with timer fields and the title only if shared — never the reflection, task id or history.
+Reason: Correct durations without background jobs; least data for the partner.
+Status: Accepted.
+
+# ADR-035 — Live Focus: one broadcast per transition, persistent focus wins over presence
+
+Decision: A DEFINER trigger on `focus_sessions` sends one `focus` broadcast on `duo:<duo_id>` per start / pause / resume / complete, and writes `focus_started` / `focus_completed` feed events (with `duration_seconds`; pause / resume stay out of the feed; private sessions have no title). Presence becomes `{ user_id, state: "online" }` only. Partner status = FOCUSING if a valid persistent session exists (even with the app closed), else presence ONLINE / OFFLINE. The owner's tabs treat `focus` broadcasts as "refetch"; transitions are queued in order and a refetch that raced a local transition is discarded; the partner's refetch never overwrites a newer broadcast. Each viewer ticks locally once a second only while a clock is on screen, corrected to the database clock (`server_now()` on load, refined by every written row: the app server or device clock can be seconds off — found in acceptance testing); E2E proves 12 s of a running session produce no requests, broadcasts or presence updates.
+Reason: Live without noise; correct under reordering, multiple tabs and closed apps.
+Status: Accepted. Supersedes the focus part of ADR-029.
+
+# ADR-036 — E2E: @focus UI tests run after the rest of their user's suite; stage6 project
+
+Decision: A running session overlays every screen of its user, so the UI focus test is tagged `@focus` and runs in `focus-390` / `focus-1440`, which depend on `mobile-390` and `desktop-1440`. `tests/e2e/stage6.spec.ts` (project `stage6`, after `stage5`, serial) covers refresh while running / paused, expiry while closed, two-browser live focus, private session, multi-tab, double start, outsider, and the no-per-second-traffic network test.
+Reason: Deterministic parallel suite with real persistence.
+Status: Accepted.

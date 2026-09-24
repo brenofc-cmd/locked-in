@@ -1,7 +1,59 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-5 — Realtime partner, presence and live activity — VERIFIED / COMPLETE (2026-09-24)
+6 — Persistent Focus Sessions and live Focus synchronization — VERIFIED / COMPLETE (2026-09-24)
+
+Next Stage:
+7 — Progress + Competition (not started)
+
+---
+
+# Stage 6 record
+
+Stage 6 — Persistent Focus Sessions and live Focus synchronization — VERIFIED / COMPLETE (2026-09-24)
+
+Completed (Stage 6):
+
+- `focus_sessions` (migrations `…162212` … `…172713`): statuses active / paused / completed (ending early = completed), every timestamp from `now()` in a lifecycle trigger, pauses excluded from the duration, one unfinished session per user (partial unique index), linked task must be mine (composite FK), private task ⇒ private session, reflection ≤ 1000 owner-only, owner-only RLS + column grants, no DELETE
+- Invoker RPCs `start / pause / resume / complete_focus_session`, `save_focus_reflection`, `my_active_focus` + `reconcile_my_focus` (expired sessions completed on demand with `actual = planned` and the real planned end; no cron; paused never expires); `server_now()` (database clock); DEFINER `partner_current_focus()` limited projection
+- Feed events `focus_started` / `focus_completed` (with real duration; no pause / resume; private without title) and one `focus` broadcast per transition on the duo channel, from a DEFINER trigger; never a reflection, never per second
+- Presence reduced to online only; partner status = FOCUSING from the persistent session (even with the app closed), else presence ONLINE / OFFLINE
+- Focus screen real: picker of today's open tasks + presets, 25 / 50 / 90 / custom, LOCK IN (not optimistic), pause / resume / end (optimistic with rollback, queued in order), completion with real duration and optional reflection, session list and Focus today from the database; the timer survives refresh, closing the app, sleep and a second tab; clock derived from timestamps + database clock offset, local 1 s tick only while a clock is on screen
+- Removed: `mockFocus`, mock focus totals / sessions, focus in presence
+- Docs: DATABASE (table, lifecycle, maths, reconciliation, privacy), REALTIME (focus events, presence change, ordering, clock), ARCHITECTURE, ADR-033…036, CLAUDE.md, README, ROADMAP
+
+Verified (2026-09-24):
+
+- `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` — pass
+- `npm test` — 6 files, 55 tests passed (timer maths incl. pauses, expiry, paused never expiring, partner status, focus today across midnight, clock offset, feed mapping, error copy)
+- `npm run test:e2e` — 45 passed, four consecutive green full runs after the last fix: setup, UI suite at 390 / 1440 (+ @focus after it), 375 / 430 layout, stage3 5, stage4 4, stage5 4, stage6 7 — refresh while running and while paused (pause excluded, reflection saved), expired while closed → reconciled, two-browser live start / pause / resume / app closed (still FOCUSING) / end → ONLINE and private title hidden, second tab restores and syncs, double LOCK IN and concurrent starts → one session, outsider no access, network test (12 s running: no HTTP requests, no broadcast / focus frames, no presence tracking; only heartbeats)
+- Database: pgTAP on DEV (aborted-transaction method) — stage 3 51/51, stage 4 71/71, stage 5 40/40, stage 6 63/63 (225/225)
+- Responsive smoke with a real session (setup, running, paused, complete, partner) at 375, 390, 430, 768, 1180, 1440 — no horizontal overflow, no console errors; clock right after start 25:00 and 24:57 after a reload 3.4 s later
+- Advisors: nothing new beyond the accepted DEFINER `partner_current_focus` (ADR-034) and the INFO about the composite FK index
+- Security review: no timer written / broadcast / tracked per second, no client broadcast, partner never reads `focus_sessions`, reflections never leave the owner, no service role in client code, no secrets committed
+
+Fixed during verification:
+
+- END right after RESUME was dropped (busy flag) → transitions are queued in order
+- Late `focus` broadcasts / refetches could resurrect an ended session or overwrite a newer partner state → refetch treated as truth, stale results discarded
+- DONE before the END response reopened the completion screen → the response only updates the screen it belongs to; the note waits for the completion
+- Initial clock used the app server's clock (≈ 10 s off from Postgres here) → `server_now()` measured on every load
+- `server_now()` was callable by anon (Supabase default privileges) → caught by pgTAP, fixed in a new migration
+
+Known Issues:
+
+- `npx supabase test db` still cannot run locally (Docker Desktop VM does not start); pgTAP ran on DEV
+- With the app closed, an expired session is completed in the database the next time its owner opens the app; until then the partner already sees ONLINE / OFFLINE (computed locally) but the `focus_completed` feed line appears only after reconciliation
+- Outside a duo there is no channel: a second tab of the same user syncs when it becomes visible (or on reload)
+- Backgrounded mobile tabs may throttle timers; the clock is recomputed from timestamps as soon as the tab is visible again
+- Still mock: standard, streak, weekly competition, head-to-head, stats, challenges, reaction persistence, notifications
+- Realtime "Allow public access" still to be disabled before production (Stage 10); leaked-password protection off in DEV
+
+---
+
+# Stage 5 record
+
+Stage 5 — Realtime partner, presence and live activity — VERIFIED / COMPLETE (2026-09-24)
 
 Previous Stages:
 
@@ -52,8 +104,8 @@ Known Issues:
 - Still mock: focus sessions / totals / history, standard, streak, weekly competition, head-to-head, stats, challenges, reaction persistence, notifications
 - Supabase advisors: definer RPCs incl. `partner_today` (ADR-015 / ADR-028), leaked-password protection off in DEV, INFO about the composite FK index and an unused `activity_events_actor_idx` (FK cascade)
 
-Next Stage:
-6 — Persistent Focus Sessions and live Focus synchronization — PENDING (not started)
+Next Stage (at the end of Stage 5):
+6 — Persistent Focus Sessions and live Focus synchronization
 
 ---
 

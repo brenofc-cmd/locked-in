@@ -140,10 +140,26 @@ Implemented; details in [REALTIME.md](REALTIME.md).
 - One **private** channel per duo, `duo:<duo_id>`, authorized by RLS on `realtime.messages`.
 - **Broadcast from the database** (`realtime.send` in the `daily_tasks` trigger) for feed changes —
   not Postgres Changes, and never full rows.
-- **Presence** on the same channel for Online / Focusing / Offline (key = user id).
+- **Presence** on the same channel for Online / Offline only (key = user id, once per join).
 - Connection state (connected / reconnecting / offline) in the Stage 2 pill. No offline write queue:
   a write that fails while offline is rolled back with a message.
 - Verified with two and three real browser contexts (Playwright) and real sockets.
+
+## Focus strategy (Stage 6)
+
+Details in [DATABASE.md](DATABASE.md) (lifecycle, timer maths) and [REALTIME.md](REALTIME.md).
+
+- `focus_sessions` in Postgres is the source of truth; every timestamp comes from the database.
+  Invoker RPCs (`start / pause / resume / complete_focus_session`, `my_active_focus`) are called by
+  Server Actions in `src/app/(app)/focus-actions.ts`.
+- `useFocus()` (`src/components/use-focus.ts`) holds my session, derives the clock from timestamps +
+  a server clock offset, queues transitions in order, and refetches on `focus` broadcasts and when
+  the tab becomes visible. Start is not optimistic; pause / resume / end are, with rollback.
+- Expired sessions are reconciled on demand (no cron). The partner's status is FOCUSING from the
+  persistent session, otherwise presence decides ONLINE / OFFLINE (`partnerStatus()` in
+  `src/lib/focus.ts`).
+- One local 1 s tick only while a clock is on screen; nothing is written, broadcast or tracked per
+  second.
 
 ## Mobile-first strategy
 
