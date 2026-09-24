@@ -3,17 +3,19 @@ import type { ReactNode } from "react";
 import { AppStateProvider } from "@/components/app-state";
 import { SessionProvider } from "@/components/session";
 import { AppShell } from "@/components/shell/AppShell";
-import { getSession } from "@/lib/session";
+import { loadAppData } from "@/lib/session";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // src/proxy.ts already redirects signed-out requests; this is the backstop
   // so no private screen can render without a verified session.
-  const session = await getSession();
-  if (!session) redirect("/login");
+  // Rendered per request (reads cookies): a refresh always shows the current
+  // database state, never a cached copy.
+  const data = await loadAppData();
+  if (!data) redirect("/login");
 
   return (
-    <SessionProvider value={session}>
-      <AppStateProvider>
+    <SessionProvider value={data.session}>
+      <AppStateProvider initialTasks={data.tasks}>
         <AppShell>{children}</AppShell>
       </AppStateProvider>
     </SessionProvider>

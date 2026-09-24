@@ -5,16 +5,15 @@ import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
 import { chipTone, cx } from "@/components/ui";
 import { seeded } from "@/lib/format";
+import { DAYS } from "@/lib/local-date";
 import {
-  DAYS,
   REACTIONS,
   mockChallengeOptions,
   mockStats,
-  mockTemplates,
-  mockToday,
   mockUser,
 } from "@/lib/mock-data";
-import { scheduledOn, todayStats } from "@/lib/today";
+import { ROUTINE_TEMPLATES } from "@/lib/templates";
+import { routinesOn, todayStats } from "@/lib/today";
 
 const heading = "font-mono text-[11px] tracking-[.18em] text-muted";
 
@@ -76,14 +75,14 @@ export function FocusSheet() {
 
 export function StreakSheet() {
   const { tasks, standard, closeSheet } = useApp();
-  const stats = todayStats(scheduledOn(tasks, mockToday.day).today, standard);
+  const stats = todayStats(tasks, standard);
   const rules = [
     {
       t: `A day counts when you complete ${standard}% of scheduled tasks.`,
       on: true,
     },
     {
-      t: "Skipped tasks leave the total. They don't count for or against you.",
+      t: "Skipped tasks stay in the total and don't count as done.",
       on: true,
     },
     { t: "Missing your standard resets the streak to zero.", on: false },
@@ -135,11 +134,15 @@ export function StreakSheet() {
 
 type DayItem = { name: string; state: "DONE" | "MISSED" | "EDITED" };
 
-/** Past day detail from the Progress calendar. Corrections stay local. */
+/**
+ * Past day detail from the mock Progress calendar (Stage 7 reads real
+ * daily_tasks history). Names come from the real routine; states and
+ * corrections are still mock and stay local.
+ */
 export function DaySheet({ day }: { day: number }) {
-  const { tasks } = useApp();
+  const { routines } = useApp();
   const [items, setItems] = useState<DayItem[]>(() => {
-    const names = scheduledOn(tasks, DAYS[(day - 1) % 7]).today.map(
+    const names = routinesOn(routines, DAYS[(day - 1) % 7]).on.map(
       (t) => t.name,
     );
     const missed = mockStats.september.missed.includes(day);
@@ -248,11 +251,11 @@ export function DaySheet({ day }: { day: number }) {
 }
 
 export function TemplateSheet() {
-  const { tasks, applyTemplate } = useApp();
-  const names = Object.keys(mockTemplates);
+  const { routines, applyTemplate, closeSheet } = useApp();
+  const names = Object.keys(ROUTINE_TEMPLATES);
   const [pick, setPick] = useState(names[0]);
-  const have = new Set(tasks.map((t) => t.name.toLowerCase()));
-  const items = mockTemplates[pick];
+  const have = new Set(routines.map((t) => t.name.toLowerCase()));
+  const items = ROUTINE_TEMPLATES[pick];
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -296,7 +299,10 @@ export function TemplateSheet() {
       </span>
       <button
         type="button"
-        onClick={() => applyTemplate(items)}
+        onClick={() => {
+          closeSheet();
+          void applyTemplate(items);
+        }}
         className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg"
       >
         USE ROUTINE

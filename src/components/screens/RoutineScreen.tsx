@@ -7,7 +7,8 @@ import { SECTION_OF, scheduleLabel } from "@/lib/today";
 
 export function RoutineScreen() {
   const app = useApp();
-  const items = app.tasks.filter((t) => !t.once);
+  // Real routine items (Stage 4). Order is persisted on drop.
+  const items = app.routines;
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
 
@@ -32,7 +33,7 @@ export function RoutineScreen() {
   }
 
   function onHandleUp() {
-    if (drag && over) app.moveTask(drag, over);
+    if (drag && over) app.moveRoutine(drag, over);
     setDrag(null);
     setOver(null);
   }
@@ -46,7 +47,7 @@ export function RoutineScreen() {
           : undefined;
     if (!target) return;
     e.preventDefault();
-    app.moveTask(items[index].id, target.id);
+    app.moveRoutine(items[index].id, target.id);
   }
 
   return (
@@ -75,6 +76,11 @@ export function RoutineScreen() {
           Use template
         </button>
       </div>
+      {items.length === 0 && (
+        <span className="text-[13.5px] text-dim">
+          No routine yet. Add your first item or start from a template.
+        </span>
+      )}
       <ul className="flex flex-col border-t border-white/9">
         {items.map((t, i) => {
           const dragging = drag === t.id;
@@ -119,7 +125,9 @@ export function RoutineScreen() {
               </span>
               <button
                 type="button"
-                onClick={() => app.openSheet({ kind: "edit", taskId: t.id })}
+                onClick={() =>
+                  app.openSheet({ kind: "editRoutine", routineId: t.id })
+                }
                 className="flex min-h-[58px] min-w-0 flex-1 items-center justify-between gap-2.5 pr-1 text-left"
               >
                 <span className="flex min-w-0 flex-col gap-1">

@@ -2,19 +2,23 @@
 
 /**
  * Product state shared through one context.
- * Stage 3: identity (your name, whether you have a partner, the partner's
- * name) is real and comes from useSession(). Tasks, feed, focus, stats,
- * challenges, presence and reactions are still mock and not persisted;
- * Stage 4+ replaces them with Supabase.
+ *
+ * REAL: identity and duo (useSession(), Stage 3); routine and today's tasks
+ *   (useTasks() in use-tasks.ts, Stage 4, persisted in Supabase).
+ * MOCK (not persisted): partner presence, partner tasks and activity feed,
+ *   reactions, focus sessions, standard, stats, streak and challenges.
  */
 import { usePathname } from "next/navigation";
 import { updateDisplayName } from "@/app/(app)/actions";
 import { useSession } from "@/components/session";
+import { useTasks } from "@/components/use-tasks";
+import type { TasksData } from "@/lib/session";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -26,14 +30,11 @@ import {
   mockFocus,
   mockPartner,
   mockPartnerTasks,
-  mockTasks,
   mockUser,
 } from "@/lib/mock-data";
 import type {
-  Category,
   Challenge,
   ConnectionState,
-  Day,
   FeedEvent,
   FocusDuration,
   FocusSession,
@@ -51,16 +52,7 @@ import type {
 let seq = 0;
 const uid = (prefix: string) => `${prefix}${Date.now().toString(36)}${++seq}`;
 
-export type TaskInput = {
-  name: string;
-  category: Category;
-  time: string;
-  days: Day[];
-  once: boolean;
-  visible: boolean;
-  reminder: boolean;
-  notes: string;
-};
+export type { TaskInput } from "@/lib/task-model";
 
 const INITIAL_FOCUS: FocusState = {
   phase: "setup",
@@ -75,7 +67,7 @@ const INITIAL_FOCUS: FocusState = {
   to: "",
 };
 
-function useAppStateValue() {
+function useAppStateValue(initialTasks: TasksData) {
   const pathname = usePathname();
   const session = useSession();
 
@@ -84,9 +76,13 @@ function useAppStateValue() {
   const realPartner = session.duo?.partner ?? null;
   const hasPartner = realPartner !== null;
   const partnerName = realPartner?.displayName ?? "Your partner";
+  // Mock until Stage 7 (the day's standard is not persisted yet).
   const [standard, setStandard] = useState(mockUser.standard);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [feed, setFeed] = useState<FeedEvent[]>(mockActivity);
+  // Mock partner events only: the user's own events come from real
+  // completions (feedOnDone), never from fixtures about tasks they don't have.
+  const [feed, setFeed] = useState<FeedEvent[]>(() =>
+    mockActivity.filter((e) => e.who === "partner"),
+  );
   // Mock presence / focus / streak; name and initial are the real partner's.
   const [partnerMock, setPartner] = useState<Partner>(mockPartner);
   const partner: Partner = {
@@ -105,8 +101,6 @@ function useAppStateValue() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [snack, setSnack] = useState<Snack | null>(null);
   const [conn, setConnState] = useState<ConnectionState>("connected");
-  const [pop, setPop] = useState<string | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const connRef = useRef(conn);
@@ -164,54 +158,52 @@ function useAppStateValue() {
     [],
   );
 
-  // ---- tasks --------------------------------------------------------------
+  // ---- tasks: REAL (Stage 4, use-tasks.ts) ----------------------------------
 
-  /** Idempotent: safe to call from Undo with a stale closure. */
-  const applyDone = useCallback((id: string, name: string, done: boolean) => {
-    const at = nowHM();
-    const offline = connRef.current !== "connected";
-    setTasks((ts) =>
-      ts.map((t) =>
-        t.id === id && t.done !== done
-          ? { ...t, done, doneAt: done ? at : null, unsynced: offline }
-          : t,
-      ),
-    );
-    setPop(id);
-    setTimeout(() => setPop((p) => (p === id ? null : p)), 180);
-    if (done) {
-      setFlash(id);
-      setTimeout(() => setFlash((f) => (f === id ? null : f)), 700);
-      setFeed((f) =>
-        f.some((e) => e.kind === "done" && e.who === "me" && e.taskId === id)
-          ? f
-          : [
-              ...f,
-              {
-                id: uid("f"),
-                t: at,
-                who: "me",
-                kind: "done",
-                text: `completed ${name}`,
-                target: name,
-                taskId: id,
-                reacted: null,
-              },
-            ],
-      );
-    } else {
+  /** The mock activity feed mirrors real completions until Stage 5. */
+  const feedOnDone = useCallback((task: Task, done: boolean) => {
+    if (!done) {
       // Unchecks never appear in the feed: the original event is withdrawn.
       setFeed((f) =>
         f.filter(
-          (e) => !(e.kind === "done" && e.who === "me" && e.taskId === id),
+          (e) => !(e.kind === "done" && e.who === "me" && e.taskId === task.id),
         ),
       );
+      return;
     }
+    setFeed((f) =>
+      f.some((e) => e.kind === "done" && e.who === "me" && e.taskId === task.id)
+        ? f
+        : [
+            ...f,
+            {
+              id: uid("f"),
+              t: nowHM(),
+              who: "me",
+              kind: "done",
+              text: `completed ${task.name}`,
+              target: task.name,
+              taskId: task.id,
+              reacted: null,
+            },
+          ],
+    );
   }, []);
+
+  const taskEffects = useMemo(
+    () => ({
+      toast,
+      onDone: feedOnDone,
+      offline: () => connRef.current !== "connected",
+    }),
+    [toast, feedOnDone],
+  );
+  const real = useTasks(initialTasks, session.me.timezone, taskEffects);
+  const { tasks, setDone, unskipTask: unskip } = real;
 
   const setTaskDone = useCallback(
     (id: string, name: string, done: boolean) => {
-      applyDone(id, name, done);
+      setDone(id, done);
       if (!done) {
         dismissSnack();
         return;
@@ -221,13 +213,13 @@ function useAppStateValue() {
         action: {
           label: "UNDO",
           run: () => {
-            applyDone(id, name, false);
+            setDone(id, false);
             dismissSnack();
           },
         },
       });
     },
-    [applyDone, dismissSnack, showSnack],
+    [setDone, dismissSnack, showSnack],
   );
 
   const toggleTask = useCallback(
@@ -235,140 +227,31 @@ function useAppStateValue() {
       const t = tasks.find((x) => x.id === id);
       if (!t) return;
       if (t.skip) {
-        setTasks((ts) =>
-          ts.map((x) => (x.id === id ? { ...x, skip: null } : x)),
-        );
+        unskip(id);
         return;
       }
       setTaskDone(id, t.name, !t.done);
     },
-    [tasks, setTaskDone],
-  );
-
-  const addTask = useCallback(
-    (input: TaskInput) => {
-      const t: Task = {
-        id: uid("t"),
-        name: input.name.trim(),
-        category: input.category,
-        time: input.time,
-        meta: "",
-        days: input.days,
-        once: input.once,
-        done: false,
-        doneAt: null,
-        skip: null,
-        visible: input.visible,
-        reminder: input.reminder,
-        notes: input.notes,
-        unsynced: connRef.current !== "connected",
-      };
-      setTasks((ts) => [...ts, t]);
-      toast({ text: "Added to your standard.", sub: t.name.toUpperCase() });
-    },
-    [toast],
-  );
-
-  const updateTask = useCallback(
-    (id: string, input: TaskInput) => {
-      setTasks((ts) =>
-        ts.map((t) =>
-          t.id === id ? { ...t, ...input, name: input.name.trim() } : t,
-        ),
-      );
-      toast({ text: "Task updated.", sub: input.name.trim().toUpperCase() });
-    },
-    [toast],
-  );
-
-  const deleteTask = useCallback(
-    (id: string) => {
-      const t = tasks.find((x) => x.id === id);
-      if (!t) return;
-      setTasks((ts) => ts.filter((x) => x.id !== id));
-      setFeed((f) => f.filter((e) => e.taskId !== id));
-      setSheet(null);
-      toast({ text: "Task deleted.", sub: t.name.toUpperCase() });
-    },
-    [tasks, toast],
+    [tasks, unskip, setTaskDone],
   );
 
   const skipTask = useCallback(
     (id: string, reason: string) => {
       const t = tasks.find((x) => x.id === id);
       if (!t) return;
-      setTasks((ts) =>
-        ts.map((x) =>
-          x.id === id
-            ? {
-                ...x,
-                skip: `SKIPPED · ${reason.toUpperCase()}`,
-                done: false,
-                doneAt: null,
-              }
-            : x,
-        ),
-      );
-      setFeed((f) => f.filter((e) => !(e.kind === "done" && e.taskId === id)));
+      real.skipTask(id, reason);
       setSheet(null);
-      toast({
-        text: "Skipped for today.",
-        sub: `${t.name.toUpperCase()} · NOT COUNTED`,
-      });
+      toast({ text: "Skipped for today.", sub: t.name.toUpperCase() });
     },
-    [tasks, toast],
+    [tasks, real, toast],
   );
 
-  const unskipTask = useCallback((id: string) => {
-    setTasks((ts) => ts.map((x) => (x.id === id ? { ...x, skip: null } : x)));
-    setSheet(null);
-  }, []);
-
-  const moveTask = useCallback((fromId: string, toId: string) => {
-    if (fromId === toId) return;
-    setTasks((ts) => {
-      const a = ts.slice();
-      const i = a.findIndex((x) => x.id === fromId);
-      const j = a.findIndex((x) => x.id === toId);
-      if (i < 0 || j < 0) return ts;
-      const [m] = a.splice(i, 1);
-      a.splice(j, 0, m);
-      return a;
-    });
-  }, []);
-
-  const applyTemplate = useCallback(
-    (items: { name: string; category: Category }[]) => {
-      const have = new Set(tasks.map((t) => t.name.toLowerCase()));
-      const fresh = items.filter((i) => !have.has(i.name.toLowerCase()));
-      setTasks((ts) => [
-        ...ts,
-        ...fresh.map<Task>((i) => ({
-          id: uid("t"),
-          name: i.name,
-          category: i.category,
-          time: "",
-          meta: "",
-          days: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
-          once: false,
-          done: false,
-          doneAt: null,
-          skip: null,
-          visible: true,
-          reminder: false,
-          notes: "",
-          unsynced: false,
-        })),
-      ]);
+  const unskipTask = useCallback(
+    (id: string) => {
+      unskip(id);
       setSheet(null);
-      toast({
-        text: fresh.length
-          ? `${fresh.length} items added.`
-          : "Nothing new to add.",
-        sub: "ROUTINE",
-      });
     },
-    [tasks, toast],
+    [unskip],
   );
 
   // ---- reactions ----------------------------------------------------------
@@ -620,13 +503,11 @@ function useAppStateValue() {
     (c: ConnectionState) => {
       setConnState(c);
       if (c === "connected") {
-        setTasks((ts) =>
-          ts.map((t) => (t.unsynced ? { ...t, unsynced: false } : t)),
-        );
+        real.markSynced();
         toast({ text: "Back online.", sub: "ALL CHANGES SYNCED" });
       }
     },
-    [toast],
+    [real, toast],
   );
 
   /** Real: writes profiles.display_name, then the layout reloads the session. */
@@ -643,15 +524,19 @@ function useAppStateValue() {
     setUserName,
     standard,
     setStandard,
+    today: real.today,
     tasks,
+    routines: real.routines,
     toggleTask,
-    addTask,
-    updateTask,
-    deleteTask,
+    addTask: real.addTask,
+    updateToday: real.updateToday,
+    updateRoutine: real.updateRoutine,
+    archiveRoutine: real.archiveRoutine,
+    deleteTask: real.deleteTask,
     skipTask,
     unskipTask,
-    moveTask,
-    applyTemplate,
+    moveRoutine: real.moveRoutine,
+    applyTemplate: real.applyTemplate,
     feed,
     partner,
     partnerTasks,
@@ -689,8 +574,8 @@ function useAppStateValue() {
     dismissSnack,
     conn,
     setConnection,
-    pop,
-    flash,
+    pop: real.pop,
+    flash: real.flash,
     now,
     setPartnerStatus,
     simulatePartnerDone,
@@ -702,8 +587,14 @@ export type AppState = ReturnType<typeof useAppStateValue>;
 
 const AppStateContext = createContext<AppState | null>(null);
 
-export function AppStateProvider({ children }: { children: ReactNode }) {
-  const value = useAppStateValue();
+export function AppStateProvider({
+  initialTasks,
+  children,
+}: {
+  initialTasks: TasksData;
+  children: ReactNode;
+}) {
+  const value = useAppStateValue(initialTasks);
   return (
     <AppStateContext.Provider value={value}>
       {children}

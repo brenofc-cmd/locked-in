@@ -1,4 +1,5 @@
-import type { Category, Day, SectionName, Task } from "@/types";
+import { sortTasks } from "@/lib/task-model";
+import type { Category, Day, RoutineItem, SectionName, Task } from "@/types";
 
 export const SECTION_ORDER: SectionName[] = [
   "MORNING",
@@ -9,12 +10,11 @@ export const SECTION_ORDER: SectionName[] = [
 ];
 
 export const SECTION_OF: Record<Category, SectionName> = {
-  Morning: "MORNING",
-  Study: "WORK / STUDY",
-  Work: "WORK / STUDY",
-  Body: "BODY",
-  Night: "NIGHT",
-  Custom: "CUSTOM",
+  morning: "MORNING",
+  work_study: "WORK / STUDY",
+  body: "BODY",
+  night: "NIGHT",
+  custom: "CUSTOM",
 };
 
 export type TodayStats = {
@@ -28,11 +28,14 @@ export type TodayStats = {
   left: number;
 };
 
-/** Skipped tasks leave the day's total; they count neither for nor against. */
+/**
+ * Completion = completed / all tasks scheduled for the day (ADR-022).
+ * A skipped task stays in the total and is not completed:
+ * 10 tasks, 8 completed, 1 skipped, 1 pending -> 80%.
+ */
 export function todayStats(tasks: Task[], standard: number): TodayStats {
-  const counted = tasks.filter((t) => !t.skip);
-  const total = counted.length;
-  const done = counted.filter((t) => t.done).length;
+  const total = tasks.length;
+  const done = tasks.filter((t) => t.done).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const neededTotal = Math.ceil((standard / 100) * total);
   const needed = Math.max(0, neededTotal - done);
@@ -55,21 +58,23 @@ export function nextLine(stats: TodayStats): string {
   return `${stats.needed} more to meet your standard.`;
 }
 
-export function scheduledOn(tasks: Task[], day: Day) {
+/** Routine items scheduled / not scheduled on a weekday. */
+export function routinesOn(routines: RoutineItem[], day: Day) {
   return {
-    today: tasks.filter((t) => t.days.includes(day)),
-    rest: tasks.filter((t) => !t.days.includes(day)),
+    on: routines.filter((r) => r.days.includes(day)),
+    off: routines.filter((r) => !r.days.includes(day)),
   };
 }
 
 export function groupBySection(tasks: Task[]) {
   return SECTION_ORDER.map((name) => {
-    const list = tasks.filter((t) => SECTION_OF[t.category] === name);
-    const counted = list.filter((t) => !t.skip);
+    const list = sortTasks(
+      tasks.filter((t) => SECTION_OF[t.category] === name),
+    );
     return {
       name,
       tasks: list,
-      count: `${counted.filter((t) => t.done).length} / ${counted.length}`,
+      count: `${list.filter((t) => t.done).length} / ${list.length}`,
     };
   }).filter((s) => s.tasks.length > 0);
 }

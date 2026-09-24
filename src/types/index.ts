@@ -1,30 +1,56 @@
 export type Day = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 
-export type Category =
-  "Morning" | "Study" | "Work" | "Body" | "Night" | "Custom";
+/** Stored values (daily_tasks / routine_items.category). Labels: CATEGORY_LABEL. */
+export type Category = "morning" | "work_study" | "body" | "night" | "custom";
 
 export type SectionName =
   "MORNING" | "WORK / STUDY" | "BODY" | "NIGHT" | "CUSTOM";
 
+export type TaskStatus = "pending" | "completed" | "skipped";
+
+/** A task on Today: one daily_tasks row (routine occurrence or one-off). */
 export type Task = {
   id: string;
+  /** Routine this occurrence came from; null for one-off tasks. */
+  routineId: string | null;
+  /** Local date "YYYY-MM-DD". */
+  date: string;
   name: string;
   category: Category;
   /** "HH:MM" or "" */
   time: string;
+  /** Short line under the name (the task's notes). */
   meta: string;
+  /** The routine's weekdays; [] for one-off tasks. */
   days: Day[];
-  /** One-off task for today only (not part of the routine). */
+  /** One-off task (not part of the routine). */
   once: boolean;
+  status: TaskStatus;
   done: boolean;
+  /** Local "HH:MM" of completion. */
   doneAt: string | null;
-  /** Skip reason shown on the row, e.g. "SKIPPED · SICK". null when not skipped. */
+  /** Skip label shown on the row, e.g. "SKIPPED · SICK". null when not skipped. */
   skip: string | null;
+  skipReason: string | null;
   visible: boolean;
   reminder: boolean;
   notes: string;
-  /** Changed while offline; shows the "Will sync" marker. */
+  sortOrder: number;
+  /** Mock connection simulation (Stage 5): shows the "Will sync" marker. */
   unsynced: boolean;
+};
+
+/** A recurring routine item (routine_items row, active only). */
+export type RoutineItem = {
+  id: string;
+  name: string;
+  category: Category;
+  time: string;
+  days: Day[];
+  visible: boolean;
+  reminder: boolean;
+  notes: string;
+  sortOrder: number;
 };
 
 export type PartnerStatus = "online" | "focusing" | "offline";
@@ -110,6 +136,7 @@ export type ConnectionState = "connected" | "reconnecting" | "offline";
 export type Sheet =
   | { kind: "add"; repeat?: boolean }
   | { kind: "edit"; taskId: string }
+  | { kind: "editRoutine"; routineId: string }
   | { kind: "options"; taskId: string }
   | {
       kind: "react";

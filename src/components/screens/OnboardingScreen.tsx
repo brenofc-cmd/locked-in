@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { LogoMark, MiniCheck, chipTone, cx } from "@/components/ui";
-import { mockTemplates } from "@/lib/mock-data";
+import { ROUTINE_TEMPLATES } from "@/lib/templates";
 
 const PATHS = [
   {
@@ -18,8 +18,8 @@ const PATHS = [
 
 /**
  * Onboarding: Welcome → Name → Routine path → Items → Invite.
- * Stage 3: the name is saved to the real profile and the invite step goes to
- * the real Duo screen. Routine choices are still mock (Stage 4).
+ * Real: the name is saved to the profile, the chosen items become routine
+ * items (every day, Stage 4) and the invite step goes to the Duo screen.
  */
 export function OnboardingScreen() {
   const app = useApp();
@@ -28,10 +28,10 @@ export function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [path, setPath] = useState<(typeof PATHS)[number]["id"]>("template");
-  const tplNames = Object.keys(mockTemplates);
+  const tplNames = Object.keys(ROUTINE_TEMPLATES);
   const [tpl, setTpl] = useState(tplNames[0]);
   const [items, setItems] = useState<{ name: string; on: boolean }[]>(() =>
-    mockTemplates[tplNames[0]].map((i) => ({ name: i.name, on: true })),
+    ROUTINE_TEMPLATES[tplNames[0]].map((i) => ({ name: i.name, on: true })),
   );
   const [draft, setDraft] = useState("");
 
@@ -39,6 +39,15 @@ export function OnboardingScreen() {
     if (name.trim() && name.trim() !== app.userName) {
       await app.setUserName(name.trim());
     }
+    const chosen = items
+      .filter((i) => i.on)
+      .map((i) => ({
+        name: i.name,
+        category:
+          ROUTINE_TEMPLATES[tpl]?.find((t) => t.name === i.name)?.category ??
+          "custom",
+      }));
+    if (chosen.length) await app.applyTemplate(chosen);
     router.push(to);
   }
 
@@ -51,7 +60,7 @@ export function OnboardingScreen() {
 
   function pickTemplate(t: string) {
     setTpl(t);
-    setItems(mockTemplates[t].map((i) => ({ name: i.name, on: true })));
+    setItems(ROUTINE_TEMPLATES[t].map((i) => ({ name: i.name, on: true })));
   }
 
   function addDraft() {

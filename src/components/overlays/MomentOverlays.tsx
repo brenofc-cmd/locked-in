@@ -2,11 +2,13 @@
 
 import { useState, type ReactNode } from "react";
 import { useApp } from "@/components/app-state";
+import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
-import { mockToday, mockUser, mockWeeks } from "@/lib/mock-data";
+import { accountDay, localTimeHM, weekdayName } from "@/lib/local-date";
+import { mockUser, mockWeeks } from "@/lib/mock-data";
 import { partnerView } from "@/lib/partner";
-import { scheduledOn, todayStats } from "@/lib/today";
+import { todayStats } from "@/lib/today";
 
 /** Review day, weekly review and morning briefing (full-screen moments). */
 export function MomentOverlays() {
@@ -52,7 +54,9 @@ const lightButton =
 
 function ReviewDay() {
   const app = useApp();
-  const list = scheduledOn(app.tasks, mockToday.day).today;
+  const { me } = useSession();
+  // Real: today's tasks. Partner numbers and focus are still mock.
+  const list = app.tasks;
   const stats = todayStats(list, app.standard);
   const pv = partnerView(app.partner, app.partnerTasks, app.feed, app.now);
   const notDone = list.filter((t) => !t.done && !t.skip).map((t) => t.name);
@@ -63,7 +67,8 @@ function ReviewDay() {
       <div className="flex flex-col gap-[34px]">
         <div className="flex flex-col gap-3.5">
           <span className="font-mono text-xs tracking-[.14em] text-dim">
-            {mockToday.weekday} · DAY {mockToday.dayNumber}
+            {weekdayName(app.today)} · DAY{" "}
+            {accountDay(me.createdAt, me.timezone, app.today)}
           </span>
           <h1 className={bigTitle}>
             TODAY
@@ -248,9 +253,11 @@ function WeeklyReview({ start }: { start: number }) {
 }
 
 function Briefing() {
-  const { closeOverlay, tasks, userName } = useApp();
+  const { closeOverlay, tasks, userName, today } = useApp();
+  const { me } = useSession();
   const [auto, setAuto] = useState(true);
-  const total = scheduledOn(tasks, mockToday.day).today.length;
+  // Real: today's task count. Yesterday % and streak are mock until Stage 7.
+  const total = tasks.length;
 
   const rows = [
     { k: "TODAY", v: String(total), unit: "TASKS" },
@@ -263,7 +270,7 @@ function Briefing() {
       <div className="flex flex-col gap-9">
         <div className="flex items-center justify-between">
           <span className="font-mono text-sm text-dim tabular-nums">
-            06:02 · {mockToday.weekday}
+            {localTimeHM(new Date(), me.timezone)} · {weekdayName(today)}
           </span>
           <button
             type="button"
@@ -280,7 +287,7 @@ function Briefing() {
             {userName.toUpperCase()}.
           </h1>
           <span className="font-mono text-[13px] tracking-[.26em] text-accent">
-            DAY {mockToday.dayNumber}
+            DAY {accountDay(me.createdAt, me.timezone, today)}
           </span>
         </div>
         <div className="flex flex-col">

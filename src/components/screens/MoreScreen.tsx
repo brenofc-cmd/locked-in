@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useApp } from "@/components/app-state";
 
 export function MoreScreen() {
-  const { tasks, challenges, hasPartner, partner } = useApp();
+  const { routines, challenges, hasPartner, partner } = useApp();
   const rows = [
     {
       href: "/routine",
       label: "Routine",
-      sub: `${tasks.filter((t) => !t.once).length} items`,
+      sub: `${routines.length} items`,
     },
     {
       href: "/challenges",

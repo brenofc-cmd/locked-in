@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import type { DailyTaskRow, RoutineRow } from "@/lib/task-model";
 
-/** Real (non-mock) identity for the signed-in user. Everything else is still mock in Stage 3. */
+/** Real identity for the signed-in user (Stage 3). */
 export type SessionData = {
   me: {
     id: string;
@@ -17,21 +18,60 @@ export type SessionData = {
   } | null;
 };
 
+/** The user's real day (Stage 4): local date, today's tasks, active routine. */
+export type TasksData = {
+  /** "YYYY-MM-DD" in profiles.timezone, from the database. */
+  today: string;
+  tasks: DailyTaskRow[];
+  routines: RoutineRow[];
+};
+
+export type AppData = { session: SessionData; tasks: TasksData };
+
 /**
- * Loads the session for a Server Component. Returns null when signed out.
- * RLS decides what is visible: own profile, own duo, own duo's members and
- * the partner's profile. No query here filters by duo on trust.
+ * Everything the (app) layout needs, in few round trips: the session queries
+ * and the task loading run in parallel. Returns null when signed out.
+ * RLS decides visibility; queries still filter by owner because the partner's
+ * shared rows are readable too.
  */
-export async function getSession(): Promise<SessionData | null> {
+export async function loadAppData(): Promise<AppData | null> {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims?.sub;
-  if (!userId) return null;
+  const sub = claims?.claims?.sub;
+  if (!sub) return null;
+  const userId: string = sub;
 
-  const [profiles, duos, members] = await Promise.all([
+  async function loadTasks(): Promise<TasksData> {
+    // Materialise routine occurrences up to the user's local today (idempotent).
+    const ensured = await supabase.rpc("ensure_my_daily_tasks");
+    if (ensured.error || !ensured.data)
+      throw new Error("Could not load today.");
+    const today = ensured.data;
+    const [tasks, routines] = await Promise.all([
+      supabase
+        .from("daily_tasks")
+        .select("*")
+        .eq("owner_id", userId)
+        .eq("task_date", today)
+        .order("sort_order")
+        .order("created_at"),
+      supabase
+        .from("routine_items")
+        .select("*")
+        .eq("owner_id", userId)
+        .or(`end_date.is.null,end_date.gte.${today}`)
+        .order("sort_order")
+        .order("created_at"),
+    ]);
+    if (tasks.error || routines.error) throw new Error("Could not load today.");
+    return { today, tasks: tasks.data, routines: routines.data };
+  }
+
+  const [profiles, duos, members, tasks] = await Promise.all([
     supabase.from("profiles").select("id, display_name, timezone, created_at"),
     supabase.from("duos").select("id, invite_code").maybeSingle(),
     supabase.from("duo_members").select("user_id"),
+    loadTasks(),
   ]);
   if (profiles.error || duos.error || members.error) {
     throw new Error("Could not load your account. Try again.");
@@ -44,21 +84,25 @@ export async function getSession(): Promise<SessionData | null> {
   const partner = profiles.data.find((p) => p.id === partnerId);
 
   return {
-    me: {
-      id: userId,
-      email: typeof claims.claims.email === "string" ? claims.claims.email : "",
-      displayName: mine.display_name,
-      timezone: mine.timezone,
-      createdAt: mine.created_at,
+    session: {
+      me: {
+        id: userId,
+        email:
+          typeof claims.claims.email === "string" ? claims.claims.email : "",
+        displayName: mine.display_name,
+        timezone: mine.timezone,
+        createdAt: mine.created_at,
+      },
+      duo: duos.data
+        ? {
+            id: duos.data.id,
+            inviteCode: duos.data.invite_code,
+            partner: partner
+              ? { id: partner.id, displayName: partner.display_name }
+              : null,
+          }
+        : null,
     },
-    duo: duos.data
-      ? {
-          id: duos.data.id,
-          inviteCode: duos.data.invite_code,
-          partner: partner
-            ? { id: partner.id, displayName: partner.display_name }
-            : null,
-        }
-      : null,
+    tasks,
   };
 }

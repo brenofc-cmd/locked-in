@@ -5,15 +5,14 @@ import { useApp } from "@/components/app-state";
 import { cx } from "@/components/ui";
 import { seeded } from "@/lib/format";
 import {
-  DAY_LETTERS,
-  DAYS,
   mockStats,
   mockToday,
   mockUser,
   mockWeeks,
   type Range,
 } from "@/lib/mock-data";
-import { scheduledOn, todayStats } from "@/lib/today";
+import { DAYS, DAY_LETTERS } from "@/lib/local-date";
+import { todayStats } from "@/lib/today";
 
 const RANGES: { k: Range; short: string; long: string }[] = [
   { k: "7", short: "7D", long: "7 DAYS" },
@@ -66,10 +65,8 @@ export function ProgressScreen() {
   const app = useApp();
   const [range, setRange] = useState<Range>("7");
   const [insights, setInsights] = useState(false);
-  const stats = todayStats(
-    scheduledOn(app.tasks, mockToday.day).today,
-    app.standard,
-  );
+  // Today's bar is real; every other number here is mock until Stage 7.
+  const stats = todayStats(app.tasks, app.standard);
   const bars = barsFor(range, stats.pct);
   const avg =
     range === "7"

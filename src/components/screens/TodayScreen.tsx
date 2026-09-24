@@ -2,19 +2,25 @@
 
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
+import { useSession } from "@/components/session";
 import { LockGlyph } from "@/components/icons";
 import { ActivityItem } from "@/components/today/ActivityItem";
 import { NoPartnerCard, PartnerCard } from "@/components/today/PartnerCard";
 import { TaskRow } from "@/components/today/TaskRow";
 import { ProgressBar, SectionHeader, cx } from "@/components/ui";
-import { mockToday, mockUser } from "@/lib/mock-data";
-import { groupBySection, nextLine, scheduledOn, todayStats } from "@/lib/today";
+import { accountDay, dateLabel, weekdayOf } from "@/lib/local-date";
+import { mockUser } from "@/lib/mock-data";
+import { groupBySection, nextLine, routinesOn, todayStats } from "@/lib/today";
 
 export function TodayScreen() {
   const app = useApp();
-  const { today, rest } = scheduledOn(app.tasks, mockToday.day);
-  const stats = todayStats(today, app.standard);
-  const sections = groupBySection(today);
+  const { me } = useSession();
+  // Real: today's daily_tasks. Rest = routine items not scheduled today.
+  const rest = routinesOn(app.routines, weekdayOf(app.today)).off;
+  const stats = todayStats(app.tasks, app.standard);
+  const sections = groupBySection(app.tasks);
+  const empty = app.tasks.length === 0 && app.routines.length === 0;
+  const dayNumber = accountDay(me.createdAt, me.timezone, app.today);
   const feedShort = app.feed.slice(-5);
 
   return (
@@ -25,10 +31,10 @@ export function TodayScreen() {
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs tracking-[.06em] text-dim">
-                  {mockToday.label}
+                  {dateLabel(app.today)}
                 </span>
                 <span className="font-mono text-[11.5px] tracking-[.22em] text-accent">
-                  DAY {mockToday.dayNumber}
+                  DAY {dayNumber}
                 </span>
               </div>
               <h1 className="m-0 text-[25px] leading-[1.1] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
@@ -62,6 +68,7 @@ export function TodayScreen() {
                   onClick={() => app.openSheet({ kind: "streak" })}
                   className="flex h-7 items-center gap-1.5 font-mono text-[11px] tracking-[.14em] text-muted hover:text-text"
                 >
+                  {/* Mock until Stage 7 (streak from daily_tasks history). */}
                   {mockUser.streak} DAY STREAK
                   <span aria-hidden="true" className="text-faint">
                     ›
@@ -104,6 +111,23 @@ export function TodayScreen() {
             aria-label="Today's tasks"
             className="flex flex-col gap-[30px]"
           >
+            {empty && (
+              <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-white/12 p-5">
+                <span className="font-mono text-[11px] tracking-[.16em] text-dim">
+                  NO ROUTINE YET
+                </span>
+                <span className="text-[15px] leading-[1.45]">
+                  Build your standard.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => app.openSheet({ kind: "add", repeat: true })}
+                  className="flex h-11 items-center self-start rounded-xl border border-white/14 px-[18px] font-mono text-[11.5px] font-semibold tracking-[.2em]"
+                >
+                  CREATE ROUTINE
+                </button>
+              </div>
+            )}
             {sections.map((sec) => (
               <div key={sec.name} className="flex flex-col">
                 <SectionHeader

@@ -1,23 +1,20 @@
 /**
- * All Stage 2 mock data lives here. Nothing else in the app should define
- * sample users, tasks or stats. Replaced by Supabase data from Stage 3 on.
+ * All remaining mock data lives here (Stage 4): partner presence and tasks,
+ * activity feed, focus, stats, streak, competition and challenges. Nothing
+ * else in the app defines sample data. Real data: identity, duo, routine and
+ * the user's own tasks (Supabase).
  */
 import type {
-  Category,
   Challenge,
   Day,
   FeedEvent,
   FocusSession,
   Partner,
   PartnerTask,
-  Task,
   WeekResult,
 } from "@/types";
 
-export const DAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-export const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-
-/** The design is drawn on Tuesday, Sep 23 2026, week 39, day 14. */
+/** Calendar of the mock Progress / Partner screens (Stage 7). Today itself is real. */
 export const mockToday = {
   day: "TUE" as Day,
   label: "TUE, SEP 23",
@@ -49,50 +46,6 @@ export const mockPartner: Partner = {
   flashAt: 0,
   streak: 8,
 };
-
-function task(
-  id: string,
-  name: string,
-  category: Category,
-  time: string,
-  meta: string,
-  doneAt: string | null,
-  days: Day[] = DAYS,
-): Task {
-  return {
-    id,
-    name,
-    category,
-    time,
-    meta,
-    days,
-    once: false,
-    done: doneAt !== null,
-    doneAt,
-    skip: null,
-    visible: true,
-    reminder: false,
-    notes: "",
-    unsynced: false,
-  };
-}
-
-/** 12 tasks today, 8 done → 67%. "Long run" is not scheduled on Tuesdays. */
-export const mockTasks: Task[] = [
-  task("t-wake", "Wake up", "Morning", "06:00", "", "05:58"),
-  task("t-water", "Drink water", "Morning", "06:10", "500 ML", "06:06"),
-  task("t-bed", "Make bed", "Morning", "06:05", "", "06:03"),
-  task("t-run", "Morning Run", "Morning", "06:30", "5 KM", null),
-  task("t-physics", "Study Physics", "Study", "07:40", "45 MIN", "08:31"),
-  task("t-project", "Work on project", "Work", "09:00", "1 H", "09:12"),
-  task("t-read", "Read", "Study", "07:15", "30 MIN", "07:38"),
-  task("t-gym", "Gym", "Body", "08:00", "PUSH DAY", "08:42"),
-  task("t-3l", "Drink 3L Water", "Body", "", "3 L", null),
-  task("t-diet", "Follow diet", "Body", "", "", "09:05"),
-  task("t-prep", "Prepare tomorrow", "Night", "22:00", "", null),
-  task("t-sleep", "Sleep before 23:00", "Night", "22:45", "", null),
-  task("t-long", "Long run", "Body", "07:00", "12 KM", null, ["SAT"]),
-];
 
 /** Lucas: 11 tasks, 7 done → 64%. */
 export const mockPartnerTasks: PartnerTask[] = [
@@ -285,32 +238,6 @@ export const mockChallengeOptions = [
   },
   { id: "focus", label: "Most focus", sub: "Most focus hours wins." },
 ];
-
-export const mockTemplates: Record<
-  string,
-  { name: string; category: Category }[]
-> = {
-  Student: [
-    { name: "Wake up", category: "Morning" },
-    { name: "Study block", category: "Study" },
-    { name: "Read", category: "Study" },
-    { name: "Review notes", category: "Study" },
-    { name: "Sleep before 23:00", category: "Night" },
-  ],
-  Athlete: [
-    { name: "Morning Run", category: "Morning" },
-    { name: "Gym", category: "Body" },
-    { name: "Stretch", category: "Body" },
-    { name: "Drink 3L Water", category: "Body" },
-    { name: "Sleep before 23:00", category: "Night" },
-  ],
-  Builder: [
-    { name: "Deep work", category: "Work" },
-    { name: "Work on project", category: "Work" },
-    { name: "Read", category: "Study" },
-    { name: "Prepare tomorrow", category: "Night" },
-  ],
-};
 
 export const REACTIONS = ["🔥", "⚡", "🫡", "Respect."];
 export const SKIP_REASONS = ["Rest", "Sick", "Travel", "Other"];

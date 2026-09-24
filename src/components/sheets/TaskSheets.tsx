@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { useApp, type TaskInput } from "@/components/app-state";
 import { SwitchTrack, chipTone, cx } from "@/components/ui";
-import { DAYS, DAY_LETTERS, SKIP_REASONS, mockToday } from "@/lib/mock-data";
+import { DAYS, DAY_LETTERS } from "@/lib/local-date";
+import { SKIP_REASONS } from "@/lib/mock-data";
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  validateTaskInput,
+} from "@/lib/task-model";
 import { SECTION_OF, scheduleLabel } from "@/lib/today";
-import type { Category, Day, Task } from "@/types";
+import type { Category, Day, RoutineItem, Task } from "@/types";
 
-const CATEGORIES: Category[] = [
-  "Morning",
-  "Study",
-  "Work",
-  "Body",
-  "Night",
-  "Custom",
-];
 const WEEKDAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI"];
 type Repeat = "Every day" | "Weekdays" | "Custom";
 
@@ -29,46 +27,53 @@ function repeatOf(days: Day[]): Repeat {
   return "Custom";
 }
 
-/** Add task (Quick Add) and edit task. */
+/**
+ * Add task (Quick Add / new routine item), edit today's task, or edit a
+ * routine item from the Routine screen. Editing a routine occurrence from
+ * Today asks "APPLY CHANGE TO": Today only | Today and future days.
+ */
 export function TaskFormSheet({
   editing,
+  routine,
   repeatByDefault = false,
 }: {
   editing?: Task;
+  routine?: RoutineItem;
   repeatByDefault?: boolean;
 }) {
   const app = useApp();
-  const [name, setName] = useState(editing?.name ?? "");
+  const source = editing ?? routine;
+  const [name, setName] = useState(source?.name ?? "");
   const [repeat, setRepeat] = useState(
-    editing ? !editing.once : repeatByDefault,
+    routine ? true : editing ? !editing.once : repeatByDefault,
   );
   const [repeatMode, setRepeatMode] = useState<Repeat>(
-    editing ? repeatOf(editing.days) : "Every day",
+    source && source.days.length ? repeatOf(source.days) : "Every day",
   );
-  const [days, setDays] = useState<Day[]>(editing?.days ?? DAYS);
+  const [days, setDays] = useState<Day[]>(
+    source && source.days.length ? source.days : DAYS,
+  );
   const [more, setMore] = useState(false);
-  const [time, setTime] = useState(editing?.time ?? "");
-  const [reminder, setReminder] = useState(editing?.reminder ?? false);
+  const [time, setTime] = useState(source?.time ?? "");
+  const [reminder, setReminder] = useState(source?.reminder ?? false);
   const [category, setCategory] = useState<Category>(
-    editing?.category ?? "Custom",
+    source?.category ?? "custom",
   );
-  const [visible, setVisible] = useState(editing?.visible ?? true);
-  const [notes, setNotes] = useState(editing?.notes ?? "");
+  const [visible, setVisible] = useState(source?.visible ?? true);
+  const [notes, setNotes] = useState(source?.notes ?? "");
   const [confirm, setConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const valid = name.trim().length > 0;
 
   function input(): TaskInput {
-    let d: Day[] = [mockToday.day];
-    if (repeat) {
-      d =
-        repeatMode === "Every day"
-          ? DAYS
-          : repeatMode === "Weekdays"
-            ? WEEKDAYS
-            : days;
-      if (d.length === 0) d = [mockToday.day];
-    }
+    const d: Day[] = !repeat
+      ? []
+      : repeatMode === "Every day"
+        ? DAYS
+        : repeatMode === "Weekdays"
+          ? WEEKDAYS
+          : days;
     return {
       name,
       category,
@@ -81,22 +86,36 @@ export function TaskFormSheet({
     };
   }
 
-  function save() {
-    if (!valid) return;
-    if (editing) {
-      if (!editing.once && !confirm) {
-        setConfirm(true);
-        return;
-      }
-      app.updateTask(editing.id, input());
-      app.closeSheet();
-      return;
-    }
-    app.addTask(input());
+  /** Close at once (the change is optimistic or fast); errors come back as toasts. */
+  function run(action: () => Promise<boolean>) {
     app.closeSheet();
+    void action();
   }
 
-  if (confirm && editing) {
+  function save() {
+    if (!valid) return;
+    const data = input();
+    const invalid = validateTaskInput(data);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    if (routine) return run(() => app.updateRoutine(routine.id, data));
+    if (editing?.routineId) {
+      setConfirm(true);
+      return;
+    }
+    if (editing) return run(() => app.updateToday(editing.id, data));
+    run(() => app.addTask(data));
+  }
+
+  function remove() {
+    if (routine) return run(() => app.archiveRoutine(routine.id));
+    if (editing) run(() => app.deleteTask(editing.id));
+  }
+
+  if (confirm && editing?.routineId) {
+    const routineId = editing.routineId;
     return (
       <div className="flex flex-col gap-2 animate-[li-fade-up_.2s_ease]">
         <span className="pb-2 font-mono text-[11px] tracking-[.18em] text-muted">
@@ -104,20 +123,14 @@ export function TaskFormSheet({
         </span>
         <button
           type="button"
-          onClick={() => {
-            app.updateTask(editing.id, input());
-            app.closeSheet();
-          }}
+          onClick={() => run(() => app.updateToday(editing.id, input()))}
           className="h-14 rounded-[14px] border border-white/10 bg-raised text-base"
         >
           Today only
         </button>
         <button
           type="button"
-          onClick={() => {
-            app.updateTask(editing.id, input());
-            app.closeSheet();
-          }}
+          onClick={() => run(() => app.updateRoutine(routineId, input()))}
           className="h-14 rounded-[14px] bg-text text-base font-semibold text-bg"
         >
           Today and future days
@@ -133,7 +146,9 @@ export function TaskFormSheet({
     );
   }
 
-  const moreSummary = [category, time].filter(Boolean).join(" · ");
+  const moreSummary = [CATEGORY_LABEL[category], time]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <form
@@ -145,12 +160,12 @@ export function TaskFormSheet({
     >
       <div className="flex min-h-8 items-center justify-between">
         <span className="font-mono text-[11px] tracking-[.18em] text-muted">
-          {editing ? "EDIT TASK" : "ADD TASK"}
+          {source ? "EDIT TASK" : "ADD TASK"}
         </span>
-        {editing && (
+        {source && (
           <button
             type="button"
-            onClick={() => app.deleteTask(editing.id)}
+            onClick={remove}
             className="h-9 rounded-lg px-2.5 text-sm text-danger"
           >
             Delete
@@ -159,13 +174,17 @@ export function TaskFormSheet({
       </div>
       <input
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => {
+          setName(e.target.value);
+          setError(null);
+        }}
+        maxLength={80}
         placeholder="Finish Physics exercise"
         aria-label="Task name"
         enterKeyHint="done"
         className="h-14 rounded-[14px] border border-white/12 bg-bg px-4 text-[17px] outline-none focus:border-white/30"
       />
-      {!editing && (
+      {!source && (
         <div role="radiogroup" aria-label="When" className="flex gap-1.5">
           {(["Today", "Repeat"] as const).map((w) => {
             const on = (w === "Repeat") === repeat;
@@ -303,7 +322,7 @@ export function TaskFormSheet({
                     chipTone(category === c),
                   )}
                 >
-                  {c}
+                  {CATEGORY_LABEL[c]}
                 </button>
               ))}
             </div>
@@ -330,9 +349,15 @@ export function TaskFormSheet({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes"
             aria-label="Notes"
+            maxLength={200}
             className={cx(field, "h-[46px] px-3.5 text-base")}
           />
         </div>
+      )}
+      {error && (
+        <p role="alert" className="-mt-2 text-[13px] text-danger">
+          {error}
+        </p>
       )}
       <button
         type="submit"
@@ -342,7 +367,7 @@ export function TaskFormSheet({
           valid ? "bg-accent text-bg" : "bg-selected text-ghost",
         )}
       >
-        {editing ? "SAVE" : "ADD"}
+        {source ? "SAVE" : "ADD"}
       </button>
     </form>
   );
@@ -383,8 +408,8 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
             ))}
           </div>
           <span className="text-xs text-dim">
-            Skipped tasks leave today&apos;s total. They don&apos;t count for or
-            against you.
+            Skipped tasks stay in today&apos;s total and don&apos;t count as
+            done.
           </span>
         </div>
       ) : (
@@ -409,10 +434,13 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
         </button>
         <button
           type="button"
-          onClick={() => app.deleteTask(task.id)}
+          onClick={() => {
+            app.closeSheet();
+            void app.deleteTask(task.id);
+          }}
           className="flex h-[54px] items-center border-t border-white/6 text-[15.5px] text-danger"
         >
-          Delete
+          {task.once ? "Delete" : "Remove from routine"}
         </button>
       </div>
     </div>

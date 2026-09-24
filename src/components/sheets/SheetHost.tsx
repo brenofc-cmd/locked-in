@@ -19,6 +19,7 @@ import {
 const LABEL = {
   add: "Add task",
   edit: "Edit task",
+  editRoutine: "Edit task",
   options: "Task options",
   react: "React",
   focus: "Start focus",
@@ -29,7 +30,7 @@ const LABEL = {
 } as const;
 
 export function SheetHost() {
-  const { sheet, closeSheet, tasks } = useApp();
+  const { sheet, closeSheet, tasks, routines } = useApp();
   if (!sheet) return null;
 
   let body: ReactNode = null;
@@ -47,6 +48,12 @@ export function SheetHost() {
         ) : (
           <TaskOptionsSheet task={task} />
         );
+      break;
+    }
+    case "editRoutine": {
+      const routine = routines.find((r) => r.id === sheet.routineId);
+      if (!routine) return null;
+      body = <TaskFormSheet routine={routine} />;
       break;
     }
     case "react":
