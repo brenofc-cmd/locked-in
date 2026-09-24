@@ -139,8 +139,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
 }
 
 function MobileHeader() {
-  const { hasPartner, partner, partnerTasks, feed, now } = useApp();
-  const pv = partnerView(partner, partnerTasks, feed, now);
+  const { hasPartner, partner, partnerCounts, feed, now } = useApp();
+  const pv = partnerView(partner, partnerCounts, feed, now);
   return (
     <div className="flex h-[52px] shrink-0 items-center justify-between bg-bg px-[18px] desk:hidden">
       <Link

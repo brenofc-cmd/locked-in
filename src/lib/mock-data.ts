@@ -1,16 +1,14 @@
 /**
- * All remaining mock data lives here (Stage 4): partner presence and tasks,
- * activity feed, focus, stats, streak, competition and challenges. Nothing
- * else in the app defines sample data. Real data: identity, duo, routine and
- * the user's own tasks (Supabase).
+ * All remaining mock data lives here (Stage 5): focus sessions, stats,
+ * streak, competition and challenges. Nothing else in the app defines sample
+ * data. Real data: identity, duo, routine, tasks, partner presence, partner's
+ * day and the activity feed (Supabase).
  */
 import type {
   Challenge,
   Day,
-  FeedEvent,
   FocusSession,
   Partner,
-  PartnerTask,
   WeekResult,
 } from "@/types";
 
@@ -34,7 +32,7 @@ export const mockUser = {
   standard: 80,
 };
 
-/** Mock presence / focus / streak. name, initial and handle are replaced by the real partner in app-state. */
+/** Mock partner streak (Stage 7). Name, presence and focus are replaced by real data in app-state. */
 export const mockPartner: Partner = {
   name: "Lucas",
   handle: "",
@@ -48,84 +46,6 @@ export const mockPartner: Partner = {
 };
 
 /** Lucas: 11 tasks, 7 done → 64%. */
-export const mockPartnerTasks: PartnerTask[] = [
-  {
-    id: "p-wake",
-    name: "Wake up at 06:30",
-    done: true,
-    at: "06:34",
-    reacted: null,
-  },
-  { id: "p-read", name: "Reading", done: true, at: "07:51", reacted: null },
-  {
-    id: "p-shower",
-    name: "Cold shower",
-    done: true,
-    at: "08:05",
-    reacted: null,
-  },
-  { id: "p-med", name: "Meditate", done: true, at: "08:20", reacted: null },
-  { id: "p-journal", name: "Journal", done: true, at: "08:40", reacted: null },
-  { id: "p-stretch", name: "Stretch", done: true, at: "09:02", reacted: null },
-  { id: "p-run", name: "Morning Run", done: true, at: "09:27", reacted: null },
-  { id: "p-work", name: "Work", done: false, at: null, reacted: null },
-  {
-    id: "p-math",
-    name: "Study Mathematics",
-    done: false,
-    at: null,
-    reacted: null,
-  },
-  { id: "p-gym", name: "Gym", done: false, at: null, reacted: null },
-  {
-    id: "p-sleep",
-    name: "Sleep before 23:00",
-    done: false,
-    at: null,
-    reacted: null,
-  },
-];
-
-function ev(
-  id: string,
-  t: string,
-  who: FeedEvent["who"],
-  kind: FeedEvent["kind"],
-  text: string,
-  target: string | null = null,
-  taskId: string | null = null,
-): FeedEvent {
-  return { id, t, who, kind, text, target, taskId, reacted: null };
-}
-
-/** Oldest first. The UI renders newest on top. */
-export const mockActivity: FeedEvent[] = [
-  ev("f1", "07:02", "partner", "start", "started the day"),
-  ev("f2", "07:14", "me", "start", "started the day"),
-  ev("f3", "07:38", "me", "done", "completed Read", "Read", "t-read"),
-  ev("f4", "07:51", "partner", "done", "completed Reading", "Reading"),
-  ev(
-    "f5",
-    "08:31",
-    "me",
-    "done",
-    "completed Study Physics",
-    "Study Physics",
-    "t-physics",
-  ),
-  ev("f6", "08:42", "me", "done", "completed Gym", "Gym", "t-gym"),
-  ev(
-    "f7",
-    "09:12",
-    "me",
-    "done",
-    "completed Work on project",
-    "Work on project",
-    "t-project",
-  ),
-  ev("f8", "09:27", "partner", "done", "completed Morning Run", "Morning Run"),
-];
-
 export const mockFocus = {
   activities: ["Project", "Physics", "Reading", "Study"],
   defaultActivity: "Project",

@@ -109,9 +109,7 @@ export function Feedback() {
                   : "bg-muted animate-[li-breathe_1.4s_ease-in-out_infinite]",
               )}
             />
-            {conn === "offline"
-              ? "Offline · changes will sync"
-              : "Reconnecting…"}
+            {conn === "offline" ? "Offline" : "Reconnecting…"}
           </div>
         </div>
       )}

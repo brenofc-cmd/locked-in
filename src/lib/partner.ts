@@ -1,5 +1,5 @@
 import { formatClock } from "@/lib/format";
-import type { FeedEvent, Partner, PartnerTask } from "@/types";
+import type { FeedEvent, Partner } from "@/types";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -20,14 +20,18 @@ export type PartnerView = {
   flashing: boolean;
 };
 
+/**
+ * The partner's status line / card. Status and focus come from Presence,
+ * counts from partner_today() (their own local day, private tasks counted
+ * but never listed), `last` from the real activity feed.
+ */
 export function partnerView(
   partner: Partner,
-  tasks: PartnerTask[],
+  counts: { done: number; total: number },
   feed: FeedEvent[],
   now: number,
 ): PartnerView {
-  const done = tasks.filter((t) => t.done).length;
-  const total = tasks.length;
+  const { done, total } = counts;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const last = [...feed]
     .reverse()
@@ -35,6 +39,8 @@ export function partnerView(
       (f) =>
         f.who === "partner" && (f.kind === "done" || f.kind === "focusdone"),
     );
+  // Countdown computed locally from the start instant shared once via Presence.
+  const timed = partner.focusEnd > 0;
   const left = formatClock(Math.max(0, (partner.focusEnd - now) / 1000));
   const flashing = now - partner.flashAt < 2200;
 
@@ -47,13 +53,16 @@ export function partnerView(
       done,
       total,
       pct,
-      line: `${partner.focusLabel} · ${left}`,
+      line: [partner.focusLabel, timed ? left : ""].filter(Boolean).join(" · "),
       lineTone: "text",
-      statusLine: `Focusing · ${partner.focusLabel} · ${left} left`,
+      statusLine: ["Focusing", partner.focusLabel, timed ? `${left} left` : ""]
+        .filter(Boolean)
+        .join(" · "),
       flashing,
     };
   }
   if (partner.status === "offline") {
+    // No "last seen" by design: only ONLINE / FOCUSING / OFFLINE.
     return {
       label: "OFFLINE",
       focusWord: "Offline",
@@ -62,9 +71,9 @@ export function partnerView(
       done,
       total,
       pct,
-      line: `Last seen ${partner.seenAt}`,
+      line: last ? `${last.t} · ${cap(last.text)}` : "",
       lineTone: "dim",
-      statusLine: `Offline · Last seen ${partner.seenAt}`,
+      statusLine: "Offline",
       flashing,
     };
   }

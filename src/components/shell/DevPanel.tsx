@@ -4,8 +4,9 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useApp } from "@/components/app-state";
 
 /**
- * Mock partner / connection simulation. Only rendered in development and only
- * when the URL contains ?dev=1 (the flag is remembered for the session).
+ * Development shortcuts. Only rendered in development and only when the URL
+ * contains ?dev=1 (the flag is remembered for the session). Never touches
+ * real presence, activity or duo state.
  */
 const KEY = "locked-in:dev";
 const noopSubscribe = () => () => {};
@@ -39,21 +40,9 @@ export function DevPanel() {
 
   if (!enabled) return null;
 
-  // Partner simulations need a real partner (Stage 3: the duo is real).
-  const p = app.partner.name;
+  // Partner presence, activity and connection are real since Stage 5, so the
+  // panel no longer simulates them (it would fight the realtime state).
   const actions: [string, () => void][] = [
-    ...(app.hasPartner
-      ? ([
-          [`${p} online`, () => app.setPartnerStatus("online")],
-          [`${p} focusing`, () => app.setPartnerStatus("focusing")],
-          [`${p} offline`, () => app.setPartnerStatus("offline")],
-          [`${p} completes a task`, app.simulatePartnerDone],
-          [`${p} sends a reaction`, app.simulatePartnerReaction],
-        ] as [string, () => void][])
-      : []),
-    ["Connection: reconnecting", () => app.setConnection("reconnecting")],
-    ["Connection: offline", () => app.setConnection("offline")],
-    ["Connection: back online", () => app.setConnection("connected")],
     ["Morning briefing", () => app.openOverlay({ kind: "briefing" })],
   ];
 

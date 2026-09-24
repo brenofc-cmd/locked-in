@@ -20,7 +20,7 @@ export function DuoScreen() {
   const [code, setCode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const pv = partnerView(app.partner, app.partnerTasks, app.feed, app.now);
+  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
 
   const state = !duo ? "none" : duo.partner ? "complete" : "waiting";
   const inviteCode = duo?.inviteCode ?? "";

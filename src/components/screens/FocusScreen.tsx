@@ -8,7 +8,7 @@ import { partnerView } from "@/lib/partner";
 
 export function FocusScreen() {
   const app = useApp();
-  const pv = partnerView(app.partner, app.partnerTasks, app.feed, app.now);
+  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
   const sessions = [...app.sessions].reverse();
 
   return (

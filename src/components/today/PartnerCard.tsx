@@ -7,8 +7,8 @@ import { Avatar, StatusDot, cx } from "@/components/ui";
 import { partnerView } from "@/lib/partner";
 
 export function PartnerCard() {
-  const { partner, partnerTasks, feed, now } = useApp();
-  const pv = partnerView(partner, partnerTasks, feed, now);
+  const { partner, partnerCounts, feed, now } = useApp();
+  const pv = partnerView(partner, partnerCounts, feed, now);
 
   return (
     <Link

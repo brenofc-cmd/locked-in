@@ -14,7 +14,7 @@ export function FocusOverlay() {
   if (focus.phase === "setup") return null;
 
   if (focus.phase === "running") {
-    const pv = partnerView(app.partner, app.partnerTasks, app.feed, app.now);
+    const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
     const offset = focus.total
       ? (RING * (focus.left / focus.total)).toFixed(2)
       : RING;

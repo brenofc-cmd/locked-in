@@ -32,10 +32,8 @@ import type { Category, RoutineItem, Task, TaskStatus, Toast } from "@/types";
 
 type Effects = {
   toast: (t: Omit<Toast, "id">) => void;
-  /** A task was completed / un-completed (drives the mock activity feed). */
+  /** A task was completed / un-completed (optimistic line in the live feed). */
   onDone: (task: Task, done: boolean) => void;
-  /** Mock connection simulation: mark changes as unsynced (dev only). */
-  offline: () => boolean;
 };
 
 const byOrder = (a: RoutineItem, b: RoutineItem) => a.sortOrder - b.sortOrder;
@@ -128,7 +126,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
           status === "completed" ? localTimeHM(new Date(), timeZone) : null,
         skip: status === "skipped" ? skipLabel(reason) : null,
         skipReason: status === "skipped" ? reason : null,
-        unsynced: fx.offline(),
+        unsynced: false,
       });
       const res = await setTaskStatus(id, status, reason).catch(() => null);
       if (!isLatest(id, v)) return true;
@@ -207,7 +205,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
           reminder: input.reminder,
           notes: input.notes.trim(),
           sortOrder: 100000,
-          unsynced: fx.offline(),
+          unsynced: false,
         };
         setTasks((ts) => [...ts, temp]);
       }
@@ -406,12 +404,6 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     [fx, routines],
   );
 
-  const markSynced = useCallback(() => {
-    setTasks((ts) =>
-      ts.map((t) => (t.unsynced ? { ...t, unsynced: false } : t)),
-    );
-  }, []);
-
   return {
     today,
     tasks,
@@ -428,6 +420,5 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     archiveRoutine: archive,
     deleteTask,
     moveRoutine,
-    markSynced,
   };
 }

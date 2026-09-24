@@ -58,7 +58,7 @@ function ReviewDay() {
   // Real: today's tasks. Partner numbers and focus are still mock.
   const list = app.tasks;
   const stats = todayStats(list, app.standard);
-  const pv = partnerView(app.partner, app.partnerTasks, app.feed, app.now);
+  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
   const notDone = list.filter((t) => !t.done && !t.skip).map((t) => t.name);
   const diff = pv.pct - stats.pct;
 

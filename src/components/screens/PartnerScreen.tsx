@@ -37,7 +37,7 @@ export function PartnerScreen() {
     );
   }
 
-  const pv = partnerView(partner, app.partnerTasks, app.feed, app.now);
+  const pv = partnerView(partner, app.partnerCounts, app.feed, app.now);
   const h2h = [...mockWeeks].reverse();
   const meWins = mockWeeks.filter((w) => w.me > w.partner).length;
   const diff = mockWeek.me - mockWeek.partner;
@@ -87,6 +87,8 @@ export function PartnerScreen() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
+        {/* MOCK until Stage 7: week, focus, streak and head-to-head numbers.
+            Real: the header, TODAY, the task list and the activity feed. */}
         <section aria-label="This week" className="flex flex-col gap-[18px]">
           <SectionHeader
             as="h2"
@@ -161,7 +163,9 @@ export function PartnerScreen() {
                       won ? "bg-accent text-bg" : "bg-[#2e2e32] text-dim",
                     )}
                   >
-                    {won ? "B" : "L"}
+                    {won
+                      ? app.userName.charAt(0).toUpperCase()
+                      : partner.initial}
                   </div>
                   <span className="font-mono text-[9.5px] text-dim">
                     W{w.week}
@@ -245,6 +249,16 @@ export function PartnerScreen() {
               )}
             </div>
           ))}
+          {app.partnerTasks.length === 0 && pv.total === 0 && (
+            <span className="py-3.5 text-[13.5px] text-dim">
+              Nothing scheduled yet today.
+            </span>
+          )}
+          {pv.total > app.partnerTasks.length && (
+            <span className="py-3.5 text-[13px] text-dim">
+              + {pv.total - app.partnerTasks.length} private
+            </span>
+          )}
         </section>
         <section aria-label="Activity" className="flex flex-col">
           <div className="flex items-center gap-[9px] border-b border-white/9 pb-2">
