@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 1 — Foundation**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 3 — Auth + Duo verified; Stage 4 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 
@@ -18,26 +18,27 @@ Requires Node 22+.
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in when Supabase is set up (Stage 3)
+cp .env.example .env.local   # Supabase DEV project URL + publishable key
 npm run dev                  # http://localhost:3000
 ```
 
 ## Scripts
 
-| Command                           | What it does                                                                          |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| `npm run dev`                     | Dev server                                                                            |
-| `npm run build` / `npm start`     | Production build / serve                                                              |
-| `npm run lint`                    | ESLint                                                                                |
-| `npm run typecheck`               | Generate route types, then `tsc --noEmit`                                             |
-| `npm test`                        | Unit tests (Vitest)                                                                   |
-| `npm run test:e2e`                | E2E tests (Playwright, mobile profile). First time: `npx playwright install chromium` |
-| `npm run format` / `format:check` | Prettier                                                                              |
+| Command                           | What it does                                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Dev server                                                                                                                        |
+| `npm run build` / `npm start`     | Production build / serve                                                                                                          |
+| `npm run lint`                    | ESLint                                                                                                                            |
+| `npm run typecheck`               | Generate route types, then `tsc --noEmit`                                                                                         |
+| `npm test`                        | Unit tests (Vitest)                                                                                                               |
+| `npm run test:e2e`                | E2E tests (Playwright, mobile profile). Needs `.env.test.local` (docs/DATABASE.md). First time: `npx playwright install chromium` |
+| `npm run format` / `format:check` | Prettier                                                                                                                          |
 
 ## Documentation
 
 - [Product](docs/PRODUCT.md) — vision, principles, core loop
 - [Architecture](docs/ARCHITECTURE.md) — stack, structure, Supabase, realtime, env
+- [Database](docs/DATABASE.md) — schema, RLS, functions, migrations, tests, test users
 - [Design reference](docs/DESIGN_REFERENCE.md) — the approved Claude Design and how to read it
 - [Roadmap](docs/ROADMAP.md) — the 10 stages
 - [Decisions](docs/DECISIONS.md) — ADRs

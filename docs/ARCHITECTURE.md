@@ -34,25 +34,33 @@ Not used, by decision: Prisma, Drizzle, Express, NestJS, Redis, Firebase, Redux,
 ```
 locked-in/
 ├── src/
-│   ├── app/            # routes: (app)/today, partner, focus, progress, more, routine,
-│   │                   #   challenges, duo, settings, onboarding; `/` redirects to /today
-│   ├── components/     # app-state.tsx (mock state), shell/, screens/, today/, sheets/,
-│   │                   #   overlays/, focus/, ui.tsx, icons.tsx
+│   ├── app/            # (app)/ private screens: today, partner, focus, progress, more, routine,
+│   │                   #   challenges, duo, settings, onboarding; (app)/actions.ts (duo, profile)
+│   │                   # (auth)/ login, signup, forgot-password, reset-password; (auth)/actions.ts
+│   │                   # auth/confirm (email links), auth/signout (POST); `/` redirects to /today
+│   ├── proxy.ts        # Next 16 proxy: session refresh + route protection
+│   ├── components/     # session.tsx (real identity), app-state.tsx (mock product state), auth/,
+│   │                   #   shell/, screens/, today/, sheets/, overlays/, focus/, ui.tsx, icons.tsx
 │   ├── hooks/          # client hooks, e.g. realtime subscriptions (Stage 5+)
 │   ├── lib/
-│   │   ├── mock-data.ts   # ALL Stage 2 mock data (user, partner, tasks, activity, focus, stats, challenges)
+│   │   ├── mock-data.ts   # ALL remaining mock data (stats, partner presence, tasks, activity, focus, challenges)
+│   │   ├── session.ts     # getSession(): user + profile + duo + partner, server only
+│   │   ├── auth-routes.ts # public / guest-only paths, safe `next` redirects
+│   │   ├── auth-errors.ts # Supabase Auth error codes -> friendly copy, password rules
+│   │   ├── invite-code.ts # invite code normalisation, duo RPC error copy
 │   │   ├── today.ts       # pure Today derivations (stats, sections, schedule labels)
 │   │   ├── partner.ts     # pure partner status view
 │   │   ├── format.ts      # time formatting
-│   │   └── supabase/   # Supabase clients: client.ts (browser), server.ts (server) — Stage 3
-│   ├── types/          # shared TS types, generated DB types (Stage 3+)
+│   │   └── supabase/   # client.ts (browser), server.ts (server), proxy.ts (session refresh), env.ts
+│   ├── types/          # shared TS types; database.ts generated from the schema
 │   └── styles/         # extra CSS if globals.css grows too large
 ├── supabase/
-│   ├── migrations/     # SQL migrations (Stage 3+)
-│   └── tests/          # SQL / RLS tests (Stage 3+)
+│   ├── migrations/     # SQL migrations (source of truth, see docs/DATABASE.md)
+│   ├── tests/          # pgTAP security tests
+│   └── dev/            # DEV-only helpers (test users)
 ├── tests/
 │   ├── unit/           # Vitest
-│   └── e2e/            # Playwright
+│   └── e2e/            # Playwright: auth.setup.ts (real sign-in), app.spec.ts, stage3.spec.ts
 ├── docs/               # product, architecture, design reference, roadmap, decisions, progress
 ├── design-reference/   # Claude Design export — read-only
 └── public/             # static assets
@@ -71,23 +79,37 @@ Empty folders hold a `.gitkeep` until they get real code.
 
 ## Client / server separation
 
-Stage 2: route `page.tsx` files are Server Components that render one client screen. Client state is a
-single context (`src/components/app-state.tsx`, ADR-008) mounted by `src/app/(app)/layout.tsx`, so state
-survives navigation between tabs. Everything is mock data; nothing is persisted.
+Route `page.tsx` files are Server Components that render one client screen. `src/app/(app)/layout.tsx`
+(Server Component) loads the real session with `getSession()` and mounts two client contexts:
+
+- `SessionProvider` (`src/components/session.tsx`) — **real**: user id / email, profile (name,
+  timezone, since), duo (invite code) and partner (name). Refreshed by Server Actions that revalidate
+  the layout.
+- `AppStateProvider` (`src/components/app-state.tsx`, ADR-008) — **mock** product state (tasks, feed,
+  focus, stats, challenges, presence, reactions); reads identity from `useSession()` (ADR-017).
 
 - Default to **Server Components**; add `"use client"` only for interactivity (checkboxes, timers,
   realtime subscriptions, sheets).
 - `src/lib/supabase/client.ts` → `createBrowserClient` (client components only).
-- `src/lib/supabase/server.ts` → `createServerClient` with `cookies()` (server only).
-- A Next.js `proxy`/middleware refreshes the auth session cookie (Stage 3; check the current Next.js
-  docs in `node_modules/next/dist/docs/` for the file convention before writing it).
-- Nothing in `src/lib/supabase` exists yet. It is created in Stage 3 together with Auth, not faked earlier.
+- `src/lib/supabase/server.ts` → `createServerClient` with `cookies()` (server only, one per request).
+- `src/proxy.ts` → `src/lib/supabase/proxy.ts`: `getClaims()` on every request validates and refreshes
+  the session cookie, then redirects signed-out users away from private paths and signed-in users away
+  from `/login`, `/signup`, `/forgot-password`.
 
-## Auth strategy (Stage 3)
+## Auth strategy (Stage 3, ADR-014)
 
-Supabase Auth with cookie-based sessions via `@supabase/ssr`. Each user has a profile row; a **duo**
-links exactly two profiles through an invite code (design: `LKD-XXXXX`). Every table exposed to the
-client has RLS enabled with policies of the form "row belongs to me" or "row belongs to my duo partner".
+Supabase Auth, email + password, cookie sessions via `@supabase/ssr`. Email confirmation is on.
+
+| Flow           | Path                                                                                  | Notes                                                          |
+| -------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Sign up        | `/signup` → email → `/auth/confirm`                                                   | name, email, password × 2; timezone from `Intl` in the browser |
+| Sign in        | `/login?next=…`                                                                       | `next` must be a same-site path (`safeNext`)                   |
+| Forgot / reset | `/forgot-password` → email → `/auth/confirm?next=/reset-password` → `/reset-password` | response never reveals whether the email exists                |
+| Sign out       | POST `/auth/signout`                                                                  | from Settings                                                  |
+
+Public paths: `/login`, `/signup`, `/forgot-password`, `/auth/*`. Everything else is private.
+Each user has a profile row created by a database trigger; a **duo** links exactly two profiles
+through an invite code (`LKD-XXXXXX`). Schema, RLS and functions: [DATABASE.md](DATABASE.md).
 
 ## Realtime strategy (Stage 5)
 
@@ -114,7 +136,10 @@ client has RLS enabled with policies of the form "row belongs to me" or "row bel
 | `NEXT_PUBLIC_SUPABASE_URL`             | client + server | project URL, public                                           |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | client + server | publishable (anon-equivalent) key, public; safe only with RLS |
 
-- Template: `.env.example`. Local values: `.env.local` (git-ignored).
+- Template: `.env.example`. Local values: `.env.local` (git-ignored). `.env.local` points at the
+  **DEV** Supabase project.
+- Tests: `.env.test.local` (git-ignored) holds `E2E_PASSWORD` and the test-user emails
+  ([DATABASE.md](DATABASE.md) → "Test users"). Never commit it.
 - Server secrets (secret/service-role key) are never needed by the client. If ever needed, they get a
   name **without** `NEXT_PUBLIC_` and are used only in server code.
 - On Vercel, set the same variables in Project Settings → Environment Variables.

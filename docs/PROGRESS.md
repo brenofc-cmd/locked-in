@@ -1,11 +1,62 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-2 — UI Implementation — VERIFIED / COMPLETE (2026-09-23)
+3 — Supabase Auth, database foundation and Duo — VERIFIED / COMPLETE (2026-09-24)
 
 Previous Stages:
 
 - 1 — Foundation — VERIFIED / COMPLETE (2026-09-23)
+- 2 — UI Implementation — VERIFIED / COMPLETE (2026-09-23)
+
+Completed (Stage 3):
+
+- Database (DEV project `locked-in`): `profiles`, `duos`, `duo_members`; 5 migrations applied; details in `docs/DATABASE.md`
+- Hard rules in the schema: one duo per user (`unique (user_id)`), two members per duo (`seat in (1,2)` + `unique (duo_id, seat)`); concurrency-safe
+- Profile created by an `auth.users` trigger (SECURITY DEFINER, `search_path = ''`); timezone validated against IANA names; `updated_at` set by trigger
+- RPCs `create_duo` (atomic duo + seat 1 + invite code), `join_duo` (normalise, lock, seat 2), `leave_duo` (ends the duo for both, ADR-016); stable `LI_*` error codes
+- Invite codes `LKD-XXXXXX`: CSPRNG, 31-symbol alphabet without 0/O/1/I/L, unique, normalised input
+- RLS on all three tables; anon has no grants; authenticated: SELECT + UPDATE of 3 profile columns; no direct INSERT / DELETE anywhere
+- Auth UI (design v2 "Sign in" frame): sign up (name, email, password × 2, browser timezone), email confirmation (`/auth/confirm`, token_hash or PKCE code), sign in with friendly errors, forgot / reset password, sign out (POST)
+- Route protection: `src/proxy.ts` (session refresh + redirects) and `(app)/layout.tsx` backstop; no private content rendered for signed-out requests
+- Real identity in the app: greeting, sidebar, Settings (email · timezone · since), Duo screen (NO DUO / WAITING / COMPLETE with create, join, copy, share, cancel), partner name everywhere Lucas was hard-coded, Today / Partner empty states
+- Mock product state kept (tasks, feed, focus, stats, presence, reactions, challenges) and separated from real session state (ADR-017)
+- Tests: pgTAP suite extended to 51 assertions; Playwright setup signs in for real; new `stage3.spec.ts`; unit tests for auth / invite / route helpers
+- Docs: DATABASE.md (new), ARCHITECTURE, DECISIONS (ADR-014…018), CLAUDE.md, ROADMAP, README
+
+Verified (2026-09-24, clean `.next`):
+
+- `npm run lint` — pass
+- `npm run typecheck` — pass
+- `npm test` — 3 files, 17 tests passed
+- `npm run build` — pass (auth pages static, app routes dynamic, proxy active)
+- `npm run format:check` — pass
+- `npm run test:e2e` — 30 passed: setup (real sign-in), 24 Stage 2 tests signed in as Brendon with Lucas as partner, 5 Stage 3 tests
+- Database: pgTAP `supabase/tests/stage3_auth_duo.test.sql` on the DEV database — 51/51 ok (run inside an aborted transaction because Docker was unavailable; DEV verified clean afterwards)
+- Concurrency: B and C joining the same code at the same time through the public API — 10 + 5 rounds, always exactly one winner, loser gets `LI_DUO_FULL`, duo never exceeds 2
+- Real email (Supabase default SMTP): sign-up confirmation link → `/auth/confirm` → signed in on `/today`; forgot password → recovery link → `/reset-password` → new password works, old one rejected
+- Manual pass in three isolated browser contexts (A 390px, B 1440px, C 390px): A creates → B joins with the code → A (refresh) and B see each other's real names → C refused ("already full") → refresh keeps state → A signs out, private route redirects, A signs in again, duo intact; no console errors
+- Supabase security advisors: only the intentional definer-RPC notice (ADR-015) and leaked-password protection (dashboard setting, see Known Issues)
+
+Pending:
+
+- Nothing for Stage 3
+
+Known Issues:
+
+- No realtime yet: the duo creator sees the partner after a refresh (Stage 5)
+- Partner presence, %, streak, focus and all tasks / stats are still mock (Stages 4–7)
+- `npx supabase test db` could not run locally (Docker Desktop VM failed to start); the same pgTAP file was executed against DEV instead
+- Supabase default SMTP: only team-member addresses receive email and the hourly limit is low; configure custom SMTP before real users (Stage 10)
+- Email templates are Supabase defaults (PKCE `?code=` links): open the link in the browser that requested it. The recommended `{{ .TokenHash }}` template is already supported by `/auth/confirm`
+- Leaked password protection (HaveIBeenPwned) is off in DEV Auth settings; enable before production
+- DEV contains the five `@example.com` test users and one real account created during the email check
+
+Next Stage:
+4 — Real Today, recurring routines, one-off tasks and task check-ins — PENDING (not started)
+
+---
+
+# Stage 2 record
 
 Completed (Stage 2):
 
@@ -49,6 +100,3 @@ Known Issues:
 - The 🫡 emoji renders as an empty box in headless Chromium without an emoji font; fine on real devices
 - A focus session ended within the first minute is recorded as 1 minute
 - Differences from the reference are listed in `docs/DESIGN_REFERENCE.md` → "Stage 2 implementation notes"
-
-Next Stage:
-3 — Supabase Auth, database foundation and Duo system — PENDING (not started)

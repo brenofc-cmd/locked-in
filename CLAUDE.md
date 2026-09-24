@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working (Windows, Node 22; last run at the end of Stage 2):
+All verified working (Windows, Node 22; last run at the end of Stage 3):
 
 ```bash
 npm install
@@ -71,17 +71,36 @@ npm run lint           # ESLint
 npm run typecheck      # next typegen && tsc --noEmit
 npm test               # Vitest, tests/unit
 npm run build          # production build
-npm run test:e2e       # Playwright, builds and serves on :3100; 390 + 1440 full suite, 375 + 430 layout
+npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.local + .env.test.local.
+                       #   setup (real sign-in) → 390 + 1440 full suite, 375 + 430 layout, stage3 (serial)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
+npx supabase test db   # pgTAP (supabase/tests), needs Docker; DEV fallback in docs/DATABASE.md
 ```
 
 Run lint, typecheck, test and build before declaring any stage complete; run test:e2e when UI or
-routing changed.
+routing changed; run the pgTAP suite when a migration changed.
 
-## Working with the mock UI (Stage 2)
+## Supabase (Stage 3+)
 
-- Mock data: only `src/lib/mock-data.ts`. Mock state: only `src/components/app-state.tsx`.
-- Dev simulation of the partner / connection: `npm run dev`, open `/today?dev=1`, use the DEV button.
+- Work only against the **DEV** project in `.env.local`. Never touch production data.
+- Schema changes are new files in `supabase/migrations/`; never edit an applied migration. Then
+  regenerate `src/types/database.ts` and update `docs/DATABASE.md`.
+- Every new `public` table: RLS on, explicit grants (anon gets nothing), policies, pgTAP tests.
+- SECURITY DEFINER functions: `set search_path = ''`, schema-qualified names, act for `auth.uid()`
+  only, `revoke all … from public` then minimal `grant execute`.
+- Errors shown to users go through `authErrorMessage()` / `duoErrorMessage()`; never render raw
+  Supabase or Postgres messages.
+- Test users and credentials: `docs/DATABASE.md` → "Test users". `.env*` and `tests/e2e/.auth/` are
+  git-ignored and must stay that way.
+
+## Real vs mock state (Stage 3)
+
+- Real: auth session, profile (name, timezone), duo (invite code), partner name →
+  `useSession()` (`src/components/session.tsx`), loaded by `src/lib/session.ts`.
+- Mock: tasks, routine, feed, focus, stats, streaks, challenges, presence, reactions → only
+  `src/lib/mock-data.ts` and `src/components/app-state.tsx`.
+- Dev simulation of the partner / connection: `npm run dev`, open `/today?dev=1`, use the DEV button
+  (partner simulations appear only when you really have a partner).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without
   checking `design-reference/`.
