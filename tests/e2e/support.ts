@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Request } from "@playwright/test";
 import type { Database } from "@/types/database";
 import { DESIGN_DAY } from "../fixtures/design-day";
 
@@ -155,21 +155,25 @@ export async function makeDuo(a: Api, b: Api) {
 }
 
 /**
- * Tracks Server Action requests (POSTs) on a page. `idle()` resolves once
- * every write started so far has finished, i.e. it is in the database.
+ * Tracks Server Action requests (every client write is one) on a page.
+ * `idle()` resolves once every write started so far has finished, i.e. it is
+ * in the database. Supabase reads sent as POST (rpc) are not writes.
  */
 export function trackWrites(page: Page) {
-  let pending = 0;
-  const done = (r: { method(): string }) => {
-    if (r.method() === "POST") pending--;
-  };
+  // A set, not a counter: a request that started before tracking began must
+  // not count as -1.
+  const pending = new Set<Request>();
+  const done = (r: Request) => pending.delete(r);
   page.on("request", (r) => {
-    if (r.method() === "POST") pending++;
+    if (r.method() === "POST" && r.headers()["next-action"]) pending.add(r);
   });
   page.on("requestfinished", done);
   page.on("requestfailed", done);
   return {
-    idle: () => expect.poll(() => pending, { timeout: 15_000 }).toBe(0),
+    idle: () =>
+      expect
+        .poll(() => [...pending].map((r) => r.url()), { timeout: 15_000 })
+        .toEqual([]),
   };
 }
 

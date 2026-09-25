@@ -105,6 +105,13 @@ export default defineConfig({
       dependencies: ["stage5"],
       use: phone(390, 844),
     },
+    // Progress and the weekly competition, same users: runs after stage6.
+    {
+      name: "stage7",
+      testMatch: /stage7\.spec\.ts/,
+      dependencies: ["stage6"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
