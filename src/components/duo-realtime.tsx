@@ -144,7 +144,6 @@ function useDuoRealtimeValue(initial: DuoData) {
     const supabase = createClient();
     let alive = true;
     let channel: RealtimeChannel | null = null;
-    let wasConnected = false;
     let lastStatus: Parameters<typeof connectionFrom>[0] = "CONNECTING";
     const online = () =>
       typeof navigator === "undefined" ? true : navigator.onLine;
@@ -221,9 +220,9 @@ function useDuoRealtimeValue(initial: DuoData) {
           update();
           if (status === "SUBSCRIBED") {
             publishPresence(ch);
-            // Anything missed while disconnected comes back from Postgres.
-            if (wasConnected) refetch();
-            wasConnected = true;
+            // Anything missed while disconnected — or between the server
+            // render and this first join — comes back from Postgres.
+            refetch();
           }
         });
     });
