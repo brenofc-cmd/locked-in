@@ -160,19 +160,31 @@ export async function makeDuo(a: Api, b: Api) {
  * in the database. Supabase reads sent as POST (rpc) are not writes.
  */
 export function trackWrites(page: Page) {
-  // A set, not a counter: a request that started before tracking began must
-  // not count as -1.
-  const pending = new Set<Request>();
+  // A map, not a counter: a request that started before tracking began must
+  // not count as -1. Requests cut off by a full reload never report back, so
+  // when a new document loads, those started before it was committed are
+  // dropped (client-side navigations fire no "load" and keep theirs).
+  const pending = new Map<Request, number>();
   const done = (r: Request) => pending.delete(r);
+  let committedAt = 0;
   page.on("request", (r) => {
-    if (r.method() === "POST" && r.headers()["next-action"]) pending.add(r);
+    if (r.method() === "POST" && r.headers()["next-action"])
+      pending.set(r, Date.now());
   });
   page.on("requestfinished", done);
   page.on("requestfailed", done);
+  page.on("framenavigated", (f) => {
+    if (f === page.mainFrame()) committedAt = Date.now();
+  });
+  page.on("load", () => {
+    for (const [r, at] of pending) if (at < committedAt) pending.delete(r);
+  });
   return {
     idle: () =>
       expect
-        .poll(() => [...pending].map((r) => r.url()), { timeout: 15_000 })
+        .poll(() => [...pending.keys()].map((r) => r.url()), {
+          timeout: 15_000,
+        })
         .toEqual([]),
   };
 }
