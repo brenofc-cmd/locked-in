@@ -141,7 +141,10 @@ export function taskErrorMessage(
   const message = error?.message ?? "";
   if (message.includes("LI_HISTORY_LOCKED"))
     return "That day is closed. Its record can't change.";
-  if (message.includes("LI_FUTURE_TASK") || message.includes("LI_ROUTINE_STALE"))
+  if (
+    message.includes("LI_FUTURE_TASK") ||
+    message.includes("LI_ROUTINE_STALE")
+  )
     return "Refresh and try again.";
   if (message.includes("LI_NOT_FOUND"))
     return "That item no longer exists. Refresh and try again.";
