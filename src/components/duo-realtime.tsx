@@ -185,11 +185,13 @@ function useDuoRealtimeValue(initial: DuoData) {
     if (!duoId) return;
     const supabase = createClient();
     let alive = true;
+    let ended = false;
     let channel: RealtimeChannel | null = null;
     let lastStatus: Parameters<typeof connectionFrom>[0] = "CONNECTING";
     const online = () =>
       typeof navigator === "undefined" ? true : navigator.onLine;
-    const update = () => alive && setConn(connectionFrom(lastStatus, online()));
+    const update = () =>
+      alive && !ended && setConn(connectionFrom(lastStatus, online()));
 
     // realtime-js reuses a channel with the same topic until its leave has
     // finished, so a new subscription waits for the previous removal.
@@ -276,6 +278,14 @@ function useDuoRealtimeValue(initial: DuoData) {
           );
         })
         .on("broadcast", { event: "duo_ended" }, ({ payload }) => {
+          // Stop listening to the ended duo right away (no presence or
+          // message of it may arrive after this), then let the app reload
+          // the session; the effect cleanup removes the channel for good.
+          ended = true;
+          setPartnerOnline(false);
+          setConn("connected");
+          void ch.untrack().catch(() => undefined);
+          void ch.unsubscribe();
           duoListeners.current.forEach((l) =>
             l("ended", payload.actor_id === me.id),
           );
