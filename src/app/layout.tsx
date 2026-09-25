@@ -15,6 +15,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: { default: "LOCKED IN", template: "%s · LOCKED IN" },
   description: "No hype. Just proof.",
+  applicationName: "LOCKED IN",
+  // Installed on iOS: full screen, dark status bar, the LogoMark icon.
+  appleWebApp: {
+    capable: true,
+    title: "LOCKED IN",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -22,6 +34,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
