@@ -17,8 +17,16 @@ export type AuthFormState = {
 
 const text = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
-/** Absolute origin for links inside auth emails. */
+/**
+ * Absolute origin for links inside auth emails. Production sets SITE_URL
+ * (server-only), so a forged Host / Origin header can never choose where a
+ * confirmation or reset link points; Supabase's redirect allow-list is the
+ * second guard (docs/PRODUCTION_CHECKLIST.md). Without it (local dev), the
+ * request's own origin is used.
+ */
 async function origin() {
+  const site = process.env.SITE_URL;
+  if (site) return new URL(site).origin;
   const h = await headers();
   const fromHeader = h.get("origin");
   if (fromHeader) return fromHeader;
