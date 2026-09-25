@@ -2,9 +2,11 @@
 
 Supabase Postgres 17. Schema lives in `supabase/migrations/` (the only source of truth); security
 tests in `supabase/tests/`. Tables so far: **profiles, duos, duo_members** (Stage 3),
-**routine_items, daily_tasks** (Stage 4) and **activity_events** (Stage 5), plus the functions /
-triggers they need and the Realtime Authorization policies on `realtime.messages` (see
-[REALTIME.md](REALTIME.md)).
+**routine_items, daily_tasks** (Stage 4), **activity_events** (Stage 5) and **focus_sessions**
+(Stage 6), plus the functions / triggers they need and the Realtime Authorization policies on
+`realtime.messages` (see [REALTIME.md](REALTIME.md)). Stage 7 adds **no table**: one profile column
+(`daily_standard_percent`) and read functions over `daily_tasks` / `focus_sessions` (see
+[ANALYTICS.md](ANALYTICS.md)).
 
 ## Projects
 
@@ -27,19 +29,29 @@ Migrations applied to DEV (`supabase_migrations.schema_migrations`):
 | `20260924110212` | `…_tasks_rls_and_grants.sql`          | RLS on, column grants, owner / partner policies                                  |
 | `20260924125209` | `…_activity_events.sql`               | `activity_events`, feed trigger + database broadcasts, `partner_today()`         |
 | `20260924125222` | `…_realtime_duo_authorization.sql`    | Realtime RLS on `realtime.messages` for private `duo:<id>` channels              |
+| `20260924162212` | `…_focus_sessions.sql`                | `focus_sessions`, lifecycle trigger, one unfinished session per user             |
+| `20260924162302` | `…_focus_functions.sql`               | start / pause / resume / complete, reflection, reconcile, partner projection     |
+| `20260924162343` | `…_focus_realtime.sql`                | focus feed events + `focus` broadcasts                                           |
+| `20260924172446` | `…_focus_server_clock.sql`            | `server_now()`                                                                   |
+| `20260924172713` | `…_focus_server_clock_grants.sql`     | `server_now()` not callable by anon                                              |
+| `20260924180106` | `…_daily_standard.sql`                | `profiles.daily_standard_percent` (1–100, default 80) (Stage 7)                  |
+| `20260924180145` | `…_progress_functions.sql`            | progress / streak / habits / duo weeks functions, shared materialisation helper  |
+| `20260924180531` | `…_summary_longest_closed.sql`        | `my_progress_summary` also returns `longest_closed`                              |
+| `20260925112050` | `…_duo_weeks_together.sql`            | `duo_weeks`: no partner side for weeks before the duo was complete               |
 
 ## Tables
 
 ### `public.profiles`
 
-| Column         | Type        | Rule                                                          |
-| -------------- | ----------- | ------------------------------------------------------------- |
-| `id`           | uuid PK     | `references auth.users(id) on delete cascade`; = auth user id |
-| `display_name` | text        | not null, trimmed by trigger, 1–40 chars                      |
-| `avatar_url`   | text        | nullable, ≤ 500 chars                                         |
-| `timezone`     | text        | not null, default `UTC`, must be a real IANA name (trigger)   |
-| `created_at`   | timestamptz | not null default now()                                        |
-| `updated_at`   | timestamptz | not null default now(); always set by trigger on update       |
+| Column                   | Type        | Rule                                                          |
+| ------------------------ | ----------- | ------------------------------------------------------------- |
+| `id`                     | uuid PK     | `references auth.users(id) on delete cascade`; = auth user id |
+| `display_name`           | text        | not null, trimmed by trigger, 1–40 chars                      |
+| `avatar_url`             | text        | nullable, ≤ 500 chars                                         |
+| `timezone`               | text        | not null, default `UTC`, must be a real IANA name (trigger)   |
+| `daily_standard_percent` | smallint    | not null, default 80, `check (1..100)` (Stage 7)              |
+| `created_at`             | timestamptz | not null default now()                                        |
+| `updated_at`             | timestamptz | not null default now(); always set by trigger on update       |
 
 Created by `private.handle_new_user()` (AFTER INSERT on `auth.users`), never by the browser. It reads
 `display_name` and `timezone` from signup metadata (user-controlled, so sanitised: name falls back to
@@ -244,6 +256,10 @@ No cron, no Edge Function, no worker. `public.ensure_my_daily_tasks()` runs when
    `ON CONFLICT (routine_item_id, task_date) DO NOTHING`.
 4. Advance `materialized_through` to `min(today, end_date)`.
 
+Since Stage 7 the steps live in `private.materialize_tasks(user)`, shared by
+`ensure_my_daily_tasks()`, `my_progress_summary()` and `duo_weeks()` (which runs it for the partner
+too, as DEFINER, so a partner who has not opened the app today is compared on their scheduled day).
+
 Days the app was not opened are therefore filled in on the next open (catch-up). Repeating the call,
 refreshing, or 5 concurrent calls create nothing twice — the unique constraint is the final
 guarantee (tested in pgTAP and with concurrent API calls).
@@ -300,38 +316,47 @@ checked when a routine is hard-deleted, which clients cannot do.
 
 ## Functions
 
-| Function                             | Security | Callable by                          | Purpose                                                         |
-| ------------------------------------ | -------- | ------------------------------------ | --------------------------------------------------------------- |
-| `public.create_duo()`                | DEFINER  | `authenticated`                      | duo + creator membership (seat 1) + invite code, atomically     |
-| `public.join_duo(p_code text)`       | DEFINER  | `authenticated`                      | normalise code, lock duo, take seat 2                           |
-| `public.leave_duo()`                 | DEFINER  | `authenticated`                      | V1: deletes the duo, memberships cascade (ends it for both)     |
-| `public.normalize_invite_code(text)` | invoker  | nobody (internal)                    | `lkd 8x29ab` → `LKD-8X29AB`                                     |
-| `private.generate_invite_code()`     | invoker  | nobody (internal)                    | CSPRNG (`gen_random_bytes`), rejection sampling, no modulo bias |
-| `private.current_duo_id()`           | DEFINER  | `authenticated` (schema not exposed) | caller's duo id for RLS, avoids policy recursion                |
-| `private.handle_new_user()`          | DEFINER  | trigger only                         | creates the profile                                             |
-| `private.set_updated_at()`           | invoker  | trigger only                         | `updated_at = now()`                                            |
-| `private.validate_profile()`         | invoker  | trigger only                         | trims name, rejects non-IANA timezone (`22023`)                 |
-| `public.my_today()`                  | invoker  | `authenticated`                      | caller's local date (profiles.timezone)                         |
-| `public.ensure_my_daily_tasks()`     | invoker  | `authenticated`                      | materialise + catch-up for `auth.uid()`; returns today          |
-| `public.create_routine_item(...)`    | invoker  | `authenticated`                      | new routine item starting today                                 |
-| `public.update_routine_item(...)`    | invoker  | `authenticated`                      | "Today and future days"                                         |
-| `public.archive_routine_item(id)`    | invoker  | `authenticated`                      | "Delete" = archive                                              |
-| `public.reorder_routine_items(ids)`  | invoker  | `authenticated`                      | persist manual order                                            |
-| `private.normalize_routine_item()`   | invoker  | trigger only                         | trims title / notes, sorts and de-duplicates weekdays           |
-| `private.normalize_daily_task()`     | invoker  | trigger only                         | trims, owns status timestamps                                   |
-| `private.sync_task_activity()`       | DEFINER  | trigger only                         | feed events + `realtime.send` broadcasts (Stage 5)              |
-| `public.partner_today()`             | DEFINER  | `authenticated`                      | partner's local date + done / total (Stage 5)                   |
-| `public.reconcile_my_focus()`        | invoker  | `authenticated`                      | complete my expired session (Stage 6)                           |
-| `public.my_active_focus()`           | invoker  | `authenticated`                      | reconcile, then my unfinished session                           |
-| `public.start_focus_session(...)`    | invoker  | `authenticated`                      | title, planned seconds, optional task, visibility               |
-| `public.pause_focus_session(id)`     | invoker  | `authenticated`                      | idempotent; returns the row                                     |
-| `public.resume_focus_session(id)`    | invoker  | `authenticated`                      | idempotent; returns the row                                     |
-| `public.complete_focus_session(...)` | invoker  | `authenticated`                      | end (early or on time), optional reflection                     |
-| `public.save_focus_reflection(...)`  | invoker  | `authenticated`                      | reflection after completion                                     |
-| `public.partner_current_focus()`     | DEFINER  | `authenticated`                      | partner's unfinished, unexpired session: limited projection     |
-| `public.server_now()`                | invoker  | `authenticated`                      | database clock: the timers' reference on page load (Stage 6)    |
-| `private.focus_lifecycle()`          | invoker  | trigger only                         | owns status timestamps and duration maths                       |
-| `private.sync_focus_activity()`      | DEFINER  | trigger only                         | focus feed events + `focus` broadcasts                          |
+| Function                                             | Security | Callable by                          | Purpose                                                         |
+| ---------------------------------------------------- | -------- | ------------------------------------ | --------------------------------------------------------------- |
+| `public.create_duo()`                                | DEFINER  | `authenticated`                      | duo + creator membership (seat 1) + invite code, atomically     |
+| `public.join_duo(p_code text)`                       | DEFINER  | `authenticated`                      | normalise code, lock duo, take seat 2                           |
+| `public.leave_duo()`                                 | DEFINER  | `authenticated`                      | V1: deletes the duo, memberships cascade (ends it for both)     |
+| `public.normalize_invite_code(text)`                 | invoker  | nobody (internal)                    | `lkd 8x29ab` → `LKD-8X29AB`                                     |
+| `private.generate_invite_code()`                     | invoker  | nobody (internal)                    | CSPRNG (`gen_random_bytes`), rejection sampling, no modulo bias |
+| `private.current_duo_id()`                           | DEFINER  | `authenticated` (schema not exposed) | caller's duo id for RLS, avoids policy recursion                |
+| `private.handle_new_user()`                          | DEFINER  | trigger only                         | creates the profile                                             |
+| `private.set_updated_at()`                           | invoker  | trigger only                         | `updated_at = now()`                                            |
+| `private.validate_profile()`                         | invoker  | trigger only                         | trims name, rejects non-IANA timezone (`22023`)                 |
+| `public.my_today()`                                  | invoker  | `authenticated`                      | caller's local date (profiles.timezone)                         |
+| `public.ensure_my_daily_tasks()`                     | invoker  | `authenticated`                      | materialise + catch-up for `auth.uid()`; returns today          |
+| `public.create_routine_item(...)`                    | invoker  | `authenticated`                      | new routine item starting today                                 |
+| `public.update_routine_item(...)`                    | invoker  | `authenticated`                      | "Today and future days"                                         |
+| `public.archive_routine_item(id)`                    | invoker  | `authenticated`                      | "Delete" = archive                                              |
+| `public.reorder_routine_items(ids)`                  | invoker  | `authenticated`                      | persist manual order                                            |
+| `private.normalize_routine_item()`                   | invoker  | trigger only                         | trims title / notes, sorts and de-duplicates weekdays           |
+| `private.normalize_daily_task()`                     | invoker  | trigger only                         | trims, owns status timestamps                                   |
+| `private.sync_task_activity()`                       | DEFINER  | trigger only                         | feed events + `realtime.send` broadcasts (Stage 5)              |
+| `public.partner_today()`                             | DEFINER  | `authenticated`                      | partner's local date + done / total (Stage 5)                   |
+| `public.reconcile_my_focus()`                        | invoker  | `authenticated`                      | complete my expired session (Stage 6)                           |
+| `public.my_active_focus()`                           | invoker  | `authenticated`                      | reconcile, then my unfinished session                           |
+| `public.start_focus_session(...)`                    | invoker  | `authenticated`                      | title, planned seconds, optional task, visibility               |
+| `public.pause_focus_session(id)`                     | invoker  | `authenticated`                      | idempotent; returns the row                                     |
+| `public.resume_focus_session(id)`                    | invoker  | `authenticated`                      | idempotent; returns the row                                     |
+| `public.complete_focus_session(...)`                 | invoker  | `authenticated`                      | end (early or on time), optional reflection                     |
+| `public.save_focus_reflection(...)`                  | invoker  | `authenticated`                      | reflection after completion                                     |
+| `public.partner_current_focus()`                     | DEFINER  | `authenticated`                      | partner's unfinished, unexpired session: limited projection     |
+| `public.server_now()`                                | invoker  | `authenticated`                      | database clock: the timers' reference on page load (Stage 6)    |
+| `private.focus_lifecycle()`                          | invoker  | trigger only                         | owns status timestamps and duration maths                       |
+| `private.sync_focus_activity()`                      | DEFINER  | trigger only                         | focus feed events + `focus` broadcasts                          |
+| `public.my_progress_summary()`                       | invoker  | `authenticated`                      | my streak, longest, standard, today's counts (Stage 7)          |
+| `public.my_daily_progress(from, to)`                 | invoker  | `authenticated`                      | my daily series: planned / completed / focus (≤ 400 days)       |
+| `public.my_habits(from, to)`                         | invoker  | `authenticated`                      | recurring tasks' consistency over closed days                   |
+| `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only        |
+| `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                       |
+| `private.materialize_tasks(user)`                    | invoker  | `authenticated` (schema not exposed) | the Stage 4 materialisation for one user                        |
+| `private.day_stats(user, from, to)`                  | invoker  | `authenticated` (schema not exposed) | one row per day; RLS applies to the caller                      |
+| `private.streaks(user)`                              | invoker  | `authenticated` (schema not exposed) | closed-day streak inputs                                        |
+| `private.local_today / standard_met / focus_seconds` | invoker  | `authenticated` (schema not exposed) | helpers                                                         |
 
 Stage 4 functions are all SECURITY INVOKER (ADR-020): they run as the caller, so RLS and column
 grants apply exactly as for direct API calls, and none of them takes an owner id. Errors:
@@ -345,6 +370,11 @@ SQL, and raise stable error codes that the app maps to copy (`src/lib/invite-cod
 Supabase advisor 0029 flags the three public RPCs as "SECURITY DEFINER executable by authenticated".
 That is intentional (they are the only write path into duos / memberships); see ADR-015.
 
+Stage 7: the owner progress functions are INVOKER (RLS applies). `duo_weeks` and
+`partner_progress_summary` are DEFINER (they must count the partner's private tasks), derive the
+partner from `auth.uid()` → membership, take no user id and return integers only; accepted under
+advisor 0029 like `partner_today` (ADR-040). Errors: `LI_NOT_AUTHENTICATED`, `LI_INVALID_RANGE`.
+
 ## Invite codes
 
 `LKD-` + 6 symbols from a 31-symbol alphabet without `0 O 1 I L` → 31⁶ ≈ 887 million codes. Random
@@ -355,10 +385,10 @@ spaces, dashes, optional `LKD` prefix) in the database and mirrored in the UI fo
 
 Grants decide which operations a role may attempt; policies decide which rows.
 
-| Role            | profiles                                                  | duos   | duo_members | RPCs                  |
-| --------------- | --------------------------------------------------------- | ------ | ----------- | --------------------- |
-| `anon`          | —                                                         | —      | —           | —                     |
-| `authenticated` | SELECT; UPDATE (`display_name`, `avatar_url`, `timezone`) | SELECT | SELECT      | create / join / leave |
+| Role            | profiles                                                                            | duos   | duo_members | RPCs                  |
+| --------------- | ----------------------------------------------------------------------------------- | ------ | ----------- | --------------------- |
+| `anon`          | —                                                                                   | —      | —           | —                     |
+| `authenticated` | SELECT; UPDATE (`display_name`, `avatar_url`, `timezone`, `daily_standard_percent`) | SELECT | SELECT      | create / join / leave |
 
 No INSERT / DELETE grants on these three: profiles come from the trigger, duos and memberships from
 the RPCs.
@@ -431,17 +461,29 @@ migrations already grant explicitly; keep doing so.
   no history) and no table read / write; outsider nothing; feed events `focus_started` /
   `focus_completed` only (no pause / resume), private without title; column-grant spoofing refused; `server_now()` returns the database clock, anon denied.
 
+- `supabase/tests/stage7_progress.test.sql` — pgTAP, 78 assertions: standard default 80 and range;
+  streak over closed days with neutral days, the exact 80 % boundary, skipped in the total, an open
+  today that never breaks it, live longest streak and undo, recalculation when the standard changes;
+  daily series (one row per day, neutral = 0 planned, capped at today, `LI_INVALID_RANGE`); focus by
+  start day and running sessions; habits (recurring, closed days, current name / archived snapshot);
+  `duo_weeks` (current first, exact draw, skipped and private tasks in the counts, pre-duo weeks
+  without a partner side, 26-week cap, standard never changes it, partner's routine materialised);
+  partner summary with the partner's own standard; outsider / no-duo / anon isolation; no `text`
+  column in the partner functions; no stats tables; grants.
+
 Each file runs in one transaction and rolls back (broadcasts sent inside it are never delivered).
 
 How to run:
 
 - **Local** (needs Docker): `npx supabase init` once (creates `supabase/config.toml`, not committed yet), then `npx supabase start` and `npx supabase test db`.
-- **DEV project** (what Stages 3 and 4 used, because Docker Desktop's VM does not start on this
-  machine): run the file's statements in one transaction against DEV, with each
-  `select <assertion>(…)` captured into a temp table and a final `raise exception` that prints the
-  TAP lines. The exception aborts the transaction, so users, rows and the pgtap extension are all
-  rolled back. Results on 2026-09-24 (after the Stage 6 migrations): stage 3 `51/51 ok`, stage 4
-  `71/71 ok`, stage 5 `40/40 ok`, stage 6 `63/63 ok` (225/225), `FAILED=0`.
+- **DEV project** (because Docker Desktop's VM does not start on this machine):
+  `node supabase/dev/pgtap_dev.mjs supabase/tests/<file>.test.sql > out.sql`, then run `out.sql` on
+  DEV (SQL editor or the Supabase MCP `execute_sql`). The script captures every assertion's TAP line
+  into a temp table and ends with a `raise exception` that prints
+  `TAP FAILED=<n> PLANNED=<p> RAN=<r>` and any failing lines. The exception aborts the transaction,
+  so users, rows and the pgtap extension are all rolled back. Results on 2026-09-25 (after the
+  Stage 7 migrations): stage 3 `51/51`, stage 4 `71/71`, stage 5 `40/40`, stage 6 `63/63`, stage 7
+  `78/78` (303/303), `FAILED=0`; DEV verified free of fixtures afterwards.
 
 End-to-end coverage of the same rules through the public API (publishable key, real sessions):
 `tests/e2e/stage3.spec.ts` → "database rules hold through the public API" and

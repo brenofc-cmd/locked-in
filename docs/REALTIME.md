@@ -130,9 +130,10 @@ client retries by itself.
 ## Recovery (source of truth)
 
 The feed and the partner's day are loaded by the server on every page load (`loadDuoData`) and
-refetched by the provider after: every partner event, every re-`SUBSCRIBED` after a disconnect,
-the browser coming back online, and the tab becoming visible again. So a completion that happened
-while a user was offline (or a lost message) appears as soon as they are back. Events are keyed by
+refetched by the provider after: every partner event, **every** `SUBSCRIBED` (the first join too —
+Stage 7 closed the gap between the server render and the join), the browser coming back online,
+and the tab becoming visible again. So a completion that happened while a user was offline (or a
+lost message) appears as soon as they are back. Events are keyed by
 `activity_events.id`; a refetch or a redelivery never duplicates a line, and my own optimistic line
 is replaced by the real event for the same task.
 
@@ -142,7 +143,14 @@ is replaced by the real event for the same task.
 timezone. One live event per task; undo removes it, so the feed never shows "completed" for
 something that was undone. Both members' shared completions appear. No pagination in V1.
 
-## Still mock after Stage 6
+## Progress and competition (Stage 7)
 
-Streaks, standard, weekly competition, head-to-head, final stats, challenges, reaction persistence
-(reactions are marked locally only), notifications.
+No new event, channel or payload. Each successful partner refetch bumps `partnerVersion`; the
+progress hook then re-reads `duo_weeks` + `partner_progress_summary` once (this week's %, leader,
+head-to-head, partner's streak). My own numbers are live from local state. A private completion
+emits nothing, so it reaches the partner's numbers on their next re-read (next shared event,
+reconnect, tab visible, reload). Details: [ANALYTICS.md](ANALYTICS.md) → Live updates.
+
+## Still mock after Stage 7
+
+Challenges, reaction persistence (reactions are marked locally only), notifications (Stage 8).

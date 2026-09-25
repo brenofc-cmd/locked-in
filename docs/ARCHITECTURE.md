@@ -42,11 +42,14 @@ locked-in/
 │   ├── proxy.ts        # Next 16 proxy: session refresh + route protection
 │   ├── components/     # session.tsx (real identity), use-tasks.ts (real tasks / routine),
 │   │                   #   duo-realtime.tsx (private duo channel: presence, feed, partner day),
-│   │                   #   app-state.tsx (mock product state + composes the real parts), auth/,
+│   │                   #   use-focus.ts, use-progress.ts (real progress / competition),
+│   │                   #   app-state.tsx (composes the real parts + the last mocks), auth/,
 │   │                   #   shell/, screens/, today/, sheets/, overlays/, focus/, ui.tsx, icons.tsx
 │   ├── hooks/          # client hooks (empty so far)
 │   ├── lib/
-│   │   ├── mock-data.ts   # ALL remaining mock data (focus sessions, stats, streak, competition, challenges)
+│   │   ├── mock-data.ts   # remaining mock data (challenges) + product constants
+│   │   ├── progress.ts    # progress / streak / competition maths (pure, unit-tested; docs/ANALYTICS.md)
+│   │   ├── progress-data.ts # loadProgress(): summary, series, habits, duo weeks (server)
 │   │   ├── session.ts     # loadAppData(): session + today's tasks + routine + duo data, server only
 │   │   ├── duo-data.ts    # loadDuoData(): feed + partner's day (server and browser clients)
 │   │   ├── realtime-model.ts # presence aggregation, feed merge / dedupe, connection state (pure)
@@ -104,8 +107,11 @@ shared tasks. It mounts:
   - `useTasks()` (`src/components/use-tasks.ts`, ADR-024) — **real**: today's tasks and the routine,
     optimistic updates + Server Actions (`task-actions.ts`) + rollback on error;
   - `useDuoRealtime()` for the partner / feed / connection;
-  - **mock** product state: reactions, focus sessions and totals, standard, stats, streak,
-    challenges. Identity comes from `useSession()` (ADR-017).
+  - `useFocus()` — **real** focus sessions (Stage 6);
+  - `useProgress()` (`src/components/use-progress.ts`, ADR-041) — **real** standard, streak,
+    progress series, weekly competition and head-to-head (Stage 7);
+  - **mock** product state: reactions and challenges (Stage 8). Identity comes from `useSession()`
+    (ADR-017).
 
 A reload always renders from the database; there is no client cache of tasks. Realtime only makes
 the partner's changes arrive without a reload (ADR-030).
@@ -160,6 +166,17 @@ Details in [DATABASE.md](DATABASE.md) (lifecycle, timer maths) and [REALTIME.md]
   `src/lib/focus.ts`).
 - One local 1 s tick only while a clock is on screen; nothing is written, broadcast or tracked per
   second.
+
+## Progress strategy (Stage 7)
+
+Details in [ANALYTICS.md](ANALYTICS.md).
+
+- Every number is derived by SQL functions from `daily_tasks` and `focus_sessions` (no stats
+  tables, ADR-037); `loadProgress()` runs with the layout load, `progress-actions.ts` re-reads.
+- `src/lib/progress.ts` does the presentation maths (ranges, buckets, calendar, leader, head-to-head,
+  habits) on the returned counts; today is added live from local state.
+- The partner side is re-read after each realtime refetch (`partnerVersion`); no new realtime
+  traffic. The app reloads when the local date changes.
 
 ## Mobile-first strategy
 

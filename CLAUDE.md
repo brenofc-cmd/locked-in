@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working (Windows, Node 22; last run at the end of Stage 6):
+All verified working (Windows, Node 22; last run at the end of Stage 7):
 
 ```bash
 npm install
@@ -75,10 +75,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   (serial, shared DEV users; stage5 / stage6 = 2-3 browsers)
+                       #   → stage7 (serial, shared DEV users; stage5-7 = 2-3 browsers)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage6), needs Docker; DEV fallback in docs/DATABASE.md
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage7), needs Docker. Without Docker:
+                       #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
+                       #   (docs/DATABASE.md → Tests)
 ```
 
 Run lint, typecheck, test and build before declaring any stage complete; run test:e2e when UI or
@@ -93,21 +95,33 @@ routing changed; run the pgTAP suite when a migration changed.
 - SECURITY DEFINER functions: `set search_path = ''`, schema-qualified names, act for `auth.uid()`
   only, `revoke all … from public` then minimal `grant execute`.
 - Errors shown to users go through `authErrorMessage()` / `duoErrorMessage()` / `taskErrorMessage()` /
-  `focusErrorMessage()`; never render raw
+  `focusErrorMessage()` (progress actions return fixed copy); never render raw
   Supabase or Postgres messages.
 - Test users and credentials: `docs/DATABASE.md` → "Test users". `.env*` and `tests/e2e/.auth/` are
   git-ignored and must stay that way.
 
-## Real vs mock state (Stage 6)
+## Real vs mock state (Stage 7)
 
 - Real: auth session, profile, duo, partner identity → `useSession()`; routine items and today's
   tasks → `useTasks()`; partner presence (online / offline), partner's day (counts + shared
   tasks), activity feed and connection state → `useDuoRealtime()`
   (`src/components/duo-realtime.tsx`); focus sessions, timer, focus today, session list and the
-  partner's focus → `useFocus()` (`src/components/use-focus.ts`) + `partner_current_focus()`. All
-  reached through `useApp()`; initial data from `loadAppData()`.
-- Mock: standard, streak, weekly competition, head-to-head, stats, challenges, reaction
-  persistence, notifications → only `src/lib/mock-data.ts` and `src/components/app-state.tsx`.
+  partner's focus → `useFocus()` (`src/components/use-focus.ts`) + `partner_current_focus()`;
+  daily standard, streak / longest streak, progress series, chart, calendar, day review, habits,
+  insights, this week's competition, head-to-head, weekly review, briefing numbers and the
+  partner's streak → `useProgress()` (`src/components/use-progress.ts`). All reached through
+  `useApp()`; initial data from `loadAppData()`.
+- Mock: challenges, reaction persistence, notifications (Stage 8) → only `src/lib/mock-data.ts`
+  and `src/components/app-state.tsx`.
+- Progress (docs/ANALYTICS.md): every number is derived in SQL from `daily_tasks` and
+  `focus_sessions` — never add a stats / cache table or store a computed number. Skipped stays in
+  the denominator; a day with 0 planned is neutral (null, never 0 % or 100 %); standard met uses
+  the exact ratio (`completed·100 ≥ standard·planned`); today never breaks the streak early;
+  Perfect Day = 100 %. The competition is raw completion % (never the standard, never focus); only
+  completed weeks together are head-to-head results. Partner functions return integers only;
+  private tasks count in aggregates but are never listed or broadcast. Presentation maths lives in
+  `src/lib/progress.ts` (pure, unit-tested); my own numbers are live from local state, the
+  partner's are re-read after realtime refetches (`partnerVersion`) — no polling.
 - Focus: Postgres owns every timestamp. Never store, send, broadcast or track a timer value; derive
   the clock with `src/lib/focus.ts` from the row + server offset. One unfinished session per user
   (database index). Expired sessions are reconciled on demand (`my_active_focus()`), never by cron.

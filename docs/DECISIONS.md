@@ -224,3 +224,39 @@ Status: Accepted. Supersedes the focus part of ADR-029.
 Decision: A running session overlays every screen of its user, so the UI focus test is tagged `@focus` and runs in `focus-390` / `focus-1440`, which depend on `mobile-390` and `desktop-1440`. `tests/e2e/stage6.spec.ts` (project `stage6`, after `stage5`, serial) covers refresh while running / paused, expiry while closed, two-browser live focus, private session, multi-tab, double start, outsider, and the no-per-second-traffic network test.
 Reason: Deterministic parallel suite with real persistence.
 Status: Accepted.
+
+# ADR-037 — Progress is derived from daily_tasks and focus_sessions; no statistics tables
+
+Decision: Every Stage 7 number (streak, completion, perfect days, focus, weekly competition, habits) is computed by SQL functions reading `daily_tasks` and `focus_sessions` on demand: `my_progress_summary`, `my_daily_progress`, `my_habits` (INVOKER) and `duo_weeks`, `partner_progress_summary` (DEFINER). No `daily_stats`, `weekly_results` or streak columns; nothing written by cron or trigger. The client does only presentation maths on the returned counts (`src/lib/progress.ts`, pure and unit-tested) and adds today live from the tasks on screen. Definitions and formulas: `docs/ANALYTICS.md`.
+Reason: Postgres stays the single source of truth; a derived number can never disagree with its source, and a history edit or standard change is reflected everywhere at once. Two users' history is small (indexed by owner + date). A cache can be added later if measurements demand it.
+Status: Accepted.
+
+# ADR-038 — Daily Standard: personal, default 80 %, exact ratio, streak only
+
+Decision: `profiles.daily_standard_percent` (1–100, not null, default 80), editable by its owner only (column grant + RLS). A day meets it when `completed · 100 ≥ standard · planned` (exact, never the rounded %). Skipped tasks stay in `planned`. A day with nothing planned is neutral (neither counts nor breaks). The streak counts consecutive standard-met closed days, and today adds one only once it meets the standard — an incomplete today never breaks it. Changing the standard recalculates the streak over all history (V1 keeps no standard history). A Perfect Day is 100 % regardless of the standard.
+Reason: One clear, honest rule; rounding can never turn 66.7 % into "67 % met"; skipping cannot inflate a day.
+Status: Accepted.
+
+# ADR-039 — Weekly competition on raw completion; head-to-head on completed weeks together only
+
+Decision: The week (Monday–Sunday, local `task_date`) is won on raw completion % (`completed / planned`), compared by exact ratio; the standard and focus play no part (focus is shown alongside). The current week shows a leader but never a result. A completed week is a head-to-head result only if both members had tasks; equal ratios are a draw. Weeks that started before the duo was complete (second member's `joined_at`, in the caller's calendar) return no partner side at all (migration `…_duo_weeks_together.sql`), so they are never a result and the partner's pre-duo history is not exposed.
+Reason: The standard is personal — lowering it must not help anyone win; "no hype" means a week is only a result once it is over and was shared.
+Status: Accepted.
+
+# ADR-040 — Partner progress through two DEFINER functions returning integers only
+
+Decision: `duo_weeks` and `partner_progress_summary` are SECURITY DEFINER because the competition must count the partner's private tasks, which RLS hides. They take no user id (partner = the other member of `private.current_duo_id()`), set `search_path = ''`, EXECUTE only for `authenticated`, and return integers / dates only — pgTAP asserts no `text` output column. Private tasks count in aggregates but are never listed and send no broadcast. `duo_weeks` materialises the partner's routine up to their today first. Accepted under advisor 0029 like `partner_today` (ADR-028) and `partner_current_focus` (ADR-034).
+Reason: Fair numbers without leaking any private detail.
+Status: Accepted.
+
+# ADR-041 — Live progress without new realtime traffic; refetch on the first channel join
+
+Decision: My own progress is live from local state (today's tasks and focus on top of the loaded series). The partner's side is re-read (`duo_weeks` + `partner_progress_summary`, one server action) whenever the realtime provider refetches the partner — partner events, reconnect, back online, tab visible — via a `partnerVersion` counter; no new broadcast, no channel, no polling. The provider now also refetches on the **first** `SUBSCRIBED`, closing the gap between the server render and the channel join (found by the Stage 7 E2E). Private completions emit nothing (ADR-028), so they reach the partner's numbers on the next re-read. The app reloads when the local date changes (timer to local midnight on the database-corrected clock, and on tab visible).
+Reason: Correct live competition within the Stage 5 realtime rules.
+Status: Accepted. Amends ADR-030's recovery rule (refetch also on the first join).
+
+# ADR-042 — pgTAP on DEV through a script; E2E stage7 project
+
+Decision: `supabase/dev/pgtap_dev.mjs` rewrites a pgTAP file for the aborted-transaction run on DEV (every assertion's line captured, a final exception reports `TAP FAILED / PLANNED / RAN` and rolls everything back), replacing the hand-made procedure while Docker is unavailable. `tests/e2e/stage7.spec.ts` (project `stage7`, after `stage6`, serial, Alice / Bruno / Carla) seeds history through the public API as each user. `trackWrites()` tracks Server Actions only (Supabase reads sent as POST are not writes) with a set of requests.
+Reason: Repeatable database verification; deterministic E2E with real persistence.
+Status: Accepted.

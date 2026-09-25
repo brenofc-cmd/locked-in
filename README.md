@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 6 — persistent Focus sessions and live Focus sync verified; Stage 7 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 7 — real progress, streak, weekly competition and analytics verified; Stage 8 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 
@@ -42,6 +42,7 @@ npm run dev                  # http://localhost:3000
 - [Realtime](docs/REALTIME.md) — private duo channel, presence, broadcasts, recovery
 - [Design reference](docs/DESIGN_REFERENCE.md) — the approved Claude Design and how to read it
 - [Roadmap](docs/ROADMAP.md) — the 10 stages
+- [Analytics](docs/ANALYTICS.md) — progress, streak, standard and competition rules
 - [Decisions](docs/DECISIONS.md) — ADRs
 - [Progress](docs/PROGRESS.md) — current status
 - [CLAUDE.md](CLAUDE.md) — rules for AI agents working on this repo
