@@ -68,7 +68,7 @@ export function SheetHost() {
       body = <StreakSheet />;
       break;
     case "day":
-      body = <DaySheet day={sheet.day} />;
+      body = <DaySheet date={sheet.date} />;
       break;
     case "template":
       body = <TemplateSheet />;

@@ -17,12 +17,3 @@ export function formatClock(seconds: number): string {
   const s = Math.max(0, Math.ceil(seconds));
   return `${pad2(Math.floor(s / 60))}:${pad2(s % 60)}`;
 }
-
-/** Deterministic pseudo-random generator for stable mock charts. */
-export function seeded(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 16807) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}

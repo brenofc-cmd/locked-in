@@ -94,6 +94,12 @@ function useDuoRealtimeValue(initial: DuoData) {
 
   /** Re-read feed + partner's day from Postgres (the source of truth). */
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * Bumped after every successful refetch of the partner's side (partner
+   * events, reconnect, back online, tab visible): progress re-reads its duo
+   * numbers then (Stage 7). No extra broadcast, no polling.
+   */
+  const [partnerVersion, setPartnerVersion] = useState(0);
   /** Bumped by each partner "focus" broadcast: a read that raced one is stale. */
   const focusSeq = useRef(0);
   const refetch = useCallback(() => {
@@ -113,6 +119,7 @@ function useDuoRealtimeValue(initial: DuoData) {
           total: data.partnerDay?.total ?? 0,
         });
         setPartnerTasks(toTasks(data.partnerTasks));
+        setPartnerVersion((v) => v + 1);
         if (seq === focusSeq.current) setPartnerFocus(data.partnerFocus);
       } catch {
         // Offline or transient: the next reconnect / event retries.
@@ -312,6 +319,7 @@ function useDuoRealtimeValue(initial: DuoData) {
     partnerFocus,
     partnerCounts,
     partnerTasks,
+    partnerVersion,
     flashAt,
     onMyFocus,
     addLocalCompletion,

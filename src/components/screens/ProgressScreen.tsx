@@ -1,18 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useApp } from "@/components/app-state";
 import { cx } from "@/components/ui";
-import { seeded } from "@/lib/format";
+import { DAYS, DAY_LETTERS, addDays } from "@/lib/local-date";
 import {
-  mockStats,
-  mockToday,
-  mockUser,
-  mockWeeks,
+  calendarMonth,
+  chartBars,
+  completedWeeks,
+  dayState,
+  focusLabel,
+  insightLines,
+  rangeFrom,
+  rankHabits,
+  totals,
+  weeksWithData,
+  type Bar,
   type Range,
-} from "@/lib/mock-data";
-import { DAYS, DAY_LETTERS } from "@/lib/local-date";
-import { todayStats } from "@/lib/today";
+} from "@/lib/progress";
 
 const RANGES: { k: Range; short: string; long: string }[] = [
   { k: "7", short: "7D", long: "7 DAYS" },
@@ -21,60 +27,54 @@ const RANGES: { k: Range; short: string; long: string }[] = [
   { k: "Y", short: "YEAR", long: "YEAR" },
 ];
 
-type Bar = { v: number; label: string; today: boolean };
-
-function barsFor(range: Range, todayPct: number): Bar[] {
-  if (range === "7") {
-    // Last 7 days ending today (TUE): WED … MON, then today, live.
-    const order = [2, 3, 4, 5, 6, 0];
-    return [
-      ...mockStats.lastSixDays.map((v, i) => ({
-        v,
-        label: DAYS[order[i]],
-        today: false,
-      })),
-      { v: todayPct, label: DAYS[1], today: true },
-    ];
-  }
-  const rnd = seeded({ "30": 7, "90": 11, Y: 17 }[range]);
-  const labels =
-    range === "30"
-      ? // 30 days ending Sep 23 start on Aug 25; label three days, away from the edges.
-        Array.from({ length: 30 }, (_, i) => {
-          if (i % 10 !== 4) return "";
-          const d = 25 + i;
-          return d > 31 ? `SEP ${d - 31}` : `AUG ${d}`;
-        })
-      : range === "90"
-        ? Array.from({ length: 13 }, (_, i) => `W${27 + i}`)
-        : ["MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP"];
-  return labels.map((label, i) => ({
-    v: i === labels.length - 1 ? todayPct : Math.round(62 + rnd() * 37),
-    label,
-    today: i === labels.length - 1,
-  }));
-}
-
-function barColor(v: number, last: boolean, range: Range) {
-  if (v < 70) return "bg-[color-mix(in_oklab,#E0715F_55%,#17171A)]";
-  if (v === 100 || (last && range !== "7")) return "bg-accent";
+function barColor(b: Bar, standard: number, range: Range) {
+  if (b.pct === null) return "bg-white/6";
+  if (b.pct < standard) return "bg-[color-mix(in_oklab,#E0715F_55%,#17171A)]";
+  if (b.pct === 100 || (b.current && range !== "7")) return "bg-accent";
   return "bg-[#35353a]";
 }
+
+/** Bar height: 40–100 % fills the chart (the design's scale); low values stay visible. */
+const barHeight = (pct: number | null) =>
+  pct === null ? 2 : Math.max(4, ((pct - 40) / 60) * 82);
 
 export function ProgressScreen() {
   const app = useApp();
   const [range, setRange] = useState<Range>("7");
   const [insights, setInsights] = useState(false);
-  // Today's bar is real; every other number here is mock until Stage 7.
-  const stats = todayStats(app.tasks, app.standard);
-  const bars = barsFor(range, stats.pct);
-  const avg =
-    range === "7"
-      ? Math.round(bars.reduce((s, b) => s + b.v, 0) / bars.length)
-      : mockStats.byRange[range].pct;
-  const meta = mockStats.byRange[range];
+  const today = app.today;
+  const days = app.progressDays;
+
+  if (!app.hasHistory) {
+    return (
+      <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
+        <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
+          PROGRESS
+        </h1>
+        <p className="text-[26px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty">
+          No data yet. Start showing up.
+        </p>
+        <Link
+          href="/today"
+          className="flex h-[52px] items-center self-start rounded-[14px] bg-accent px-[22px] font-mono text-xs font-semibold tracking-[.22em] text-bg"
+        >
+          GO TO TODAY
+        </Link>
+      </div>
+    );
+  }
+
+  const t = totals(days, rangeFrom(range, today), today);
+  const bars = chartBars(days, range, today);
   const showValues = bars.length <= 13;
   const rangeLong = RANGES.find((r) => r.k === range)?.long ?? "";
+  const weeks = weeksWithData(completedWeeks(app.progress.weeks)).slice(0, 4);
+  const habits = rankHabits(app.progress.habits);
+  const lines = insightLines(
+    app.progress.habits,
+    days.filter((d) => d.day >= addDays(today, -30) && d.day < today),
+    "in the last 30 days",
+  );
 
   return (
     <div className="flex flex-col gap-8 animate-[li-fade-up_.4s_ease] desk:gap-12">
@@ -113,11 +113,16 @@ export function ProgressScreen() {
             data-testid="progress-pct"
             className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] tabular-nums desk:text-[84px] wide:text-[112px]"
           >
-            {avg}
-            <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
+            {t.pct ?? "—"}
+            {t.pct !== null && (
+              <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
+            )}
           </span>
           <span className="font-mono text-[11px] tracking-[.16em] text-dim">
             COMPLETION RATE · {rangeLong}
+            <span className="sr-only">
+              {`: ${t.completed} of ${t.planned} tasks`}
+            </span>
           </span>
         </div>
         <div className="grid grid-cols-3 gap-4">
@@ -126,18 +131,29 @@ export function ProgressScreen() {
             onClick={() => app.openSheet({ kind: "streak" })}
             className="flex flex-col gap-2 border-t border-white/10 pt-3.5 text-left"
           >
-            <span className="text-[30px] leading-none font-medium tracking-[-0.03em] desk:text-[40px]">
-              {mockUser.streak}{" "}
+            <span
+              data-testid="progress-streak"
+              className="text-[30px] leading-none font-medium tracking-[-0.03em] desk:text-[40px]"
+            >
+              {app.streak}{" "}
               <span className="text-[13px] tracking-normal text-muted">
-                days
+                {app.streak === 1 ? "day" : "days"}
               </span>
             </span>
             <span className="font-mono text-[10px] tracking-[.14em] text-dim">
               STREAK ›
             </span>
           </button>
-          <Stat value={meta.focus} label="FOCUS" />
-          <Stat value={String(meta.perfect)} label="PERFECT DAYS" />
+          <Stat
+            value={focusLabel(t.focusSeconds)}
+            label="FOCUS"
+            testId="progress-focus"
+          />
+          <Stat
+            value={String(t.perfectDays)}
+            label="PERFECT DAYS"
+            testId="progress-perfect"
+          />
         </div>
       </div>
 
@@ -146,53 +162,59 @@ export function ProgressScreen() {
           {range === "7" ? "LAST 7 DAYS" : `COMPLETION · ${rangeLong}`}
         </h2>
         <div
+          role="list"
           className={cx(
             "flex h-[170px] items-end border-b border-white/8",
             bars.length > 20 ? "gap-[3px]" : "gap-1.5 desk:gap-2",
           )}
         >
-          {bars.map((b, i) => (
+          {bars.map((b) => (
             <div
-              key={i}
-              title={`${b.v}%`}
-              className="flex h-full flex-1 flex-col justify-end gap-2"
+              key={b.key}
+              role="listitem"
+              aria-label={b.title}
+              title={b.title}
+              className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"
             >
               {showValues && (
                 <span
+                  aria-hidden="true"
                   className={cx(
                     "text-center text-[13px] font-medium tabular-nums",
-                    b.v === 100
+                    b.pct === 100
                       ? "text-accent"
-                      : b.v < 70
+                      : b.pct !== null && b.pct < app.standard
                         ? "text-danger"
                         : "text-muted",
                   )}
                 >
-                  {b.v}
+                  {b.pct ?? "–"}
                 </span>
               )}
               <div
+                aria-hidden="true"
                 className={cx(
                   "rounded-t transition-[height] duration-500 ease-[cubic-bezier(.2,.8,.2,1)]",
-                  barColor(b.v, i === bars.length - 1, range),
+                  barColor(b, app.standard, range),
                 )}
-                style={{ height: `${Math.max(4, ((b.v - 40) / 60) * 82)}%` }}
+                style={{ height: `${barHeight(b.pct)}%` }}
               />
             </div>
           ))}
         </div>
         <div
+          aria-hidden="true"
           className={cx(
             "flex",
             bars.length > 20 ? "gap-[3px]" : "gap-1.5 desk:gap-2",
           )}
         >
-          {bars.map((b, i) => (
+          {bars.map((b) => (
             <span
-              key={i}
+              key={b.key}
               className={cx(
-                "flex-1 text-center font-mono text-[10px] whitespace-nowrap",
-                b.today ? "text-text" : "text-dim",
+                "min-w-0 flex-1 text-center font-mono text-[10px] whitespace-nowrap",
+                b.current ? "text-text" : "text-dim",
               )}
             >
               {range === "7" ? (
@@ -215,33 +237,38 @@ export function ProgressScreen() {
       </section>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
-        <Calendar
-          todayPct={stats.pct}
-          standard={app.standard}
-          onOpen={(d) => app.openSheet({ kind: "day", day: d })}
-        />
+        <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
         <section aria-label="Weekly reviews" className="flex flex-col">
           <h2 className="border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
             WEEKLY REVIEWS
           </h2>
-          {mockWeeks.slice(0, 4).map((w, i) => (
+          {weeks.map((w) => (
             <button
-              key={w.week}
+              key={w.weekStart}
               type="button"
-              onClick={() => app.openOverlay({ kind: "weekly", index: i })}
+              onClick={() =>
+                app.openOverlay({ kind: "weekly", weekStart: w.weekStart })
+              }
               className="grid min-h-[50px] grid-cols-[80px_1fr_auto] items-center gap-2.5 border-b border-white/5 p-0 text-left text-sm"
             >
               <span className="font-mono text-[11px] text-muted">
                 WEEK {w.week}
               </span>
               <span className="tabular-nums">
-                You {w.me}% · {app.partner.name} {w.partner}%
+                You {w.me === null ? "—" : `${w.me}%`}
+                {app.hasPartner &&
+                  ` · ${app.partner.name} ${w.partner === null ? "—" : `${w.partner}%`}`}
               </span>
               <span aria-hidden="true" className="text-faint">
                 ›
               </span>
             </button>
           ))}
+          {weeks.length === 0 && (
+            <span className="py-3.5 text-[13.5px] text-dim">
+              Your first review arrives after your first full week.
+            </span>
+          )}
         </section>
       </div>
 
@@ -263,7 +290,7 @@ export function ProgressScreen() {
       {insights && (
         <div className="flex flex-col gap-[30px] animate-[li-fade-up_.3s_ease]">
           <div className="flex flex-col gap-2.5">
-            {mockStats.insights.map((i) => (
+            {lines.map((i) => (
               <span
                 key={i}
                 className="border-l-2 border-white/12 pl-3.5 text-[15px] leading-[1.5]"
@@ -271,27 +298,42 @@ export function ProgressScreen() {
                 {i}
               </span>
             ))}
+            {lines.length === 0 && (
+              <span className="text-[14px] leading-[1.5] text-dim">
+                Not enough history yet. Insights need a routine scheduled at
+                least 3 times.
+              </span>
+            )}
           </div>
           <div className="flex flex-col">
-            <div className="flex justify-between border-b border-white/9 pb-2">
+            <div className="flex justify-between gap-3 border-b border-white/9 pb-2">
               <span className="font-mono text-[11px] tracking-[.16em] text-muted">
                 CONSISTENCY · 30 DAYS
               </span>
               <span className="font-mono text-[11px] text-dim">
-                LONGEST STREAK {mockUser.longestStreak} DAYS
+                LONGEST STREAK {app.longestStreak}{" "}
+                {app.longestStreak === 1 ? "DAY" : "DAYS"}
               </span>
             </div>
-            {mockStats.habits.map((h) => (
+            {habits.map((h) => (
               <div
-                key={h.name}
+                key={h.routineId}
                 className="grid min-h-[46px] grid-cols-[minmax(0,1fr)_90px_44px] items-center gap-3 border-b border-white/5"
               >
-                <span className="truncate text-sm">{h.name}</span>
-                <div className="h-[3px] rounded-sm bg-white/6">
+                <span className="truncate text-sm">
+                  {h.title}
+                  <span className="sr-only">
+                    {`: ${h.completed} of ${h.planned}`}
+                  </span>
+                </span>
+                <div
+                  aria-hidden="true"
+                  className="h-[3px] rounded-sm bg-white/6"
+                >
                   <div
                     className={cx(
                       "h-full rounded-sm",
-                      h.rate < 75 ? "bg-danger" : "bg-muted",
+                      h.rate < app.standard ? "bg-danger" : "bg-muted",
                     )}
                     style={{ width: `${h.rate}%` }}
                   />
@@ -299,7 +341,7 @@ export function ProgressScreen() {
                 <span
                   className={cx(
                     "text-right text-sm tabular-nums",
-                    h.rate < 75 ? "text-danger" : "text-text",
+                    h.rate < app.standard ? "text-danger" : "text-text",
                   )}
                 >
                   {h.rate}%
@@ -313,10 +355,21 @@ export function ProgressScreen() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({
+  value,
+  label,
+  testId,
+}: {
+  value: string;
+  label: string;
+  testId?: string;
+}) {
   return (
     <div className="flex flex-col gap-2 border-t border-white/10 pt-3.5">
-      <span className="text-[30px] leading-none font-medium tracking-[-0.03em] desk:text-[40px]">
+      <span
+        data-testid={testId}
+        className="text-[30px] leading-none font-medium tracking-[-0.03em] desk:text-[40px]"
+      >
         {value}
       </span>
       <span className="font-mono text-[10px] tracking-[.14em] text-dim">
@@ -326,24 +379,29 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
-function Calendar({
-  todayPct,
-  standard,
-  onOpen,
-}: {
-  todayPct: number;
-  standard: number;
-  onOpen: (day: number) => void;
-}) {
-  const { missed, perfect } = mockStats.september;
-  // Sep 1 2026 is a Monday, so the grid needs no leading blanks.
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
+const STATE_LABEL = {
+  met: "standard met",
+  perfect: "perfect",
+  missed: "missed",
+  neutral: "nothing scheduled",
+  future: "upcoming",
+  today: "in progress",
+} as const;
+
+function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
+  const app = useApp();
+  const { label, cells } = calendarMonth(
+    app.progressDays,
+    app.today,
+    app.standard,
+  );
+  const title = label.charAt(0) + label.slice(1).toLowerCase();
 
   return (
-    <section aria-label="September" className="flex flex-col gap-3.5">
+    <section aria-label={title} className="flex flex-col gap-3.5">
       <div className="flex items-baseline justify-between">
         <h2 className="font-mono text-[11px] font-normal tracking-[.16em] text-muted">
-          {mockToday.monthLabel}
+          {label}
         </h2>
         <span className="text-xs text-dim">Tap a day to review</span>
       </div>
@@ -357,55 +415,46 @@ function Calendar({
             {d}
           </span>
         ))}
-        {days.map((d) => {
-          const future = d > mockToday.date;
-          const isToday = d === mockToday.date;
-          const state = isToday
-            ? todayPct === 100
-              ? "perfect"
-              : todayPct >= standard
-                ? "met"
-                : "open"
-            : future
-              ? "future"
-              : missed.includes(d)
-                ? "missed"
-                : perfect.includes(d)
-                  ? "perfect"
-                  : "met";
-          const aria = `Sep ${d}: ${
-            {
-              met: "standard met",
-              perfect: "perfect",
-              missed: "missed",
-              future: "upcoming",
-              open: "in progress",
-            }[state]
-          }`;
+        {cells.map((c) => {
+          if (c.kind === "blank") return <span key={c.key} />;
+          // Today shows its live state like the rest of the heat.
+          const shown =
+            c.state === "today"
+              ? todayState(
+                  app.tasks.length,
+                  app.tasks.filter((x) => x.done).length,
+                  app.standard,
+                )
+              : c.state;
+          const closed = c.state !== "future" && c.state !== "today";
           return (
             <button
-              key={d}
+              key={c.key}
               type="button"
-              disabled={future || isToday}
-              onClick={() => onOpen(d)}
-              aria-label={aria}
+              disabled={!closed || c.state === "neutral"}
+              onClick={() => onOpen(c.date)}
+              aria-label={`${title.slice(0, 3)} ${c.dayNumber}: ${
+                c.state === "today"
+                  ? `today, ${STATE_LABEL[shown === "today" ? "today" : shown]}`
+                  : STATE_LABEL[c.state]
+              }${c.pct !== null && closed ? `, ${c.pct}%` : ""}`}
               className={cx(
                 "flex h-[46px] flex-col items-center justify-center gap-[5px] rounded-[10px] p-0 text-[12.5px] tabular-nums disabled:cursor-default",
-                isToday
+                c.state === "today"
                   ? "border border-white/20"
                   : "border border-transparent",
-                future ? "text-off" : "text-text",
+                c.state === "future" ? "text-off" : "text-text",
               )}
             >
-              <span>{d}</span>
+              <span>{c.dayNumber}</span>
               <span
                 aria-hidden="true"
                 className={cx(
                   "size-1.5 rounded-full",
-                  (state === "met" || state === "perfect") && "bg-accent",
-                  state === "perfect" &&
+                  (shown === "met" || shown === "perfect") && "bg-accent",
+                  shown === "perfect" &&
                     "shadow-[0_0_0_2px_#0A0A0B,0_0_0_3px_var(--color-accent)]",
-                  state === "missed" && "border-[1.5px] border-missed",
+                  shown === "missed" && "border-[1.5px] border-missed",
                 )}
               />
             </button>
@@ -437,4 +486,10 @@ function Calendar({
       </div>
     </section>
   );
+}
+
+/** Today in the calendar: met / perfect once reached; otherwise still open. */
+function todayState(planned: number, completed: number, standard: number) {
+  const state = dayState(planned, completed, standard);
+  return state === "met" || state === "perfect" ? state : ("today" as const);
 }

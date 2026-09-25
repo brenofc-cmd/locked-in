@@ -11,8 +11,17 @@ import {
   StatusDot,
   cx,
 } from "@/components/ui";
-import { mockToday, mockUser, mockWeek, mockWeeks } from "@/lib/mock-data";
+import { isoWeekday } from "@/lib/local-date";
 import { partnerView } from "@/lib/partner";
+import {
+  completedWeeks,
+  focusLabel,
+  headToHead,
+  isoWeekNumber,
+  leader,
+  percent,
+  weeksWithData,
+} from "@/lib/progress";
 
 export function PartnerScreen() {
   const app = useApp();
@@ -38,9 +47,19 @@ export function PartnerScreen() {
   }
 
   const pv = partnerView(partner, app.partnerCounts, app.feed, app.now);
-  const h2h = [...mockWeeks].reverse();
-  const meWins = mockWeeks.filter((w) => w.me > w.partner).length;
-  const diff = mockWeek.me - mockWeek.partner;
+  // This week: mine live, theirs from duo_weeks; completed weeks only in H2H.
+  const { week } = app;
+  const mePct = percent(week.me.completed, week.me.planned);
+  const partnerPct = week.partner
+    ? percent(week.partner.completed, week.partner.planned)
+    : null;
+  const lead = leader(week.me, week.partner);
+  const daysLeft = 7 - isoWeekday(app.today);
+  const results = completedWeeks(app.progress.weeks);
+  const score = headToHead(results);
+  const strip = [...results].reverse();
+  const history = weeksWithData(results).slice(0, 3);
+  const myInitial = app.userName.charAt(0).toUpperCase();
 
   return (
     <div className="flex flex-col gap-8 animate-[li-fade-up_.4s_ease] desk:gap-12">
@@ -87,47 +106,58 @@ export function PartnerScreen() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
-        {/* MOCK until Stage 7: week, focus, streak and head-to-head numbers.
-            Real: the header, TODAY, the task list and the activity feed. */}
         <section aria-label="This week" className="flex flex-col gap-[18px]">
           <SectionHeader
             as="h2"
-            label={`THIS WEEK · WEEK ${mockToday.week}`}
-            right={`${mockToday.daysLeftInWeek} DAYS LEFT`}
+            label={`THIS WEEK · WEEK ${isoWeekNumber(week.start)}`}
+            right={
+              daysLeft === 0
+                ? "LAST DAY"
+                : `${daysLeft} ${daysLeft === 1 ? "DAY" : "DAYS"} LEFT`
+            }
           />
           <div className="flex flex-col gap-3.5">
-            <WeekBar who="YOU" value={mockWeek.me} me />
+            <WeekBar who="YOU" value={mePct} me testId="week-me" />
             <WeekBar
               who={partner.name.toUpperCase()}
-              value={mockWeek.partner}
+              value={partnerPct}
+              testId="week-partner"
             />
           </div>
-          <div className="flex items-center justify-between gap-3">
+          <div
+            data-testid="week-leader"
+            className="flex items-center justify-between gap-3"
+          >
             <span className="font-mono text-xs tracking-[.2em]">
-              {diff >= 0
+              {lead.who === "me"
                 ? "YOU'RE AHEAD"
-                : `${partner.name.toUpperCase()} IS AHEAD`}
+                : lead.who === "partner"
+                  ? `${partner.name.toUpperCase()} IS AHEAD`
+                  : lead.who === "tied"
+                    ? "TIED"
+                    : "NO SCORE YET"}
             </span>
-            <span
-              className={cx(
-                "text-[22px] font-medium",
-                diff >= 0 ? "text-accent" : "text-muted",
-              )}
-            >
-              {diff >= 0 ? "+" : "−"}
-              {Math.abs(diff)}%
-            </span>
+            {lead.margin && (
+              <span
+                className={cx(
+                  "text-[22px] font-medium",
+                  lead.who === "me" ? "text-accent" : "text-muted",
+                )}
+              >
+                {lead.margin}
+              </span>
+            )}
           </div>
           <div className="flex flex-col">
             <CompareRow
               label="FOCUS"
-              me={mockWeek.focusMe}
-              them={mockWeek.focusPartner}
+              me={focusLabel(week.me.focusSeconds)}
+              them={week.partner ? focusLabel(week.partner.focus) : "—"}
             />
             <CompareRow
               label="STREAK"
-              me={`${mockUser.streak} days`}
-              them={`${partner.streak} days`}
+              me={days(app.streak)}
+              them={partner.streak === null ? "—" : days(partner.streak)}
             />
           </div>
           <span className="text-[12.5px] leading-[1.5] text-dim">
@@ -137,62 +167,100 @@ export function PartnerScreen() {
         </section>
 
         <section aria-label="Head to head" className="flex flex-col gap-[18px]">
-          <SectionHeader as="h2" label="HEAD TO HEAD" right="LAST 8 WEEKS" />
+          <SectionHeader
+            as="h2"
+            label="HEAD TO HEAD"
+            right={`LAST ${results.length} WEEKS`}
+          />
           <div className="flex items-end justify-between gap-3">
-            <span className="text-[56px] leading-[.85] font-medium tracking-[-0.05em] tabular-nums desk:text-[72px]">
-              {meWins}
+            <span
+              data-testid="h2h-score"
+              className="text-[56px] leading-[.85] font-medium tracking-[-0.05em] tabular-nums desk:text-[72px]"
+            >
+              {score.me}
               <span className="px-2.5 text-off">—</span>
-              <span className="text-dim">{mockWeeks.length - meWins}</span>
+              <span className="text-dim">{score.partner}</span>
             </span>
             <span className="text-right font-mono text-[10.5px] leading-[1.8] tracking-[.14em] text-dim">
               YOU — {partner.name.toUpperCase()}
+              {score.draws > 0 && (
+                <span data-testid="h2h-draws" className="block">
+                  {score.draws} {score.draws === 1 ? "DRAW" : "DRAWS"}
+                </span>
+              )}
             </span>
           </div>
-          <div className="grid grid-cols-8 gap-1">
-            {h2h.map((w) => {
-              const won = w.me > w.partner;
-              return (
+          <div
+            className="grid gap-1"
+            style={{
+              gridTemplateColumns: `repeat(${Math.max(strip.length, 1)}, minmax(0, 1fr))`,
+            }}
+          >
+            {strip.map((w) => (
+              <div
+                key={w.weekStart}
+                className="flex flex-col items-center gap-1.5"
+              >
                 <div
-                  key={w.week}
-                  className="flex flex-col items-center gap-1.5"
+                  aria-label={`Week ${w.week}: ${
+                    w.result === "me"
+                      ? "you won"
+                      : w.result === "partner"
+                        ? `${partner.name} won`
+                        : w.result === "draw"
+                          ? "draw"
+                          : "no contest"
+                  }`}
+                  className={cx(
+                    "flex h-[30px] w-full items-center justify-center rounded-md font-mono text-[10px] font-semibold",
+                    w.result === "me"
+                      ? "bg-accent text-bg"
+                      : w.result === "partner"
+                        ? "bg-[#2e2e32] text-dim"
+                        : "border border-white/8 text-faint",
+                  )}
                 >
-                  <div
-                    aria-label={`Week ${w.week}: ${won ? "you" : partner.name} won`}
-                    className={cx(
-                      "flex h-[30px] w-full items-center justify-center rounded-md font-mono text-[10px] font-semibold",
-                      won ? "bg-accent text-bg" : "bg-[#2e2e32] text-dim",
-                    )}
-                  >
-                    {won
-                      ? app.userName.charAt(0).toUpperCase()
-                      : partner.initial}
-                  </div>
-                  <span className="font-mono text-[9.5px] text-dim">
-                    W{w.week}
-                  </span>
+                  {w.result === "me"
+                    ? myInitial
+                    : w.result === "partner"
+                      ? partner.initial
+                      : w.result === "draw"
+                        ? "="
+                        : "·"}
                 </div>
-              );
-            })}
+                <span className="font-mono text-[9.5px] text-dim">
+                  W{w.week}
+                </span>
+              </div>
+            ))}
           </div>
           <div className="flex flex-col">
-            {mockWeeks.slice(0, 3).map((w, i) => (
+            {history.map((w) => (
               <button
-                key={w.week}
+                key={w.weekStart}
                 type="button"
-                onClick={() => app.openOverlay({ kind: "weekly", index: i })}
+                onClick={() =>
+                  app.openOverlay({ kind: "weekly", weekStart: w.weekStart })
+                }
                 className="grid min-h-12 grid-cols-[80px_1fr_auto] items-center gap-2.5 border-t border-white/5 p-0 text-left text-sm"
               >
                 <span className="font-mono text-[11px] text-muted">
                   WEEK {w.week}
                 </span>
                 <span className="tabular-nums">
-                  You {w.me}% · {partner.name} {w.partner}%
+                  You {w.me === null ? "—" : `${w.me}%`} · {partner.name}{" "}
+                  {w.partner === null ? "—" : `${w.partner}%`}
                 </span>
                 <span aria-hidden="true" className="text-faint">
                   ›
                 </span>
               </button>
             ))}
+            {history.length === 0 && (
+              <span className="border-t border-white/5 py-3.5 text-[13.5px] text-dim">
+                The first result comes after your first full week together.
+              </span>
+            )}
           </div>
         </section>
       </div>
@@ -281,14 +349,18 @@ export function PartnerScreen() {
   );
 }
 
+const days = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
+
 function WeekBar({
   who,
   value,
   me = false,
+  testId,
 }: {
   who: string;
-  value: number;
+  value: number | null;
   me?: boolean;
+  testId?: string;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -307,13 +379,13 @@ function WeekBar({
             !me && "text-muted",
           )}
         >
-          {value}%
+          <span data-testid={testId}>{value === null ? "—" : `${value}%`}</span>
         </span>
       </div>
       <div className="h-1.5 rounded-[3px] bg-white/6">
         <div
           className={cx("h-full rounded-[3px]", me ? "bg-accent" : "bg-ghost")}
-          style={{ width: `${value}%` }}
+          style={{ width: `${value ?? 0}%` }}
         />
       </div>
     </div>

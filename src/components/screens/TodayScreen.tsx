@@ -9,7 +9,6 @@ import { NoPartnerCard, PartnerCard } from "@/components/today/PartnerCard";
 import { TaskRow } from "@/components/today/TaskRow";
 import { ProgressBar, SectionHeader, cx } from "@/components/ui";
 import { accountDay, dateLabel, weekdayOf } from "@/lib/local-date";
-import { mockUser } from "@/lib/mock-data";
 import { groupBySection, nextLine, routinesOn, todayStats } from "@/lib/today";
 
 export function TodayScreen() {
@@ -68,8 +67,8 @@ export function TodayScreen() {
                   onClick={() => app.openSheet({ kind: "streak" })}
                   className="flex h-7 items-center gap-1.5 font-mono text-[11px] tracking-[.14em] text-muted hover:text-text"
                 >
-                  {/* Mock until Stage 7 (streak from daily_tasks history). */}
-                  {mockUser.streak} DAY STREAK
+                  <span data-testid="today-streak">{app.streak}</span> DAY
+                  STREAK
                   <span aria-hidden="true" className="text-faint">
                     ›
                   </span>

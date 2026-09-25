@@ -6,18 +6,22 @@
  * REAL: identity and duo (useSession(), Stage 3); routine and today's tasks
  *   (useTasks(), Stage 4); partner presence, partner's day, activity feed and
  *   connection state (useDuoRealtime(), Stage 5); focus sessions, timer,
- *   focus today and the partner's focus (useFocus(), Stage 6).
- * MOCK (not persisted): reactions, standard, stats, streak, competition and
- *   challenges.
+ *   focus today and the partner's focus (useFocus(), Stage 6); standard,
+ *   streaks, weekly competition, head-to-head and analytics (useProgress(),
+ *   Stage 7).
+ * MOCK (not persisted): reactions and challenges (Stage 8).
  */
 import { usePathname } from "next/navigation";
 import { updateDisplayName } from "@/app/(app)/actions";
 import { useDuoRealtime } from "@/components/duo-realtime";
 import { useSession } from "@/components/session";
 import { useFocus } from "@/components/use-focus";
+import { useProgress } from "@/components/use-progress";
 import { useTasks } from "@/components/use-tasks";
 import { partnerStatus } from "@/lib/focus";
 import type { FocusData } from "@/lib/focus-data";
+import { localDateISO } from "@/lib/local-date";
+import { msUntilDateChange, type ProgressData } from "@/lib/progress";
 import type { TasksData } from "@/lib/session";
 import {
   createContext,
@@ -29,7 +33,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { mockChallenges, mockPartner, mockUser } from "@/lib/mock-data";
+import { mockChallenges } from "@/lib/mock-data";
 import type {
   Challenge,
   Overlay,
@@ -47,7 +51,11 @@ export type { TaskInput } from "@/lib/task-model";
 
 type InitialFocus = FocusData & { serverNow: number };
 
-function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
+function useAppStateValue(
+  initialTasks: TasksData,
+  initialFocus: InitialFocus,
+  initialProgress: ProgressData,
+) {
   const pathname = usePathname();
   const session = useSession();
 
@@ -56,8 +64,6 @@ function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
   const realPartner = session.duo?.partner ?? null;
   const hasPartner = realPartner !== null;
   const partnerName = realPartner?.displayName ?? "Your partner";
-  // Mock until Stage 7 (the day's standard is not persisted yet).
-  const [standard, setStandard] = useState(mockUser.standard);
 
   // ---- real duo side (Stage 5, duo-realtime.tsx) ----------------------------
   const rt = useDuoRealtime();
@@ -84,9 +90,7 @@ function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
       ),
     [rt.partnerTasks, reacted],
   );
-  // Presence and day are real; the streak is mock until Stage 7.
-  const partner: Partner = {
-    ...mockPartner,
+  const partner: Omit<Partner, "streak"> = {
     name: partnerName,
     initial: partnerName.charAt(0).toUpperCase(),
     handle: "",
@@ -269,6 +273,39 @@ function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
     onMyFocus: rt.onMyFocus,
   });
   const { startFocus: start, checkExpiry, clockNow } = fx;
+
+  // ---- progress: REAL (Stage 7, use-progress.ts) ----------------------------
+
+  const pg = useProgress({
+    initial: initialProgress,
+    tasks,
+    focusTodaySeconds: fx.focusSeconds,
+    partnerCounts,
+    partnerVersion: rt.partnerVersion,
+    toast,
+  });
+
+  // The local day changed (midnight, or back from sleep on a new day): reload
+  // so Today, Focus and Progress all start the new day from the database.
+  // Uses the database-corrected clock, so a wrong device date cannot loop.
+  const today = real.today;
+  const timeZone = session.me.timezone;
+  useEffect(() => {
+    const check = () => {
+      if (localDateISO(timeZone, new Date(clockNow())) !== today)
+        window.location.reload();
+    };
+    const ms = msUntilDateChange(clockNow(), timeZone, today, localDateISO);
+    const id = setTimeout(check, Math.min(ms, 2 ** 31 - 1));
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [today, timeZone, clockNow]);
   const startFocus = useCallback(() => {
     setSheet(null);
     void start();
@@ -336,8 +373,15 @@ function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
   return {
     userName,
     setUserName,
-    standard,
-    setStandard,
+    standard: pg.standard,
+    setStandard: pg.setStandard,
+    streak: pg.streak,
+    longestStreak: pg.longestStreak,
+    progress: pg.progress,
+    progressDays: pg.progressDays,
+    hasHistory: pg.hasHistory,
+    week: pg.week,
+    refreshProgress: pg.refreshProgress,
     today: real.today,
     tasks,
     routines: real.routines,
@@ -352,7 +396,7 @@ function useAppStateValue(initialTasks: TasksData, initialFocus: InitialFocus) {
     moveRoutine: real.moveRoutine,
     applyTemplate: real.applyTemplate,
     feed,
-    partner,
+    partner: { ...partner, streak: pg.partnerStreak } satisfies Partner,
     partnerTasks,
     partnerCounts,
     hasPartner,
@@ -402,13 +446,15 @@ const AppStateContext = createContext<AppState | null>(null);
 export function AppStateProvider({
   initialTasks,
   initialFocus,
+  initialProgress,
   children,
 }: {
   initialTasks: TasksData;
   initialFocus: InitialFocus;
+  initialProgress: ProgressData;
   children: ReactNode;
 }) {
-  const value = useAppStateValue(initialTasks, initialFocus);
+  const value = useAppStateValue(initialTasks, initialFocus, initialProgress);
   return (
     <AppStateContext.Provider value={value}>
       {children}

@@ -1,19 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { loadDayTasks, type DayTask } from "@/app/(app)/progress-actions";
 import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
 import { chipTone, cx } from "@/components/ui";
-import { seeded } from "@/lib/format";
-import { DAYS } from "@/lib/local-date";
-import {
-  REACTIONS,
-  mockChallengeOptions,
-  mockStats,
-  mockUser,
-} from "@/lib/mock-data";
+import { dateLabel } from "@/lib/local-date";
+import { REACTIONS, mockChallengeOptions } from "@/lib/mock-data";
+import { dayState, percent } from "@/lib/progress";
 import { ROUTINE_TEMPLATES } from "@/lib/templates";
-import { routinesOn, todayStats } from "@/lib/today";
+import { todayStats } from "@/lib/today";
 
 const heading = "font-mono text-[11px] tracking-[.18em] text-muted";
 
@@ -74,7 +70,7 @@ export function FocusSheet() {
 }
 
 export function StreakSheet() {
-  const { tasks, standard, closeSheet } = useApp();
+  const { tasks, standard, streak, longestStreak, closeSheet } = useApp();
   const stats = todayStats(tasks, standard);
   const rules = [
     {
@@ -85,20 +81,30 @@ export function StreakSheet() {
       t: "Skipped tasks stay in the total and don't count as done.",
       on: true,
     },
+    {
+      t: "Days with nothing scheduled neither count nor break it.",
+      on: true,
+    },
     { t: "Missing your standard resets the streak to zero.", on: false },
   ];
-  const today = stats.standardMet
-    ? `Today: ${stats.done} / ${stats.total}. Standard met — the streak continues.`
-    : `Today: ${stats.done} / ${stats.total}. ${stats.needed} more to keep the streak.`;
+  const today =
+    stats.total === 0
+      ? "Nothing scheduled today. The streak is safe."
+      : stats.standardMet
+        ? `Today: ${stats.done} / ${stats.total}. Standard met — today counts.`
+        : `Today: ${stats.done} / ${stats.total}. ${stats.needed} more and today counts. Today can't break the streak before it ends.`;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-baseline gap-2.5">
         <span className="text-[56px] leading-[.9] font-medium tracking-[-0.05em]">
-          {mockUser.streak}
+          {streak}
         </span>
         <span className="font-mono text-xs tracking-[.16em] text-muted">
           DAY STREAK
+        </span>
+        <span className="ml-auto font-mono text-[11px] tracking-[.12em] text-dim">
+          LONGEST {longestStreak}
         </span>
       </div>
       <div className="flex flex-col">
@@ -132,75 +138,80 @@ export function StreakSheet() {
   );
 }
 
-type DayItem = { name: string; state: "DONE" | "MISSED" | "EDITED" };
+const STATE_TEXT = {
+  completed: "DONE",
+  skipped: "SKIPPED",
+  pending: "MISSED",
+} as const;
 
-/**
- * Past day detail from the mock Progress calendar (Stage 7 reads real
- * daily_tasks history). Names come from the real routine; states and
- * corrections are still mock and stay local.
- */
-export function DaySheet({ day }: { day: number }) {
-  const { routines } = useApp();
-  const [items, setItems] = useState<DayItem[]>(() => {
-    const names = routinesOn(routines, DAYS[(day - 1) % 7]).on.map(
-      (t) => t.name,
-    );
-    const missed = mockStats.september.missed.includes(day);
-    const perfect = mockStats.september.perfect.includes(day);
-    const rnd = seeded(day * 13 + 7);
-    return names.map((name) => ({
-      name,
-      state: perfect
-        ? "DONE"
-        : rnd() < (missed ? 0.35 : 0.1)
-          ? "MISSED"
-          : "DONE",
-    }));
-  });
-  const done = items.filter((i) => i.state !== "MISSED").length;
-  const pct = items.length ? Math.round((done / items.length) * 100) : 0;
-  const weekday = DAYS[(day - 1) % 7];
+/** A past day from daily_tasks history (read-only: the record). */
+export function DaySheet({ date }: { date: string }) {
+  const { standard } = useApp();
+  const [items, setItems] = useState<DayTask[] | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void loadDayTasks(date)
+      .catch(() => null)
+      .then((res) => {
+        if (!alive) return;
+        if (res?.ok) setItems(res.tasks);
+        else setError(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [date]);
+
+  const done = items?.filter((i) => i.status === "completed").length ?? 0;
+  const total = items?.length ?? 0;
+  const pct = percent(done, total);
+  const state = dayState(total, done, standard);
   const summary =
-    pct === 100
+    state === "perfect"
       ? "Perfect day"
-      : pct >= mockUser.standard
+      : state === "met"
         ? "Standard met"
-        : "Standard missed";
+        : state === "missed"
+          ? "Standard missed"
+          : "Nothing scheduled";
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-end justify-between gap-3">
         <span className="flex flex-col gap-1.5">
           <span className="font-mono text-[11px] tracking-[.16em] text-muted">
-            {weekday}, SEP {day}
+            {dateLabel(date)}
           </span>
           <span
             className={cx(
               "text-[15px]",
-              pct >= mockUser.standard ? "text-accent" : "text-danger",
+              items === null
+                ? "text-dim"
+                : state === "missed"
+                  ? "text-danger"
+                  : "text-accent",
             )}
           >
-            {summary}
+            {error
+              ? "Could not load this day."
+              : items === null
+                ? "Loading…"
+                : summary}
           </span>
         </span>
         <span className="text-[44px] leading-[.85] font-medium tracking-[-0.045em] tabular-nums">
-          {pct}%
+          {pct === null ? "—" : `${pct}%`}
         </span>
       </div>
       <div className="flex flex-col">
-        {items.map((it, i) => {
-          const missed = it.state === "MISSED";
+        {(items ?? []).map((it) => {
+          const missed = it.status !== "completed";
           return (
-            <button
-              key={it.name}
-              type="button"
-              disabled={!missed}
-              onClick={() =>
-                setItems((list) =>
-                  list.map((x, j) => (j === i ? { ...x, state: "EDITED" } : x)),
-                )
-              }
-              className="flex min-h-12 items-center gap-3 border-t border-white/5 text-left disabled:cursor-default"
+            <div
+              key={it.id}
+              className="flex min-h-12 items-center gap-3 border-t border-white/5"
             >
               <span
                 aria-hidden="true"
@@ -229,7 +240,7 @@ export function DaySheet({ day }: { day: number }) {
                   missed ? "text-text" : "text-muted",
                 )}
               >
-                {it.name}
+                {it.title}
               </span>
               <span
                 className={cx(
@@ -237,14 +248,14 @@ export function DaySheet({ day }: { day: number }) {
                   missed ? "text-danger" : "text-dim",
                 )}
               >
-                {it.state}
+                {STATE_TEXT[it.status]}
               </span>
-            </button>
+            </div>
           );
         })}
       </div>
       <span className="text-xs text-dim">
-        Tap a missed task to correct it. Corrections are marked as edited.
+        Skipped tasks stay in the total. Past days are the record.
       </span>
     </div>
   );

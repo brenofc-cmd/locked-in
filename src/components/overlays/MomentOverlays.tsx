@@ -1,13 +1,27 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { loadWeekHabits } from "@/app/(app)/progress-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
-import { accountDay, localTimeHM, weekdayName } from "@/lib/local-date";
-import { mockUser, mockWeeks } from "@/lib/mock-data";
+import {
+  accountDay,
+  addDays,
+  localTimeHM,
+  weekdayName,
+} from "@/lib/local-date";
 import { partnerView } from "@/lib/partner";
+import {
+  completedWeeks,
+  focusLabel,
+  habitExtremes,
+  percent,
+  weekRangeLabel,
+  weeksWithData,
+  type Habit,
+} from "@/lib/progress";
 import { todayStats } from "@/lib/today";
 
 /** Review day, weekly review and morning briefing (full-screen moments). */
@@ -15,7 +29,8 @@ export function MomentOverlays() {
   const { overlay } = useApp();
   if (!overlay) return null;
   if (overlay.kind === "review") return <ReviewDay />;
-  if (overlay.kind === "weekly") return <WeeklyReview start={overlay.index} />;
+  if (overlay.kind === "weekly")
+    return <WeeklyReview start={overlay.weekStart} />;
   return <Briefing />;
 }
 
@@ -55,7 +70,6 @@ const lightButton =
 function ReviewDay() {
   const app = useApp();
   const { me } = useSession();
-  // Real: today's tasks. Partner numbers and focus are still mock.
   const list = app.tasks;
   const stats = todayStats(list, app.standard);
   const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
@@ -100,7 +114,7 @@ function ReviewDay() {
             )}
           />
           {stats.standardMet
-            ? `Standard met. Streak is now ${mockUser.streak + 1} days.`
+            ? `Standard met. Streak is now ${app.streak} ${app.streak === 1 ? "day" : "days"}.`
             : `${stats.needed} more to meet your standard.`}
         </div>
         {app.hasPartner && (
@@ -143,39 +157,106 @@ function ReviewDay() {
   );
 }
 
-function WeeklyReview({ start }: { start: number }) {
-  const { closeOverlay, partner } = useApp();
-  const [i, setI] = useState(start);
-  const w = mockWeeks[i];
-  const meWon = w.me >= w.partner;
+/** A completed week (duo_weeks): raw completion decides; focus is shown apart. */
+function WeeklyReview({ start }: { start: string }) {
+  const { closeOverlay, partner, hasPartner, progress } = useApp();
+  const weeks = weeksWithData(completedWeeks(progress.weeks));
+  const [i, setI] = useState(() =>
+    Math.max(
+      0,
+      weeks.findIndex((w) => w.weekStart === start),
+    ),
+  );
+  const w = weeks[i];
+  const [habits, setHabits] = useState<{ week: string; list: Habit[] } | null>(
+    null,
+  );
+
+  const weekStart = w?.weekStart;
+  useEffect(() => {
+    if (!weekStart) return;
+    let alive = true;
+    void loadWeekHabits(weekStart)
+      .catch(() => null)
+      .then((res) => {
+        if (alive && res?.ok) setHabits({ week: weekStart, list: res.habits });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [weekStart]);
+
+  if (!w) {
+    return (
+      <Frame label="Weekly review" width="max-w-[560px]">
+        <span className="text-[15px] text-muted">
+          Your first review arrives after your first full week.
+        </span>
+        <button type="button" onClick={closeOverlay} className={lightButton}>
+          CLOSE
+        </button>
+      </Frame>
+    );
+  }
+
+  const me = w.row.me;
+  const them = hasPartner ? w.row.partner : null;
+  const diff = Math.abs((w.me ?? 0) - (w.partner ?? 0));
+  const margin = diff === 0 ? "<1" : String(diff);
+  const verdict =
+    w.result === "me"
+      ? `YOU WON BY ${margin}%`
+      : w.result === "partner"
+        ? `${partner.name.toUpperCase()} WON BY ${margin}%`
+        : w.result === "draw"
+          ? "DRAW"
+          : "NO CONTEST";
+  const pair = (a: string, b: string) => (them ? `${a} · ${b}` : a);
+  const { best, missed } = habitExtremes(
+    habits?.week === w.weekStart ? habits.list : [],
+  );
   const rows = [
     {
       k: "TASKS COMPLETED",
-      v: `${Math.round(w.me * 0.74)} · ${Math.round(w.partner * 0.72)}`,
+      v: pair(
+        `${me.completed} / ${me.planned}`,
+        them ? `${them.completed} / ${them.planned}` : "",
+      ),
     },
     {
       k: "FOCUS",
-      v: `${8 + (w.week % 4)}h ${10 + w.week}m · ${6 + (w.week % 3)}h ${w.week}m`,
+      v: pair(focusLabel(me.focus), them ? focusLabel(them.focus) : ""),
     },
     {
       k: "PERFECT DAYS",
-      v: `${w.me > 90 ? 3 : 1} · ${w.partner > 90 ? 3 : 1}`,
+      v: pair(String(me.perfect), them ? String(them.perfect) : ""),
     },
+    ...(best
+      ? [{ k: "MOST CONSISTENT", v: `${best.title} ${best.rate}%` }]
+      : []),
+    ...(missed
+      ? [{ k: "MOST MISSED", v: `${missed.title} ${missed.rate}%` }]
+      : []),
   ];
 
   return (
     <Frame label={`Week ${w.week} review`} width="max-w-[560px]">
       <div className="flex flex-col gap-[30px]">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-xs tracking-[.22em] text-accent">
-            WEEK {w.week} COMPLETE
+          <span className="flex flex-col gap-1.5">
+            <span className="font-mono text-xs tracking-[.22em] text-accent">
+              WEEK {w.week} COMPLETE
+            </span>
+            <span className="font-mono text-[11px] tracking-[.14em] text-dim">
+              {weekRangeLabel(w.weekStart)}
+            </span>
           </span>
           <div className="flex gap-1.5">
             <button
               type="button"
               aria-label="Older week"
-              disabled={i >= mockWeeks.length - 1}
-              onClick={() => setI((x) => Math.min(mockWeeks.length - 1, x + 1))}
+              disabled={i >= weeks.length - 1}
+              onClick={() => setI((x) => Math.min(weeks.length - 1, x + 1))}
               className="size-11 rounded-xl border border-white/10 text-base text-text disabled:text-off"
             >
               ‹
@@ -195,37 +276,51 @@ function WeeklyReview({ start }: { start: number }) {
           <div
             className={cx(
               "flex items-end justify-between pb-1.5",
-              meWon ? "text-text" : "text-quiet",
+              w.result === "partner" ? "text-quiet" : "text-text",
             )}
           >
             <span className="text-[13px] font-semibold tracking-[.16em]">
               YOU
             </span>
-            <span className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]">
-              {w.me}%
+            <span
+              data-testid="weekly-me"
+              className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]"
+            >
+              {w.me === null ? "—" : `${w.me}%`}
             </span>
           </div>
-          <div className="flex items-center gap-3.5 py-3.5">
-            <span className="h-px flex-1 bg-white/8" />
-            <span className="font-mono text-[11px] tracking-[.2em] text-muted">
-              {meWon ? "YOU WON" : `${partner.name.toUpperCase()} WON`} BY{" "}
-              {Math.abs(w.me - w.partner)}%
-            </span>
-            <span className="h-px flex-1 bg-white/8" />
-          </div>
-          <div
-            className={cx(
-              "flex items-end justify-between gap-3",
-              meWon ? "text-quiet" : "text-text",
-            )}
-          >
-            <span className="text-[13px] font-semibold tracking-[.16em]">
-              {partner.name.toUpperCase()}
-            </span>
-            <span className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]">
-              {w.partner}%
-            </span>
-          </div>
+          {them && (
+            <>
+              <div className="flex items-center gap-3.5 py-3.5">
+                <span className="h-px flex-1 bg-white/8" />
+                <span
+                  data-testid="weekly-verdict"
+                  className="font-mono text-[11px] tracking-[.2em] text-muted"
+                >
+                  {verdict}
+                </span>
+                <span className="h-px flex-1 bg-white/8" />
+              </div>
+              <div
+                className={cx(
+                  "flex items-end justify-between gap-3",
+                  w.result === "partner" || w.result === "draw"
+                    ? "text-text"
+                    : "text-quiet",
+                )}
+              >
+                <span className="text-[13px] font-semibold tracking-[.16em]">
+                  {partner.name.toUpperCase()}
+                </span>
+                <span
+                  data-testid="weekly-partner"
+                  className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]"
+                >
+                  {w.partner === null ? "—" : `${w.partner}%`}
+                </span>
+              </div>
+            </>
+          )}
         </div>
         <div className="flex flex-col">
           {rows.map((r) => (
@@ -253,16 +348,18 @@ function WeeklyReview({ start }: { start: number }) {
 }
 
 function Briefing() {
-  const { closeOverlay, tasks, userName, today } = useApp();
+  const { closeOverlay, tasks, userName, today, progressDays, streak } =
+    useApp();
   const { me } = useSession();
   const [auto, setAuto] = useState(true);
-  // Real: today's task count. Yesterday % and streak are mock until Stage 7.
   const total = tasks.length;
+  const y = progressDays.find((d) => d.day === addDays(today, -1));
+  const yesterday = y ? percent(y.completed, y.planned) : null;
 
   const rows = [
     { k: "TODAY", v: String(total), unit: "TASKS" },
-    { k: "YESTERDAY", v: "93%", unit: "" },
-    { k: "STREAK", v: String(mockUser.streak), unit: "DAYS" },
+    { k: "YESTERDAY", v: yesterday === null ? "—" : `${yesterday}%`, unit: "" },
+    { k: "STREAK", v: String(streak), unit: streak === 1 ? "DAY" : "DAYS" },
   ];
 
   return (

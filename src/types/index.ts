@@ -72,7 +72,8 @@ export type Partner = {
   seenAt: string;
   /** epoch ms of the last completion, drives the card flash */
   flashAt: number;
-  streak: number;
+  /** Current streak (aggregate from partner_progress_summary); null without data. */
+  streak: number | null;
 };
 
 export type PartnerTask = {
@@ -126,8 +127,6 @@ export type Challenge = {
   partnerWidth: number;
 };
 
-export type WeekResult = { week: number; me: number; partner: number };
-
 export type ConnectionState = "connected" | "reconnecting" | "offline";
 
 export type Sheet =
@@ -143,12 +142,14 @@ export type Sheet =
     }
   | { kind: "focus" }
   | { kind: "streak" }
-  | { kind: "day"; day: number }
+  | { kind: "day"; date: string }
   | { kind: "template" }
   | { kind: "challenge" };
 
 export type Overlay =
-  { kind: "review" } | { kind: "weekly"; index: number } | { kind: "briefing" };
+  | { kind: "review" }
+  | { kind: "weekly"; weekStart: string }
+  | { kind: "briefing" };
 
 export type Toast = {
   id: string;
