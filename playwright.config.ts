@@ -112,6 +112,14 @@ export default defineConfig({
       dependencies: ["stage6"],
       use: phone(390, 844),
     },
+    // Complete product (onboarding, reactions, challenges, settings, duo
+    // end), same users: runs after stage7.
+    {
+      name: "stage8",
+      testMatch: /stage8\.spec\.ts/,
+      dependencies: ["stage7"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
