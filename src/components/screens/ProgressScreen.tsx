@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { loadDays } from "@/app/(app)/progress-actions";
+import { useSession } from "@/components/session";
 import { useApp } from "@/components/app-state";
 import { cx } from "@/components/ui";
 import { DAYS, DAY_LETTERS, addDays } from "@/lib/local-date";
@@ -16,7 +18,10 @@ import {
   rankHabits,
   totals,
   weeksWithData,
+  monthRange,
+  shiftMonth,
   type Bar,
+  type DayStat,
   type Range,
 } from "@/lib/progress";
 
@@ -388,22 +393,74 @@ const STATE_LABEL = {
   today: "in progress",
 } as const;
 
+/**
+ * History calendar: the current month from the loaded series; earlier months
+ * (back to the account's first month) are read on demand. Read-only.
+ */
 function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
   const app = useApp();
-  const { label, cells } = calendarMonth(
-    app.progressDays,
-    app.today,
-    app.standard,
-  );
+  const { me } = useSession();
+  const current = app.today.slice(0, 7);
+  const [month, setMonth] = useState(current);
+  const [extra, setExtra] = useState<Record<string, DayStat>>({});
+  const loadedFrom = app.progressDays[0]?.day ?? app.today;
+  const firstMonth = [
+    me.createdAt.slice(0, 7),
+    loadedFrom.slice(0, 7),
+  ].sort()[0];
+
+  useEffect(() => {
+    const { from, to } = monthRange(month);
+    if (from >= loadedFrom || extra[from]) return;
+    let alive = true;
+    void loadDays(from, to < loadedFrom ? to : addDays(loadedFrom, -1))
+      .catch(() => null)
+      .then((res) => {
+        if (!alive || !res?.ok) return;
+        setExtra((x) => {
+          const next = { ...x };
+          for (const d of res.days) next[d.day] = d;
+          return next;
+        });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [month, loadedFrom, extra]);
+
+  const days = [...Object.values(extra), ...app.progressDays];
+  const { label, cells } = calendarMonth(days, app.today, app.standard, month);
   const title = label.charAt(0) + label.slice(1).toLowerCase();
 
   return (
     <section aria-label={title} className="flex flex-col gap-3.5">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="font-mono text-[11px] font-normal tracking-[.16em] text-muted">
           {label}
         </h2>
-        <span className="text-xs text-dim">Tap a day to review</span>
+        <div className="flex items-center gap-1">
+          <span className="hidden text-xs text-dim min-[400px]:inline">
+            Tap a day to review
+          </span>
+          <button
+            type="button"
+            aria-label="Previous month"
+            disabled={month <= firstMonth}
+            onClick={() => setMonth((m) => shiftMonth(m, -1))}
+            className="size-11 rounded-xl text-base text-text disabled:text-off"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            aria-label="Next month"
+            disabled={month >= current}
+            onClick={() => setMonth((m) => shiftMonth(m, 1))}
+            className="size-11 rounded-xl text-base text-text disabled:text-off"
+          >
+            ›
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-7 gap-1">
         {DAY_LETTERS.map((d, i) => (

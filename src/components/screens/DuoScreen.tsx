@@ -9,10 +9,21 @@ import { NETWORK_ERROR } from "@/lib/invite-code";
 import { partnerView } from "@/lib/partner";
 
 /**
- * Real duo state (Stage 3): NO DUO -> WAITING FOR PARTNER -> DUO COMPLETE.
- * The partner's presence label is still mock (Stage 5).
- * The creator sees the partner after a refresh; no realtime yet.
+ * Duo management (Stages 3, 5, 8): NO DUO -> WAITING FOR PARTNER -> ACTIVE.
+ * The waiting creator sees the partner arrive live (duo_joined broadcast).
+ * Leaving ends the duo for both members (atomic in the database, ADR-016);
+ * the partner's app leaves the duo live (duo_ended broadcast). Personal
+ * data stays; the duo's feed, reactions and challenges go with it.
  */
+const since = (iso: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "—";
+
 export function DuoScreen() {
   const app = useApp();
   const { me, duo } = useSession();
@@ -20,6 +31,7 @@ export function DuoScreen() {
   const [code, setCode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
 
   const state = !duo ? "none" : duo.partner ? "complete" : "waiting";
@@ -52,8 +64,18 @@ export function DuoScreen() {
     );
   }
 
-  function cancel() {
-    run(leaveDuo, (m) => app.toast({ text: m, sub: "DUO" }));
+  function leave() {
+    run(
+      async () => {
+        const res = await leaveDuo();
+        if (res.ok) {
+          setConfirmLeave(false);
+          app.toast({ text: "The duo has ended.", sub: "NO PARTNER YET" });
+        }
+        return res;
+      },
+      (m) => app.toast({ text: m, sub: "DUO" }),
+    );
   }
 
   async function copyCode() {
@@ -126,7 +148,9 @@ export function DuoScreen() {
               <span className="text-[15px]" data-testid="duo-partner-name">
                 {app.partner.name}
               </span>
-              <span className="text-xs text-dim">Partner</span>
+              <span className="text-xs text-dim" data-testid="duo-since">
+                Partner · together since {since(duo?.partner?.joinedAt ?? "")}
+              </span>
             </span>
             <span
               className={cx(
@@ -234,18 +258,67 @@ export function DuoScreen() {
         </form>
       )}
 
-      <span className="flex flex-wrap items-center justify-between gap-3 text-[12.5px] text-dim">
-        Duos are two people. Small squads come later.
-        {state === "waiting" && (
-          <button
-            type="button"
-            onClick={cancel}
-            disabled={pending}
-            className="h-11 text-[12.5px] text-dim underline underline-offset-[3px]"
+      {state === "complete" && (
+        <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
+          <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+            DUO CODE
+          </span>
+          <span className="font-mono text-base tracking-[.12em]">
+            {inviteCode}
+          </span>
+        </div>
+      )}
+
+      {state !== "none" && !confirmLeave && (
+        <button
+          type="button"
+          onClick={() => setConfirmLeave(true)}
+          className="h-11 self-start rounded-xl border border-danger/30 px-[18px] text-sm text-danger"
+        >
+          {state === "waiting" ? "Cancel duo" : "Leave duo"}
+        </button>
+      )}
+      {confirmLeave && (
+        <div
+          role="alertdialog"
+          aria-labelledby="leave-title"
+          aria-describedby="leave-desc"
+          className="flex flex-col gap-3.5 rounded-2xl border border-danger/30 p-[18px]"
+        >
+          <span id="leave-title" className="text-[15px] font-medium">
+            {state === "waiting" ? "Cancel this duo?" : "End this duo?"}
+          </span>
+          <span
+            id="leave-desc"
+            className="text-[13.5px] leading-[1.5] text-muted"
           >
-            Cancel duo
-          </button>
-        )}
+            Leaving will end this Duo for both members. Your tasks, focus and
+            progress stay. The duo&apos;s feed, reactions and challenges are
+            removed, and a future partner never sees them.
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={leave}
+              disabled={pending}
+              className="h-11 rounded-xl bg-danger px-[18px] text-sm font-medium text-bg disabled:opacity-60"
+            >
+              {pending ? "Ending…" : "End duo for both"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmLeave(false)}
+              disabled={pending}
+              className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
+            >
+              Keep duo
+            </button>
+          </div>
+        </div>
+      )}
+
+      <span className="text-[12.5px] text-dim">
+        Duos are two people. Small squads come later.
       </span>
     </div>
   );

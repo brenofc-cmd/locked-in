@@ -1,7 +1,7 @@
 "use server";
 
 import { addDays } from "@/lib/local-date";
-import type { Habit, ProgressData } from "@/lib/progress";
+import type { DayStat, Habit, ProgressData } from "@/lib/progress";
 import { loadDuoProgress, loadHabits, loadProgress } from "@/lib/progress-data";
 import { createClient } from "@/lib/supabase/server";
 
@@ -83,26 +83,65 @@ export type DayTask = {
   status: "pending" | "completed" | "skipped";
 };
 
-/** One of my past days (the calendar's day review). */
+/** My daily series for a range (history months beyond the loaded series). */
+export async function loadDays(
+  from: string,
+  to: string,
+): Promise<Result<{ days: DayStat[] }>> {
+  if (!/^d{4}-d{2}-d{2}$/.test(from) || !/^d{4}-d{2}-d{2}$/.test(to))
+    return { ok: false, error: ERROR };
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("my_daily_progress", {
+      p_from: from,
+      p_to: to,
+    });
+    if (error) return { ok: false, error: ERROR };
+    return {
+      ok: true,
+      days: data.map((d) => ({
+        day: d.day,
+        planned: d.planned,
+        completed: d.completed,
+        focusSeconds: d.focus_seconds,
+        focusSessions: d.focus_sessions,
+      })),
+    };
+  } catch {
+    return { ok: false, error: ERROR };
+  }
+}
+
+/**
+ * One of my past days (history): the task snapshots of that date as they
+ * were recorded, and that day's focus. Read-only — past days are the record.
+ */
 export async function loadDayTasks(
   date: string,
-): Promise<Result<{ tasks: DayTask[] }>> {
+): Promise<
+  Result<{ tasks: DayTask[]; focusSeconds: number; focusSessions: number }>
+> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: ERROR };
   try {
     const supabase = await createClient();
     const { data: claims } = await supabase.auth.getClaims();
     const id = claims?.claims?.sub;
     if (!id) return { ok: false, error: ERROR };
-    const { data, error } = await supabase
-      .from("daily_tasks")
-      .select("id, title, status")
-      .eq("owner_id", id)
-      .eq("task_date", date)
-      .order("sort_order")
-      .order("created_at");
-    if (error) return { ok: false, error: ERROR };
+    const [{ data, error }, focus] = await Promise.all([
+      supabase
+        .from("daily_tasks")
+        .select("id, title, status")
+        .eq("owner_id", id)
+        .eq("task_date", date)
+        .order("sort_order")
+        .order("created_at"),
+      supabase.rpc("my_daily_progress", { p_from: date, p_to: date }),
+    ]);
+    if (error || focus.error) return { ok: false, error: ERROR };
     return {
       ok: true,
+      focusSeconds: focus.data[0]?.focus_seconds ?? 0,
+      focusSessions: focus.data[0]?.focus_sessions ?? 0,
       tasks: data.map((t) => ({
         id: t.id,
         title: t.title,

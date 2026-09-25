@@ -4,25 +4,37 @@ import { useEffect, useState } from "react";
 import { loadDayTasks, type DayTask } from "@/app/(app)/progress-actions";
 import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
-import { chipTone, cx } from "@/components/ui";
+import { MiniCheck, chipTone, cx } from "@/components/ui";
 import { dateLabel } from "@/lib/local-date";
-import { REACTIONS, mockChallengeOptions } from "@/lib/mock-data";
-import { dayState, percent } from "@/lib/progress";
-import { ROUTINE_TEMPLATES } from "@/lib/templates";
+import { createChallenge } from "@/app/(app)/social-actions";
+import { useSession } from "@/components/session";
+import {
+  defaultDraft,
+  validateDraft,
+  type ChallengeDraft,
+  type ChallengeType,
+} from "@/lib/challenges";
+import {
+  REACTION_TYPES,
+  isEmojiReaction,
+  reactionLabel,
+} from "@/lib/reactions";
+import { dayState, focusLabel, percent } from "@/lib/progress";
+import { ROUTINE_TEMPLATES, TEMPLATE_NAMES } from "@/lib/routine-templates";
 import { todayStats } from "@/lib/today";
 
 const heading = "font-mono text-[11px] tracking-[.18em] text-muted";
 
 export function ReactSheet({
-  source,
-  id,
+  eventId,
   title,
 }: {
-  source: "feed" | "partnerTask";
-  id: string;
+  eventId: string;
   title: string;
 }) {
-  const { react } = useApp();
+  const { react, reactions } = useApp();
+  const { me } = useSession();
+  const mine = reactions[eventId]?.[me.id] ?? null;
   return (
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-col gap-1.5">
@@ -30,24 +42,40 @@ export function ReactSheet({
         <span className="text-[17px]">{title}</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        {REACTIONS.map((r) => {
-          const emoji = !r.endsWith(".");
+        {REACTION_TYPES.map((r) => {
+          const label = reactionLabel(r);
+          const on = mine === r;
           return (
             <button
               key={r}
               type="button"
-              onClick={() => react(source, id, r)}
-              aria-label={emoji ? `React ${r}` : `Send “${r}”`}
+              aria-pressed={on}
+              onClick={() => void react(eventId, r)}
+              aria-label={
+                isEmojiReaction(r) ? `React ${label}` : `Send “${label}”`
+              }
               className={cx(
-                "h-[72px] rounded-[18px] border border-white/8 bg-raised p-0 transition-transform duration-100 active:scale-[.88]",
-                emoji ? "text-[26px]" : "text-[13px]",
+                "h-[72px] rounded-[18px] border p-0 transition-transform duration-100 active:scale-[.88]",
+                on
+                  ? "border-accent-line bg-accent-soft"
+                  : "border-white/8 bg-raised",
+                isEmojiReaction(r) ? "text-[26px]" : "text-[13px]",
               )}
             >
-              {r}
+              {label}
             </button>
           );
         })}
       </div>
+      {mine && (
+        <button
+          type="button"
+          onClick={() => void react(eventId, null)}
+          className="h-11 self-start text-[13px] text-dim underline underline-offset-[3px]"
+        >
+          Remove reaction
+        </button>
+      )}
     </div>
   );
 }
@@ -148,6 +176,7 @@ const STATE_TEXT = {
 export function DaySheet({ date }: { date: string }) {
   const { standard } = useApp();
   const [items, setItems] = useState<DayTask[] | null>(null);
+  const [focus, setFocus] = useState({ seconds: 0, sessions: 0 });
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -156,8 +185,10 @@ export function DaySheet({ date }: { date: string }) {
       .catch(() => null)
       .then((res) => {
         if (!alive) return;
-        if (res?.ok) setItems(res.tasks);
-        else setError(true);
+        if (res?.ok) {
+          setItems(res.tasks);
+          setFocus({ seconds: res.focusSeconds, sessions: res.focusSessions });
+        } else setError(true);
       });
     return () => {
       alive = false;
@@ -201,7 +232,10 @@ export function DaySheet({ date }: { date: string }) {
                 : summary}
           </span>
         </span>
-        <span className="text-[44px] leading-[.85] font-medium tracking-[-0.045em] tabular-nums">
+        <span
+          data-testid="day-pct"
+          className="text-[44px] leading-[.85] font-medium tracking-[-0.045em] tabular-nums"
+        >
           {pct === null ? "—" : `${pct}%`}
         </span>
       </div>
@@ -254,6 +288,20 @@ export function DaySheet({ date }: { date: string }) {
           );
         })}
       </div>
+      {items !== null && (
+        <div className="flex items-baseline justify-between border-t border-white/8 pt-3">
+          <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+            FOCUS
+          </span>
+          <span className="text-[15px] tabular-nums" data-testid="day-focus">
+            {focusLabel(focus.seconds)}
+            <span className="text-dim">
+              {" "}
+              · {focus.sessions} {focus.sessions === 1 ? "session" : "sessions"}
+            </span>
+          </span>
+        </div>
+      )}
       <span className="text-xs text-dim">
         Skipped tasks stay in the total. Past days are the record.
       </span>
@@ -262,11 +310,28 @@ export function DaySheet({ date }: { date: string }) {
 }
 
 export function TemplateSheet() {
-  const { routines, applyTemplate, closeSheet } = useApp();
-  const names = Object.keys(ROUTINE_TEMPLATES);
-  const [pick, setPick] = useState(names[0]);
+  const { routines, applyTemplate, closeSheet, settings } = useApp();
+  const [pick, setPick] = useState(TEMPLATE_NAMES[0]);
+  const [items, setItems] = useState(() =>
+    ROUTINE_TEMPLATES[TEMPLATE_NAMES[0]].map((i) => ({ ...i, on: true })),
+  );
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
   const have = new Set(routines.map((t) => t.name.toLowerCase()));
-  const items = ROUTINE_TEMPLATES[pick];
+
+  function choose(name: string) {
+    setPick(name);
+    setItems(ROUTINE_TEMPLATES[name].map((i) => ({ ...i, on: true })));
+  }
+
+  function addOwn() {
+    const name = draft.trim().slice(0, 80);
+    if (!name) return;
+    setItems((l) => [...l, { name, category: "custom" as const, on: true }]);
+    setDraft("");
+  }
+
+  const chosen = items.filter((i) => i.on && !have.has(i.name.toLowerCase()));
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -276,13 +341,13 @@ export function TemplateSheet() {
         aria-label="Template"
         className="flex flex-wrap gap-1.5"
       >
-        {names.map((n) => (
+        {TEMPLATE_NAMES.map((n) => (
           <button
             key={n}
             type="button"
             role="radio"
             aria-checked={pick === n}
-            onClick={() => setPick(n)}
+            onClick={() => choose(n)}
             className={cx(
               "h-10 rounded-[10px] border px-3.5 text-sm",
               chipTone(pick === n),
@@ -293,113 +358,234 @@ export function TemplateSheet() {
         ))}
       </div>
       <div className="flex flex-col">
-        {items.map((it) => (
-          <div
-            key={it.name}
-            className="flex min-h-[46px] items-center justify-between border-t border-white/5 text-[15px]"
+        {items.map((it, i) => {
+          const owned = have.has(it.name.toLowerCase());
+          return (
+            <div
+              key={it.name + i}
+              className="flex min-h-[46px] items-center gap-3 border-t border-white/5 text-[15px]"
+            >
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={it.on && !owned}
+                aria-label={it.name}
+                disabled={owned}
+                onClick={() =>
+                  setItems((l) =>
+                    l.map((x, j) => (j === i ? { ...x, on: !x.on } : x)),
+                  )
+                }
+                className="flex size-11 shrink-0 items-center justify-center disabled:opacity-50"
+              >
+                <MiniCheck done={it.on && !owned} size={22} radius={6} />
+              </button>
+              <span className={cx("flex-1", !it.on && "text-dim")}>
+                {it.name}
+              </span>
+              <span className="font-mono text-[10px] tracking-[.12em] text-dim">
+                {owned ? "HAVE" : "NEW"}
+              </span>
+            </div>
+          );
+        })}
+        <div className="flex gap-2 pt-3">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addOwn();
+              }
+            }}
+            placeholder="Add your own"
+            aria-label="Add item"
+            maxLength={80}
+            className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 text-[15px] outline-none"
+          />
+          <button
+            type="button"
+            onClick={addOwn}
+            aria-label="Add"
+            className="size-11 rounded-xl border border-white/12 text-xl"
           >
-            <span>{it.name}</span>
-            <span className="font-mono text-[10px] tracking-[.12em] text-dim">
-              {have.has(it.name.toLowerCase()) ? "HAVE" : "NEW"}
-            </span>
-          </div>
-        ))}
+            +
+          </button>
+        </div>
       </div>
       <span className="text-[12.5px] text-dim">
-        Items you already have are skipped. Everything stays editable.
+        Every item repeats daily. Items you already have are skipped.
       </span>
       <button
         type="button"
-        onClick={() => {
-          closeSheet();
-          void applyTemplate(items);
+        disabled={busy || chosen.length === 0}
+        onClick={async () => {
+          setBusy(true);
+          const ok = await applyTemplate(
+            chosen.map(({ name, category }) => ({ name, category })),
+            settings.shareNewTasks,
+          );
+          setBusy(false);
+          if (ok) closeSheet();
         }}
-        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg"
+        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg disabled:opacity-50"
       >
-        USE ROUTINE
+        {busy
+          ? "ADDING…"
+          : chosen.length
+            ? `ADD ${chosen.length} ${chosen.length === 1 ? "ITEM" : "ITEMS"}`
+            : "NOTHING NEW"}
       </button>
     </div>
   );
 }
 
 export function ChallengeSheet() {
-  const { addChallenge, partner } = useApp();
-  const [pick, setPick] = useState(mockChallengeOptions[0].id);
-  const [len, setLen] = useState(30);
-  const option =
-    mockChallengeOptions.find((o) => o.id === pick) ?? mockChallengeOptions[0];
+  const { closeSheet, today, toast, partner } = useApp();
+  const [draft, setDraft] = useState<ChallengeDraft>(() =>
+    defaultDraft("standard_days", today),
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function setType(type: ChallengeType) {
+    const d = defaultDraft(type, today);
+    setDraft((x) => ({
+      ...d,
+      start: x.start,
+      end: x.end < x.start ? d.end : x.end,
+    }));
+  }
+
+  async function create() {
+    const invalid = validateDraft(draft, today);
+    if (invalid) return setError(invalid);
+    setError(null);
+    setBusy(true);
+    const res = await createChallenge(draft, today).catch(() => null);
+    setBusy(false);
+    if (!res?.ok) {
+      setError(res && !res.ok ? res.error : "Network error. Try again.");
+      return;
+    }
+    closeSheet();
+    toast({
+      text: `Challenge set with ${partner.name}.`,
+      sub: draft.title.trim().toUpperCase(),
+    });
+  }
+
+  const field =
+    "h-12 w-full min-w-0 rounded-xl border border-white/10 bg-field px-3.5 text-[15px] outline-none focus:border-white/30";
+  const label = "font-mono text-[10.5px] tracking-[.16em] text-dim";
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void create();
+      }}
+    >
       <span className={heading}>NEW CHALLENGE</span>
-      <div
-        role="radiogroup"
-        aria-label="Challenge"
-        className="flex flex-col gap-[18px]"
-      >
-        {mockChallengeOptions.map((c) => {
-          const on = pick === c.id;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => setPick(c.id)}
-              className={cx(
-                "flex min-h-[70px] items-center justify-between gap-3 rounded-[14px] border px-4 text-left",
-                on ? "border-accent-line bg-accent-soft" : "border-white/9",
-              )}
-            >
-              <span className="flex flex-col gap-1">
-                <span className="text-[15.5px] font-medium">{c.label}</span>
-                <span className="text-[12.5px] text-dim">{c.sub}</span>
-              </span>
-              <span
-                aria-hidden="true"
-                className={cx(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px]",
-                  on ? "border-accent" : "border-white/20",
-                )}
-              >
-                <span
-                  className="size-[9px] rounded-full bg-accent"
-                  style={{ transform: on ? "scale(1)" : "scale(0)" }}
-                />
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <label className="flex flex-col gap-2">
+        <span className={label}>TITLE</span>
+        <input
+          value={draft.title}
+          maxLength={40}
+          onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+          className={cx(field, "uppercase")}
+        />
+      </label>
       <div className="flex flex-col gap-2">
-        <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
-          LENGTH
+        <span className={label} id="challenge-type">
+          TYPE
         </span>
-        <div role="radiogroup" aria-label="Length" className="flex gap-1.5">
-          {[7, 14, 30].map((n) => (
+        <div
+          role="radiogroup"
+          aria-labelledby="challenge-type"
+          className="grid grid-cols-2 gap-1.5"
+        >
+          {(
+            [
+              ["standard_days", "Standard days"],
+              ["focus_seconds", "Focus time"],
+            ] as const
+          ).map(([k, l]) => (
             <button
-              key={n}
+              key={k}
               type="button"
               role="radio"
-              aria-checked={len === n}
-              onClick={() => setLen(n)}
+              aria-checked={draft.type === k}
+              onClick={() => setType(k)}
               className={cx(
-                "h-[46px] flex-1 rounded-xl border text-[14.5px]",
-                chipTone(len === n),
+                "h-[46px] rounded-xl border text-[14.5px]",
+                chipTone(draft.type === k),
               )}
             >
-              {n} days
+              {l}
             </button>
           ))}
         </div>
       </div>
+      <label className="flex flex-col gap-2">
+        <span className={label}>
+          GOAL ·{" "}
+          {draft.type === "standard_days"
+            ? "DAYS MEETING YOUR STANDARD"
+            : "HOURS OF FOCUS"}
+        </span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min={1}
+          step={draft.type === "standard_days" ? 1 : 0.5}
+          value={Number.isFinite(draft.goal) ? draft.goal : ""}
+          onChange={(e) =>
+            setDraft((d) => ({ ...d, goal: Number(e.target.value) }))
+          }
+          className={field}
+        />
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex min-w-0 flex-col gap-2">
+          <span className={label}>START</span>
+          <input
+            type="date"
+            min={today}
+            value={draft.start}
+            onChange={(e) => setDraft((d) => ({ ...d, start: e.target.value }))}
+            className={field}
+          />
+        </label>
+        <label className="flex min-w-0 flex-col gap-2">
+          <span className={label}>END</span>
+          <input
+            type="date"
+            min={draft.start}
+            value={draft.end}
+            onChange={(e) => setDraft((d) => ({ ...d, end: e.target.value }))}
+            className={field}
+          />
+        </label>
+      </div>
+      <span className="text-[12.5px] text-dim">
+        Progress comes from your tasks and focus sessions. The higher total
+        wins; the challenge never changes the weekly head-to-head.
+      </span>
+      {error && (
+        <p role="alert" className="text-[13px] text-danger">
+          {error}
+        </p>
+      )}
       <button
-        type="button"
-        onClick={() => addChallenge(option.label, len)}
-        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg"
+        type="submit"
+        disabled={busy}
+        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg disabled:opacity-50"
       >
-        START WITH {partner.name.toUpperCase()}
+        {busy ? "CREATING…" : "CREATE"}
       </button>
-    </div>
+    </form>
   );
 }

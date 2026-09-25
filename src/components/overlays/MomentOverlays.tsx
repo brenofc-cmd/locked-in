@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { loadWeekHabits } from "@/app/(app)/progress-actions";
+import { updateSetting } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
@@ -17,9 +18,10 @@ import {
   completedWeeks,
   focusLabel,
   habitExtremes,
+  headToHead,
   percent,
+  reviewWeeks,
   weekRangeLabel,
-  weeksWithData,
   type Habit,
 } from "@/lib/progress";
 import { todayStats } from "@/lib/today";
@@ -74,6 +76,8 @@ function ReviewDay() {
   const stats = todayStats(list, app.standard);
   const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
   const notDone = list.filter((t) => !t.done && !t.skip).map((t) => t.name);
+  const doneNames = list.filter((t) => t.done).map((t) => t.name);
+  const skipped = list.filter((t) => t.skip).map((t) => t.name);
   const diff = pv.pct - stats.pct;
 
   return (
@@ -91,7 +95,10 @@ function ReviewDay() {
           </h1>
         </div>
         <div className="flex items-end justify-between gap-4">
-          <span className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] desk:text-[112px]">
+          <span
+            data-testid="review-pct"
+            className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] desk:text-[112px]"
+          >
             {stats.pct}
             <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
           </span>
@@ -100,7 +107,10 @@ function ReviewDay() {
               {stats.done} / {stats.total}{" "}
               <span className="text-dim">done</span>
             </span>
-            <span className="font-mono text-[11px] tracking-[.14em] text-muted">
+            <span
+              data-testid="review-focus"
+              className="font-mono text-[11px] tracking-[.14em] text-muted"
+            >
               {formatMinutes(app.focusMin).toUpperCase()} FOCUS
             </span>
           </span>
@@ -127,7 +137,10 @@ function ReviewDay() {
                 <span className="text-[15px] text-muted">
                   {pv.done} / {pv.total}
                 </span>
-                <span className="text-[28px] font-medium tracking-[-0.03em]">
+                <span
+                  data-testid="review-partner-pct"
+                  className="text-[28px] font-medium tracking-[-0.03em]"
+                >
                   {pv.pct}%
                 </span>
               </span>
@@ -141,13 +154,26 @@ function ReviewDay() {
             </span>
           </div>
         )}
-        {notDone.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-              NOT DONE
-            </span>
-            <span className="text-sm text-muted">{notDone.join(" · ")}</span>
-          </div>
+        {(
+          [
+            ["DONE", doneNames],
+            ["SKIPPED · STILL IN THE TOTAL", skipped],
+            ["NOT DONE", notDone],
+          ] as const
+        ).map(([k, names]) =>
+          names.length > 0 ? (
+            <div key={k} className="flex flex-col gap-1.5">
+              <span className="font-mono text-[11px] tracking-[.16em] text-dim">
+                {k}
+              </span>
+              <span className="text-sm text-muted">{names.join(" · ")}</span>
+            </div>
+          ) : null,
+        )}
+        {list.length === 0 && (
+          <span className="text-sm text-muted">
+            Nothing scheduled today. The day is neutral.
+          </span>
         )}
       </div>
       <button type="button" onClick={app.closeOverlay} className={lightButton}>
@@ -157,17 +183,27 @@ function ReviewDay() {
   );
 }
 
-/** A completed week (duo_weeks): raw completion decides; focus is shown apart. */
+/**
+ * Weekly review (Stage 8): the current week (CURRENT LEADER, live) and every
+ * completed week (WINNER), from Stage 7 data. Raw completion decides; focus,
+ * perfect days and habits are shown apart; head-to-head is the record.
+ */
 function WeeklyReview({ start }: { start: string }) {
-  const { closeOverlay, partner, hasPartner, progress } = useApp();
-  const weeks = weeksWithData(completedWeeks(progress.weeks));
+  const { closeOverlay, partner, hasPartner, progress, week } = useApp();
+  const weeks = reviewWeeks(progress.weeks, {
+    planned: week.me.planned,
+    completed: week.me.completed,
+    focus: week.me.focusSeconds,
+    perfect: week.me.perfectDays,
+  });
+  const record = headToHead(completedWeeks(progress.weeks));
   const [i, setI] = useState(() =>
     Math.max(
       0,
       weeks.findIndex((w) => w.weekStart === start),
     ),
   );
-  const w = weeks[i];
+  const w = weeks[Math.min(i, Math.max(0, weeks.length - 1))];
   const [habits, setHabits] = useState<{ week: string; list: Habit[] } | null>(
     null,
   );
@@ -199,18 +235,28 @@ function WeeklyReview({ start }: { start: string }) {
     );
   }
 
-  const me = w.row.me;
-  const them = hasPartner ? w.row.partner : null;
-  const diff = Math.abs((w.me ?? 0) - (w.partner ?? 0));
+  const me = w.me;
+  const them = hasPartner ? w.partner : null;
+  const diff = Math.abs((w.mePct ?? 0) - (w.partnerPct ?? 0));
   const margin = diff === 0 ? "<1" : String(diff);
-  const verdict =
-    w.result === "me"
-      ? `YOU WON BY ${margin}%`
+  const verdict = w.current
+    ? w.leader?.who === "me"
+      ? `CURRENT LEADER · YOU ${w.leader.margin}`
+      : w.leader?.who === "partner"
+        ? `CURRENT LEADER · ${partner.name.toUpperCase()} ${w.leader.margin}`
+        : w.leader?.who === "tied"
+          ? "CURRENT LEADER · TIED"
+          : "NO SCORE YET"
+    : w.result === "me"
+      ? `WINNER · YOU BY ${margin}%`
       : w.result === "partner"
-        ? `${partner.name.toUpperCase()} WON BY ${margin}%`
+        ? `WINNER · ${partner.name.toUpperCase()} BY ${margin}%`
         : w.result === "draw"
           ? "DRAW"
           : "NO CONTEST";
+  const partnerAhead = w.current
+    ? w.leader?.who === "partner"
+    : w.result === "partner";
   const pair = (a: string, b: string) => (them ? `${a} · ${b}` : a);
   const { best, missed } = habitExtremes(
     habits?.week === w.weekStart ? habits.list : [],
@@ -231,11 +277,17 @@ function WeeklyReview({ start }: { start: string }) {
       k: "PERFECT DAYS",
       v: pair(String(me.perfect), them ? String(them.perfect) : ""),
     },
-    ...(best
-      ? [{ k: "MOST CONSISTENT", v: `${best.title} ${best.rate}%` }]
-      : []),
+    ...(best ? [{ k: "BEST HABIT", v: `${best.title} ${best.rate}%` }] : []),
     ...(missed
       ? [{ k: "MOST MISSED", v: `${missed.title} ${missed.rate}%` }]
+      : []),
+    ...(hasPartner
+      ? [
+          {
+            k: "HEAD TO HEAD",
+            v: `${record.me} — ${record.partner}${record.draws ? ` · ${record.draws} ${record.draws === 1 ? "draw" : "draws"}` : ""}`,
+          },
+        ]
       : []),
   ];
 
@@ -244,8 +296,11 @@ function WeeklyReview({ start }: { start: string }) {
       <div className="flex flex-col gap-[30px]">
         <div className="flex items-center justify-between">
           <span className="flex flex-col gap-1.5">
-            <span className="font-mono text-xs tracking-[.22em] text-accent">
-              WEEK {w.week} COMPLETE
+            <span
+              data-testid="weekly-title"
+              className="font-mono text-xs tracking-[.22em] text-accent"
+            >
+              WEEK {w.week} {w.current ? "IN PROGRESS" : "COMPLETE"}
             </span>
             <span className="font-mono text-[11px] tracking-[.14em] text-dim">
               {weekRangeLabel(w.weekStart)}
@@ -276,7 +331,7 @@ function WeeklyReview({ start }: { start: string }) {
           <div
             className={cx(
               "flex items-end justify-between pb-1.5",
-              w.result === "partner" ? "text-quiet" : "text-text",
+              partnerAhead ? "text-quiet" : "text-text",
             )}
           >
             <span className="text-[13px] font-semibold tracking-[.16em]">
@@ -286,7 +341,7 @@ function WeeklyReview({ start }: { start: string }) {
               data-testid="weekly-me"
               className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]"
             >
-              {w.me === null ? "—" : `${w.me}%`}
+              {w.mePct === null ? "—" : `${w.mePct}%`}
             </span>
           </div>
           {them && (
@@ -295,7 +350,7 @@ function WeeklyReview({ start }: { start: string }) {
                 <span className="h-px flex-1 bg-white/8" />
                 <span
                   data-testid="weekly-verdict"
-                  className="font-mono text-[11px] tracking-[.2em] text-muted"
+                  className="text-center font-mono text-[11px] tracking-[.2em] text-muted"
                 >
                   {verdict}
                 </span>
@@ -304,7 +359,7 @@ function WeeklyReview({ start }: { start: string }) {
               <div
                 className={cx(
                   "flex items-end justify-between gap-3",
-                  w.result === "partner" || w.result === "draw"
+                  partnerAhead || w.result === "draw"
                     ? "text-text"
                     : "text-quiet",
                 )}
@@ -316,7 +371,7 @@ function WeeklyReview({ start }: { start: string }) {
                   data-testid="weekly-partner"
                   className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]"
                 >
-                  {w.partner === null ? "—" : `${w.partner}%`}
+                  {w.partnerPct === null ? "—" : `${w.partnerPct}%`}
                 </span>
               </div>
             </>
@@ -347,20 +402,51 @@ function WeeklyReview({ start }: { start: string }) {
   );
 }
 
+/**
+ * Morning briefing (Stage 8): optional, real numbers only — today's tasks,
+ * yesterday's completion, my streak and my partner's. Never blocks Today;
+ * "Show automatically each morning" is the persisted setting.
+ */
 function Briefing() {
-  const { closeOverlay, tasks, userName, today, progressDays, streak } =
-    useApp();
-  const { me } = useSession();
-  const [auto, setAuto] = useState(true);
+  const app = useApp();
+  const { closeOverlay, tasks, userName, today, progressDays, streak } = app;
+  const { me, settings } = useSession();
+  const [auto, setAuto] = useState(settings.showMorningBriefing);
   const total = tasks.length;
   const y = progressDays.find((d) => d.day === addDays(today, -1));
   const yesterday = y ? percent(y.completed, y.planned) : null;
+  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
 
   const rows = [
-    { k: "TODAY", v: String(total), unit: "TASKS" },
-    { k: "YESTERDAY", v: yesterday === null ? "—" : `${yesterday}%`, unit: "" },
+    { k: "TODAY", v: String(total), unit: total === 1 ? "TASK" : "TASKS" },
+    {
+      k: "YESTERDAY",
+      v: yesterday === null ? "—" : `${yesterday}%`,
+      unit: "",
+    },
     { k: "STREAK", v: String(streak), unit: streak === 1 ? "DAY" : "DAYS" },
+    ...(app.hasPartner
+      ? [
+          {
+            k: app.partner.name.toUpperCase(),
+            v: app.partner.streak === null ? "—" : String(app.partner.streak),
+            unit: `DAY STREAK · ${pv.label}`,
+          },
+        ]
+      : []),
   ];
+
+  async function toggleAuto() {
+    const next = !auto;
+    setAuto(next);
+    const res = await updateSetting("showMorningBriefing", next).catch(
+      () => null,
+    );
+    if (!res?.ok) {
+      setAuto(!next);
+      app.toast({ text: "Could not save.", sub: "BRIEFING" });
+    }
+  }
 
   return (
     <Frame label="Morning briefing" width="max-w-[480px]">
@@ -416,7 +502,7 @@ function Briefing() {
           type="button"
           role="switch"
           aria-checked={auto}
-          onClick={() => setAuto((a) => !a)}
+          onClick={() => void toggleAuto()}
           className="flex h-11 items-center gap-2.5 text-[13px] text-dim"
         >
           <span

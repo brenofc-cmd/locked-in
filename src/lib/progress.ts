@@ -285,13 +285,14 @@ export type CalendarCell =
       pct: number | null;
     };
 
-/** The current month, Monday-first, with each day's state. */
+/** A month (default: the current one), Monday-first, with each day's state. */
 export function calendarMonth(
   days: DayStat[],
   today: string,
   standard: number,
+  month: string = today.slice(0, 7),
 ): { label: string; cells: CalendarCell[] } {
-  const first = `${today.slice(0, 7)}-01`;
+  const first = `${month}-01`;
   const byDay = new Map(days.map((d) => [d.day, d]));
   const cells: CalendarCell[] = [];
   for (let i = 1; i < isoWeekday(first); i++)
@@ -315,7 +316,13 @@ export function calendarMonth(
     });
     date = addDays(date, 1);
   }
-  return { label: fullMonth(today), cells };
+  return {
+    label:
+      month === today.slice(0, 7)
+        ? fullMonth(first)
+        : `${fullMonth(first)} ${first.slice(0, 4)}`,
+    cells,
+  };
 }
 
 const FULL_MONTHS = [
@@ -557,4 +564,75 @@ export function msUntilDateChange(
   while (localDate(timeZone, new Date(t + 60_000)) === today) t += 60_000;
   // t + 1 min is on the new date (at most a minute late, + 1 s margin).
   return t + 60_000 - nowMs + 1000;
+}
+
+// ---- weekly review (Stage 8) --------------------------------------------------
+
+export type ReviewWeek = {
+  weekStart: string;
+  week: number;
+  /** The current week: a live leader, never a winner. */
+  current: boolean;
+  me: WeekRow["me"];
+  partner: WeekRow["partner"];
+  mePct: number | null;
+  partnerPct: number | null;
+  /** Closed weeks only (null for the current week). */
+  result: WeekResult["result"] | null;
+  /** Current week only. */
+  leader: Leader | null;
+};
+
+/**
+ * Weeks the weekly review can show, newest first: the current week (with my
+ * live numbers) when anyone has tasks, then completed weeks with data.
+ */
+export function reviewWeeks(
+  weeks: WeekRow[],
+  liveMe?: WeekRow["me"],
+): ReviewWeek[] {
+  const out: ReviewWeek[] = [];
+  const cur = weeks.find((w) => w.isCurrent);
+  if (cur) {
+    const me = liveMe ?? cur.me;
+    const p = cur.partner;
+    if (me.planned > 0 || (p?.planned ?? 0) > 0)
+      out.push({
+        weekStart: cur.weekStart,
+        week: isoWeekNumber(cur.weekStart),
+        current: true,
+        me,
+        partner: p,
+        mePct: percent(me.completed, me.planned),
+        partnerPct: p ? percent(p.completed, p.planned) : null,
+        result: null,
+        leader: leader(me, p),
+      });
+  }
+  for (const r of weeksWithData(completedWeeks(weeks)))
+    out.push({
+      weekStart: r.weekStart,
+      week: r.week,
+      current: false,
+      me: r.row.me,
+      partner: r.row.partner,
+      mePct: r.me,
+      partnerPct: r.partner,
+      result: r.result,
+      leader: null,
+    });
+  return out;
+}
+
+/** "YYYY-MM" shifted by n months. */
+export function shiftMonth(month: string, n: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const t = y * 12 + (m - 1) + n;
+  return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}`;
+}
+
+/** First and last day of a "YYYY-MM" month. */
+export function monthRange(month: string): { from: string; to: string } {
+  const from = `${month}-01`;
+  return { from, to: addDays(`${shiftMonth(month, 1)}-01`, -1) };
 }

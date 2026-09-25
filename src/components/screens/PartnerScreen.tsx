@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { ActivityItem } from "@/components/today/ActivityItem";
+import { ReactButton } from "@/components/today/Reactions";
 import {
   Avatar,
   MiniCheck,
@@ -164,6 +165,15 @@ export function PartnerScreen() {
             The week is won on percentage of scheduled tasks completed. Task
             count and focus time are shown separately.
           </span>
+          <button
+            type="button"
+            onClick={() =>
+              app.openOverlay({ kind: "weekly", weekStart: week.start })
+            }
+            className="h-11 self-start text-[13px] text-muted underline underline-offset-[3px]"
+          >
+            Review this week
+          </button>
         </section>
 
         <section aria-label="Head to head" className="flex flex-col gap-[18px]">
@@ -292,29 +302,17 @@ export function PartnerScreen() {
               <span className="font-mono text-[11px] text-dim">
                 {x.at ?? ""}
               </span>
-              {x.done && (
-                <button
-                  type="button"
-                  disabled={x.reacted !== null}
-                  onClick={() =>
-                    app.openSheet({
-                      kind: "react",
-                      source: "partnerTask",
-                      id: x.id,
-                      title: `${partner.name} completed ${x.name}`,
-                    })
-                  }
-                  aria-label={
-                    x.reacted ? `${x.reacted} sent` : `React to ${x.name}`
-                  }
-                  className={cx(
-                    "h-9 min-w-11 rounded-full border border-white/9 px-2.5 text-xs",
-                    x.reacted ? "text-dim" : "text-muted",
-                  )}
-                >
-                  {x.reacted ? `${x.reacted} sent` : "React"}
-                </button>
-              )}
+              {x.done &&
+                (() => {
+                  const eventId = app.eventForTask(x.id);
+                  return eventId ? (
+                    <ReactButton
+                      eventId={eventId}
+                      title={`${partner.name} completed ${x.name}`}
+                      name={x.name}
+                    />
+                  ) : null;
+                })()}
             </div>
           ))}
           {app.partnerTasks.length === 0 && pv.total === 0 && (
