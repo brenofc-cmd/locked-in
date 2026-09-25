@@ -526,7 +526,7 @@ function Briefing() {
           </span>
           Show automatically each morning
         </button>
-        <span className="text-center font-mono text-[10.5px] leading-[1.9] tracking-[.28em] text-faint">
+        <span className="text-center font-mono text-[10.5px] leading-[1.9] tracking-[.28em] text-quiet">
           NO HYPE.
           <br />
           JUST PROOF.

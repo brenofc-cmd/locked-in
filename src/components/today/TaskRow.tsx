@@ -187,7 +187,7 @@ export function TaskRow({
           <span
             className={cx(
               "flex shrink-0 items-center gap-1.5 font-mono text-[10.5px] tracking-[.08em]",
-              skipped ? "text-dim" : task.done ? "text-ghost" : "text-dim",
+              skipped ? "text-dim" : task.done ? "text-quiet" : "text-dim",
             )}
           >
             {task.unsynced && (

@@ -226,8 +226,8 @@ export function PartnerScreen() {
                     w.result === "me"
                       ? "bg-accent text-bg"
                       : w.result === "partner"
-                        ? "bg-[#2e2e32] text-dim"
-                        : "border border-white/8 text-faint",
+                        ? "bg-[#2e2e32] text-muted"
+                        : "border border-white/8 text-quiet",
                   )}
                 >
                   {w.result === "me"

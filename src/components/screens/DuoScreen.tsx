@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import { createDuo, joinDuo, leaveDuo } from "@/app/(app)/actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
@@ -32,6 +32,12 @@ export function DuoScreen() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const leaveButton = useRef<HTMLButtonElement>(null);
+  // Cancel returns focus to the button that opened the confirmation.
+  const keepDuo = () => {
+    setConfirmLeave(false);
+    requestAnimationFrame(() => leaveButton.current?.focus());
+  };
   const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
 
   const state = !duo ? "none" : duo.partner ? "complete" : "waiting";
@@ -271,6 +277,7 @@ export function DuoScreen() {
 
       {state !== "none" && !confirmLeave && (
         <button
+          ref={leaveButton}
           type="button"
           onClick={() => setConfirmLeave(true)}
           className="h-11 self-start rounded-xl border border-danger/30 px-[18px] text-sm text-danger"
@@ -283,6 +290,9 @@ export function DuoScreen() {
           role="alertdialog"
           aria-labelledby="leave-title"
           aria-describedby="leave-desc"
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !pending) keepDuo();
+          }}
           className="flex flex-col gap-3.5 rounded-2xl border border-danger/30 p-[18px]"
         >
           <span id="leave-title" className="text-[15px] font-medium">
@@ -307,8 +317,10 @@ export function DuoScreen() {
             </button>
             <button
               type="button"
-              onClick={() => setConfirmLeave(false)}
+              onClick={keepDuo}
               disabled={pending}
+              // The safe choice gets focus when the confirmation opens.
+              autoFocus
               className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
             >
               Keep duo

@@ -76,7 +76,7 @@ export function FocusOverlay() {
             >
               {formatClock(focus.left)}
             </span>
-            <span className="font-mono text-[10px] tracking-[.24em] text-faint">
+            <span className="font-mono text-[10px] tracking-[.24em] text-quiet">
               {focus.paused
                 ? "PAUSED"
                 : `CURRENT SESSION · ${Math.round(focus.total / 60)} MIN`}
@@ -84,7 +84,7 @@ export function FocusOverlay() {
           </div>
           {app.hasPartner && (
             <div className="flex flex-col items-center gap-2">
-              <span className="font-mono text-[10px] tracking-[.2em] text-faint">
+              <span className="font-mono text-[10px] tracking-[.2em] text-quiet">
                 PARTNER
               </span>
               <span className="flex items-center gap-[7px] text-[13px] text-muted">
@@ -98,7 +98,7 @@ export function FocusOverlay() {
           <button
             type="button"
             onClick={app.togglePause}
-            className="h-12 min-w-24 px-5 font-mono text-[11px] tracking-[.24em] text-ghost hover:text-text"
+            className="h-12 min-w-24 px-5 font-mono text-[11px] tracking-[.24em] text-quiet hover:text-text"
           >
             {focus.paused ? "RESUME" : "PAUSE"}
           </button>
@@ -106,7 +106,7 @@ export function FocusOverlay() {
             type="button"
             onClick={app.endFocus}
             aria-label="End session"
-            className="h-12 min-w-24 px-5 font-mono text-[11px] tracking-[.24em] text-ghost hover:text-text"
+            className="h-12 min-w-24 px-5 font-mono text-[11px] tracking-[.24em] text-quiet hover:text-text"
           >
             END
           </button>
@@ -141,7 +141,7 @@ export function FocusOverlay() {
         <label className="flex flex-col gap-2.5">
           <span className="text-sm text-muted">
             What did you accomplish?{" "}
-            <span className="text-ghost">Optional</span>
+            <span className="text-quiet">Optional</span>
           </span>
           <textarea
             value={focus.note}
