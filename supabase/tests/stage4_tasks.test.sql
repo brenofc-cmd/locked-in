@@ -8,7 +8,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
 
-select plan(71);
+select plan(72);
 
 grant all on table __tcache__ to anon, authenticated;
 grant all on sequence __tcache___id_seq, __tresults___numb_seq to anon, authenticated;
@@ -78,11 +78,21 @@ select throws_ok(
          pg_temp.rid('wake'), pg_temp.today_a()),
   '23505', null, 'the database allows one occurrence per routine per date');
 
--- Catch-up: last materialised 4 days ago -> the 3 skipped days and today appear.
-insert into public.routine_items (title, days_of_week, category, start_date)
-  values ('Catchup', array[1,2,3,4,5,6,7]::smallint[], 'work_study', pg_temp.today_a() - 6);
+-- History fixtures (routines that started days ago) are written as the
+-- database owner: since Stage 9 no client can create past data.
+reset role;
+insert into public.routine_items (owner_id, title, days_of_week, category, start_date, materialized_through)
+  values ('00000000-0000-4000-b000-00000000000a', 'Catchup', array[1,2,3,4,5,6,7]::smallint[], 'work_study', pg_temp.today_a() - 6, pg_temp.today_a() - 4);
+insert into public.routine_items (owner_id, title, days_of_week, start_date)
+  values ('00000000-0000-4000-b000-00000000000a', 'Weekly', array[pg_temp.dow(pg_temp.today_a())], pg_temp.today_a() - 13);
+insert into public.routine_items (owner_id, title, days_of_week, start_date, end_date)
+  values ('00000000-0000-4000-b000-00000000000a', 'Ended', array[1,2,3,4,5,6,7]::smallint[], pg_temp.today_a() - 6, pg_temp.today_a() - 2);
 insert into v (k, id) select 'catchup', id from public.routine_items where title = 'Catchup';
-update public.routine_items set materialized_through = pg_temp.today_a() - 4 where id = pg_temp.rid('catchup');
+insert into v (k, id) select 'weekly', id from public.routine_items where title = 'Weekly';
+insert into v (k, id) select 'ended', id from public.routine_items where title = 'Ended';
+select set_config('role', 'authenticated', true);
+
+-- Catch-up: last materialised 4 days ago -> the 3 skipped days and today appear.
 select public.ensure_my_daily_tasks();
 select is((select count(*)::int from public.daily_tasks where routine_item_id = pg_temp.rid('catchup')), 4,
   'days the app was not opened are materialised on the next open');
@@ -91,11 +101,7 @@ select is((select min(task_date) from public.daily_tasks where routine_item_id =
 select is((select materialized_through from public.routine_items where id = pg_temp.rid('catchup')), pg_temp.today_a(),
   'materialized_through advances to today');
 
--- Weekday correctness over two weeks.
-insert into public.routine_items (title, days_of_week, start_date)
-  values ('Weekly', array[pg_temp.dow(pg_temp.today_a())], pg_temp.today_a() - 13);
-insert into v (k, id) select 'weekly', id from public.routine_items where title = 'Weekly';
-select public.ensure_my_daily_tasks();
+-- Weekday correctness over two weeks (materialised by the ensure above).
 select is((select count(*)::int from public.daily_tasks where routine_item_id = pg_temp.rid('weekly')), 2,
   'a one-weekday routine generates exactly the matching dates over two weeks');
 select ok((select bool_and(extract(isodow from task_date)::smallint = pg_temp.dow(pg_temp.today_a()))
@@ -103,11 +109,6 @@ select ok((select bool_and(extract(isodow from task_date)::smallint = pg_temp.do
   'generated dates fall on the scheduled ISO weekday');
 
 -- end_date stops generation.
-insert into public.routine_items (title, days_of_week, start_date)
-  values ('Ended', array[1,2,3,4,5,6,7]::smallint[], pg_temp.today_a() - 6);
-insert into v (k, id) select 'ended', id from public.routine_items where title = 'Ended';
-update public.routine_items set end_date = pg_temp.today_a() - 2 where id = pg_temp.rid('ended');
-select public.ensure_my_daily_tasks();
 select is((select max(task_date) from public.daily_tasks where routine_item_id = pg_temp.rid('ended')), pg_temp.today_a() - 2,
   'a routine that ended generates nothing after end_date');
 select is((select count(*)::int from public.daily_tasks where routine_item_id = pg_temp.rid('ended')), 5,
@@ -123,7 +124,7 @@ select throws_ok($$select public.create_routine_item('Bad', array[]::smallint[])
 select throws_ok($$select public.create_routine_item('   ', array[1]::smallint[])$$, '23514', null, 'blank titles are rejected');
 select throws_ok($$select public.create_routine_item('Bad', array[1]::smallint[], 'sleep')$$, '23514', null, 'unknown categories are rejected');
 select throws_ok(format($$update public.routine_items set end_date = start_date - 5 where id = %L$$, pg_temp.rid('norm')),
-  '23514', null, 'end_date before start_date is rejected');
+  'P0001', 'LI_HISTORY_LOCKED', 'an end_date in closed days is rejected');
 
 -- ------------------------------------------------ one-off + status (A) ----
 insert into public.daily_tasks (title, category) values ('Finish Physics assignment', 'work_study');
@@ -248,6 +249,8 @@ select throws_ok(format('delete from public.routine_items where id = %L', pg_tem
   'a routine with history cannot be hard-deleted even by an admin');
 select throws_ok(format($$update public.daily_tasks set completed_at = now() where id = %L$$, pg_temp.rid('oneoff')),
   '23514', null, 'an impossible row (pending with completed_at) is rejected even for an admin');
+select throws_ok(format($$update public.routine_items set end_date = start_date - 5 where id = %L$$, pg_temp.rid('norm')),
+  '23514', null, 'end_date before start_date is rejected even for an admin');
 
 select * from finish();
 rollback;

@@ -120,6 +120,14 @@ export default defineConfig({
       dependencies: ["stage7"],
       use: phone(390, 844),
     },
+    // Final audit: attacks on the public API, races, channel isolation,
+    // headers, redirects; same users, runs last.
+    {
+      name: "stage9",
+      testMatch: /stage9\.spec\.ts/,
+      dependencies: ["stage8"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,

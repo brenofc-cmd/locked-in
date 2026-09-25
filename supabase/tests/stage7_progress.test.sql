@@ -46,9 +46,9 @@ $$;
 create function pg_temp.focus(p_user uuid, p_start timestamptz, p_seconds int, p_visible boolean default true)
 returns void language sql as $$
   insert into public.focus_sessions (user_id, title, planned_seconds, started_at, ended_at,
-                                     actual_focus_seconds, status, visible_to_partner)
+                                     actual_focus_seconds, status, visible_to_partner, local_date)
   values (p_user, 'Deep work', 3600, p_start, p_start + make_interval(secs => p_seconds),
-          p_seconds, 'completed', p_visible);
+          p_seconds, 'completed', p_visible, (p_start at time zone 'America/Sao_Paulo')::date);
 $$;
 create temp table v (k text primary key, id uuid);
 grant all on v to anon, authenticated;

@@ -177,10 +177,10 @@ insert into public.daily_tasks (owner_id, task_date, title, status, visible_to_p
   ('00000000-0000-4000-f000-00000000000b', pg_temp.t(), 'Secret', 'completed', false);
 update public.daily_tasks set status = 'completed' where id = pg_temp.rid('a_run_task');
 alter table public.focus_sessions disable trigger focus_sessions_lifecycle;
-insert into public.focus_sessions (user_id, title, planned_seconds, started_at, ended_at, actual_focus_seconds, status, visible_to_partner) values
-  ('00000000-0000-4000-f000-00000000000a', 'Deep', 3600, now() - interval '30 minutes', now() - interval '5 minutes', 1500, 'completed', true),
-  ('00000000-0000-4000-f000-00000000000b', 'Hidden', 3600, now() - interval '20 minutes', now() - interval '10 minutes', 600, 'completed', false),
-  ('00000000-0000-4000-f000-00000000000b', 'Running', 3600, now() - interval '5 minutes', null, null, 'active', true);
+insert into public.focus_sessions (user_id, title, planned_seconds, started_at, ended_at, actual_focus_seconds, status, visible_to_partner, local_date) values
+  ('00000000-0000-4000-f000-00000000000a', 'Deep', 3600, now() - interval '30 minutes', now() - interval '5 minutes', 1500, 'completed', true, pg_temp.t()),
+  ('00000000-0000-4000-f000-00000000000b', 'Hidden', 3600, now() - interval '20 minutes', now() - interval '10 minutes', 600, 'completed', false, pg_temp.t()),
+  ('00000000-0000-4000-f000-00000000000b', 'Running', 3600, now() - interval '5 minutes', null, null, 'active', true, pg_temp.t());
 alter table public.focus_sessions enable trigger focus_sessions_lifecycle;
 -- A past, completed challenge (as the superuser: clients cannot backdate).
 insert into public.challenges (id, duo_id, created_by, title, challenge_type, target_value, start_date, end_date) values
@@ -230,8 +230,8 @@ select results_eq(
   'standard days: today counts once met — A 2 / 2 (1), B 2 / 3 incl. a private completion = 67 % < 80 (0)');
 select results_eq(
   $$select me_value, partner_value from public.duo_challenges() where title = 'Deep work week'$$,
-  $$values (1500, 600)$$,
-  'focus: completed sessions only (running excluded), private sessions counted in the aggregate');
+  $$values (1500, 900)$$,
+  'focus: effective seconds of every session (a running one counts its elapsed time, Stage 9), private sessions counted in the aggregate');
 select results_eq(
   $$select me_value, partner_value from public.duo_challenges() where id = '00000000-0000-4000-f000-0000000000c1'$$,
   $$values (2, 1)$$,
@@ -242,7 +242,7 @@ select pg_temp.as_user('b');
 select is((select count(*)::int from public.challenges), 4, 'the partner sees the duo''s challenges');
 select results_eq(
   $$select me_value, partner_value from public.duo_challenges() where title = 'Deep work week'$$,
-  $$values (600, 1500)$$, 'the partner sees the same challenge from their side');
+  $$values (900, 1500)$$, 'the partner sees the same challenge from their side');
 delete from public.challenges where id = pg_temp.rid('ch_std');
 select is((select count(*)::int from public.challenges where id = pg_temp.rid('ch_std')), 1,
   'a started challenge cannot be deleted');

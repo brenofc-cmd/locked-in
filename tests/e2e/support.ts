@@ -76,14 +76,59 @@ export async function resetDuo(...users: TestUser[]) {
 
 export type Api = Awaited<ReturnType<typeof apiAs>>;
 
+type FixtureCall = (
+  fn: string,
+  args?: Record<string, unknown>,
+) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+
 /**
- * Test users only: archive every routine item and delete every task, so a
- * run starts from an empty day. (Archived routine rows stay; see
- * supabase/dev/reset_test_users.sql for a full DEV cleanup.)
+ * DEV-only fixtures (supabase/dev/test_fixtures.sql, never in production):
+ * since Stage 9 no client can write a closed day, so past data for a test is
+ * prepared by these SECURITY DEFINER helpers, limited to the li-…@example.com
+ * test accounts. Permission tests still attack the public API as each user.
+ */
+export async function fixture(
+  api: Api,
+  fn:
+    | "dev_fixture_reset_history"
+    | "dev_fixture_add_tasks"
+    | "dev_fixture_backdate_routine",
+  args?: Record<string, unknown>,
+) {
+  const call = api.rpc.bind(api) as unknown as FixtureCall;
+  const { data, error } = await call(fn, args);
+  if (error)
+    throw new Error(
+      `${fn} failed: ${error.message} (apply supabase/dev/test_fixtures.sql to DEV)`,
+    );
+  return data;
+}
+
+/** Past (or any-date) one-off tasks for the signed-in test user. */
+export async function addTasksOn(
+  api: Api,
+  rows: {
+    task_date: string;
+    title: string;
+    status?: string;
+    visible_to_partner?: boolean;
+  }[],
+) {
+  return (await fixture(api, "dev_fixture_add_tasks", {
+    p_rows: rows,
+  })) as string[];
+}
+
+/**
+ * Test users only: archive every routine item and delete every task (closed
+ * days included, through the DEV fixture), so a run starts from an empty day
+ * with the history boundary back at the real local date. (Archived routine
+ * rows stay; see supabase/dev/reset_test_users.sql for a full DEV cleanup.)
  */
 export async function resetTasks(api: Api) {
   await testSettings(api);
   await finishFocus(api);
+  await fixture(api, "dev_fixture_reset_history");
   const { data: me } = await api.auth.getUser();
   const id = me.user!.id;
   const active = await api
@@ -96,8 +141,7 @@ export async function resetTasks(api: Api) {
       await api.rpc("archive_routine_item", { p_id: r.id });
     }
   }
-  const del = await api.from("daily_tasks").delete().eq("owner_id", id);
-  if (del.error) throw new Error(`reset failed: ${del.error.message}`);
+  await fixture(api, "dev_fixture_reset_history");
 }
 
 export const isoWeekday = (dateISO: string) => {
@@ -218,5 +262,6 @@ export async function signInUI(page: Page, user: TestUser, next = "/today") {
   await page.getByPlaceholder("Email").fill(user.email());
   await page.getByPlaceholder("Password").fill(password());
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(new RegExp(`${next}$`));
+  // Supabase Auth (remote DEV) can take several seconds under a full run.
+  await expect(page).toHaveURL(new RegExp(`${next}$`), { timeout: 20_000 });
 }

@@ -3,6 +3,7 @@ import { addDays } from "@/lib/local-date";
 import { focusLabel } from "@/lib/progress";
 import type { Database } from "@/types/database";
 import {
+  addTasksOn,
   apiAs,
   makeDuo,
   resetTasks,
@@ -55,6 +56,18 @@ async function task(
   title: string,
   opts: { date?: string; status?: string; visible?: boolean } = {},
 ) {
+  if (opts.date && opts.date !== T) {
+    // A closed day: only the DEV fixture can write it (Stage 9).
+    const [id] = await addTasksOn(api, [
+      {
+        task_date: opts.date,
+        title,
+        status: opts.status ?? "pending",
+        visible_to_partner: opts.visible ?? true,
+      },
+    ]);
+    return id;
+  }
   const { data, error } = await api
     .from("daily_tasks")
     .insert({

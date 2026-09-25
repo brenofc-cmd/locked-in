@@ -4,6 +4,7 @@ import { addDays } from "@/lib/local-date";
 import { isoWeekNumber, monthLabel, weekStartOf } from "@/lib/progress";
 import type { Database } from "@/types/database";
 import {
+  addTasksOn,
   apiAs,
   makeDuo,
   resetTasks,
@@ -17,8 +18,9 @@ import {
 /**
  * Stage 7: real progress, streak, standard and the weekly competition on the
  * DEV project. Alice (A) and Bruno (B) are a duo formed during the run, Carla
- * (C) is alone. History is inserted through the public API as each user
- * (RLS applies); every number on screen comes from the database functions.
+ * (C) is alone. Past days are prepared with the DEV-only fixture (clients
+ * cannot write closed days since Stage 9); every number on screen comes
+ * from the database functions.
  * Competition updates are asserted WITHOUT reloading the watching page.
  */
 test.describe.configure({ mode: "serial" });
@@ -41,7 +43,6 @@ async function seedDay(
   pending: number,
   opts: { skipped?: number; prefix?: string; visible?: boolean } = {},
 ) {
-  const owner = await uid(api);
   const rows = [];
   const statuses = [
     ...Array<string>(done).fill("completed"),
@@ -50,14 +51,12 @@ async function seedDay(
   ];
   for (const [i, status] of statuses.entries())
     rows.push({
-      owner_id: owner,
       task_date: date,
       title: `${opts.prefix ?? "Task"} ${i + 1}`,
       status,
       visible_to_partner: opts.visible ?? true,
     });
-  const { error } = await api.from("daily_tasks").insert(rows);
-  if (error) throw new Error(`seed failed: ${error.message}`);
+  await addTasksOn(api, rows);
 }
 
 async function oneOff(api: Api, title: string, visible = true) {

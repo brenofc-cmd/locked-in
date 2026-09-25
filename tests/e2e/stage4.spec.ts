@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { addDays, dateLabel, localDateISO } from "@/lib/local-date";
 import {
   apiAs,
+  fixture,
   isoWeekday,
   makeDuo,
   resetTasks,
@@ -320,19 +321,20 @@ test("partner reads only shared tasks and cannot change them; outsider sees noth
 
 test("generation is idempotent under 5 concurrent calls and catches up missed days", async () => {
   const today = (await A.rpc("my_today")).data!;
-  // A routine that last materialised 4 days ago (the app was not opened since).
-  const ins = await A.from("routine_items")
-    .insert({
-      title: "Catch up",
-      days_of_week: [1, 2, 3, 4, 5, 6, 7],
-      start_date: addDays(today, -6),
-    })
-    .select()
-    .single();
-  expect(ins.error).toBeNull();
-  await A.from("routine_items")
-    .update({ materialized_through: addDays(today, -4) })
-    .eq("id", ins.data!.id);
+  // A routine that last materialised 4 days ago (the app was not opened
+  // since). Clients cannot backdate a routine (Stage 9), so the DEV fixture
+  // moves its start and materialisation into the past.
+  const created = await A.rpc("create_routine_item", {
+    p_title: "Catch up",
+    p_days: [1, 2, 3, 4, 5, 6, 7],
+  });
+  expect(created.error).toBeNull();
+  const ins = { data: { id: created.data! } };
+  await fixture(A, "dev_fixture_backdate_routine", {
+    p_id: ins.data.id,
+    p_start: addDays(today, -6),
+    p_materialized: addDays(today, -4),
+  });
 
   const results = await Promise.all(
     Array.from({ length: 5 }, () => A.rpc("ensure_my_daily_tasks")),
@@ -341,7 +343,7 @@ test("generation is idempotent under 5 concurrent calls and catches up missed da
 
   const { data } = await A.from("daily_tasks")
     .select("task_date")
-    .eq("routine_item_id", ins.data!.id);
+    .eq("routine_item_id", ins.data.id);
   const dates = data!.map((d) => d.task_date).sort();
   expect(dates).toEqual([
     addDays(today, -3),
@@ -352,7 +354,7 @@ test("generation is idempotent under 5 concurrent calls and catches up missed da
 
   // Snapshot: renaming the routine changes today, never the past.
   const up = await A.rpc("update_routine_item", {
-    p_id: ins.data!.id,
+    p_id: ins.data.id,
     p_title: "Catch up renamed",
     p_days: [1, 2, 3, 4, 5, 6, 7],
     p_category: "custom",
@@ -364,7 +366,7 @@ test("generation is idempotent under 5 concurrent calls and catches up missed da
   expect(up.error).toBeNull();
   const after = await A.from("daily_tasks")
     .select("task_date, title")
-    .eq("routine_item_id", ins.data!.id);
+    .eq("routine_item_id", ins.data.id);
   for (const t of after.data!) {
     expect(t.title).toBe(
       t.task_date === today ? "Catch up renamed" : "Catch up",
@@ -385,9 +387,15 @@ test("today follows profiles.timezone, not UTC", async ({ page }) => {
     page.getByText(dateLabel(expected), { exact: true }),
   ).toBeVisible();
 
+  // Back west: the Kiritimati day may be ahead of São Paulo's, and a
+  // closed day never reopens (Stage 9) — "today" does not move back.
   await A.from("profiles")
     .update({ timezone: "America/Sao_Paulo" })
     .neq("display_name", "");
+  expect((await A.rpc("my_today")).data).toBe(expected);
+
+  // Test users only: clear the boundary the timezone move pushed forward.
+  await fixture(A, "dev_fixture_reset_history");
   expect((await A.rpc("my_today")).data).toBe(
     localDateISO("America/Sao_Paulo"),
   );
