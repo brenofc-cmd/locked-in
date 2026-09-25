@@ -220,6 +220,7 @@ export type Database = {
           duo_id: string | null;
           ended_at: string | null;
           id: string;
+          local_date: string;
           paused_at: string | null;
           planned_seconds: number;
           reflection: string | null;
@@ -238,6 +239,7 @@ export type Database = {
           duo_id?: string | null;
           ended_at?: string | null;
           id?: string;
+          local_date?: string;
           paused_at?: string | null;
           planned_seconds: number;
           reflection?: string | null;
@@ -256,6 +258,7 @@ export type Database = {
           duo_id?: string | null;
           ended_at?: string | null;
           id?: string;
+          local_date?: string;
           paused_at?: string | null;
           planned_seconds?: number;
           reflection?: string | null;
@@ -296,6 +299,7 @@ export type Database = {
           created_at: string;
           daily_standard_percent: number;
           display_name: string;
+          history_locked_through: string | null;
           id: string;
           timezone: string;
           updated_at: string;
@@ -459,9 +463,11 @@ export type Database = {
           challenge_type: string;
           created_at: string;
           created_by: string;
+          creator_standard: number;
           duo_id: string;
           end_date: string;
           id: string;
+          partner_standard: number;
           start_date: string;
           target_value: number;
           title: string;
