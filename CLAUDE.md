@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working (Windows, Node 22; last run at the end of Stage 7):
+All verified working (Windows, Node 22; last run at the end of Stage 8):
 
 ```bash
 npm install
@@ -75,10 +75,10 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 (serial, shared DEV users; stage5-7 = 2-3 browsers)
+                       #   → stage7 → stage8 (serial, shared DEV users; stage5-8 = 2-3 browsers)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage7), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage8), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -100,7 +100,7 @@ routing changed; run the pgTAP suite when a migration changed.
 - Test users and credentials: `docs/DATABASE.md` → "Test users". `.env*` and `tests/e2e/.auth/` are
   git-ignored and must stay that way.
 
-## Real vs mock state (Stage 7)
+## Real vs mock state (Stage 8)
 
 - Real: auth session, profile, duo, partner identity → `useSession()`; routine items and today's
   tasks → `useTasks()`; partner presence (online / offline), partner's day (counts + shared
@@ -109,10 +109,20 @@ routing changed; run the pgTAP suite when a migration changed.
   partner's focus → `useFocus()` (`src/components/use-focus.ts`) + `partner_current_focus()`;
   daily standard, streak / longest streak, progress series, chart, calendar, day review, habits,
   insights, this week's competition, head-to-head, weekly review, briefing numbers and the
-  partner's streak → `useProgress()` (`src/components/use-progress.ts`). All reached through
-  `useApp()`; initial data from `loadAppData()`.
-- Mock: challenges, reaction persistence, notifications (Stage 8) → only `src/lib/mock-data.ts`
-  and `src/components/app-state.tsx`.
+  partner's streak → `useProgress()` (`src/components/use-progress.ts`); reactions (persisted,
+  live) → `useDuoRealtime().reactions` + `react()`; settings, onboarding state and notification
+  preferences → `useSession().settings` (`user_settings`); challenges →
+  `useChallenges()` (`src/components/use-challenges.ts`). All reached through `useApp()`; initial
+  data from `loadAppData()`.
+- Mock: **nothing**. `src/lib/mock-data.ts` is gone; product constants live in
+  `src/lib/constants.ts`, `src/lib/reactions.ts`, `src/lib/routine-templates.ts`.
+- Stage 8 rules: reactions attach to `activity_events` (one per user per event, never on my own,
+  never a feed line); challenge progress, status and winner are derived, never stored
+  (docs/CHALLENGES.md); notifications are in-app toasts + the browser Notification API while the
+  app is open — no push, service worker or cron (docs/NOTIFICATIONS.md); permission only on an
+  explicit click; ending a duo is one atomic delete that removes its feed / reactions / challenges;
+  a partner reads shared tasks only from the day the duo formed. Never add an interface that edits
+  past days (closed competition history is frozen in Stage 9).
 - Progress (docs/ANALYTICS.md): every number is derived in SQL from `daily_tasks` and
   `focus_sessions` — never add a stats / cache table or store a computed number. Skipped stays in
   the denominator; a day with 0 planned is neutral (null, never 0 % or 100 %); standard met uses

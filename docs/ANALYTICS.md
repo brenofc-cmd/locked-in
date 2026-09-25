@@ -104,11 +104,21 @@ of the month) and every range is computed on the client. Today's entry is replac
 - Equal exact ratios are a **draw** (shown, counted apart from wins).
 - History: 8 completed weeks are loaded (`HISTORY_WEEKS`); the strip shows them oldest → newest.
 
+## Challenges (Stage 8)
+
+Standard-days and focus-time challenges reuse these definitions (exact standard, neutral days,
+completed focus by start day); rules and derivation in [CHALLENGES.md](CHALLENGES.md). They never
+change the weekly head-to-head.
+
 ## Weekly review, briefing, review day
 
-- Weekly review: a completed week's two percentages, the verdict (won by / draw / no contest), tasks
-  completed `c / p`, focus, perfect days and — from `my_habits` for that week — the most consistent
-  and most missed routine (same 3-sample rule).
+- Weekly review (Stage 8): the current week (live, **CURRENT LEADER**, never a winner) and every
+  completed week with data (**WINNER** by / draw / no contest), tasks completed `c / p`, focus, perfect
+  days, best habit and most missed routine for that week (`my_habits`, same 3-sample rule) and the
+  head-to-head record. `reviewWeeks()` builds the list.
+- History (Stage 8): the calendar navigates back to the account's first month (earlier months read
+  on demand with `my_daily_progress`); a past day shows its task snapshots, completion and focus,
+  read-only.
 - Morning briefing: today's task count, yesterday's % (or "—" for a neutral day), the live streak.
 - Review day: today's %, the live streak once the standard is met, the partner's today.
 
@@ -171,8 +181,9 @@ partner too, so a partner who has not opened the app today is still compared on 
   re-read.
 - Weeks are framed by the viewer's Monday; with members in far-apart time zones the two views of the
   same week can differ by a day at the edges.
-- Past tasks can still be inserted or changed through the API by their owner (Stage 4 grants), which
-  means closed weeks are not frozen — to be locked down in Stage 9 (RLS / integrity audit).
+- **Open for Stage 9:** past tasks can still be inserted or changed through the API by their owner
+  (Stage 4 grants), so closed weeks are not frozen. Stage 8 adds no interface that edits past days;
+  freezing / protecting closed competition history is on the Stage 9 checklist.
 
 ## Tests
 

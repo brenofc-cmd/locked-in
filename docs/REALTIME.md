@@ -64,12 +64,16 @@ Sent by `private.sync_task_activity()` on `daily_tasks` changes and by
 `private.sync_focus_activity()` on `focus_sessions` status changes (Stage 6). Payloads are minimal —
 never notes, reflections, timezone, email or private titles.
 
-| Event              | When                                                                                                      | Payload                                                                                                           |
-| ------------------ | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `activity`         | a shared task becomes completed (or a completed task becomes shared); a focus session starts or completes | `id, actor_id, event_type, target_id, title, duration_seconds, created_at`                                        |
-| `focus`            | a focus session is started, paused, resumed or completed (one message per transition)                     | `id, user_id, title (null if private), status, started_at, planned_seconds, paused_at, accumulated_pause_seconds` |
-| `activity_removed` | a completed shared task is undone, skipped, made private or deleted                                       | `id, actor_id`                                                                                                    |
-| `tasks_changed`    | a shared task changes state without a feed change (skip / unskip)                                         | `actor_id`                                                                                                        |
+| Event                | When                                                                                                      | Payload                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `activity`           | a shared task becomes completed (or a completed task becomes shared); a focus session starts or completes | `id, actor_id, event_type, target_id, title, duration_seconds, created_at`                                        |
+| `focus`              | a focus session is started, paused, resumed or completed (one message per transition)                     | `id, user_id, title (null if private), status, started_at, planned_seconds, paused_at, accumulated_pause_seconds` |
+| `activity_removed`   | a completed shared task is undone, skipped, made private or deleted                                       | `id, actor_id`                                                                                                    |
+| `tasks_changed`      | a shared task changes state without a feed change (skip / unskip)                                         | `actor_id`                                                                                                        |
+| `reaction`           | a reaction is set, replaced or removed (Stage 8)                                                          | `activity_event_id, actor_id, from_user_id, reaction_type (null = removed)`                                       |
+| `challenges_changed` | a challenge is created or deleted (Stage 8)                                                               | `actor_id, challenge_id`                                                                                          |
+| `duo_joined`         | the second member joins (Stage 8)                                                                         | `actor_id`                                                                                                        |
+| `duo_ended`          | a member ends the duo, sent just before the atomic delete (Stage 8)                                       | `actor_id`                                                                                                        |
 
 Private tasks (`visible_to_partner = false`) emit nothing at all — no title, no timing. Edits,
 reorders, archives, renames, settings and page views emit nothing ("magical, not noisy").
@@ -151,6 +155,19 @@ head-to-head, partner's streak). My own numbers are live from local state. A pri
 emits nothing, so it reaches the partner's numbers on their next re-read (next shared event,
 reconnect, tab visible, reload). Details: [ANALYTICS.md](ANALYTICS.md) → Live updates.
 
-## Still mock after Stage 7
+## Complete product (Stage 8)
 
-Challenges, reaction persistence (reactions are marked locally only), notifications (Stage 8).
+Still one channel per duo; the four new events above reuse it.
+
+- **Reactions:** loaded with the feed (embedded `reactions` rows, RLS: my duo) and patched live by
+  `reaction`; my own change is optimistic with rollback. A reaction by my partner to one of my events
+  raises a notice (docs/NOTIFICATIONS.md).
+- **Challenges:** no progress broadcast; the open screen re-reads `duo_challenges()` after
+  `challenges_changed`, after every partner refetch and when my own progress changes.
+- **Duo joined / ended:** the app re-renders the session (`router.refresh()`); the provider leaves
+  or joins the channel from the new `duo`. A broadcast missed before this tab joined is recovered: a
+  refetch that finds the partner arrived or gone triggers the same re-render.
+- **Join warm-up:** a database broadcast sent in the first moments after a join can be missed by that
+  new subscription. State is always recovered by the next refetch; only the live notice is lost.
+
+No mocks remain after Stage 8.

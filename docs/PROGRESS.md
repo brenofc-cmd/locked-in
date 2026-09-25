@@ -1,9 +1,89 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-8 — Complete Product — IN PROGRESS (started 2026-09-25)
+8 — Complete Product — VERIFIED / COMPLETE (2026-09-25)
 
-Previous: 7 — Real progress, streak, weekly competition and analytics — VERIFIED / COMPLETE (2026-09-25)
+Next: 9 — Final QA, Security, Integrity, Performance and Production Readiness Audit (not started;
+checklist in docs/ROADMAP.md)
+
+---
+
+# Stage 8 record
+
+Stage 8 — Complete Product — VERIFIED / COMPLETE (2026-09-25)
+
+Completed (Stage 8):
+
+- Six migrations (`…122722` … `…125824`): `user_settings`, `reactions`, `challenges` (RLS on
+  all three, column grants), `set_reaction`, `duo_challenges` (DEFINER, ADR-044),
+  `add_routine_items`, `duo_ended` / `duo_joined` / `reaction` / `challenges_changed`
+  broadcasts, partner reads shared tasks only from the day the duo formed
+- Reactions: persisted on `activity_events`, fire / lightning / salute / respect, one per user and
+  replaceable, removable, never on my own event, duo only, live on both sides, no feed line; toast
+  "Lucas reacted 🔥 to your Morning Run."
+- Challenges: standard days / focus time only, progress / status / leader / winner / draw derived
+  (docs/CHALLENGES.md), delete only before start, no edits
+- Onboarding: real, resumable (`onboarding_completed_at`), templates or own items, duo optional
+  ("Do this later"), never shown again
+- Routine templates: frontend constants, editable before adding, double click safe
+  (`add_routine_items` serialised per user, skips existing titles)
+- Settings: name, timezone, Daily Standard with explanation, briefing, share new tasks, four
+  notification preferences, quiet hours, browser permission (button only), duo, install, sign out
+- Notifications: in-app toasts + browser Notification API only while open (docs/NOTIFICATIONS.md);
+  no push / service worker / VAPID / cron
+- Duo management: "End this duo?" confirmation, atomic end for both (feed, reactions, challenges
+  removed), live on both sides, personal data kept, a new partner sees nothing of the old duo
+- Briefing (optional, once a day, real numbers), day review, weekly review (CURRENT LEADER vs
+  WINNER, head to head), history (calendar month navigation, past days with focus, weekly reviews)
+- PWA: manifest, icons (192 / 512 / maskable, apple-touch), web-app metadata; no service worker
+- Mocks removed: `src/lib/mock-data.ts` deleted; nothing is mock any more
+- Docs: NOTIFICATIONS.md and CHALLENGES.md (new), DATABASE, REALTIME, ANALYTICS, ARCHITECTURE,
+  PRODUCT, ADR-043…049, CLAUDE.md, README, ROADMAP (Stage 9 checklist)
+
+Verified (2026-09-25, clean `.next`):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm test` — 8 files, 112 tests passed (23 new in `product.test.ts`)
+- `npm run test:e2e` — 58 passed: previous suites + stage8 10 (onboarding solo and with a duo,
+  reactions live / persisted / isolated, challenges derived from real tasks and focus, settings
+  persist, notification preferences and quiet hours, briefing once a day, reviews and history
+  match recorded numbers, ending the duo live on both sides + new partner sees nothing, manifest)
+- Database: pgTAP on DEV after the Stage 8 migrations — stage 3 51/51, stage 4 71/71, stage 5
+  40/40, stage 6 63/63, stage 7 78/78, stage 8 84/84 (387/387); DEV free of fixtures afterwards
+- Clean clone: `git clone`, `npm ci`, lint, typecheck, unit (112), build — pass
+- Acceptance: the 20-step acceptance flow on two fresh throwaway accounts in one Playwright run
+  (temporary spec, removed afterwards), no console errors; accounts deleted afterwards
+- Responsive smoke on the production build (settings, challenges, duo, progress + previous month,
+  more, challenge sheet, weekly review, onboarding) at 375, 390, 430, 768, 1180, 1440 — no
+  horizontal overflow, no console errors
+- Advisors: new only the accepted DEFINER `duo_challenges` (ADR-044); leaked password protection
+  still off (Stage 9)
+- Security review: RLS on every new table, anon gets nothing, no self reaction, no cross-duo
+  access, settings owner only, private tasks never listed, no service role in client code, no
+  secrets committed
+
+Fixed during Stage 8:
+
+- A partner could read shared tasks from before the duo existed → migration `…125824`
+- A partner joining right after the invite could miss `duo_joined` → the refetch detects a
+  partner who arrived or left
+- The morning briefing appeared right after finishing onboarding → marked shown on finish
+
+Known Issues / warnings:
+
+- **Closed weeks are still mutable through the API**: owners can insert / edit / skip past-dated
+  tasks (Stage 4 grants), which can change a closed week's result, a past streak or a finished
+  challenge. No UI allows it and none was added. Stage 9: FREEZE / PROTECT CLOSED COMPETITION
+  HISTORY
+- Production pendings (Stage 9 / 10): Realtime "Allow public access" off, leaked password
+  protection on, review of every SECURITY DEFINER function, final advisors / security scan
+- Notifications only while the app is open (by design, ADR-045)
+- A broadcast in the first moments after joining the channel can be missed live; numbers recover
+  on the next refetch
+- Headless Chromium draws 🫡 as a box (no emoji font); real browsers are fine
+- Occasional "destination stream closed early" server log from aborted RSC streams on navigation;
+  no user impact seen
+- `npx supabase test db` still cannot run locally (Docker); pgTAP runs on DEV via the script
 
 ---
 
@@ -76,7 +156,7 @@ Known Issues:
   the API) seen once, right after an invalid parallel test run on shared users; not reproduced in
   10 serial repeats or 6 full suites
 - `npx supabase test db` still cannot run locally (Docker); pgTAP runs on DEV via the script
-- Still mock: challenges, reaction persistence, notifications (Stage 8)
+- Still mock: challenges, reaction persistence, notifications (Stage 8) — done in Stage 8
 - Realtime "Allow public access" and leaked-password protection still to change before production
 
 ---

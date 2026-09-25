@@ -6,7 +6,8 @@ tests in `supabase/tests/`. Tables so far: **profiles, duos, duo_members** (Stag
 (Stage 6), plus the functions / triggers they need and the Realtime Authorization policies on
 `realtime.messages` (see [REALTIME.md](REALTIME.md)). Stage 7 adds **no table**: one profile column
 (`daily_standard_percent`) and read functions over `daily_tasks` / `focus_sessions` (see
-[ANALYTICS.md](ANALYTICS.md)).
+[ANALYTICS.md](ANALYTICS.md)). Stage 8 adds **user_settings**, **reactions** and **challenges**
+(see [CHALLENGES.md](CHALLENGES.md), [NOTIFICATIONS.md](NOTIFICATIONS.md)).
 
 ## Projects
 
@@ -38,6 +39,12 @@ Migrations applied to DEV (`supabase_migrations.schema_migrations`):
 | `20260924180145` | `…_progress_functions.sql`            | progress / streak / habits / duo weeks functions, shared materialisation helper  |
 | `20260924180531` | `…_summary_longest_closed.sql`        | `my_progress_summary` also returns `longest_closed`                              |
 | `20260925112050` | `…_duo_weeks_together.sql`            | `duo_weeks`: no partner side for weeks before the duo was complete               |
+| `20260925122722` | `…_user_settings.sql`                 | `user_settings` (owner only), trigger per profile, existing profiles backfilled  |
+| `20260925122818` | `…_reactions.sql`                     | `reactions`, `set_reaction()`, `reaction` broadcast (Stage 8)                    |
+| `20260925122919` | `…_challenges.sql`                    | `challenges`, `duo_challenges()`, `challenges_changed` broadcast                 |
+| `20260925122957` | `…_duo_end_and_templates.sql`         | `leave_duo()` broadcasts `duo_ended`; `add_routine_items()`                      |
+| `20260925123402` | `…_duo_joined_broadcast.sql`          | `join_duo()` broadcasts `duo_joined`                                             |
+| `20260925125824` | `…_partner_reads_since_duo.sql`       | partner reads shared `daily_tasks` only from the date the duo formed             |
 
 ## Tables
 
@@ -196,6 +203,53 @@ Constraints: a state check (active ⇒ no `paused_at` / `ended_at`; paused ⇒ `
 where status in ('active','paused')` — **one unfinished session per user**, so a double tap, two tabs
 or two devices cannot start two. `daily_tasks` gained `unique (id, owner_id)` as the FK target.
 
+### `public.user_settings` (Stage 8) — owner-only preferences
+
+One row per profile (created by `private.handle_new_profile_settings()` after a profile insert;
+existing profiles backfilled with `onboarding_completed_at = now()`).
+
+| Column                                             | Type        | Rule                                                            |
+| -------------------------------------------------- | ----------- | --------------------------------------------------------------- |
+| `user_id`                                          | uuid PK     | references profiles, cascade                                    |
+| `onboarding_completed_at`                          | timestamptz | null = onboarding open; the first non-null write becomes now()  |
+| `show_morning_briefing`                            | boolean     | default true                                                    |
+| `share_new_tasks`                                  | boolean     | default true — default "Visible to partner" for new tasks       |
+| `notify_partner_activity` … `notify_weekly_review` | boolean     | default true (4 columns)                                        |
+| `quiet_hours_enabled`                              | boolean     | default false                                                   |
+| `quiet_hours_start` / `quiet_hours_end`            | time        | default 22:00 / 07:00, must differ (start > end wraps midnight) |
+
+RLS: SELECT / UPDATE own row only (not even the partner); UPDATE granted on the preference columns;
+no INSERT / DELETE for clients.
+
+### `public.reactions` (Stage 8) — attached to activity
+
+| Column              | Type    | Rule                                                            |
+| ------------------- | ------- | --------------------------------------------------------------- |
+| `id`                | uuid PK |                                                                 |
+| `activity_event_id` | uuid    | references activity_events, cascade (undo / duo end removes it) |
+| `from_user_id`      | uuid    | default `auth.uid()`, not writable by clients                   |
+| `reaction_type`     | text    | `fire` / `lightning` / `salute` / `respect`                     |
+| unique              |         | `(activity_event_id, from_user_id)` — one reaction per user     |
+
+RLS: read = events of my duo; insert / update = own row on the partner's event in my duo
+(`private.can_react`); delete = own. `set_reaction(event, type)` (INVOKER) upserts. A trigger
+broadcasts `reaction` (ids and type, no title).
+
+### `public.challenges` (Stage 8)
+
+| Column                    | Type    | Rule                                                         |
+| ------------------------- | ------- | ------------------------------------------------------------ |
+| `duo_id`                  | uuid    | default `private.current_duo_id()`, cascade with the duo     |
+| `created_by`              | uuid    | default `auth.uid()`                                         |
+| `title`                   | text    | trimmed, 1–40                                                |
+| `challenge_type`          | text    | `standard_days` / `focus_seconds`                            |
+| `target_value`            | integer | > 0; standard days ≤ days in the period; focus ≤ 24 h × days |
+| `start_date` / `end_date` | date    | end ≥ start, at most 365 days apart                          |
+
+RLS: read = my duo; insert = my complete duo, author = me, start ≥ my today; delete = my duo and not
+started yet; no update. Progress: `duo_challenges()` (DEFINER, CHALLENGES.md). A trigger broadcasts
+`challenges_changed`.
+
 ## Focus lifecycle and timer maths (Stage 6)
 
 Trigger `private.focus_lifecycle()` (BEFORE INSERT / UPDATE) owns every timestamp; clients only send
@@ -316,47 +370,54 @@ checked when a routine is hard-deleted, which clients cannot do.
 
 ## Functions
 
-| Function                                             | Security | Callable by                          | Purpose                                                         |
-| ---------------------------------------------------- | -------- | ------------------------------------ | --------------------------------------------------------------- |
-| `public.create_duo()`                                | DEFINER  | `authenticated`                      | duo + creator membership (seat 1) + invite code, atomically     |
-| `public.join_duo(p_code text)`                       | DEFINER  | `authenticated`                      | normalise code, lock duo, take seat 2                           |
-| `public.leave_duo()`                                 | DEFINER  | `authenticated`                      | V1: deletes the duo, memberships cascade (ends it for both)     |
-| `public.normalize_invite_code(text)`                 | invoker  | nobody (internal)                    | `lkd 8x29ab` → `LKD-8X29AB`                                     |
-| `private.generate_invite_code()`                     | invoker  | nobody (internal)                    | CSPRNG (`gen_random_bytes`), rejection sampling, no modulo bias |
-| `private.current_duo_id()`                           | DEFINER  | `authenticated` (schema not exposed) | caller's duo id for RLS, avoids policy recursion                |
-| `private.handle_new_user()`                          | DEFINER  | trigger only                         | creates the profile                                             |
-| `private.set_updated_at()`                           | invoker  | trigger only                         | `updated_at = now()`                                            |
-| `private.validate_profile()`                         | invoker  | trigger only                         | trims name, rejects non-IANA timezone (`22023`)                 |
-| `public.my_today()`                                  | invoker  | `authenticated`                      | caller's local date (profiles.timezone)                         |
-| `public.ensure_my_daily_tasks()`                     | invoker  | `authenticated`                      | materialise + catch-up for `auth.uid()`; returns today          |
-| `public.create_routine_item(...)`                    | invoker  | `authenticated`                      | new routine item starting today                                 |
-| `public.update_routine_item(...)`                    | invoker  | `authenticated`                      | "Today and future days"                                         |
-| `public.archive_routine_item(id)`                    | invoker  | `authenticated`                      | "Delete" = archive                                              |
-| `public.reorder_routine_items(ids)`                  | invoker  | `authenticated`                      | persist manual order                                            |
-| `private.normalize_routine_item()`                   | invoker  | trigger only                         | trims title / notes, sorts and de-duplicates weekdays           |
-| `private.normalize_daily_task()`                     | invoker  | trigger only                         | trims, owns status timestamps                                   |
-| `private.sync_task_activity()`                       | DEFINER  | trigger only                         | feed events + `realtime.send` broadcasts (Stage 5)              |
-| `public.partner_today()`                             | DEFINER  | `authenticated`                      | partner's local date + done / total (Stage 5)                   |
-| `public.reconcile_my_focus()`                        | invoker  | `authenticated`                      | complete my expired session (Stage 6)                           |
-| `public.my_active_focus()`                           | invoker  | `authenticated`                      | reconcile, then my unfinished session                           |
-| `public.start_focus_session(...)`                    | invoker  | `authenticated`                      | title, planned seconds, optional task, visibility               |
-| `public.pause_focus_session(id)`                     | invoker  | `authenticated`                      | idempotent; returns the row                                     |
-| `public.resume_focus_session(id)`                    | invoker  | `authenticated`                      | idempotent; returns the row                                     |
-| `public.complete_focus_session(...)`                 | invoker  | `authenticated`                      | end (early or on time), optional reflection                     |
-| `public.save_focus_reflection(...)`                  | invoker  | `authenticated`                      | reflection after completion                                     |
-| `public.partner_current_focus()`                     | DEFINER  | `authenticated`                      | partner's unfinished, unexpired session: limited projection     |
-| `public.server_now()`                                | invoker  | `authenticated`                      | database clock: the timers' reference on page load (Stage 6)    |
-| `private.focus_lifecycle()`                          | invoker  | trigger only                         | owns status timestamps and duration maths                       |
-| `private.sync_focus_activity()`                      | DEFINER  | trigger only                         | focus feed events + `focus` broadcasts                          |
-| `public.my_progress_summary()`                       | invoker  | `authenticated`                      | my streak, longest, standard, today's counts (Stage 7)          |
-| `public.my_daily_progress(from, to)`                 | invoker  | `authenticated`                      | my daily series: planned / completed / focus (≤ 400 days)       |
-| `public.my_habits(from, to)`                         | invoker  | `authenticated`                      | recurring tasks' consistency over closed days                   |
-| `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only        |
-| `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                       |
-| `private.materialize_tasks(user)`                    | invoker  | `authenticated` (schema not exposed) | the Stage 4 materialisation for one user                        |
-| `private.day_stats(user, from, to)`                  | invoker  | `authenticated` (schema not exposed) | one row per day; RLS applies to the caller                      |
-| `private.streaks(user)`                              | invoker  | `authenticated` (schema not exposed) | closed-day streak inputs                                        |
-| `private.local_today / standard_met / focus_seconds` | invoker  | `authenticated` (schema not exposed) | helpers                                                         |
+| Function                                             | Security | Callable by                          | Purpose                                                          |
+| ---------------------------------------------------- | -------- | ------------------------------------ | ---------------------------------------------------------------- |
+| `public.create_duo()`                                | DEFINER  | `authenticated`                      | duo + creator membership (seat 1) + invite code, atomically      |
+| `public.join_duo(p_code text)`                       | DEFINER  | `authenticated`                      | normalise code, lock duo, take seat 2                            |
+| `public.leave_duo()`                                 | DEFINER  | `authenticated`                      | V1: deletes the duo, memberships cascade (ends it for both)      |
+| `public.normalize_invite_code(text)`                 | invoker  | nobody (internal)                    | `lkd 8x29ab` → `LKD-8X29AB`                                      |
+| `private.generate_invite_code()`                     | invoker  | nobody (internal)                    | CSPRNG (`gen_random_bytes`), rejection sampling, no modulo bias  |
+| `private.current_duo_id()`                           | DEFINER  | `authenticated` (schema not exposed) | caller's duo id for RLS, avoids policy recursion                 |
+| `private.handle_new_user()`                          | DEFINER  | trigger only                         | creates the profile                                              |
+| `private.set_updated_at()`                           | invoker  | trigger only                         | `updated_at = now()`                                             |
+| `private.validate_profile()`                         | invoker  | trigger only                         | trims name, rejects non-IANA timezone (`22023`)                  |
+| `public.my_today()`                                  | invoker  | `authenticated`                      | caller's local date (profiles.timezone)                          |
+| `public.ensure_my_daily_tasks()`                     | invoker  | `authenticated`                      | materialise + catch-up for `auth.uid()`; returns today           |
+| `public.create_routine_item(...)`                    | invoker  | `authenticated`                      | new routine item starting today                                  |
+| `public.update_routine_item(...)`                    | invoker  | `authenticated`                      | "Today and future days"                                          |
+| `public.archive_routine_item(id)`                    | invoker  | `authenticated`                      | "Delete" = archive                                               |
+| `public.reorder_routine_items(ids)`                  | invoker  | `authenticated`                      | persist manual order                                             |
+| `private.normalize_routine_item()`                   | invoker  | trigger only                         | trims title / notes, sorts and de-duplicates weekdays            |
+| `private.normalize_daily_task()`                     | invoker  | trigger only                         | trims, owns status timestamps                                    |
+| `private.sync_task_activity()`                       | DEFINER  | trigger only                         | feed events + `realtime.send` broadcasts (Stage 5)               |
+| `public.partner_today()`                             | DEFINER  | `authenticated`                      | partner's local date + done / total (Stage 5)                    |
+| `public.reconcile_my_focus()`                        | invoker  | `authenticated`                      | complete my expired session (Stage 6)                            |
+| `public.my_active_focus()`                           | invoker  | `authenticated`                      | reconcile, then my unfinished session                            |
+| `public.start_focus_session(...)`                    | invoker  | `authenticated`                      | title, planned seconds, optional task, visibility                |
+| `public.pause_focus_session(id)`                     | invoker  | `authenticated`                      | idempotent; returns the row                                      |
+| `public.resume_focus_session(id)`                    | invoker  | `authenticated`                      | idempotent; returns the row                                      |
+| `public.complete_focus_session(...)`                 | invoker  | `authenticated`                      | end (early or on time), optional reflection                      |
+| `public.save_focus_reflection(...)`                  | invoker  | `authenticated`                      | reflection after completion                                      |
+| `public.partner_current_focus()`                     | DEFINER  | `authenticated`                      | partner's unfinished, unexpired session: limited projection      |
+| `public.server_now()`                                | invoker  | `authenticated`                      | database clock: the timers' reference on page load (Stage 6)     |
+| `private.focus_lifecycle()`                          | invoker  | trigger only                         | owns status timestamps and duration maths                        |
+| `private.sync_focus_activity()`                      | DEFINER  | trigger only                         | focus feed events + `focus` broadcasts                           |
+| `public.my_progress_summary()`                       | invoker  | `authenticated`                      | my streak, longest, standard, today's counts (Stage 7)           |
+| `public.my_daily_progress(from, to)`                 | invoker  | `authenticated`                      | my daily series: planned / completed / focus (≤ 400 days)        |
+| `public.my_habits(from, to)`                         | invoker  | `authenticated`                      | recurring tasks' consistency over closed days                    |
+| `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only         |
+| `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                        |
+| `private.materialize_tasks(user)`                    | invoker  | `authenticated` (schema not exposed) | the Stage 4 materialisation for one user                         |
+| `private.day_stats(user, from, to)`                  | invoker  | `authenticated` (schema not exposed) | one row per day; RLS applies to the caller                       |
+| `private.streaks(user)`                              | invoker  | `authenticated` (schema not exposed) | closed-day streak inputs                                         |
+| `private.local_today / standard_met / focus_seconds` | invoker  | `authenticated` (schema not exposed) | helpers                                                          |
+| `public.set_reaction(event, type)`                   | invoker  | `authenticated`                      | set / replace my reaction on a partner event (Stage 8)           |
+| `public.duo_challenges()`                            | DEFINER  | `authenticated`                      | my duo's challenges with both members' derived progress          |
+| `public.add_routine_items(...)`                      | invoker  | `authenticated`                      | template / onboarding items, serialised per user, skips existing |
+| `private.can_react(event)`                           | invoker  | `authenticated` (schema not exposed) | event in my duo and not mine                                     |
+| `private.duo_is_complete()`                          | DEFINER  | `authenticated` (schema not exposed) | my duo has two members                                           |
+| `private.duo_together_since(owner)`                  | invoker  | `authenticated` (schema not exposed) | date the duo became complete, in the owner's calendar            |
+| `private.challenge_value(...)`                       | invoker  | nobody (called by `duo_challenges`)  | one member's progress in a period                                |
 
 Stage 4 functions are all SECURITY INVOKER (ADR-020): they run as the caller, so RLS and column
 grants apply exactly as for direct API calls, and none of them takes an owner id. Errors:
@@ -409,22 +470,25 @@ planned_seconds, paused_at, accumulated_pause_seconds` — never the reflection,
 history. Outsiders get nothing. Focus errors: `LI_FOCUS_RUNNING`, `LI_FOCUS_FINISHED`,
 `LI_NOT_FOUND`, `LI_NOT_AUTHENTICATED` (mapped by `focusErrorMessage()` in `src/lib/focus.ts`).
 
-RLS is enabled on all seven tables, and on `realtime.messages` (Realtime Authorization, see
+RLS is enabled on all ten tables, and on `realtime.messages` (Realtime Authorization, see
 REALTIME.md).
 
-| Policy                                                  | Table             | Rule                                                        |
-| ------------------------------------------------------- | ----------------- | ----------------------------------------------------------- |
-| `profiles: read own or duo partner`                     | profiles          | SELECT: `id = auth.uid()` or id is a member of my duo       |
-| `profiles: update own`                                  | profiles          | UPDATE: `id = auth.uid()` (using + with check)              |
-| `duos: read own duo`                                    | duos              | SELECT: `id = private.current_duo_id()`                     |
-| `duo_members: read own duo`                             | duo_members       | SELECT: `duo_id = private.current_duo_id()`                 |
-| `routine_items: read own or shared by duo partner`      | routine_items     | SELECT: own, or `visible_to_partner` and owner is in my duo |
-| `routine_items: insert own` / `update own`              | routine_items     | `owner_id = auth.uid()` (with check blocks spoofing)        |
-| `daily_tasks: read own or shared by duo partner`        | daily_tasks       | SELECT: own, or `visible_to_partner` and owner is in my duo |
-| `daily_tasks: insert own` / `update own` / `delete own` | daily_tasks       | `owner_id = auth.uid()`                                     |
-| `activity_events: read own duo`                         | activity_events   | SELECT: `duo_id = private.current_duo_id()`                 |
-| `duo members receive duo broadcasts and presence`       | realtime.messages | SELECT: broadcast / presence on topic `duo:<my duo>`        |
-| `duo members publish presence`                          | realtime.messages | INSERT: presence only, topic `duo:<my duo>`                 |
+| Policy                                                                | Table             | Rule                                                                                                     |
+| --------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `profiles: read own or duo partner`                                   | profiles          | SELECT: `id = auth.uid()` or id is a member of my duo                                                    |
+| `profiles: update own`                                                | profiles          | UPDATE: `id = auth.uid()` (using + with check)                                                           |
+| `duos: read own duo`                                                  | duos              | SELECT: `id = private.current_duo_id()`                                                                  |
+| `duo_members: read own duo`                                           | duo_members       | SELECT: `duo_id = private.current_duo_id()`                                                              |
+| `routine_items: read own or shared by duo partner`                    | routine_items     | SELECT: own, or `visible_to_partner` and owner is in my duo                                              |
+| `routine_items: insert own` / `update own`                            | routine_items     | `owner_id = auth.uid()` (with check blocks spoofing)                                                     |
+| `daily_tasks: read own or shared by duo partner`                      | daily_tasks       | SELECT: own, or `visible_to_partner`, owner in my duo and `task_date` ≥ the day the duo formed (Stage 8) |
+| `daily_tasks: insert own` / `update own` / `delete own`               | daily_tasks       | `owner_id = auth.uid()`                                                                                  |
+| `activity_events: read own duo`                                       | activity_events   | SELECT: `duo_id = private.current_duo_id()`                                                              |
+| `duo members receive duo broadcasts and presence`                     | realtime.messages | SELECT: broadcast / presence on topic `duo:<my duo>`                                                     |
+| `duo members publish presence`                                        | realtime.messages | INSERT: presence only, topic `duo:<my duo>`                                                              |
+| `user_settings: read own` / `update own`                              | user_settings     | `user_id = auth.uid()`                                                                                   |
+| `reactions: read own duo`, insert / update / delete own               | reactions         | see the reactions table above                                                                            |
+| `challenges: read own duo` / `members create` / `delete before start` | challenges        | see the challenges table above                                                                           |
 
 Partner = read-only and only shared rows; private tasks (`visible_to_partner = false`) are invisible
 to them at the database level. Outsiders read and write nothing. Queries in the app still filter
@@ -471,6 +535,13 @@ migrations already grant explicitly; keep doing so.
   partner summary with the partner's own standard; outsider / no-duo / anon isolation; no `text`
   column in the partner functions; no stats tables; grants.
 
+- `supabase/tests/stage8_product.test.sql` — pgTAP, 84 assertions: settings (defaults, owner only,
+  onboarding time, constraints), profile edits, reactions (replace, self, outsider, other duo,
+  spoofing, approved set, broadcast without title, undo cascade), challenges (create, validation,
+  derived progress of both types incl. private data and past periods, delete rules, isolation,
+  broadcast), templates (dedupe, double click), duo end (atomic, third party untouched, personal
+  history kept, old duo data gone, broadcast), a new partner seeing nothing of the old duo, grants.
+
 Each file runs in one transaction and rolls back (broadcasts sent inside it are never delivered).
 
 How to run:
@@ -482,8 +553,8 @@ How to run:
   into a temp table and ends with a `raise exception` that prints
   `TAP FAILED=<n> PLANNED=<p> RAN=<r>` and any failing lines. The exception aborts the transaction,
   so users, rows and the pgtap extension are all rolled back. Results on 2026-09-25 (after the
-  Stage 7 migrations): stage 3 `51/51`, stage 4 `71/71`, stage 5 `40/40`, stage 6 `63/63`, stage 7
-  `78/78` (303/303), `FAILED=0`; DEV verified free of fixtures afterwards.
+  Stage 8 migrations): stage 3 `51/51`, stage 4 `71/71`, stage 5 `40/40`, stage 6 `63/63`, stage 7
+  `78/78`, stage 8 `84/84` (387/387), `FAILED=0`; DEV verified free of fixtures afterwards.
 
 End-to-end coverage of the same rules through the public API (publishable key, real sessions):
 `tests/e2e/stage3.spec.ts` → "database rules hold through the public API" and

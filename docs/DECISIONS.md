@@ -260,3 +260,45 @@ Status: Accepted. Amends ADR-030's recovery rule (refetch also on the first join
 Decision: `supabase/dev/pgtap_dev.mjs` rewrites a pgTAP file for the aborted-transaction run on DEV (every assertion's line captured, a final exception reports `TAP FAILED / PLANNED / RAN` and rolls everything back), replacing the hand-made procedure while Docker is unavailable. `tests/e2e/stage7.spec.ts` (project `stage7`, after `stage6`, serial, Alice / Bruno / Carla) seeds history through the public API as each user. `trackWrites()` tracks Server Actions only (Supabase reads sent as POST are not writes) with a set of requests.
 Reason: Repeatable database verification; deterministic E2E with real persistence.
 Status: Accepted.
+
+# ADR-043 — User settings in an owner-only table; onboarding completion persisted
+
+Decision: `public.user_settings` (one row per profile, created by trigger, backfilled as onboarded for existing accounts) holds onboarding completion, the morning briefing and default task sharing preferences, notification preferences and quiet hours. RLS: the owner reads and updates their row only; no client insert / delete; `onboarding_completed_at` is set to the database time when first written and cannot be rewritten (null restarts it). The Daily Standard, name and timezone stay on `profiles`. Onboarding replaces the app (any path) until completed and resumes at the duo step when a routine exists; the slide is not persisted. The day the briefing was last shown is per browser (`localStorage`), the preference itself is the setting.
+Reason: Profiles are readable by the duo partner; nobody else needs someone's quiet hours or onboarding state. Onboarding must survive devices and never come back once finished.
+Status: Accepted.
+
+# ADR-044 — Reactions and challenges: attached, derived, private to the duo
+
+Decision: `reactions` (fire / lightning / salute / respect) attach to `activity_events`: one per user per event (`set_reaction()` upserts, INVOKER), only on the partner's events in my duo (RLS + `private.can_react`), never on my own, never a feed line; a `reaction` broadcast carries ids and the type, no title. `challenges` store title, type (`standard_days` / `focus_seconds`), target and period; progress is derived by `duo_challenges()` (DEFINER, because the partner's private data counts in the aggregate; integers, dates and the challenge's own text only); status and winner are derived on the client. Members of a complete duo create from today on; delete only before start; no edits; a `challenges_changed` broadcast triggers re-reads. Both tables cascade with the duo. Accepted under advisor 0029 like the other partner aggregates.
+Reason: No stored number can disagree with the record; nothing leaves the duo.
+Status: Accepted.
+
+# ADR-045 — Notifications: in-app first, browser Notification while open, no push in V1
+
+Decision: Notifications are in-app toasts filtered by the user's preferences, mirrored by the browser Notification API only in a background tab, with permission granted by an explicit click, outside quiet hours. Task reminders are timers while the app is open. No service worker, VAPID, push provider, Edge Function, queue or cron. Details: docs/NOTIFICATIONS.md.
+Reason: Real push is infrastructure with its own security surface; V1 does not fake it.
+Status: Accepted.
+
+# ADR-046 — Ending a duo: one atomic delete, broadcast first, nothing survives for a new partner
+
+Decision: `leave_duo()` (either member) sends `duo_ended` on the duo channel and deletes the duo row in the same transaction; memberships, feed, reactions and challenges cascade. Personal data (tasks, routine, focus, progress, settings) stays. `join_duo()` sends `duo_joined` so a waiting creator updates live. The provider also re-renders the session when a refetch finds the partner arrived or gone (a missed broadcast cannot leave a stale duo). A partner reads shared `daily_tasks` only from the date the duo formed (new RLS condition, `private.duo_together_since`), so a new partner cannot read history from before them. The UI asks for an explicit confirmation ("Leaving will end this Duo for both members.").
+Reason: A duo is two people; there is no owner / member state to maintain, and the old duo's history must never reach a new partner.
+Status: Accepted. Refines ADR-016.
+
+# ADR-047 — Templates are constants; applying one is serialised in the database
+
+Decision: Routine templates (Morning, Study, Night, Training) are constants in `src/lib/routine-templates.ts`; the user edits the items, then `add_routine_items()` creates them in one call, taking a per-user advisory lock and skipping titles already active (case-insensitive). The client also ignores a second click while one is in flight.
+Reason: No template table; a double click can never create the same routine twice.
+Status: Accepted.
+
+# ADR-048 — Installable app without offline mode
+
+Decision: A web manifest (`src/app/manifest.ts`: standalone, app surface colours, LogoMark icons incl. maskable), apple-touch icon and web-app metadata; the manifest is served without a session (proxy matcher). Icons are generated once from the LogoMark by `scripts/generate-icons.mjs`. No service worker and no offline cache; Settings offers "Install" only when the browser reports it installable.
+Reason: App-like on the home screen without pretending to work offline.
+Status: Accepted.
+
+# ADR-049 — E2E: stage8 project, Stage 8 defaults for older suites
+
+Decision: `tests/e2e/stage8.spec.ts` (project `stage8`, after `stage7`, serial, Alice / Bruno / Carla) covers onboarding, reactions, challenges, settings, notification preferences (stubbed Notification API, forced background visibility), briefing, reviews / history, duo end with a new partner, and the manifest. `support.testSettings()` (called by `resetTasks` / `resetDuo`) keeps the older suites on onboarded users with the briefing and weekly notice off. Waits for the channel join use the browser's first `partner_today` read.
+Reason: Deterministic suites that still exercise the first-open behaviour where it is tested.
+Status: Accepted.

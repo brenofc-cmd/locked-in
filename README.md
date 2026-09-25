@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 7 — real progress, streak, weekly competition and analytics verified; Stage 8 next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 8 — complete product verified; Stage 9 (QA, security, integrity audit) next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 
@@ -43,6 +43,8 @@ npm run dev                  # http://localhost:3000
 - [Design reference](docs/DESIGN_REFERENCE.md) — the approved Claude Design and how to read it
 - [Roadmap](docs/ROADMAP.md) — the 10 stages
 - [Analytics](docs/ANALYTICS.md) — progress, streak, standard and competition rules
+- [Challenges](docs/CHALLENGES.md) — duo challenges, derived progress
+- [Notifications](docs/NOTIFICATIONS.md) — what is notified, and what V1 does not do
 - [Decisions](docs/DECISIONS.md) — ADRs
 - [Progress](docs/PROGRESS.md) — current status
 - [CLAUDE.md](CLAUDE.md) — rules for AI agents working on this repo

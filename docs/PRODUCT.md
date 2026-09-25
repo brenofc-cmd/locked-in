@@ -55,6 +55,11 @@ PLAN → SHOW UP → CHECK OFF → SEE YOUR FRIEND SHOW UP → FOCUS → SEE PRO
 
 Today checklist · recurring routines · one-off tasks · realtime partner · online/offline presence ·
 Focus Mode with timer · progress · streaks · weekly comparison · head-to-head · reactions ·
-private challenges · history.
+private challenges · history · onboarding · settings · in-app notifications · installable app.
+
+All of it is real since Stage 8. Deliberately **not** in V1: background push notifications,
+offline mode, AI coach, chat / DMs, public profiles, followers, public feed or challenges,
+community, XP / coins / achievements, projects or documents. LOCKED IN stays a simple
+discipline system for two.
 
 See [ROADMAP.md](ROADMAP.md) for when each lands.
