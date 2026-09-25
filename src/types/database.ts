@@ -382,6 +382,116 @@ export type Database = {
           },
         ];
       };
+      user_settings: {
+        Row: {
+          created_at: string;
+          notify_partner_activity: boolean;
+          notify_reactions: boolean;
+          notify_task_reminders: boolean;
+          notify_weekly_review: boolean;
+          onboarding_completed_at: string | null;
+          quiet_hours_enabled: boolean;
+          quiet_hours_end: string;
+          quiet_hours_start: string;
+          share_new_tasks: boolean;
+          show_morning_briefing: boolean;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: { [_ in never]: never };
+        Update: {
+          notify_partner_activity?: boolean;
+          notify_reactions?: boolean;
+          notify_task_reminders?: boolean;
+          notify_weekly_review?: boolean;
+          onboarding_completed_at?: string | null;
+          quiet_hours_enabled?: boolean;
+          quiet_hours_end?: string;
+          quiet_hours_start?: string;
+          share_new_tasks?: boolean;
+          show_morning_briefing?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reactions: {
+        Row: {
+          activity_event_id: string;
+          created_at: string;
+          from_user_id: string;
+          id: string;
+          reaction_type: string;
+          updated_at: string;
+        };
+        Insert: {
+          activity_event_id: string;
+          reaction_type: string;
+        };
+        Update: {
+          reaction_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reactions_activity_event_id_fkey";
+            columns: ["activity_event_id"];
+            isOneToOne: false;
+            referencedRelation: "activity_events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reactions_from_user_id_fkey";
+            columns: ["from_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      challenges: {
+        Row: {
+          challenge_type: string;
+          created_at: string;
+          created_by: string;
+          duo_id: string;
+          end_date: string;
+          id: string;
+          start_date: string;
+          target_value: number;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          challenge_type: string;
+          end_date: string;
+          start_date: string;
+          target_value: number;
+          title: string;
+        };
+        Update: { [_ in never]: never };
+        Relationships: [
+          {
+            foreignKeyName: "challenges_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "challenges_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -412,6 +522,33 @@ export type Database = {
         Returns: string;
       };
       ensure_my_daily_tasks: { Args: never; Returns: string };
+      add_routine_items: {
+        Args: {
+          p_titles: string[];
+          p_categories: string[];
+          p_visible?: boolean;
+        };
+        Returns: string[];
+      };
+      set_reaction: {
+        Args: { p_event_id: string; p_type: string };
+        Returns: string;
+      };
+      duo_challenges: {
+        Args: never;
+        Returns: {
+          id: string;
+          title: string;
+          challenge_type: string;
+          target_value: number;
+          start_date: string;
+          end_date: string;
+          created_by: string;
+          created_at: string;
+          me_value: number;
+          partner_value: number | null;
+        }[];
+      };
       join_duo: { Args: { p_code: string }; Returns: string };
       leave_duo: { Args: never; Returns: undefined };
       my_active_focus: {
