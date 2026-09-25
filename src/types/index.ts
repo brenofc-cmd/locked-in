@@ -81,7 +81,6 @@ export type PartnerTask = {
   name: string;
   done: boolean;
   at: string | null;
-  reacted: string | null;
 };
 
 export type FeedKind = "start" | "done" | "focus" | "focusdone" | "react";
@@ -94,9 +93,9 @@ export type FeedEvent = {
   text: string;
   /** What a reaction refers to, e.g. "Morning Run". */
   target: string | null;
-  /** My task that produced this event; used to withdraw it on uncheck. */
+  /** The task (or focus session) behind this event: withdraws my optimistic
+   * line on uncheck, and links a partner task to its event for reactions. */
   taskId: string | null;
-  reacted: string | null;
 };
 
 export type FocusDuration = 25 | 50 | 90 | "custom";
@@ -114,19 +113,6 @@ export type FocusState = {
   to: string;
 };
 
-export type Challenge = {
-  id: string;
-  title: string;
-  desc: string;
-  status: string;
-  progLabel: string;
-  prog: string;
-  me: string;
-  meWidth: number;
-  partner: string;
-  partnerWidth: number;
-};
-
 export type ConnectionState = "connected" | "reconnecting" | "offline";
 
 export type Sheet =
@@ -134,12 +120,7 @@ export type Sheet =
   | { kind: "edit"; taskId: string }
   | { kind: "editRoutine"; routineId: string }
   | { kind: "options"; taskId: string }
-  | {
-      kind: "react";
-      source: "feed" | "partnerTask";
-      id: string;
-      title: string;
-    }
+  | { kind: "react"; eventId: string; title: string }
   | { kind: "focus" }
   | { kind: "streak" }
   | { kind: "day"; date: string }

@@ -6,8 +6,9 @@
  *   - Presence: this user is here { user_id, state: "online" } (key = user
  *     id, so several tabs / devices are one user; offline = no presence);
  *   - Broadcast from the database: "activity", "activity_removed",
- *     "tasks_changed" (daily_tasks trigger) and "focus" (one per focus
- *     session transition); never sent by clients.
+ *     "tasks_changed" (daily_tasks trigger), "focus" (one per focus
+ *     session transition), and since Stage 8 "reaction", "challenges_changed",
+ *     "duo_joined" and "duo_ended"; never sent by clients.
  * Postgres is the source of truth: initial data comes from the server, and
  * after every event, reconnect or return to the tab the feed and the
  * partner's day are refetched. Realtime only makes updates arrive sooner.
@@ -36,12 +37,30 @@ import {
   type LiveEvent,
   type PresenceMeta,
 } from "@/lib/realtime-model";
+import {
+  applyReaction,
+  isReactionType,
+  reactionMapFrom,
+  type ReactionMap,
+  type ReactionType,
+} from "@/lib/reactions";
 import { createClient } from "@/lib/supabase/client";
 import type { ConnectionState, PartnerTask } from "@/types";
 
 type ActivityListener = (event: LiveEvent) => void;
 /** A focus state change of MY session (another tab / device), from the database. */
 type MyFocusListener = (focus: PartnerFocus) => void;
+/** My partner reacted to one of my events (toast / notification). */
+type ReactionListener = (r: { eventId: string; type: ReactionType }) => void;
+/** The duo was completed (partner joined) or ended by either member. */
+type DuoChangeListener = (change: "joined" | "ended", byMe: boolean) => void;
+
+const reactionsOf = (feed: DuoData["feed"]) =>
+  reactionMapFrom(
+    feed.flatMap((e) =>
+      (e.reactions ?? []).map((r) => ({ ...r, activity_event_id: e.id })),
+    ),
+  );
 
 /** Serialises channel teardown and re-creation (see the lifecycle effect). */
 let pendingRemoval: Promise<unknown> = Promise.resolve();
@@ -67,12 +86,16 @@ function useDuoRealtimeValue(initial: DuoData) {
         name: t.title,
         done: t.status === "completed",
         at: t.completed_at ? localTimeHM(t.completed_at, tz) : null,
-        reacted: null,
       })),
     [tz],
   );
 
   const [feed, setFeed] = useState<LiveEvent[]>(() => toFeed(initial.feed));
+  const [reactions, setReactions] = useState<ReactionMap>(() =>
+    reactionsOf(initial.feed),
+  );
+  /** Bumped when the duo's challenges change or its progress may have. */
+  const [challengesVersion, setChallengesVersion] = useState(0);
   const [partnerCounts, setPartnerCounts] = useState(() => ({
     done: initial.partnerDay?.done ?? 0,
     total: initial.partnerDay?.total ?? 0,
@@ -91,6 +114,8 @@ function useDuoRealtimeValue(initial: DuoData) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const listeners = useRef(new Set<ActivityListener>());
   const myFocusListeners = useRef(new Set<MyFocusListener>());
+  const reactionListeners = useRef(new Set<ReactionListener>());
+  const duoListeners = useRef(new Set<DuoChangeListener>());
 
   /** Re-read feed + partner's day from Postgres (the source of truth). */
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,12 +139,14 @@ function useDuoRealtimeValue(initial: DuoData) {
           const local = f.filter((e) => e.id.startsWith("local-"));
           return mergeFeed(local, toFeed(data.feed));
         });
+        setReactions(reactionsOf(data.feed));
         setPartnerCounts({
           done: data.partnerDay?.done ?? 0,
           total: data.partnerDay?.total ?? 0,
         });
         setPartnerTasks(toTasks(data.partnerTasks));
         setPartnerVersion((v) => v + 1);
+        setChallengesVersion((v) => v + 1);
         if (seq === focusSeq.current) setPartnerFocus(data.partnerFocus);
       } catch {
         // Offline or transient: the next reconnect / event retries.
@@ -215,6 +242,29 @@ function useDuoRealtimeValue(initial: DuoData) {
         .on("broadcast", { event: "tasks_changed" }, ({ payload }) => {
           if (payload.actor_id !== me.id) refetch();
         })
+        .on("broadcast", { event: "reaction" }, ({ payload }) => {
+          const eventId = String(payload.activity_event_id);
+          const from = String(payload.from_user_id);
+          const type = isReactionType(payload.reaction_type)
+            ? payload.reaction_type
+            : null;
+          setReactions((m) => applyReaction(m, eventId, from, type));
+          if (type && from !== me.id && payload.actor_id === me.id)
+            reactionListeners.current.forEach((l) => l({ eventId, type }));
+        })
+        .on("broadcast", { event: "challenges_changed" }, () => {
+          setChallengesVersion((v) => v + 1);
+        })
+        .on("broadcast", { event: "duo_joined" }, ({ payload }) => {
+          duoListeners.current.forEach((l) =>
+            l("joined", payload.actor_id === me.id),
+          );
+        })
+        .on("broadcast", { event: "duo_ended" }, ({ payload }) => {
+          duoListeners.current.forEach((l) =>
+            l("ended", payload.actor_id === me.id),
+          );
+        })
         .subscribe((status) => {
           lastStatus = status;
           update();
@@ -258,6 +308,7 @@ function useDuoRealtimeValue(initial: DuoData) {
   if (shownDuo !== duoId) {
     setShownDuo(duoId);
     setFeed([]);
+    setReactions({});
     setPartnerTasks([]);
     setPartnerCounts({ done: 0, total: 0 });
     setPartnerFocus(null);
@@ -285,7 +336,6 @@ function useDuoRealtimeValue(initial: DuoData) {
             text: `completed ${title}`,
             target: title,
             taskId,
-            reacted: null,
           },
         ]),
       );
@@ -304,6 +354,28 @@ function useDuoRealtimeValue(initial: DuoData) {
     };
   }, []);
 
+  /** Optimistic change of my own reaction (null = removed). */
+  const setMyReaction = useCallback(
+    (eventId: string, type: ReactionType | null) => {
+      setReactions((m) => applyReaction(m, eventId, me.id, type));
+    },
+    [me.id],
+  );
+
+  const onPartnerReaction = useCallback((listener: ReactionListener) => {
+    reactionListeners.current.add(listener);
+    return () => {
+      reactionListeners.current.delete(listener);
+    };
+  }, []);
+
+  const onDuoChange = useCallback((listener: DuoChangeListener) => {
+    duoListeners.current.add(listener);
+    return () => {
+      duoListeners.current.delete(listener);
+    };
+  }, []);
+
   const onPartnerActivity = useCallback((listener: ActivityListener) => {
     listeners.current.add(listener);
     return () => {
@@ -319,6 +391,11 @@ function useDuoRealtimeValue(initial: DuoData) {
     partnerCounts,
     partnerTasks,
     partnerVersion,
+    reactions,
+    setMyReaction,
+    onPartnerReaction,
+    onDuoChange,
+    challengesVersion,
     flashAt,
     onMyFocus,
     addLocalCompletion,

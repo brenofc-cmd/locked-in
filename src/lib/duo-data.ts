@@ -13,6 +13,8 @@ export type DuoData = {
     title: string | null;
     duration_seconds: number | null;
     created_at: string;
+    /** Stage 8: reactions attached to the event (RLS: my duo only). */
+    reactions: { from_user_id: string; reaction_type: string }[];
   }[];
   /** Partner's local today and counts (private tasks counted, never listed). */
   partnerDay: { date: string; done: number; total: number } | null;
@@ -48,7 +50,7 @@ export async function loadDuoData(
     supabase
       .from("activity_events")
       .select(
-        "id, actor_id, event_type, target_id, title:title_snapshot, duration_seconds, created_at",
+        "id, actor_id, event_type, target_id, title:title_snapshot, duration_seconds, created_at, reactions(from_user_id, reaction_type)",
       )
       .order("created_at", { ascending: false })
       .limit(20),

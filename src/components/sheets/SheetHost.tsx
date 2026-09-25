@@ -57,9 +57,7 @@ export function SheetHost() {
       break;
     }
     case "react":
-      body = (
-        <ReactSheet source={sheet.source} id={sheet.id} title={sheet.title} />
-      );
+      body = <ReactSheet eventId={sheet.eventId} title={sheet.title} />;
       break;
     case "focus":
       body = <FocusSheet />;

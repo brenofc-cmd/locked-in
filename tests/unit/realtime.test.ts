@@ -149,7 +149,6 @@ describe("activity feed", () => {
       text: "completed Gym",
       target: "Gym",
       taskId: "t9",
-      reacted: null,
     };
     const real = eventFromActivity(
       row("e9", ME, "t9", "2026-09-24T12:00:01Z"),

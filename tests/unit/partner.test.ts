@@ -13,7 +13,6 @@ const feed: FeedEvent[] = [
     text: "completed Reading",
     target: "Reading",
     taskId: "a",
-    reacted: null,
   },
   {
     id: "2",
@@ -23,7 +22,6 @@ const feed: FeedEvent[] = [
     text: "completed Gym",
     target: "Gym",
     taskId: "b",
-    reacted: null,
   },
   {
     id: "3",
@@ -33,7 +31,6 @@ const feed: FeedEvent[] = [
     text: "completed Morning Run",
     target: "Morning Run",
     taskId: "c",
-    reacted: null,
   },
 ];
 const online: Partner = {

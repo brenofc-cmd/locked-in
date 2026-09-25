@@ -53,7 +53,6 @@ export function eventFromActivity(
     t: localTimeHM(r.created_at, timeZone),
     who: r.actor_id === myId ? ("me" as const) : ("partner" as const),
     taskId: r.target_id,
-    reacted: null,
   };
   if (r.event_type === "focus_started") {
     // A private session has no title: a generic line, nothing more.
