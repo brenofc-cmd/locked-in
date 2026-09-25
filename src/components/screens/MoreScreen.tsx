@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useApp } from "@/components/app-state";
 
 export function MoreScreen() {
-  const { routines, challenges, hasPartner, partner } = useApp();
+  const { routines, hasPartner, partner } = useApp();
   const rows = [
     {
       href: "/routine",
@@ -14,7 +14,7 @@ export function MoreScreen() {
     {
       href: "/challenges",
       label: "Challenges",
-      sub: `${challenges.length} active`,
+      sub: hasPartner ? "With your partner" : "Needs a partner",
     },
     {
       href: "/duo",
