@@ -9,9 +9,14 @@
  *   focus today and the partner's focus (useFocus(), Stage 6); standard,
  *   streaks, weekly competition, head-to-head and analytics (useProgress(),
  *   Stage 7).
- * MOCK (not persisted): reactions and challenges (Stage 8).
+ *   Stage 8: persistent reactions (useDuoRealtime()), settings and
+ *   notification preferences (useSession().settings), in-app notifications
+ *   (toast + optional browser Notification while open), task reminders while
+ *   open, morning briefing / weekly review prompts, duo joined / ended.
+ * Challenges load on their own screen (use-challenges.ts). No mocks remain.
  */
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { clearReaction, setReaction } from "@/app/(app)/social-actions";
 import { updateDisplayName } from "@/app/(app)/actions";
 import { useDuoRealtime } from "@/components/duo-realtime";
 import { useSession } from "@/components/session";
@@ -20,8 +25,29 @@ import { useProgress } from "@/components/use-progress";
 import { useTasks } from "@/components/use-tasks";
 import { partnerStatus } from "@/lib/focus";
 import type { FocusData } from "@/lib/focus-data";
-import { localDateISO } from "@/lib/local-date";
-import { msUntilDateChange, type ProgressData } from "@/lib/progress";
+import {
+  addDays,
+  isoWeekday,
+  localDateISO,
+  localTimeHM,
+} from "@/lib/local-date";
+import {
+  decide,
+  reminderDelays,
+  type NotificationKind,
+} from "@/lib/notifications";
+import {
+  completedWeeks,
+  msUntilDateChange,
+  weekStartOf,
+  type ProgressData,
+} from "@/lib/progress";
+import {
+  reactionLabel,
+  reactionToastText,
+  type ReactionType,
+} from "@/lib/reactions";
+import { notificationPrefs } from "@/lib/settings";
 import type { TasksData } from "@/lib/session";
 import {
   createContext,
@@ -33,16 +59,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { mockChallenges } from "@/lib/mock-data";
-import type {
-  Challenge,
-  Overlay,
-  Partner,
-  Sheet,
-  Snack,
-  Task,
-  Toast,
-} from "@/types";
+import type { Overlay, Partner, Sheet, Snack, Task, Toast } from "@/types";
 
 let seq = 0;
 const uid = (prefix: string) => `${prefix}${Date.now().toString(36)}${++seq}`;
@@ -57,7 +74,9 @@ function useAppStateValue(
   initialProgress: ProgressData,
 ) {
   const pathname = usePathname();
+  const router = useRouter();
   const session = useSession();
+  const { settings } = session;
 
   // ---- real identity (Stage 3) ----------------------------------------------
   const userName = session.me.displayName;
@@ -72,24 +91,9 @@ function useAppStateValue(
   const [now, setNow] = useState(() => initialFocus.serverNow);
   const conn = rt.conn;
   const partnerCounts = rt.partnerCounts;
-  // Reactions are still mock (Stage 8): marked locally, never sent.
-  const [reacted, setReacted] = useState<Record<string, string>>({});
-  const feed = useMemo(
-    () =>
-      rt.feed.map((e) =>
-        reacted[e.id] ? { ...e, reacted: reacted[e.id] } : e,
-      ),
-    [rt.feed, reacted],
-  );
-  const partnerTasks = useMemo(
-    () =>
-      rt.partnerTasks.map((t) =>
-        reacted[`task:${t.id}`]
-          ? { ...t, reacted: reacted[`task:${t.id}`] }
-          : t,
-      ),
-    [rt.partnerTasks, reacted],
-  );
+  const feed = rt.feed;
+  const partnerTasks = rt.partnerTasks;
+  const reactions = rt.reactions;
   const partner: Omit<Partner, "streak"> = {
     name: partnerName,
     initial: partnerName.charAt(0).toUpperCase(),
@@ -101,7 +105,6 @@ function useAppStateValue(
     seenAt: "",
     flashAt: rt.flashAt,
   };
-  const [challenges, setChallenges] = useState<Challenge[]>(mockChallenges);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -212,24 +215,89 @@ function useAppStateValue(
     [unskip],
   );
 
-  // ---- reactions ----------------------------------------------------------
+  // ---- notifications (Stage 8, docs/NOTIFICATIONS.md) ---------------------
 
-  const react = useCallback(
-    (source: "feed" | "partnerTask", id: string, reaction: string) => {
-      const key = source === "feed" ? id : `task:${id}`;
-      if (reacted[key]) return;
-      const target =
-        source === "feed"
-          ? (feed.find((x) => x.id === id)?.target ?? "")
-          : (partnerTasks.find((x) => x.id === id)?.name ?? "");
-      setReacted((r) => ({ ...r, [key]: reaction }));
-      setSheet(null);
-      toast({
-        text: `Sent to ${partnerName}.`,
-        sub: `${reaction} · ${target.toUpperCase()}`,
+  const timeZone = session.me.timezone;
+  const prefs = useMemo(() => notificationPrefs(settings), [settings]);
+  const prefsRef = useRef(prefs);
+  useEffect(() => {
+    prefsRef.current = prefs;
+  }, [prefs]);
+
+  /**
+   * In-app toast when the preference is on; the browser notification only
+   * with permission, in a background tab and outside quiet hours. Nothing
+   * is sent anywhere: the app must be open (V1 has no push).
+   */
+  const notify = useCallback(
+    (kind: NotificationKind, t: Omit<Toast, "id"> & { id?: string }) => {
+      const hasApi = typeof Notification !== "undefined";
+      const d = decide(kind, prefsRef.current, {
+        nowHM: localTimeHM(new Date(), timeZone),
+        permission: hasApi ? Notification.permission : "unsupported",
+        visible: document.visibilityState === "visible",
       });
+      if (d.toast) toast(t);
+      if (d.browser) {
+        try {
+          new Notification("LOCKED IN", { body: t.text, tag: t.id ?? kind });
+        } catch {
+          // Some browsers only allow notifications from a service worker.
+        }
+      }
     },
-    [reacted, feed, partnerTasks, partnerName, toast],
+    [toast, timeZone],
+  );
+
+  // ---- reactions: REAL (Stage 8) --------------------------------------------
+
+  const { setMyReaction } = rt;
+  /** Set / replace / remove my reaction on a partner event (optimistic). */
+  const react = useCallback(
+    async (eventId: string, type: ReactionType | null) => {
+      const before = reactions[eventId]?.[session.me.id] ?? null;
+      setSheet(null);
+      if (before === type) return;
+      setMyReaction(eventId, type);
+      const res = await (
+        type ? setReaction(eventId, type) : clearReaction(eventId)
+      ).catch(() => null);
+      if (!res?.ok) {
+        setMyReaction(eventId, before);
+        toast({
+          text: res && !res.ok ? res.error : "Network error. Try again.",
+          sub: "REACTION",
+        });
+      }
+    },
+    [reactions, session.me.id, setMyReaction, toast],
+  );
+
+  /** A partner task links to its completion event (for reacting). */
+  const eventForTask = useCallback(
+    (taskId: string) =>
+      feed.find(
+        (e) => e.who === "partner" && e.kind === "done" && e.taskId === taskId,
+      )?.id ?? null,
+    [feed],
+  );
+
+  // My partner reacted to one of my events.
+  const { onPartnerReaction } = rt;
+  const feedRef = useRef(feed);
+  useEffect(() => {
+    feedRef.current = feed;
+  }, [feed]);
+  useEffect(
+    () =>
+      onPartnerReaction(({ eventId, type }) => {
+        const target = feedRef.current.find((e) => e.id === eventId)?.target;
+        notify("reaction", {
+          text: reactionToastText(partnerName, target ?? null),
+          sub: reactionLabel(type),
+        });
+      }),
+    [onPartnerReaction, partnerName, notify],
   );
 
   /** Toast for the partner's completions (not on /partner, where the feed shows it). */
@@ -243,21 +311,41 @@ function useAppStateValue(
       onPartnerActivity((event) => {
         if (pathnameRef.current === "/partner") return;
         const toastId = uid("toast");
-        toast({
+        const canReact = event.kind === "done" || event.kind === "focusdone";
+        notify("partner_activity", {
           id: toastId,
           text: `${partnerName} ${event.text}`,
           sub: event.t,
-          actions: ["🔥", "🫡"].map((r) => ({
-            label: r,
-            aria: `React ${r}`,
-            run: () => {
-              setReacted((m) => ({ ...m, [event.id]: r }));
-              dismissToast(toastId);
-            },
-          })),
+          actions: canReact
+            ? (["fire", "salute"] as const).map((r) => ({
+                label: reactionLabel(r),
+                aria: `React ${reactionLabel(r)}`,
+                run: () => {
+                  void react(event.id, r);
+                  dismissToast(toastId);
+                },
+              }))
+            : undefined,
         });
       }),
-    [onPartnerActivity, partnerName, toast, dismissToast],
+    [onPartnerActivity, partnerName, notify, react, dismissToast],
+  );
+
+  // Duo joined / ended (either member): re-render the session from the
+  // server; the realtime provider then leaves or joins the channel.
+  const { onDuoChange } = rt;
+  useEffect(
+    () =>
+      onDuoChange((change, byMe) => {
+        router.refresh();
+        if (byMe) return;
+        toast(
+          change === "joined"
+            ? { text: "Your partner joined.", sub: "DUO COMPLETE" }
+            : { text: `${partnerName} ended the duo.`, sub: "NO PARTNER YET" },
+        );
+      }),
+    [onDuoChange, router, partnerName, toast],
   );
 
   // ---- focus: REAL (Stage 6, use-focus.ts) ---------------------------------
@@ -289,7 +377,6 @@ function useAppStateValue(
   // so Today, Focus and Progress all start the new day from the database.
   // Uses the database-corrected clock, so a wrong device date cannot loop.
   const today = real.today;
-  const timeZone = session.me.timezone;
   useEffect(() => {
     const check = () => {
       if (localDateISO(timeZone, new Date(clockNow())) !== today)
@@ -306,6 +393,83 @@ function useAppStateValue(
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [today, timeZone, clockNow]);
+  // ---- reminders, briefing, weekly result (Stage 8) ------------------------
+
+  // Task reminders fire only while the app is open (timers to each pending
+  // reminder time today; rescheduled whenever the tasks change). V1 has no
+  // push: a closed app reminds nobody (docs/NOTIFICATIONS.md).
+  useEffect(() => {
+    if (!settings.notifyTaskReminders) return;
+    const now = new Date(clockNow());
+    const timers = reminderDelays(
+      localTimeHM(now, timeZone),
+      now.getSeconds(),
+      tasks,
+    )
+      .filter((r) => r.ms < 2 ** 31 - 1)
+      .map(({ id, ms }) =>
+        setTimeout(() => {
+          const t = tasks.find((x) => x.id === id);
+          if (t)
+            notify("task_reminder", {
+              text: t.name,
+              sub: `REMINDER · ${t.time}`,
+            });
+        }, ms),
+      );
+    return () => timers.forEach(clearTimeout);
+  }, [settings.notifyTaskReminders, tasks, timeZone, clockNow, notify]);
+
+  // Morning briefing: optional, once per local day on the first open, never
+  // over onboarding. Which day it was last shown is a presentation detail of
+  // this browser (localStorage); whether to show it is a real setting.
+  const briefingChecked = useRef(false);
+  useEffect(() => {
+    if (briefingChecked.current) return;
+    briefingChecked.current = true;
+    if (!settings.onboarded || !settings.showMorningBriefing) return;
+    try {
+      if (localStorage.getItem("li:briefing-shown") === today) return;
+      localStorage.setItem("li:briefing-shown", today);
+    } catch {
+      return;
+    }
+    // After hydration, so the server render never contains the overlay.
+    const id = setTimeout(() => setOverlay({ kind: "briefing" }), 0);
+    return () => clearTimeout(id);
+  }, [settings.onboarded, settings.showMorningBriefing, today]);
+
+  // A new week: offer last week's result once (in-app toast).
+  const weeklyChecked = useRef(false);
+  const lastWeek = completedWeeks(pg.progress.weeks).find(
+    (w) =>
+      w.weekStart === addDays(weekStartOf(today), -7) &&
+      (w.row.me.planned > 0 || (w.row.partner?.planned ?? 0) > 0),
+  );
+  useEffect(() => {
+    if (weeklyChecked.current || !settings.onboarded || !lastWeek) return;
+    weeklyChecked.current = true;
+    const key = weekStartOf(today);
+    try {
+      if (localStorage.getItem("li:weekly-shown") === key) return;
+      localStorage.setItem("li:weekly-shown", key);
+    } catch {
+      return;
+    }
+    const weekStart = lastWeek.weekStart;
+    notify("weekly_review", {
+      text: `Week ${lastWeek.week} is closed.`,
+      sub: isoWeekday(today) === 1 ? "MONDAY · RESULT" : "RESULT",
+      actions: [
+        {
+          label: "OPEN",
+          aria: "Open the weekly review",
+          run: () => setOverlay({ kind: "weekly", weekStart }),
+        },
+      ],
+    });
+  }, [settings.onboarded, lastWeek, today, notify]);
+
   const startFocus = useCallback(() => {
     setSheet(null);
     void start();
@@ -332,34 +496,6 @@ function useAppStateValue(
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [clockNow]);
-
-  // ---- challenges ---------------------------------------------------------
-
-  const addChallenge = useCallback(
-    (title: string, days: number) => {
-      setChallenges((c) => [
-        {
-          id: uid("c"),
-          title: title.toUpperCase(),
-          desc: `${days} days. Starts today.`,
-          status: "STARTS TODAY",
-          progLabel: "DAY",
-          prog: `0 / ${days}`,
-          me: "0%",
-          meWidth: 0,
-          partner: "0%",
-          partnerWidth: 0,
-        },
-        ...c,
-      ]);
-      setSheet(null);
-      toast({
-        text: `Challenge sent to ${partnerName}.`,
-        sub: title.toUpperCase(),
-      });
-    },
-    [partnerName, toast],
-  );
 
   /** Real: writes profiles.display_name, then the layout reloads the session. */
   const setUserName = useCallback(
@@ -400,7 +536,11 @@ function useAppStateValue(
     partnerTasks,
     partnerCounts,
     hasPartner,
+    reactions,
     react,
+    eventForTask,
+    settings,
+    notify,
     focus: fx.focus,
     focusMin: Math.floor(fx.focusSeconds / 60),
     sessions: fx.sessions,
@@ -413,8 +553,6 @@ function useAppStateValue(
     togglePause: fx.togglePause,
     endFocus: fx.endFocus,
     completeFocus: fx.completeFocus,
-    challenges,
-    addChallenge,
     sheet,
     openSheet: useCallback(
       (next: Sheet | null) => {

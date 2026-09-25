@@ -2,6 +2,7 @@ import { loadDuoData, type DuoData } from "@/lib/duo-data";
 import { loadFocusData, type FocusData } from "@/lib/focus-data";
 import type { ProgressData } from "@/lib/progress";
 import { loadProgress } from "@/lib/progress-data";
+import { settingsFromRow, type UserSettings } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { DailyTaskRow, RoutineRow } from "@/lib/task-model";
 
@@ -14,11 +15,20 @@ export type SessionData = {
     timezone: string;
     createdAt: string;
   };
+  /** Owner-only settings (Stage 8). */
+  settings: UserSettings;
   /** null = no duo. partner null = waiting for the partner to join. */
   duo: {
     id: string;
     inviteCode: string;
-    partner: { id: string; displayName: string } | null;
+    /** When I joined (ISO). */
+    joinedAt: string;
+    partner: {
+      id: string;
+      displayName: string;
+      /** When the partner joined (ISO). */
+      joinedAt: string;
+    } | null;
   } | null;
 };
 
@@ -83,25 +93,28 @@ export async function loadAppData(): Promise<AppData | null> {
     progress: await loadProgress(supabase),
   }));
 
-  const [profiles, duos, members, { tasks, progress }, duo, focus] =
+  const [profiles, duos, members, settings, { tasks, progress }, duo, focus] =
     await Promise.all([
       supabase
         .from("profiles")
         .select("id, display_name, timezone, created_at"),
       supabase.from("duos").select("id, invite_code").maybeSingle(),
-      supabase.from("duo_members").select("user_id"),
+      supabase.from("duo_members").select("user_id, joined_at"),
+      supabase.from("user_settings").select("*").maybeSingle(),
       tasksAndProgress,
       loadDuoData(supabase, userId),
       loadFocusData(supabase),
     ]);
-  if (profiles.error || duos.error || members.error) {
+  if (profiles.error || duos.error || members.error || settings.error) {
     throw new Error("Could not load your account. Try again.");
   }
 
   const mine = profiles.data.find((p) => p.id === userId);
   if (!mine) throw new Error("Profile missing for signed-in user.");
 
-  const partnerId = members.data.find((m) => m.user_id !== userId)?.user_id;
+  const partnerMember = members.data.find((m) => m.user_id !== userId);
+  const partnerId = partnerMember?.user_id;
+  const myMember = members.data.find((m) => m.user_id === userId);
   const partner = profiles.data.find((p) => p.id === partnerId);
 
   return {
@@ -114,13 +127,20 @@ export async function loadAppData(): Promise<AppData | null> {
         timezone: mine.timezone,
         createdAt: mine.created_at,
       },
+      settings: settingsFromRow(settings.data),
       duo: duos.data
         ? {
             id: duos.data.id,
             inviteCode: duos.data.invite_code,
-            partner: partner
-              ? { id: partner.id, displayName: partner.display_name }
-              : null,
+            joinedAt: myMember?.joined_at ?? "",
+            partner:
+              partner && partnerMember
+                ? {
+                    id: partner.id,
+                    displayName: partner.display_name,
+                    joinedAt: partnerMember.joined_at,
+                  }
+                : null,
           }
         : null,
     },

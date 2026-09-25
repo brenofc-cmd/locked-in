@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useApp, type TaskInput } from "@/components/app-state";
 import { SwitchTrack, chipTone, cx } from "@/components/ui";
 import { DAYS, DAY_LETTERS } from "@/lib/local-date";
-import { SKIP_REASONS } from "@/lib/mock-data";
+import { SKIP_REASONS } from "@/lib/constants";
 import {
   CATEGORIES,
   CATEGORY_LABEL,
@@ -59,7 +59,9 @@ export function TaskFormSheet({
   const [category, setCategory] = useState<Category>(
     source?.category ?? "custom",
   );
-  const [visible, setVisible] = useState(source?.visible ?? true);
+  const [visible, setVisible] = useState(
+    source?.visible ?? app.settings.shareNewTasks,
+  );
   const [notes, setNotes] = useState(source?.notes ?? "");
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
