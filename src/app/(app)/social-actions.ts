@@ -111,7 +111,9 @@ export async function createChallenge(
         error:
           error.code === "42501"
             ? "Challenges start today or later, with your partner in the duo."
-            : "Could not create the challenge.",
+            : error.code === "23505"
+              ? "That challenge already exists."
+              : "Could not create the challenge.",
       };
     return { ok: true };
   } catch {
