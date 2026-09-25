@@ -1,9 +1,84 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-7 — Real progress, streak, weekly competition and analytics — IN PROGRESS (started 2026-09-24)
+7 — Real progress, streak, weekly competition and analytics — VERIFIED / COMPLETE (2026-09-25)
 
-Previous: 6 — Persistent Focus Sessions and live Focus synchronization — VERIFIED / COMPLETE (2026-09-24)
+Next Stage:
+8 — Complete Product (not started)
+
+---
+
+# Stage 7 record
+
+Stage 7 — Real progress, streak, weekly competition and analytics — VERIFIED / COMPLETE (2026-09-25)
+
+Completed (Stage 7):
+
+- `profiles.daily_standard_percent` (1–100, default 80); Settings saves it (optimistic, rollback)
+- Progress derived in SQL from `daily_tasks` + `focus_sessions`, no stats tables (4 migrations
+  `…180106`, `…180145`, `…180531`, `…112050`): `my_progress_summary`, `my_daily_progress`,
+  `my_habits` (INVOKER), `duo_weeks`, `partner_progress_summary` (DEFINER, integers only); shared
+  `private.materialize_tasks` (also materialises the partner before comparing)
+- Rules: skipped in the denominator, neutral days (0 planned) never 0 % / 100 %, standard met by
+  exact ratio, today never breaks the streak early, Perfect Day = 100 %, streak recalculated when
+  the standard changes, focus by the day a session started
+- Competition: raw completion % (never the standard, never focus), exact-ratio leader with `<1%`,
+  current week never a result, head-to-head over completed weeks where both had tasks, draws,
+  only full weeks together (pre-duo weeks have no partner side)
+- UI real: Today streak, streak sheet (longest), Progress (ranges 7D / 30D / 90D / YEAR, chart per
+  day / week / month, focus, perfect days, calendar with past-day review, weekly reviews, habits
+  and descriptive insights with a 3-occurrence minimum, longest streak), Partner (this week, leader,
+  focus and streak comparison, head-to-head strip and history), weekly review, morning briefing
+  (yesterday %, streak), review day; reload on local day change
+- Live without polling: own numbers from local state; partner numbers re-read after every realtime
+  refetch (`partnerVersion`); the provider now also refetches on the first channel join
+- Removed mocks: stats, streak, week, weeks, head-to-head, mock DaySheet corrections, `seeded()`
+- Docs: ANALYTICS.md (new), DATABASE, REALTIME, ARCHITECTURE, ADR-037…042, CLAUDE.md, README
+- Tooling: `supabase/dev/pgtap_dev.mjs` (pgTAP on DEV without Docker); `trackWrites()` tracks
+  Server Actions only and survives reloads
+
+Verified (2026-09-25, clean `.next`):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm test` — 7 files, 89 tests passed (34 new in `progress.test.ts`)
+- `npm run test:e2e` — 48 passed, three consecutive green full runs after the last fix: setup, UI
+  suite at 390 / 1440 (real progress / competition numbers), @focus, 375 / 430 layout, stage3 5,
+  stage4 4, stage5 4, stage6 7, stage7 3 (history / streak / standard / skipped / calendar / day
+  review; two browsers live competition without reload, private counted but never shown, current
+  week not a result, pre-duo week no contest, weekly review; public API isolation)
+- Database: pgTAP on DEV after the Stage 7 migrations — stage 3 51/51, stage 4 71/71, stage 5
+  40/40, stage 6 63/63, stage 7 78/78 (303/303); DEV free of fixtures afterwards
+- Migrations: all four applied on DEV; function bodies checked byte-identical (md5) with the files;
+  `src/types/database.ts` matches the generated schema
+- Responsive smoke with a real session (/today, /progress incl. insights, /partner, /settings) at
+  375, 390, 430, 768, 1180, 1440 — no horizontal overflow, no console errors
+- Advisors: new only the accepted DEFINER `duo_weeks` / `partner_progress_summary` (ADR-040); INFO
+  items unchanged
+- Security review: no stats tables, partner functions take no user id and return integers only,
+  private tasks never listed or broadcast, pre-duo history not exposed, anon refused, no service
+  role in client code, no secrets committed
+
+Fixed during Stage 7:
+
+- Weekly review / briefing / review day still read removed mocks (typecheck failed) → real data
+- Head-to-head counted weeks before the duo existed → `duo_weeks` hides the partner side there
+- Events between the server render and the first channel join were lost → refetch on first join
+- E2E helper counted Supabase reads and requests cut off by reloads as pending writes → fixed
+
+Known Issues:
+
+- A private completion reaches the partner's competition numbers only on their next re-read
+  (next shared event, reconnect, tab visible, reload) — by design, private tasks emit nothing
+- A standard change is not pushed to the partner (seen on their next re-read)
+- Weeks are framed by the viewer's Monday; far-apart time zones can differ by a day at the edges
+- Owners can still insert / edit past-dated tasks through the API (Stage 4 grants), so closed weeks
+  are not frozen — lock down in Stage 9 (integrity / RLS audit)
+- One transient "Could not load Focus." server error (Node → Supabase request that never reached
+  the API) seen once, right after an invalid parallel test run on shared users; not reproduced in
+  10 serial repeats or 6 full suites
+- `npx supabase test db` still cannot run locally (Docker); pgTAP runs on DEV via the script
+- Still mock: challenges, reaction persistence, notifications (Stage 8)
+- Realtime "Allow public access" and leaked-password protection still to change before production
 
 ---
 
