@@ -77,6 +77,12 @@ export function OnboardingScreen() {
       });
       return;
     }
+    // Just set up: nothing to brief today (the briefing starts tomorrow).
+    try {
+      localStorage.setItem("li:briefing-shown", app.today);
+    } catch {
+      // Storage blocked: the briefing may show once, still skippable.
+    }
     router.replace("/today");
   }
 
