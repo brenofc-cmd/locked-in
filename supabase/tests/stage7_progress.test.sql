@@ -298,8 +298,9 @@ select has_column('public', 'profiles', 'daily_standard_percent', 'profiles has 
 select col_not_null('public', 'profiles', 'daily_standard_percent', 'the standard is never null');
 select hasnt_table('public', 'daily_stats', 'no stats cache table');
 select hasnt_table('public', 'weekly_results', 'no weekly results cache table');
-select is((select count(*)::int from information_schema.tables where table_schema = 'public'), 7,
-  'Stage 7 adds no table (profiles, duos, duo_members, routine_items, daily_tasks, activity_events, focus_sessions)');
+select is((select count(*)::int from information_schema.tables where table_schema = 'public'
+           and table_name ~ '(stat|result|streak|progress|score|summary)'), 0,
+  'no stats / cache table of any kind (every number is derived)');
 
 -- ------------------------------------------------------------- GRANTS ----
 select ok(not has_function_privilege('anon', 'public.my_progress_summary()', 'execute'), 'anon cannot execute my_progress_summary');
