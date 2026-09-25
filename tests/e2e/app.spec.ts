@@ -202,7 +202,24 @@ test("partner page shows the duo comparison and live activity; reactions work", 
     .getByRole("dialog", { name: "React" })
     .getByRole("button", { name: "React 🔥" })
     .click();
-  await expect(activity.getByRole("button", { name: "🔥 sent" })).toBeVisible();
+  // Persisted (Stage 8): survives a reload.
+  const reacted = activity.getByRole("button", {
+    name: "You reacted 🔥 to Lucas completed Morning Run. Change reaction",
+  });
+  await expect(reacted).toBeVisible();
+  await page.reload();
+  await expect(reacted).toBeVisible();
+  // Leave the seeded state as it was.
+  await reacted.click();
+  await page
+    .getByRole("dialog", { name: "React" })
+    .getByRole("button", { name: "Remove reaction" })
+    .click();
+  await expect(
+    activity.getByRole("button", {
+      name: "React to Lucas completed Morning Run",
+    }),
+  ).toBeVisible();
 });
 
 // @focus: a running session covers every screen of that user, so this runs

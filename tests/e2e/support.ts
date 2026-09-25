@@ -41,10 +41,33 @@ export async function apiAs(user: TestUser) {
   return client;
 }
 
+/**
+ * Stage 8: the suites before stage8 run with onboarding finished, the
+ * morning briefing and the weekly-result notice off, so no first-open
+ * overlay or toast covers the screens they test. stage8 tests those.
+ */
+export async function testSettings(api: Api) {
+  const { data: me } = await api.auth.getUser();
+  const { error } = await api
+    .from("user_settings")
+    .update({
+      onboarding_completed_at: new Date().toISOString(),
+      show_morning_briefing: false,
+      notify_weekly_review: false,
+      notify_partner_activity: true,
+      notify_reactions: true,
+      share_new_tasks: true,
+      quiet_hours_enabled: false,
+    })
+    .eq("user_id", me.user!.id);
+  if (error) throw new Error(`settings reset failed: ${error.message}`);
+}
+
 /** Leaves any duo (ignores "not in a duo"). */
 export async function resetDuo(...users: TestUser[]) {
   for (const u of users) {
     const c = await apiAs(u);
+    await testSettings(c);
     await c.rpc("leave_duo");
     // "local": a global sign-out would revoke the user's browser sessions too.
     await c.auth.signOut({ scope: "local" });
@@ -59,6 +82,7 @@ export type Api = Awaited<ReturnType<typeof apiAs>>;
  * supabase/dev/reset_test_users.sql for a full DEV cleanup.)
  */
 export async function resetTasks(api: Api) {
+  await testSettings(api);
   await finishFocus(api);
   const { data: me } = await api.auth.getUser();
   const id = me.user!.id;
