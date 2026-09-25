@@ -182,12 +182,16 @@ test("partner page shows the duo comparison and live activity; reactions work", 
   await expect(
     page.getByRole("heading", { level: 1, name: "LUCAS" }),
   ).toBeVisible();
+  // Real week (the seeds only create today): Brendon 8 / 12 = 67 %, Lucas
+  // 3 / 5 = 60 %. No completed week yet, so head to head is 0 — 0.
   const week = page.getByRole("region", { name: "This week" });
-  await expect(week.getByText("87%")).toBeVisible();
-  await expect(week.getByText("81%")).toBeVisible();
-  await expect(
-    page.getByRole("region", { name: "Head to head" }),
-  ).toBeVisible();
+  await expect(week.getByTestId("week-me")).toHaveText("67%");
+  await expect(week.getByTestId("week-partner")).toHaveText("60%");
+  await expect(week.getByTestId("week-leader")).toHaveText(
+    /YOU'RE AHEAD\s*\+7%/,
+  );
+  const h2h = page.getByRole("region", { name: "Head to head" });
+  await expect(h2h.getByTestId("h2h-score")).toHaveText(/^0\s*—\s*0$/);
 
   const activity = page.getByRole("region", { name: "Activity" });
   await expect(activity.getByText("completed Morning Run")).toBeVisible();
@@ -251,17 +255,28 @@ test("focus: pick duration, start, pause, resume, end and record @focus", async 
   await expect(page.getByTestId("focus-today")).toHaveText(/^(\d+h )?\d+m$/);
 });
 
-test("progress opens and the range switch changes the numbers", async ({
+test("progress opens with the real numbers in every range", async ({
   page,
 }) => {
   await page.goto("/progress");
   await expect(
     page.getByRole("heading", { level: 1, name: "PROGRESS" }),
   ).toBeVisible();
-  await expect(page.getByTestId("progress-pct")).toHaveText("89%");
+  // Only today exists (8 / 12): 67 % in every range, below the 80 % standard.
+  await expect(page.getByTestId("progress-pct")).toHaveText("67%");
+  await expect(page.getByTestId("progress-streak")).toHaveText(/^0\s*days$/);
+  await expect(page.getByTestId("progress-perfect")).toHaveText("0");
   await page.getByRole("radio", { name: "30 DAYS" }).click();
-  await expect(page.getByTestId("progress-pct")).toHaveText("84%");
-  await expect(page.getByRole("region", { name: "September" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "30 DAYS" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await expect(page.getByTestId("progress-pct")).toHaveText("67%");
+  await expect(
+    page.getByRole("region", {
+      name: /^(January|February|March|April|May|June|July|August|September|October|November|December)$/,
+    }),
+  ).toBeVisible();
 });
 
 test("more lists the secondary screens and opens routine", async ({ page }) => {

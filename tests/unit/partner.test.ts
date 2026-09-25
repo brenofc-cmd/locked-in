@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatClock, formatMinutes } from "@/lib/format";
-import { mockPartner } from "@/lib/mock-data";
+import type { Partner } from "@/types";
 import { partnerView } from "@/lib/partner";
 import type { FeedEvent } from "@/types";
 
@@ -36,7 +36,17 @@ const feed: FeedEvent[] = [
     reacted: null,
   },
 ];
-const online = { ...mockPartner, status: "online" as const };
+const online: Partner = {
+  name: "Lucas",
+  handle: "",
+  initial: "L",
+  status: "online",
+  focusLabel: "",
+  focusSession: null,
+  seenAt: "",
+  flashAt: 0,
+  streak: 8,
+};
 
 describe("partner view", () => {
   it("shows online with real counts and the partner's latest completion", () => {
