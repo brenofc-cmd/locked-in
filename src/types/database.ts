@@ -294,6 +294,7 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           created_at: string;
+          daily_standard_percent: number;
           display_name: string;
           id: string;
           timezone: string;
@@ -302,6 +303,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null;
           created_at?: string;
+          daily_standard_percent?: number;
           display_name: string;
           id: string;
           timezone?: string;
@@ -310,6 +312,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null;
           created_at?: string;
+          daily_standard_percent?: number;
           display_name?: string;
           id?: string;
           timezone?: string;
@@ -416,6 +419,62 @@ export type Database = {
         Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
       };
       my_today: { Args: never; Returns: string };
+      my_progress_summary: {
+        Args: never;
+        Returns: {
+          today: string;
+          standard: number;
+          streak_before_today: number;
+          current_streak: number;
+          longest_closed: number;
+          longest_streak: number;
+          today_planned: number;
+          today_completed: number;
+          first_task_date: string | null;
+        }[];
+      };
+      my_daily_progress: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          day: string;
+          planned: number;
+          completed: number;
+          focus_seconds: number;
+          focus_sessions: number;
+        }[];
+      };
+      my_habits: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          routine_item_id: string;
+          title: string;
+          planned: number;
+          completed: number;
+        }[];
+      };
+      duo_weeks: {
+        Args: { p_weeks?: number };
+        Returns: {
+          week_start: string;
+          is_current: boolean;
+          me_planned: number;
+          me_completed: number;
+          me_focus_seconds: number;
+          me_perfect_days: number;
+          partner_planned: number | null;
+          partner_completed: number | null;
+          partner_focus_seconds: number | null;
+          partner_perfect_days: number | null;
+        }[];
+      };
+      partner_progress_summary: {
+        Args: never;
+        Returns: {
+          streak_before_today: number;
+          current_streak: number;
+          standard: number;
+        }[];
+      };
       normalize_invite_code: { Args: { p_code: string }; Returns: string };
       partner_current_focus: {
         Args: never;
