@@ -20,7 +20,7 @@ Completed (Stage 8):
   broadcasts, partner reads shared tasks only from the day the duo formed
 - Reactions: persisted on `activity_events`, fire / lightning / salute / respect, one per user and
   replaceable, removable, never on my own event, duo only, live on both sides, no feed line; toast
-  "Lucas reacted 🔥 to your Morning Run."
+  "Lucas reacted to your Morning Run."
 - Challenges: standard days / focus time only, progress / status / leader / winner / draw derived
   (docs/CHALLENGES.md), delete only before start, no edits
 - Onboarding: real, resumable (`onboarding_completed_at`), templates or own items, duo optional
