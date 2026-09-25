@@ -116,6 +116,11 @@ function useDuoRealtimeValue(initial: DuoData) {
   const myFocusListeners = useRef(new Set<MyFocusListener>());
   const reactionListeners = useRef(new Set<ReactionListener>());
   const duoListeners = useRef(new Set<DuoChangeListener>());
+  /** The session's view of the duo, for refetches that find it changed. */
+  const sessionPartner = useRef(partnerId);
+  useEffect(() => {
+    sessionPartner.current = partnerId;
+  }, [partnerId]);
 
   /** Re-read feed + partner's day from Postgres (the source of truth). */
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -148,6 +153,16 @@ function useDuoRealtimeValue(initial: DuoData) {
         setPartnerVersion((v) => v + 1);
         setChallengesVersion((v) => v + 1);
         if (seq === focusSeq.current) setPartnerFocus(data.partnerFocus);
+        // A duo_joined / duo_ended broadcast can be missed (sent before this
+        // tab joined the channel, or while offline): the database is the
+        // truth, so a refetch that finds the partner arrived or gone tells
+        // the app to re-render the session too.
+        const partnerNow = data.partnerDay !== null;
+        if (partnerNow !== (sessionPartner.current !== null)) {
+          duoListeners.current.forEach((l) =>
+            partnerNow ? l("joined", false) : l("ended", true),
+          );
+        }
       } catch {
         // Offline or transient: the next reconnect / event retries.
       }
