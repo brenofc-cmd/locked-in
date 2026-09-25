@@ -232,15 +232,21 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     [fx, merge, today],
   );
 
+  // One template application at a time (the database also serialises and
+  // skips items that already exist, so a double click adds nothing twice).
+  const applying = useRef(false);
   const applyTemplate = useCallback(
-    async (items: { name: string; category: Category }[]) => {
+    async (items: { name: string; category: Category }[], visible = true) => {
+      if (applying.current) return false;
       const have = new Set(routines.map((r) => r.name.toLowerCase()));
       const fresh = items.filter((i) => !have.has(i.name.toLowerCase()));
       if (fresh.length === 0) {
         fx.toast({ text: "Nothing new to add.", sub: "ROUTINE" });
         return true;
       }
-      const res = await applyTemplateAction(fresh).catch(() => null);
+      applying.current = true;
+      const res = await applyTemplateAction(fresh, visible).catch(() => null);
+      applying.current = false;
       if (!res?.ok) {
         fx.toast({
           text: res?.error ?? "Network error. Try again.",
@@ -249,7 +255,13 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         return false;
       }
       merge(res.routines, res.tasks);
-      fx.toast({ text: `${fresh.length} items added.`, sub: "ROUTINE" });
+      const n = res.routines.length;
+      fx.toast({
+        text: n
+          ? `${n} ${n === 1 ? "item" : "items"} added.`
+          : "Nothing new to add.",
+        sub: "ROUTINE",
+      });
       return true;
     },
     [fx, merge, routines],

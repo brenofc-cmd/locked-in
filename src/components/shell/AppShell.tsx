@@ -13,6 +13,8 @@ import {
 } from "@/components/icons";
 import { FocusOverlay } from "@/components/overlays/FocusOverlay";
 import { MomentOverlays } from "@/components/overlays/MomentOverlays";
+import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
+import { useSession } from "@/components/session";
 import { DevPanel } from "@/components/shell/DevPanel";
 import { Feedback } from "@/components/shell/Feedback";
 import { SheetHost } from "@/components/sheets/SheetHost";
@@ -44,6 +46,8 @@ const TABS = [
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
+  // Until onboarding is finished (persisted), it replaces the app (Stage 8).
+  const { settings } = useSession();
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
@@ -58,10 +62,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
       >
         <div className="mx-auto max-w-[1120px] px-[18px] pt-5 pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-[52px] wide:pt-11 wide:pb-24">
-          {children}
+          {settings.onboarded ? children : null}
         </div>
       </main>
       <BottomNav pathname={pathname} />
+      {!settings.onboarded && <OnboardingScreen />}
       <FocusOverlay />
       <MomentOverlays />
       <SheetHost />

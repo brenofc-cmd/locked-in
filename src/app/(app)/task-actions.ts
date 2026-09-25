@@ -212,22 +212,24 @@ export async function reorderRoutines(
 }
 
 /** Creates one routine item per template entry (every day), in order. */
+/**
+ * Template / onboarding items in one database call (Stage 8): items already
+ * in the active routine are skipped and calls are serialised per user, so a
+ * double click can never create the same routine twice.
+ */
 export async function applyTemplate(
   items: { name: string; category: Category }[],
+  visible = true,
 ): Promise<{ ok: true; routines: RoutineRow[]; tasks: DailyTaskRow[] } | Fail> {
   if (items.length === 0 || items.length > 20) return fail({ code: "23514" });
   return guard(async () => {
     const supabase = await createClient();
-    const ids: string[] = [];
-    for (const item of items) {
-      const { data, error } = await supabase.rpc("create_routine_item", {
-        p_title: item.name,
-        p_days: [1, 2, 3, 4, 5, 6, 7],
-        p_category: item.category,
-      });
-      if (error || !data) return fail(error);
-      ids.push(data);
-    }
-    return { ok: true as const, ...(await routineWithToday(supabase, ids)) };
+    const { data, error } = await supabase.rpc("add_routine_items", {
+      p_titles: items.map((i) => i.name),
+      p_categories: items.map((i) => i.category),
+      p_visible: visible === true,
+    });
+    if (error || !data) return fail(error);
+    return { ok: true as const, ...(await routineWithToday(supabase, data)) };
   });
 }
