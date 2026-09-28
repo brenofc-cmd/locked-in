@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { LOCALE, t } from "@/i18n/pt-BR";
 
 /**
  * Installable app (Stage 8): name, standalone display, the app's surface
@@ -9,7 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "LOCKED IN",
     short_name: "LOCKED IN",
-    description: "No hype. Just proof.",
+    description: t.app.tagline,
+    lang: LOCALE,
     id: "/",
     start_url: "/today",
     scope: "/",

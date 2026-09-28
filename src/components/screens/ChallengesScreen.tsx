@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { useChallenges } from "@/components/use-challenges";
@@ -28,16 +29,16 @@ export function ChallengesScreen() {
     return (
       <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
         <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
-          CHALLENGES
+          {t.challengesScreen.title}
         </h1>
         <p className="text-[26px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty">
-          Challenges are set with your partner.
+          {t.challengesScreen.needsPartner}
         </p>
         <Link
           href="/duo"
           className="flex h-[52px] items-center self-start rounded-[14px] bg-accent px-[22px] font-mono text-xs font-semibold tracking-[.22em] text-bg"
         >
-          INVITE PARTNER
+          {t.challengesScreen.invitePartner}
         </Link>
       </div>
     );
@@ -55,10 +56,10 @@ export function ChallengesScreen() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-2.5">
           <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-            CHALLENGES
+            {t.challengesScreen.title}
           </h1>
           <span className="text-[14.5px] text-muted">
-            Optional. Private to your Duo.
+            {t.challengesScreen.subtitle}
           </span>
         </div>
         <button
@@ -66,25 +67,29 @@ export function ChallengesScreen() {
           onClick={() => app.openSheet({ kind: "challenge" })}
           className="h-11 rounded-xl border border-white/12 px-4 text-sm"
         >
-          New challenge
+          {t.challengesScreen.newChallenge}
         </button>
       </header>
 
       {challenges === null && !error && (
-        <span className="text-[13.5px] text-dim">Loading…</span>
+        <span className="text-[13.5px] text-dim">
+          {t.challengesScreen.loading}
+        </span>
       )}
       {error && (
         <span role="alert" className="text-[13.5px] text-danger">
-          Could not load challenges.
+          {t.challengesScreen.loadFailed}
         </span>
       )}
 
       {challenges !== null && active.length === 0 && (
         <div className="flex flex-col gap-2 border-y border-white/7 py-6">
           <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-            NO ACTIVE CHALLENGE
+            {t.challengesScreen.noActive}
           </span>
-          <span className="text-[15px] text-muted">Create one together.</span>
+          <span className="text-[15px] text-muted">
+            {t.challengesScreen.createTogether}
+          </span>
         </div>
       )}
 
@@ -98,11 +103,11 @@ export function ChallengesScreen() {
 
       {done.length > 0 && (
         <section
-          aria-label="Completed challenges"
+          aria-label={t.challengesScreen.completedAria}
           className="flex flex-col gap-3.5"
         >
           <h2 className="border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
-            COMPLETED
+            {t.challengesScreen.completed}
           </h2>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
             {done.map((c) => (
@@ -129,16 +134,16 @@ function ChallengeCard({
   const verdict =
     status === "completed"
       ? winner === "me"
-        ? "YOU WON"
+        ? t.challengesScreen.youWon
         : winner === "partner"
-          ? `${partner.name.toUpperCase()} WON`
-          : "DRAW"
+          ? t.challengesScreen.partnerWon(partner.name.toUpperCase())
+          : t.challengesScreen.draw
       : status === "active"
         ? leader === "me"
-          ? "YOU LEAD"
+          ? t.challengesScreen.youLead
           : leader === "partner"
-            ? `${partner.name.toUpperCase()} LEADS`
-            : "LEVEL"
+            ? t.challengesScreen.partnerLeads(partner.name.toUpperCase())
+            : t.challengesScreen.level
         : "";
 
   return (
@@ -195,7 +200,7 @@ function ChallengeCard({
           onClick={() => onDelete(c.id)}
           className="h-11 self-start text-[13px] text-dim underline underline-offset-[3px]"
         >
-          Delete before it starts
+          {t.challengesScreen.deleteBeforeStart}
         </button>
       )}
     </article>

@@ -106,7 +106,7 @@ const during = (
     .map((x) => x.data);
 
 const overlay = (page: Page) =>
-  page.getByRole("dialog", { name: "Focus session" });
+  page.getByRole("dialog", { name: "Sessão de Foco" });
 const clock = (page: Page) => page.getByTestId("focus-clock");
 const toSeconds = (t: string) => {
   const [m, s] = t.split(":").map(Number);
@@ -118,7 +118,7 @@ const partnerCard = (page: Page, status: string) =>
 async function lockIn(page: Page, option: string, minutes: "25" | "50") {
   await page.goto("/focus");
   await page.getByRole("radio", { name: option }).first().click();
-  await page.getByRole("radio", { name: `${minutes} minutes` }).click();
+  await page.getByRole("radio", { name: `${minutes} minutos` }).click();
   await page.getByRole("button", { name: "LOCK IN" }).click();
   await expect(overlay(page)).toBeVisible();
 }
@@ -131,12 +131,12 @@ test("a session survives refresh while running and while paused; ends early with
   const a = await open(browser, users.a, "/focus");
   const writes = trackWrites(a.page);
 
-  await lockIn(a.page, "Project", "25");
+  await lockIn(a.page, "Projeto", "25");
   await expect(clock(a.page)).toHaveText(/^2[45]:\d\d$/);
   const active = (await A.rpc("my_active_focus")).data!;
   expect(active).toHaveLength(1);
   expect(active[0]).toMatchObject({
-    title: "Project",
+    title: "Projeto",
     planned_seconds: 1500,
     status: "active",
   });
@@ -150,9 +150,9 @@ test("a session survives refresh while running and while paused; ends early with
     .toBeLessThan(1500 - 2);
 
   // Pause: the clock stops, and stays stopped across a refresh.
-  await overlay(a.page).getByRole("button", { name: "PAUSE" }).click();
+  await overlay(a.page).getByRole("button", { name: "PAUSAR" }).click();
   await expect(
-    overlay(a.page).getByRole("button", { name: "RESUME" }),
+    overlay(a.page).getByRole("button", { name: "RETOMAR" }),
   ).toBeVisible();
   await writes.idle();
   const pausedAt = toSeconds((await clock(a.page).textContent())!);
@@ -160,7 +160,7 @@ test("a session survives refresh while running and while paused; ends early with
   expect(toSeconds((await clock(a.page).textContent())!)).toBe(pausedAt);
   await a.page.reload();
   await expect(
-    overlay(a.page).getByRole("button", { name: "RESUME" }),
+    overlay(a.page).getByRole("button", { name: "RETOMAR" }),
   ).toBeVisible();
   expect(
     Math.abs(toSeconds((await clock(a.page).textContent())!) - pausedAt),
@@ -168,7 +168,7 @@ test("a session survives refresh while running and while paused; ends early with
   expect((await A.rpc("my_active_focus")).data![0].status).toBe("paused");
 
   // Resume: running again.
-  await overlay(a.page).getByRole("button", { name: "RESUME" }).click();
+  await overlay(a.page).getByRole("button", { name: "RETOMAR" }).click();
   await expect
     .poll(async () => toSeconds((await clock(a.page).textContent()) ?? ""), {
       timeout: 5000,
@@ -178,11 +178,13 @@ test("a session survives refresh while running and while paused; ends early with
 
   // End early: real duration, optional reflection, focus today updated.
   const note = `Outlined chapter ${Date.now()}.`;
-  await overlay(a.page).getByRole("button", { name: "End session" }).click();
-  const done = a.page.getByRole("dialog", { name: "Session complete" });
-  await expect(done.getByText("MIN COMPLETE")).toBeVisible();
+  await overlay(a.page)
+    .getByRole("button", { name: "Encerrar sessão" })
+    .click();
+  const done = a.page.getByRole("dialog", { name: "Sessão concluída" });
+  await expect(done.getByText("MIN CONCLUÍDOS")).toBeVisible();
   await done.getByRole("textbox").fill(note);
-  await done.getByRole("button", { name: "DONE" }).click();
+  await done.getByRole("button", { name: "PRONTO" }).click();
   await expect(done).toBeHidden();
   await writes.idle();
   await expect(a.page.getByText(note)).toBeVisible();
@@ -247,46 +249,46 @@ test("the partner sees focus live: start, pause, resume, end, app closed; privat
   await expect(partnerCard(b.page, "online")).toBeVisible({ timeout: LIVE });
 
   // Start -> B: FOCUSING with the shared title and a running clock.
-  await lockIn(a.page, "Project", "25");
-  const focusing = partnerCard(b.page, "focusing");
+  await lockIn(a.page, "Projeto", "25");
+  const focusing = partnerCard(b.page, "em foco");
   await expect(focusing).toBeVisible({ timeout: LIVE });
-  await expect(focusing).toContainText(/Project · 2[45]:\d\d/);
+  await expect(focusing).toContainText(/Projeto · 2[45]:\d\d/);
   await expect(
-    b.page.getByRole("status").getByText("Alice started Focus — Project"),
+    b.page.getByRole("status").getByText("Alice iniciou Foco — Projeto"),
   ).toBeVisible({ timeout: LIVE });
 
   // Pause / resume reach B without reload.
-  await overlay(a.page).getByRole("button", { name: "PAUSE" }).click();
-  await expect(focusing).toContainText("paused", { timeout: LIVE });
-  await overlay(a.page).getByRole("button", { name: "RESUME" }).click();
-  await expect(focusing).not.toContainText("paused", { timeout: LIVE });
+  await overlay(a.page).getByRole("button", { name: "PAUSAR" }).click();
+  await expect(focusing).toContainText("pausado", { timeout: LIVE });
+  await overlay(a.page).getByRole("button", { name: "RETOMAR" }).click();
+  await expect(focusing).not.toContainText("pausado", { timeout: LIVE });
 
   // A closes the app mid-session: still FOCUSING for B (persistent, not presence).
   await a.context.close();
   await b.page.waitForTimeout(6000);
-  await expect(partnerCard(b.page, "focusing")).toBeVisible();
+  await expect(partnerCard(b.page, "em foco")).toBeVisible();
 
   // A reopens: the session is restored; A ends it -> B sees ONLINE.
   a = await open(browser, users.a, "/today");
   await expect(overlay(a.page)).toBeVisible();
-  await overlay(a.page).getByRole("button", { name: "End session" }).click();
-  const done = a.page.getByRole("dialog", { name: "Session complete" });
+  await overlay(a.page)
+    .getByRole("button", { name: "Encerrar sessão" })
+    .click();
+  const done = a.page.getByRole("dialog", { name: "Sessão concluída" });
   await done.getByRole("textbox").fill("private note for me");
-  await done.getByRole("button", { name: "DONE" }).click();
+  await done.getByRole("button", { name: "PRONTO" }).click();
   await expect(partnerCard(b.page, "online")).toBeVisible({ timeout: LIVE });
   await expect(
-    b.page.getByText(/Alice completed (<1|\d+) min Focus/).first(),
+    b.page.getByText(/Alice concluiu (<1|\d+) min de Foco/).first(),
   ).toBeVisible({ timeout: LIVE });
 
   // Private: a session on a private task shows no title to B.
   await lockIn(a.page, "Secret thesis", "25");
-  await expect(partnerCard(b.page, "focusing")).toBeVisible({ timeout: LIVE });
+  await expect(partnerCard(b.page, "em foco")).toBeVisible({ timeout: LIVE });
   await b.page.waitForTimeout(1500);
   await expect(b.page.getByText("Secret thesis")).toHaveCount(0);
   await expect(
-    b.page
-      .getByRole("status")
-      .getByText("Alice started Focus", { exact: true }),
+    b.page.getByRole("status").getByText("Alice iniciou Foco", { exact: true }),
   ).toBeVisible();
 
   // Reflection is never readable by the partner.
@@ -315,16 +317,16 @@ test("second tab restores the session, cannot start another, and a pause there r
 }) => {
   await finishFocus(A);
   const a = await open(browser, users.a, "/focus");
-  await lockIn(a.page, "Reading", "50");
+  await lockIn(a.page, "Leitura", "50");
 
   const tab2 = await a.context.newPage();
   await tab2.goto("/focus");
   await expect(overlay(tab2)).toBeVisible(); // same session, not a new picker
-  await expect(overlay(tab2).getByText("READING")).toBeVisible();
+  await expect(overlay(tab2).getByText("LEITURA")).toBeVisible();
 
-  await overlay(tab2).getByRole("button", { name: "PAUSE" }).click();
+  await overlay(tab2).getByRole("button", { name: "PAUSAR" }).click();
   await expect(
-    overlay(a.page).getByRole("button", { name: "RESUME" }),
+    overlay(a.page).getByRole("button", { name: "RETOMAR" }),
   ).toBeVisible({ timeout: LIVE });
 
   // A second device racing a start gets a friendly refusal; still one session.
@@ -352,7 +354,7 @@ test("double LOCK IN and concurrent starts create exactly one session", async ({
 
   const a = await open(browser, users.a, "/focus");
   const before = (await A.from("focus_sessions").select("id")).data!.length;
-  await a.page.getByRole("radio", { name: "Study" }).click();
+  await a.page.getByRole("radio", { name: "Estudo" }).click();
   await a.page.getByRole("button", { name: "LOCK IN" }).dblclick();
   await expect(overlay(a.page)).toBeVisible();
   await a.page.waitForTimeout(1500);
@@ -391,8 +393,8 @@ test("a running focus sends nothing per second: no writes, no broadcasts, no pre
   await finishFocus(A);
   const b = await open(browser, users.b, "/today");
   const a = await open(browser, users.a, "/focus");
-  await lockIn(a.page, "Project", "25");
-  await expect(partnerCard(b.page, "focusing")).toBeVisible({ timeout: LIVE });
+  await lockIn(a.page, "Projeto", "25");
+  await expect(partnerCard(b.page, "em foco")).toBeVisible({ timeout: LIVE });
   await a.page.waitForTimeout(1000);
 
   // Sanity: the recorders do see realtime traffic (the start itself reached B).
@@ -430,10 +432,12 @@ test("a running focus sends nothing per second: no writes, no broadcasts, no pre
     expect(f).toContain('"leaves":{}');
   }
 
-  await overlay(a.page).getByRole("button", { name: "End session" }).click();
+  await overlay(a.page)
+    .getByRole("button", { name: "Encerrar sessão" })
+    .click();
   await a.page
-    .getByRole("dialog", { name: "Session complete" })
-    .getByRole("button", { name: "DONE" })
+    .getByRole("dialog", { name: "Sessão concluída" })
+    .getByRole("button", { name: "PRONTO" })
     .click();
   await a.context.close();
   await b.context.close();

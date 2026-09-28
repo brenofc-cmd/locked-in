@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import { createDuo, joinDuo } from "@/app/(app)/actions";
@@ -18,10 +19,14 @@ import {
 const PATHS = [
   {
     id: "template",
-    label: "Start from a template",
-    sub: "Morning, study, night or training. Edit later.",
+    label: t.onboarding.pathTemplate,
+    sub: t.onboarding.pathTemplateSub,
   },
-  { id: "scratch", label: "Build from scratch", sub: "Add your own items." },
+  {
+    id: "scratch",
+    label: t.onboarding.pathScratch,
+    sub: t.onboarding.pathScratchSub,
+  },
 ] as const;
 
 /**
@@ -73,7 +78,7 @@ export function OnboardingScreen() {
     if (!res?.ok) {
       app.toast({
         text: res && !res.ok ? res.error : NETWORK_ERROR,
-        sub: "ONBOARDING",
+        sub: t.onboarding.toastSub,
       });
       return;
     }
@@ -107,9 +112,9 @@ export function OnboardingScreen() {
     setStep((s) => (s + 1) as OnboardingStep);
   }
 
-  function pickTemplate(t: string) {
-    setTpl(t);
-    setItems(ROUTINE_TEMPLATES[t].map((i) => ({ name: i.name, on: true })));
+  function pickTemplate(name: string) {
+    setTpl(name);
+    setItems(ROUTINE_TEMPLATES[name].map((i) => ({ name: i.name, on: true })));
   }
 
   function addDraft() {
@@ -138,23 +143,21 @@ export function OnboardingScreen() {
     });
   }
 
-  const cta = ["BEGIN", "CONTINUE", "CONTINUE", "CONTINUE", "ENTER LOCKED IN"][
-    step
-  ];
+  const cta = t.onboarding.ctas[step];
   const ctaDisabled = busy || (step === 1 && !name.trim());
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Welcome to LOCKED IN"
+      aria-label={t.onboarding.dialogAria}
       className="absolute inset-0 z-[60] overflow-y-auto bg-overlay animate-[li-fade-in_.5s_ease]"
     >
       <div className="mx-auto flex min-h-full max-w-[440px] flex-col justify-between gap-9 px-6 pt-12 pb-8 desk:px-8 desk:py-16">
         <div className="flex min-h-11 items-center justify-between">
           <div
             className="flex gap-1.5"
-            aria-label={`Step ${step + 1} of 5`}
+            aria-label={t.onboarding.stepAria(step + 1, 5)}
             role="img"
           >
             {[0, 1, 2, 3, 4].map((i) => (
@@ -177,7 +180,7 @@ export function OnboardingScreen() {
               onClick={() => setStep((s) => (s - 1) as OnboardingStep)}
               className="h-11 px-1 text-sm text-dim"
             >
-              Back
+              {t.onboarding.back}
             </button>
           )}
         </div>
@@ -189,9 +192,9 @@ export function OnboardingScreen() {
               LOCKED IN
             </h1>
             <span className="font-mono text-[13px] leading-[1.8] tracking-[.28em] text-dim">
-              NO HYPE.
+              {t.app.taglineLines[0]}
               <br />
-              JUST PROOF.
+              {t.app.taglineLines[1]}
             </span>
           </div>
         )}
@@ -201,7 +204,7 @@ export function OnboardingScreen() {
               htmlFor="ob-name"
               className="font-mono text-[11px] tracking-[.18em] text-dim"
             >
-              YOUR NAME
+              {t.onboarding.yourName}
             </label>
             <input
               id="ob-name"
@@ -213,20 +216,20 @@ export function OnboardingScreen() {
               className="h-[60px] rounded-[14px] border border-white/12 bg-field px-[18px] text-[22px] outline-none focus:border-white/30"
             />
             <span className="text-[13px] text-dim">
-              Your partner will see this name.
+              {t.onboarding.nameHint}
             </span>
           </div>
         )}
         {step === 2 && (
           <div className="flex flex-col gap-[18px] animate-[li-rise_.4s_ease]">
             <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.02em]">
-              BUILD YOUR
+              {t.onboarding.buildLines[0]}
               <br />
-              FIRST ROUTINE
+              {t.onboarding.buildLines[1]}
             </h1>
             <div
               role="radiogroup"
-              aria-label="How to start"
+              aria-label={t.onboarding.howToStart}
               className="flex flex-col gap-[18px]"
             >
               {PATHS.map((p) => {
@@ -272,27 +275,29 @@ export function OnboardingScreen() {
         {step === 3 && (
           <div className="flex flex-col gap-4 animate-[li-rise_.4s_ease]">
             <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.02em]">
-              {path === "template" ? "PICK YOUR ITEMS" : "ADD YOUR ITEMS"}
+              {path === "template"
+                ? t.onboarding.pickItems
+                : t.onboarding.addItems}
             </h1>
             {path === "template" && (
               <div
                 role="radiogroup"
-                aria-label="Template"
+                aria-label={t.onboarding.templateAria}
                 className="flex flex-wrap gap-1.5"
               >
-                {TEMPLATE_NAMES.map((t) => (
+                {TEMPLATE_NAMES.map((tplName) => (
                   <button
-                    key={t}
+                    key={tplName}
                     type="button"
                     role="radio"
-                    aria-checked={tpl === t}
-                    onClick={() => pickTemplate(t)}
+                    aria-checked={tpl === tplName}
+                    onClick={() => pickTemplate(tplName)}
                     className={cx(
                       "h-10 rounded-[10px] border px-3.5 text-sm",
-                      chipTone(tpl === t),
+                      chipTone(tpl === tplName),
                     )}
                   >
-                    {t}
+                    {tplName}
                   </button>
                 ))}
               </div>
@@ -337,14 +342,14 @@ export function OnboardingScreen() {
                       addDraft();
                     }
                   }}
-                  placeholder="Add your own"
-                  aria-label="Add item"
+                  placeholder={t.onboarding.addOwn}
+                  aria-label={t.onboarding.addItemAria}
                   className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 text-base outline-none"
                 />
                 <button
                   type="button"
                   onClick={addDraft}
-                  aria-label="Add"
+                  aria-label={t.onboarding.addAria}
                   className="size-12 rounded-xl border border-white/12 text-[22px]"
                 >
                   +
@@ -352,28 +357,36 @@ export function OnboardingScreen() {
               </div>
             </div>
             <span className="text-[13px] text-dim">
-              Every item repeats daily. Change schedules any time.
+              {t.onboarding.repeatsDaily}
             </span>
           </div>
         )}
         {step === 4 && (
           <div className="flex flex-col gap-[18px] animate-[li-rise_.4s_ease]">
             <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.02em]">
-              {duo?.partner ? "YOUR DUO" : "INVITE YOUR"}
+              {
+                (duo?.partner
+                  ? t.onboarding.duoReadyLines
+                  : t.onboarding.inviteLines)[0]
+              }
               <br />
-              {duo?.partner ? "IS READY" : "PARTNER"}
+              {
+                (duo?.partner
+                  ? t.onboarding.duoReadyLines
+                  : t.onboarding.inviteLines)[1]
+              }
             </h1>
             <span className="text-base leading-[1.5] text-pretty text-muted">
-              Discipline is easier when somebody knows whether you showed up.
+              {t.onboarding.pitch}
             </span>
             {duo?.partner ? (
               <span className="text-[15px]" data-testid="onboarding-partner">
-                You and {duo.partner.displayName} see each other&apos;s day.
+                {t.onboarding.partnerReady(duo.partner.displayName)}
               </span>
             ) : duo ? (
               <div className="flex flex-col gap-1 border-y border-white/7 py-4">
                 <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
-                  YOUR CODE · SHARE IT WITH YOUR PARTNER
+                  {t.onboarding.yourCode}
                 </span>
                 <span
                   className="font-mono text-2xl tracking-[.12em]"
@@ -390,14 +403,16 @@ export function OnboardingScreen() {
                   disabled={duoPending}
                   className="h-[52px] rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.24em] text-bg disabled:opacity-60"
                 >
-                  {duoPending ? "CREATING…" : "CREATE INVITE"}
+                  {duoPending
+                    ? t.onboarding.creating
+                    : t.onboarding.createInvite}
                 </button>
                 <form className="flex gap-2" onSubmit={join}>
                   <input
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     placeholder="LKD-XXXXXX"
-                    aria-label="Partner's code"
+                    aria-label={t.onboarding.partnerCodeAria}
                     autoCapitalize="characters"
                     autoComplete="off"
                     spellCheck={false}
@@ -409,7 +424,7 @@ export function OnboardingScreen() {
                     disabled={duoPending || !code.trim()}
                     className="h-12 rounded-xl border border-white/12 px-[18px] text-sm disabled:opacity-60"
                   >
-                    Join
+                    {t.onboarding.join}
                   </button>
                 </form>
               </div>
@@ -433,7 +448,7 @@ export function OnboardingScreen() {
                 ctaDisabled ? "bg-selected text-ghost" : "bg-text text-bg",
               )}
             >
-              {busy && step !== 0 ? "SAVING…" : cta}
+              {busy && step !== 0 ? t.onboarding.saving : cta}
             </button>
           )}
           {step === 4 && !duo && (
@@ -443,7 +458,7 @@ export function OnboardingScreen() {
               disabled={busy}
               className="h-12 text-sm text-muted"
             >
-              Do this later
+              {t.onboarding.later}
             </button>
           )}
         </div>

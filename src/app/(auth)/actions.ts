@@ -1,5 +1,6 @@
 "use server";
 
+import { t } from "@/i18n/pt-BR";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authErrorMessage, validatePassword } from "@/lib/auth-errors";
@@ -42,7 +43,7 @@ export async function signIn(
   const email = text(fd, "email");
   const password = String(fd.get("password") ?? "");
   if (!email || !password)
-    return { error: "Enter your email and password.", email };
+    return { error: t.auth.enterEmailAndPassword, email };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -59,8 +60,8 @@ export async function signUp(
   const email = text(fd, "email");
   const password = String(fd.get("password") ?? "");
   const echo = { name, email };
-  if (!name) return { error: "Enter your name.", ...echo };
-  if (!email) return { error: "Enter your email.", ...echo };
+  if (!name) return { error: t.auth.enterName, ...echo };
+  if (!email) return { error: t.auth.enterEmail, ...echo };
   const invalid = validatePassword(password, String(fd.get("confirm") ?? ""));
   if (invalid) return { error: invalid, ...echo };
 
@@ -86,7 +87,7 @@ export async function requestPasswordReset(
   fd: FormData,
 ): Promise<AuthFormState> {
   const email = text(fd, "email");
-  if (!email) return { error: "Enter your email.", email };
+  if (!email) return { error: t.auth.enterEmail, email };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

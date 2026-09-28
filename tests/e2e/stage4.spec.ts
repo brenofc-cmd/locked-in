@@ -51,14 +51,14 @@ const row = (page: Page, name: string) =>
 async function addRoutine(
   page: Page,
   name: string,
-  days: "Every day" | "Weekdays",
+  days: "Todo dia" | "Dias úteis",
 ) {
   await page.goto("/routine");
-  await page.getByRole("button", { name: "+ Add item" }).click();
-  const sheet = page.getByRole("dialog", { name: "Add task" });
-  await sheet.getByRole("textbox", { name: "Task name" }).fill(name);
+  await page.getByRole("button", { name: "+ Adicionar item" }).click();
+  const sheet = page.getByRole("dialog", { name: "Adicionar tarefa" });
+  await sheet.getByRole("textbox", { name: "Nome da tarefa" }).fill(name);
   await sheet.getByRole("radio", { name: days }).click();
-  await sheet.getByRole("button", { name: "ADD", exact: true }).click();
+  await sheet.getByRole("button", { name: "ADICIONAR", exact: true }).click();
   await expect(sheet).toBeHidden();
   await expect(
     page.getByRole("button", { name: new RegExp(`^${name}`) }),
@@ -83,12 +83,12 @@ test("a real user builds a routine and runs the day; everything survives reloads
   await signInUI(page, users.a);
 
   // New user: no fake tasks.
-  await expect(page.getByText("NO ROUTINE YET")).toBeVisible();
-  await expect(page.getByTestId("today-count")).toHaveText("0 / 0 done");
+  await expect(page.getByText("NENHUMA ROTINA AINDA")).toBeVisible();
+  await expect(page.getByTestId("today-count")).toHaveText("0 / 0 feitas");
 
   // Recurring items. Morning Run is MON–FRI: it is on Today only on weekdays.
-  await addRoutine(page, "Morning Run", "Weekdays");
-  await addRoutine(page, "Wake Up", "Every day");
+  await addRoutine(page, "Morning Run", "Dias úteis");
+  await addRoutine(page, "Wake Up", "Todo dia");
   const today = (await A.rpc("my_today")).data!;
   const weekday = isoWeekday(today) <= 5;
 
@@ -114,51 +114,55 @@ test("a real user builds a routine and runs the day; everything survives reloads
   await expect(row(page, "Wake Up")).toHaveAttribute("aria-checked", "false");
 
   // Skip -> reload -> skipped, stays in the total and not done.
-  await page.getByRole("button", { name: "Options for Wake Up" }).click();
+  await page.getByRole("button", { name: "Opções de Wake Up" }).click();
   await page
-    .getByRole("dialog", { name: "Task options" })
-    .getByRole("button", { name: "Rest" })
+    .getByRole("dialog", { name: "Opções da tarefa" })
+    .getByRole("button", { name: "Descanso" })
     .click();
-  await expect(page.getByText("SKIPPED · REST")).toBeVisible();
+  await expect(page.getByText("PULADA · DESCANSO")).toBeVisible();
   await writes.idle();
   await page.reload();
-  await expect(page.getByText("SKIPPED · REST")).toBeVisible();
+  await expect(page.getByText("PULADA · DESCANSO")).toBeVisible();
   const total = weekday ? 2 : 1;
-  await expect(page.getByTestId("today-count")).toHaveText(`0 / ${total} done`);
+  await expect(page.getByTestId("today-count")).toHaveText(
+    `0 / ${total} feitas`,
+  );
   expect(await taskStatus(A, "Wake Up")).toEqual(["skipped"]);
 
   // Unskip (correction) -> pending again.
-  await page.getByRole("button", { name: "Options for Wake Up" }).click();
+  await page.getByRole("button", { name: "Opções de Wake Up" }).click();
   await page
-    .getByRole("dialog", { name: "Task options" })
-    .getByRole("button", { name: /Unskip/ })
+    .getByRole("dialog", { name: "Opções da tarefa" })
+    .getByRole("button", { name: /Desfazer pulo/ })
     .click();
-  await expect(page.getByText("SKIPPED · REST")).toBeHidden();
+  await expect(page.getByText("PULADA · DESCANSO")).toBeHidden();
   await writes.idle();
   expect(await taskStatus(A, "Wake Up")).toEqual(["pending"]);
 
   // Quick Add a one-off -> reload -> still there.
-  await page.getByRole("button", { name: "Add task" }).click();
-  const add = page.getByRole("dialog", { name: "Add task" });
+  await page.getByRole("button", { name: "Adicionar tarefa" }).click();
+  const add = page.getByRole("dialog", { name: "Adicionar tarefa" });
   await add
-    .getByRole("textbox", { name: "Task name" })
+    .getByRole("textbox", { name: "Nome da tarefa" })
     .fill("Finish Physics assignment");
-  await add.getByRole("button", { name: "ADD", exact: true }).click();
+  await add.getByRole("button", { name: "ADICIONAR", exact: true }).click();
   await expect(row(page, "Finish Physics assignment")).toBeVisible();
   await writes.idle();
   await page.reload();
   await expect(row(page, "Finish Physics assignment")).toBeVisible();
 
   // Edit today only -> the routine keeps its name.
-  await page.getByRole("button", { name: "Options for Wake Up" }).click();
+  await page.getByRole("button", { name: "Opções de Wake Up" }).click();
   await page
-    .getByRole("dialog", { name: "Task options" })
-    .getByRole("button", { name: "Edit" })
+    .getByRole("dialog", { name: "Opções da tarefa" })
+    .getByRole("button", { name: "Editar" })
     .click();
-  const edit = page.getByRole("dialog", { name: "Edit task" });
-  await edit.getByRole("textbox", { name: "Task name" }).fill("Wake Up late");
-  await edit.getByRole("button", { name: "SAVE" }).click();
-  await edit.getByRole("button", { name: "Today only" }).click();
+  const edit = page.getByRole("dialog", { name: "Editar tarefa" });
+  await edit
+    .getByRole("textbox", { name: "Nome da tarefa" })
+    .fill("Wake Up late");
+  await edit.getByRole("button", { name: "SALVAR" }).click();
+  await edit.getByRole("button", { name: "Só hoje" }).click();
   await expect(row(page, "Wake Up late")).toBeVisible();
   await writes.idle();
   await page.reload();
@@ -171,11 +175,11 @@ test("a real user builds a routine and runs the day; everything survives reloads
 
   // Edit today and future from the Routine screen -> today follows.
   await page.getByRole("button", { name: /^Wake Up\b/ }).click();
-  const routineEdit = page.getByRole("dialog", { name: "Edit task" });
+  const routineEdit = page.getByRole("dialog", { name: "Editar tarefa" });
   await routineEdit
-    .getByRole("textbox", { name: "Task name" })
+    .getByRole("textbox", { name: "Nome da tarefa" })
     .fill("Wake Up 6am");
-  await routineEdit.getByRole("button", { name: "SAVE" }).click();
+  await routineEdit.getByRole("button", { name: "SALVAR" }).click();
   await expect(
     page.getByRole("button", { name: /^Wake Up 6am/ }),
   ).toBeVisible();
@@ -184,16 +188,16 @@ test("a real user builds a routine and runs the day; everything survives reloads
   await expect(row(page, "Wake Up 6am")).toBeVisible();
 
   // Another routine item, then reorder it to the top; the order persists.
-  await addRoutine(page, "Read", "Every day");
+  await addRoutine(page, "Read", "Todo dia");
   const names = async () =>
     (await page.locator("li[data-rid]").allInnerTexts()).map((t) =>
       t.split("\n")[0].trim(),
     );
   await page
-    .getByRole("button", { name: "Reorder Read. Use arrow keys to move." })
+    .getByRole("button", { name: "Reordenar Read. Use as setas para mover." })
     .press("ArrowUp");
   await page
-    .getByRole("button", { name: "Reorder Read. Use arrow keys to move." })
+    .getByRole("button", { name: "Reordenar Read. Use as setas para mover." })
     .press("ArrowUp");
   await writes.idle();
   const expected = ["Read", "Morning Run", "Wake Up 6am"];
@@ -204,8 +208,8 @@ test("a real user builds a routine and runs the day; everything survives reloads
   // Archive (Delete) -> gone from the routine and from Today; history kept.
   await page.getByRole("button", { name: /^Read/ }).click();
   await page
-    .getByRole("dialog", { name: "Edit task" })
-    .getByRole("button", { name: "Delete" })
+    .getByRole("dialog", { name: "Editar tarefa" })
+    .getByRole("button", { name: "Excluir" })
     .click();
   await expect(page.getByRole("button", { name: /^Read/ })).toHaveCount(0);
   await writes.idle();
@@ -218,7 +222,7 @@ test("a real user builds a routine and runs the day; everything survives reloads
   await row(page, "Wake Up 6am").click();
   await writes.idle();
   await page.goto("/settings");
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.getByRole("button", { name: "Sair" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await signInUI(page, users.a);
   await expect(row(page, "Wake Up 6am")).toHaveAttribute(
@@ -230,7 +234,7 @@ test("a real user builds a routine and runs the day; everything survives reloads
     "false",
   );
   await expect(page.getByTestId("today-count")).toHaveText(
-    `1 / ${total + 1} done`,
+    `1 / ${total + 1} feitas`,
   );
 });
 

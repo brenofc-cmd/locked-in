@@ -43,7 +43,7 @@ export function DevPanel() {
   // Partner presence, activity and connection are real since Stage 5, so the
   // panel no longer simulates them (it would fight the realtime state).
   const actions: [string, () => void][] = [
-    ["Morning briefing", () => app.openOverlay({ kind: "briefing" })],
+    ["Resumo da manhã", () => app.openOverlay({ kind: "briefing" })],
   ];
 
   return (

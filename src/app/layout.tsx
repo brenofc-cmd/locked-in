@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { LOCALE, t } from "@/i18n/pt-BR";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: { default: "LOCKED IN", template: "%s · LOCKED IN" },
-  description: "No hype. Just proof.",
+  description: t.app.tagline,
   applicationName: "LOCKED IN",
   // Installed on iOS: full screen, dark status bar, the LogoMark icon.
   appleWebApp: {
@@ -40,7 +41,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang={LOCALE}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans">{children}</body>

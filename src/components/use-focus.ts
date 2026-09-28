@@ -11,6 +11,7 @@
  * broadcast on the duo channel (or the tab becoming visible) triggers a
  * refetch; refetches that raced a local transition are discarded.
  */
+import { t } from "@/i18n/pt-BR";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   completeFocus as completeFocusAction,
@@ -180,8 +181,8 @@ export function useFocus({
       return true;
     }
     toast({
-      text: res && !res.ok ? res.error : "Could not start Focus.",
-      sub: "FOCUS",
+      text: res && !res.ok ? res.error : t.hookToasts.focusStartFailed,
+      sub: t.hookToasts.focus,
     });
     // e.g. another tab already started one: show that session instead.
     await reload();
@@ -232,9 +233,9 @@ export function useFocus({
         res && !res.ok
           ? res.error
           : paused
-            ? "Could not resume."
-            : "Could not pause.",
-      sub: "FOCUS",
+            ? t.hookToasts.focusResumeFailed
+            : t.hookToasts.focusPauseFailed,
+      sub: t.hookToasts.focus,
     });
     if (pending.current === 0) {
       put(prev);
@@ -270,8 +271,8 @@ export function useFocus({
     setFinished((f) => (f?.id === prev.id ? null : f));
     put(prev);
     toast({
-      text: res && !res.ok ? res.error : "Could not finish Focus.",
-      sub: "FOCUS",
+      text: res && !res.ok ? res.error : t.hookToasts.focusFinishFailed,
+      sub: t.hookToasts.focus,
     });
     await reload();
   }, [clockNow, send, measured, put, toast, upsertRecent, reload]);
@@ -284,8 +285,10 @@ export function useFocus({
     setNote("");
     if (!done) return;
     toast({
-      text: "Session recorded.",
-      sub: `${Math.round((done.actual_focus_seconds ?? 0) / 60)} MIN`,
+      text: t.hookToasts.sessionRecorded,
+      sub: t.hookToasts.minutesSub(
+        Math.round((done.actual_focus_seconds ?? 0) / 60),
+      ),
     });
     if (!text) return;
     await ending.current; // the session must be completed before the note
@@ -295,8 +298,8 @@ export function useFocus({
     if (res?.ok && res.session) upsertRecent(res.session);
     else
       toast({
-        text: res && !res.ok ? res.error : "Could not save your note.",
-        sub: "FOCUS",
+        text: res && !res.ok ? res.error : t.hookToasts.focusNoteFailed,
+        sub: t.hookToasts.focus,
       });
   }, [finished, note, send, toast, upsertRecent]);
 

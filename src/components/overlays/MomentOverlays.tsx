@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useEffect, useState, type ReactNode } from "react";
 import { loadWeekHabits } from "@/app/(app)/progress-actions";
 import { updateSetting } from "@/app/(app)/settings-actions";
@@ -75,23 +76,23 @@ function ReviewDay() {
   const list = app.tasks;
   const stats = todayStats(list, app.standard);
   const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
-  const notDone = list.filter((t) => !t.done && !t.skip).map((t) => t.name);
-  const doneNames = list.filter((t) => t.done).map((t) => t.name);
-  const skipped = list.filter((t) => t.skip).map((t) => t.name);
+  const notDone = list.filter((x) => !x.done && !x.skip).map((x) => x.name);
+  const doneNames = list.filter((x) => x.done).map((x) => x.name);
+  const skipped = list.filter((x) => x.skip).map((x) => x.name);
   const diff = pv.pct - stats.pct;
 
   return (
-    <Frame label="Review today" width="max-w-[520px]">
+    <Frame label={t.moments.reviewTodayAria} width="max-w-[520px]">
       <div className="flex flex-col gap-[34px]">
         <div className="flex flex-col gap-3.5">
           <span className="font-mono text-xs tracking-[.14em] text-dim">
-            {weekdayName(app.today)} · DAY{" "}
-            {accountDay(me.createdAt, me.timezone, app.today)}
+            {weekdayName(app.today)} ·{" "}
+            {t.moments.day(accountDay(me.createdAt, me.timezone, app.today))}
           </span>
           <h1 className={bigTitle}>
-            TODAY
+            {t.moments.today}
             <br />
-            {stats.perfect ? "COMPLETE" : "SO FAR"}
+            {stats.perfect ? t.moments.complete : t.moments.soFar}
           </h1>
         </div>
         <div className="flex items-end justify-between gap-4">
@@ -105,13 +106,14 @@ function ReviewDay() {
           <span className="flex flex-col items-end gap-2">
             <span className="text-[15px] tabular-nums">
               {stats.done} / {stats.total}{" "}
-              <span className="text-dim">done</span>
+              <span className="text-dim">{t.moments.done}</span>
             </span>
             <span
               data-testid="review-focus"
               className="font-mono text-[11px] tracking-[.14em] text-muted"
             >
-              {formatMinutes(app.focusMin).toUpperCase()} FOCUS
+              {formatMinutes(app.focusMin).toUpperCase()}{" "}
+              {t.moments.focusSuffix}
             </span>
           </span>
         </div>
@@ -124,8 +126,8 @@ function ReviewDay() {
             )}
           />
           {stats.standardMet
-            ? `Standard met. Streak is now ${app.streak} ${app.streak === 1 ? "day" : "days"}.`
-            : `${stats.needed} more to meet your standard.`}
+            ? t.moments.standardMetStreak(app.streak)
+            : t.moments.moreToMeet(stats.needed)}
         </div>
         {app.hasPartner && (
           <div className="flex flex-col gap-3 border-t border-white/7 pt-[18px]">
@@ -147,18 +149,18 @@ function ReviewDay() {
             </div>
             <span className="text-sm text-muted">
               {diff > 0
-                ? `${app.partner.name} is ${diff}% ahead today.`
+                ? t.moments.partnerAheadToday(app.partner.name, diff)
                 : diff < 0
-                  ? `You are ${-diff}% ahead today.`
-                  : "Level today."}
+                  ? t.moments.youAheadToday(-diff)
+                  : t.moments.levelToday}
             </span>
           </div>
         )}
         {(
           [
-            ["DONE", doneNames],
-            ["SKIPPED · STILL IN THE TOTAL", skipped],
-            ["NOT DONE", notDone],
+            [t.moments.doneList, doneNames],
+            [t.moments.skippedList, skipped],
+            [t.moments.notDoneList, notDone],
           ] as const
         ).map(([k, names]) =>
           names.length > 0 ? (
@@ -171,13 +173,11 @@ function ReviewDay() {
           ) : null,
         )}
         {list.length === 0 && (
-          <span className="text-sm text-muted">
-            Nothing scheduled today. The day is neutral.
-          </span>
+          <span className="text-sm text-muted">{t.moments.nothingToday}</span>
         )}
       </div>
       <button type="button" onClick={app.closeOverlay} className={lightButton}>
-        DONE
+        {t.moments.doneButton}
       </button>
     </Frame>
   );
@@ -224,12 +224,10 @@ function WeeklyReview({ start }: { start: string }) {
 
   if (!w) {
     return (
-      <Frame label="Weekly review" width="max-w-[560px]">
-        <span className="text-[15px] text-muted">
-          Your first review arrives after your first full week.
-        </span>
+      <Frame label={t.moments.weeklyAria} width="max-w-[560px]">
+        <span className="text-[15px] text-muted">{t.moments.firstReview}</span>
         <button type="button" onClick={closeOverlay} className={lightButton}>
-          CLOSE
+          {t.moments.close}
         </button>
       </Frame>
     );
@@ -241,19 +239,19 @@ function WeeklyReview({ start }: { start: string }) {
   const margin = diff === 0 ? "<1" : String(diff);
   const verdict = w.current
     ? w.leader?.who === "me"
-      ? `CURRENT LEADER · YOU ${w.leader.margin}`
+      ? t.moments.leaderYou(w.leader.margin)
       : w.leader?.who === "partner"
-        ? `CURRENT LEADER · ${partner.name.toUpperCase()} ${w.leader.margin}`
+        ? t.moments.leaderPartner(partner.name.toUpperCase(), w.leader.margin)
         : w.leader?.who === "tied"
-          ? "CURRENT LEADER · TIED"
-          : "NO SCORE YET"
+          ? t.moments.leaderTied
+          : t.moments.noScore
     : w.result === "me"
-      ? `WINNER · YOU BY ${margin}%`
+      ? t.moments.winnerYou(margin)
       : w.result === "partner"
-        ? `WINNER · ${partner.name.toUpperCase()} BY ${margin}%`
+        ? t.moments.winnerPartner(partner.name.toUpperCase(), margin)
         : w.result === "draw"
-          ? "DRAW"
-          : "NO CONTEST";
+          ? t.moments.draw
+          : t.moments.noContest;
   const partnerAhead = w.current
     ? w.leader?.who === "partner"
     : w.result === "partner";
@@ -263,36 +261,38 @@ function WeeklyReview({ start }: { start: string }) {
   );
   const rows = [
     {
-      k: "TASKS COMPLETED",
+      k: t.moments.tasksCompleted,
       v: pair(
         `${me.completed} / ${me.planned}`,
         them ? `${them.completed} / ${them.planned}` : "",
       ),
     },
     {
-      k: "FOCUS",
+      k: t.moments.focus,
       v: pair(focusLabel(me.focus), them ? focusLabel(them.focus) : ""),
     },
     {
-      k: "PERFECT DAYS",
+      k: t.moments.perfectDays,
       v: pair(String(me.perfect), them ? String(them.perfect) : ""),
     },
-    ...(best ? [{ k: "BEST HABIT", v: `${best.title} ${best.rate}%` }] : []),
+    ...(best
+      ? [{ k: t.moments.bestHabit, v: `${best.title} ${best.rate}%` }]
+      : []),
     ...(missed
-      ? [{ k: "MOST MISSED", v: `${missed.title} ${missed.rate}%` }]
+      ? [{ k: t.moments.mostMissed, v: `${missed.title} ${missed.rate}%` }]
       : []),
     ...(hasPartner
       ? [
           {
-            k: "HEAD TO HEAD",
-            v: `${record.me} — ${record.partner}${record.draws ? ` · ${record.draws} ${record.draws === 1 ? "draw" : "draws"}` : ""}`,
+            k: t.moments.headToHead,
+            v: `${record.me} — ${record.partner}${record.draws ? ` · ${t.moments.draws(record.draws)}` : ""}`,
           },
         ]
       : []),
   ];
 
   return (
-    <Frame label={`Week ${w.week} review`} width="max-w-[560px]">
+    <Frame label={t.moments.weekReviewAria(w.week)} width="max-w-[560px]">
       <div className="flex flex-col gap-[30px]">
         <div className="flex items-center justify-between">
           <span className="flex flex-col gap-1.5">
@@ -300,7 +300,7 @@ function WeeklyReview({ start }: { start: string }) {
               data-testid="weekly-title"
               className="font-mono text-xs tracking-[.22em] text-accent"
             >
-              WEEK {w.week} {w.current ? "IN PROGRESS" : "COMPLETE"}
+              {t.moments.weekTitle(w.week, w.current)}
             </span>
             <span className="font-mono text-[11px] tracking-[.14em] text-dim">
               {weekRangeLabel(w.weekStart)}
@@ -309,7 +309,7 @@ function WeeklyReview({ start }: { start: string }) {
           <div className="flex gap-1.5">
             <button
               type="button"
-              aria-label="Older week"
+              aria-label={t.moments.olderWeek}
               disabled={i >= weeks.length - 1}
               onClick={() => setI((x) => Math.min(weeks.length - 1, x + 1))}
               className="size-11 rounded-xl border border-white/10 text-base text-text disabled:text-off"
@@ -318,7 +318,7 @@ function WeeklyReview({ start }: { start: string }) {
             </button>
             <button
               type="button"
-              aria-label="Newer week"
+              aria-label={t.moments.newerWeek}
               disabled={i <= 0}
               onClick={() => setI((x) => Math.max(0, x - 1))}
               className="size-11 rounded-xl border border-white/10 text-base text-text disabled:text-off"
@@ -335,7 +335,7 @@ function WeeklyReview({ start }: { start: string }) {
             )}
           >
             <span className="text-[13px] font-semibold tracking-[.16em]">
-              YOU
+              {t.moments.you}
             </span>
             <span
               data-testid="weekly-me"
@@ -396,7 +396,7 @@ function WeeklyReview({ start }: { start: string }) {
         onClick={closeOverlay}
         className={cx(lightButton, "h-[58px] text-[12.5px] tracking-[.26em]")}
       >
-        CLOSE
+        {t.moments.close}
       </button>
     </Frame>
   );
@@ -418,19 +418,19 @@ function Briefing() {
   const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
 
   const rows = [
-    { k: "TODAY", v: String(total), unit: total === 1 ? "TASK" : "TASKS" },
+    { k: t.moments.today, v: String(total), unit: t.moments.tasks(total) },
     {
-      k: "YESTERDAY",
+      k: t.moments.yesterday,
       v: yesterday === null ? "—" : `${yesterday}%`,
       unit: "",
     },
-    { k: "STREAK", v: String(streak), unit: streak === 1 ? "DAY" : "DAYS" },
+    { k: t.moments.streak, v: String(streak), unit: t.moments.days(streak) },
     ...(app.hasPartner
       ? [
           {
             k: app.partner.name.toUpperCase(),
             v: app.partner.streak === null ? "—" : String(app.partner.streak),
-            unit: `DAY STREAK · ${pv.label}`,
+            unit: t.moments.partnerStreak(app.partner.streak, pv.label),
           },
         ]
       : []),
@@ -444,12 +444,12 @@ function Briefing() {
     );
     if (!res?.ok) {
       setAuto(!next);
-      app.toast({ text: "Could not save.", sub: "BRIEFING" });
+      app.toast({ text: t.moments.couldNotSave, sub: t.moments.briefingSub });
     }
   }
 
   return (
-    <Frame label="Morning briefing" width="max-w-[480px]">
+    <Frame label={t.moments.briefingAria} width="max-w-[480px]">
       <div className="flex flex-col gap-9">
         <div className="flex items-center justify-between">
           <span className="font-mono text-sm text-dim tabular-nums">
@@ -460,17 +460,17 @@ function Briefing() {
             onClick={closeOverlay}
             className="h-11 px-1 text-sm text-dim"
           >
-            Skip
+            {t.moments.skip}
           </button>
         </div>
         <div className="flex flex-col gap-4">
           <h1 className={bigTitle}>
-            GOOD MORNING,
+            {t.moments.goodMorning}
             <br />
             {userName.toUpperCase()}.
           </h1>
           <span className="font-mono text-[13px] tracking-[.26em] text-accent">
-            DAY {accountDay(me.createdAt, me.timezone, today)}
+            {t.moments.day(accountDay(me.createdAt, me.timezone, today))}
           </span>
         </div>
         <div className="flex flex-col">
@@ -496,7 +496,7 @@ function Briefing() {
       </div>
       <div className="flex flex-col items-center gap-[18px]">
         <button type="button" onClick={closeOverlay} className={lightButton}>
-          START DAY
+          {t.moments.startDay}
         </button>
         <button
           type="button"
@@ -524,12 +524,12 @@ function Briefing() {
               />
             </svg>
           </span>
-          Show automatically each morning
+          {t.moments.autoShow}
         </button>
         <span className="text-center font-mono text-[10.5px] leading-[1.9] tracking-[.28em] text-quiet">
-          NO HYPE.
+          {t.app.taglineLines[0]}
           <br />
-          JUST PROOF.
+          {t.app.taglineLines[1]}
         </span>
       </div>
     </Frame>

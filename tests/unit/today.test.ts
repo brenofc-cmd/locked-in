@@ -47,7 +47,7 @@ describe("today stats", () => {
     const s = todayStats(today, 80);
     expect(s).toMatchObject({ done: 8, total: 12, pct: 67, perfect: false });
     expect(s.needed).toBe(2);
-    expect(nextLine(s)).toBe("2 more to meet your standard.");
+    expect(nextLine(s)).toBe("Faltam 2 para atingir seu padrão.");
   });
 
   it("keeps skipped tasks in the total: 8 done, 1 skipped, 1 pending of 10 -> 80%", () => {
@@ -66,7 +66,7 @@ describe("today stats", () => {
     const all = today.map((t) => ({ ...t, done: true }));
     const s = todayStats(all, 80);
     expect(s.perfect).toBe(true);
-    expect(nextLine(s)).toBe("Every task done.");
+    expect(nextLine(s)).toBe("Todas as tarefas concluídas.");
   });
 
   it("shows an empty day", () => {
@@ -75,16 +75,16 @@ describe("today stats", () => {
       pct: 0,
       perfect: false,
     });
-    expect(nextLine(todayStats([], 80))).toBe("Nothing scheduled today.");
+    expect(nextLine(todayStats([], 80))).toBe("Nada agendado para hoje.");
   });
 
   it("groups into the design's sections, in order, manual order inside", () => {
     const sections = groupBySection(today);
     expect(sections.map((s) => [s.name, s.count])).toEqual([
-      ["MORNING", "3 / 4"],
-      ["WORK / STUDY", "3 / 3"],
-      ["BODY", "2 / 3"],
-      ["NIGHT", "0 / 2"],
+      ["MANHÃ", "3 / 4"],
+      ["TRABALHO / ESTUDO", "3 / 3"],
+      ["CORPO", "2 / 3"],
+      ["NOITE", "0 / 2"],
     ]);
     // sort_order wins over time: Drink water (06:10) stays before Make bed (06:05).
     expect(sections[0].tasks.map((t) => t.name)).toEqual([
@@ -129,8 +129,10 @@ describe("today stats", () => {
   });
 
   it("labels schedules", () => {
-    expect(scheduleLabel(["MON", "TUE", "WED", "THU", "FRI"])).toBe("WEEKDAYS");
-    expect(scheduleLabel([...DAYS_ALL])).toBe("EVERY DAY");
-    expect(scheduleLabel(["MON", "WED"])).toBe("MO WE");
+    expect(scheduleLabel(["MON", "TUE", "WED", "THU", "FRI"])).toBe(
+      "DIAS ÚTEIS",
+    );
+    expect(scheduleLabel([...DAYS_ALL])).toBe("TODOS OS DIAS");
+    expect(scheduleLabel(["MON", "WED"])).toBe("SEG QUA");
   });
 });

@@ -14,6 +14,7 @@
  * partner's day are refetched. Realtime only makes updates arrive sooner.
  * Docs: docs/REALTIME.md.
  */
+import { t } from "@/i18n/pt-BR";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   createContext,
@@ -358,7 +359,7 @@ function useDuoRealtimeValue(initial: DuoData) {
             t: localTimeHM(at, tz),
             who: "me",
             kind: "done",
-            text: `completed ${title}`,
+            text: t.feed.completed(title),
             target: title,
             taskId,
           },

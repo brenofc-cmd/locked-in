@@ -34,6 +34,8 @@ The user must understand their state and take the main action in about 3 seconds
 - Avoid premature abstraction.
 - Do not add features outside the current stage.
 - Do not add dependencies without a real reason.
+- All user-facing copy is Brazilian Portuguese and lives in `src/i18n/pt-BR.ts` (ADR-054); never
+  hard-code UI text in a component. Keep internal identifiers (Day codes, statuses) in English.
 - Supabase is the only backend.
 - PostgreSQL is the database.
 - Vercel is production hosting.

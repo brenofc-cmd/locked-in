@@ -68,18 +68,18 @@ describe("challenges", () => {
 
   it("status labels", () => {
     expect(statusLabel(challenge({ start: "2026-09-26" }), TODAY)).toBe(
-      "STARTS TOMORROW",
+      "COMEÇA AMANHÃ",
     );
     expect(statusLabel(challenge({ start: "2026-09-28" }), TODAY)).toBe(
-      "STARTS IN 3 DAYS",
+      "COMEÇA EM 3 DIAS",
     );
-    expect(statusLabel(challenge({ end: TODAY }), TODAY)).toBe("LAST DAY");
+    expect(statusLabel(challenge({ end: TODAY }), TODAY)).toBe("ÚLTIMO DIA");
     expect(statusLabel(challenge({ end: "2026-09-27" }), TODAY)).toBe(
-      "3 DAYS LEFT",
+      "FALTAM 3 DIAS",
     );
     expect(
       statusLabel(challenge({ start: "2026-09-01", end: "2026-09-02" }), TODAY),
-    ).toBe("COMPLETED");
+    ).toBe("CONCLUÍDO");
   });
 
   const closed = { start: "2026-09-01", end: "2026-09-07" };
@@ -113,14 +113,14 @@ describe("challenges", () => {
   });
 
   it("formats progress, goals and the period", () => {
-    expect(formatValue("standard_days", 1)).toBe("1 day");
-    expect(formatValue("standard_days", 12)).toBe("12 days");
+    expect(formatValue("standard_days", 1)).toBe("1 dia");
+    expect(formatValue("standard_days", 12)).toBe("12 dias");
     expect(formatValue("focus_seconds", 31_320)).toBe("8h 42m");
-    expect(goalLabel("standard_days", 20)).toBe("20 STANDARD DAYS");
-    expect(goalLabel("focus_seconds", 36_000)).toBe("10 HOURS");
-    expect(goalLabel("focus_seconds", 3600)).toBe("1 HOUR");
+    expect(goalLabel("standard_days", 20)).toBe("20 DIAS NO PADRÃO");
+    expect(goalLabel("focus_seconds", 36_000)).toBe("10 HORAS");
+    expect(goalLabel("focus_seconds", 3600)).toBe("1 HORA");
     expect(goalLabel("focus_seconds", 5400)).toBe("1H 30M");
-    expect(periodLabel("2026-09-25", "2026-10-24")).toBe("SEP 25 → OCT 24");
+    expect(periodLabel("2026-09-25", "2026-10-24")).toBe("25 SET → 24 OUT");
     expect(goalShare(5, 20)).toBe(25);
     expect(goalShare(30, 20)).toBe(100);
   });
@@ -128,22 +128,22 @@ describe("challenges", () => {
   it("validates a draft with the database's rules", () => {
     const ok = defaultDraft("standard_days", TODAY);
     expect(validateDraft(ok, TODAY)).toBeNull();
-    expect(validateDraft({ ...ok, title: "  " }, TODAY)).toMatch(/title/);
+    expect(validateDraft({ ...ok, title: "  " }, TODAY)).toMatch(/título/);
     expect(validateDraft({ ...ok, start: "2026-09-24" }, TODAY)).toMatch(
-      /today or later/,
+      /hoje ou depois/,
     );
     expect(validateDraft({ ...ok, end: "2026-09-20" }, TODAY)).toMatch(
-      /before the start/,
+      /antes do início/,
     );
-    expect(validateDraft({ ...ok, goal: 0 }, TODAY)).toMatch(/above zero/);
+    expect(validateDraft({ ...ok, goal: 0 }, TODAY)).toMatch(/maior que zero/);
     expect(validateDraft({ ...ok, goal: 31 }, TODAY)).toMatch(
-      /At most 30 days/,
+      /No máximo 30 dias/,
     );
-    expect(validateDraft({ ...ok, goal: 2.5 }, TODAY)).toMatch(/whole/);
+    expect(validateDraft({ ...ok, goal: 2.5 }, TODAY)).toMatch(/inteiros/);
     const focus = defaultDraft("focus_seconds", TODAY);
     expect(validateDraft(focus, TODAY)).toBeNull();
     expect(validateDraft({ ...focus, goal: 200 }, TODAY)).toMatch(
-      /At most 168 hours/,
+      /No máximo 168 horas/,
     );
     expect(targetValue(focus)).toBe(36_000);
     expect(targetValue({ ...focus, goal: 1.5 })).toBe(5400);
@@ -256,7 +256,7 @@ describe("reactions", () => {
     expect(reactionLabel("fire")).toBe("🔥");
     expect(reactionLabel("lightning")).toBe("⚡");
     expect(reactionLabel("salute")).toBe("🫡");
-    expect(reactionLabel("respect")).toBe("Respect.");
+    expect(reactionLabel("respect")).toBe("Respeito.");
     expect(isReactionType("fire")).toBe(true);
     expect(isReactionType("love")).toBe(false);
     expect(isReactionType(null)).toBe(false);
@@ -278,10 +278,10 @@ describe("reactions", () => {
 
   it("toast copy", () => {
     expect(reactionToastText("Lucas", "Morning Run")).toBe(
-      "Lucas reacted to your Morning Run.",
+      "Lucas reagiu a Morning Run.",
     );
     expect(reactionToastText("Lucas", null)).toBe(
-      "Lucas reacted to your activity.",
+      "Lucas reagiu à sua atividade.",
     );
   });
 });
@@ -384,7 +384,7 @@ describe("history", () => {
       80,
       "2026-08",
     );
-    expect(label).toBe("AUGUST 2026");
+    expect(label).toBe("AGOSTO 2026");
     const days = cells.filter((c) => c.kind === "day");
     expect(days).toHaveLength(31);
     const aug3 = days.find((c) => c.kind === "day" && c.date === "2026-08-03");

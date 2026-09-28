@@ -2,6 +2,7 @@
  * Pure logic for the duo's realtime layer (Stage 5): presence aggregation,
  * activity feed mapping / merging, connection state. No Supabase imports.
  */
+import { t } from "@/i18n/pt-BR";
 import { localTimeHM } from "@/lib/local-date";
 import type { ConnectionState, FeedEvent } from "@/types";
 
@@ -36,7 +37,9 @@ export type ActivityRecord = {
 
 /** "32 min"; under a minute stays honest ("<1 min"). */
 export function focusMinutes(seconds: number): string {
-  return seconds < 60 ? "<1 min" : `${Math.floor(seconds / 60)} min`;
+  return seconds < 60
+    ? t.feed.underAMinute
+    : t.feed.minutes(Math.floor(seconds / 60));
 }
 
 /** A feed line, with the instant kept for ordering. */
@@ -59,7 +62,7 @@ export function eventFromActivity(
     return {
       ...base,
       kind: "focus",
-      text: r.title ? `started Focus — ${r.title}` : "started Focus",
+      text: r.title ? t.feed.startedFocusOn(r.title) : t.feed.startedFocus,
       target: null,
     };
   }
@@ -67,12 +70,17 @@ export function eventFromActivity(
     return {
       ...base,
       kind: "focusdone",
-      text: `completed ${focusMinutes(r.duration_seconds ?? 0)} Focus`,
-      target: "Focus Session",
+      text: t.feed.completedFocus(focusMinutes(r.duration_seconds ?? 0)),
+      target: t.feed.focusSessionTarget,
     };
   }
-  const title = r.title ?? "a task";
-  return { ...base, kind: "done", text: `completed ${title}`, target: title };
+  const title = r.title ?? t.feed.aTask;
+  return {
+    ...base,
+    kind: "done",
+    text: t.feed.completed(title),
+    target: title,
+  };
 }
 
 export const FEED_LIMIT = 20;

@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
 import { cx } from "@/components/ui";
 
@@ -109,7 +110,9 @@ export function Feedback() {
                   : "bg-muted animate-[li-breathe_1.4s_ease-in-out_infinite]",
               )}
             />
-            {conn === "offline" ? "Offline" : "Reconnecting…"}
+            {conn === "offline"
+              ? t.connection.offline
+              : t.connection.reconnecting}
           </div>
         </div>
       )}

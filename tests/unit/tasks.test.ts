@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { t } from "@/i18n/pt-BR";
 import {
   accountDay,
   addDays,
@@ -70,8 +71,8 @@ describe("local dates (timezone, not UTC)", () => {
   });
 
   it("labels days", () => {
-    expect(dateLabel("2026-09-24")).toBe("THU, SEP 24");
-    expect(weekdayName("2026-09-27")).toBe("SUNDAY");
+    expect(dateLabel("2026-09-24")).toBe("QUI, 24 SET");
+    expect(weekdayName("2026-09-27")).toBe(t.dates.weekdaysLong[6]);
     expect(
       accountDay("2026-09-11T12:00:00Z", "America/Sao_Paulo", "2026-09-24"),
     ).toBe(14);
@@ -159,7 +160,7 @@ describe("row mapping", () => {
     );
     expect(skipped).toMatchObject({
       done: false,
-      skip: "SKIPPED · SICK",
+      skip: "PULADA · SICK",
       status: "skipped",
     });
     const once = taskFromRow(
@@ -173,7 +174,7 @@ describe("row mapping", () => {
       "UTC",
     );
     expect(once).toMatchObject({ once: true, days: [], doneAt: null });
-    expect(skipLabel(null)).toBe("SKIPPED");
+    expect(skipLabel(null)).toBe("PULADA");
   });
 
   it("converts times", () => {
@@ -202,10 +203,10 @@ describe("task input validation", () => {
   });
 
   it("rejects what the database would reject", () => {
-    expect(validateTaskInput({ ...base, name: "   " })).toMatch(/name/);
+    expect(validateTaskInput({ ...base, name: "   " })).toMatch(/nome/);
     expect(validateTaskInput({ ...base, name: "x".repeat(81) })).toMatch(/80/);
-    expect(validateTaskInput({ ...base, days: [] })).toMatch(/day/);
-    expect(validateTaskInput({ ...base, time: "7pm" })).toMatch(/time/);
+    expect(validateTaskInput({ ...base, days: [] })).toMatch(/dia/);
+    expect(validateTaskInput({ ...base, time: "7pm" })).toMatch(/horário/);
     expect(validateTaskInput({ ...base, notes: "x".repeat(201) })).toMatch(
       /200/,
     );
@@ -213,17 +214,19 @@ describe("task input validation", () => {
 
   it("maps errors to safe copy", () => {
     expect(taskErrorMessage({ message: "LI_NOT_FOUND" })).toMatch(
-      /no longer exists/,
+      /não existe mais/,
     );
     expect(
       taskErrorMessage({
         code: "23514",
         message: 'violates check constraint "daily_tasks_status"',
       }),
-    ).toBe("Check the task details and try again.");
+    ).toBe("Confira os dados da tarefa e tente de novo.");
     expect(taskErrorMessage({ message: "TypeError: fetch failed" })).toMatch(
-      /Network/,
+      /conexão/,
     );
-    expect(taskErrorMessage(null)).toBe("Couldn't save. Try again.");
+    expect(taskErrorMessage(null)).toBe(
+      "Não foi possível salvar. Tente de novo.",
+    );
   });
 });

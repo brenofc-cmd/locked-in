@@ -1,3 +1,4 @@
+import { t } from "@/i18n/pt-BR";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays } from "@/lib/local-date";
 import {
@@ -17,7 +18,7 @@ export const HISTORY_WEEKS = 8;
 /** "CONSISTENCY · 30 DAYS": the last 30 closed days. */
 export const HABIT_DAYS = 30;
 
-const fail = () => new Error("Could not load progress.");
+const fail = () => new Error(t.loadErrors.progress);
 
 export async function loadHabits(
   supabase: Client,

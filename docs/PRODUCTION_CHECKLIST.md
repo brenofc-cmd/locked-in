@@ -48,6 +48,9 @@ settings; the Stage 9 tools could neither read nor change them, and no code depe
 - [ ] Auth → SMTP: custom SMTP (sender domain with SPF / DKIM); the built-in sender is rate-limited
       and not for production.
 - [ ] Auth rate limits reviewed (sign-in, sign-up, email).
+- [x] Auth → Emails → templates in pt-BR (ADR-054): "Confirm sign up" (subject "Confirme seu e-mail · LOCKED IN",
+      link `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`) and "Reset password" (subject
+      "Redefina sua senha · LOCKED IN", link `…&type=recovery&next=/reset-password`). Keep the token_hash links.
 - [ ] Run the Security and Performance advisors: only the items classified ACCEPTED in
       docs/SECURITY.md → "Supabase advisors" may remain (and no `dev_fixture_*` finding at all).
 - [ ] Point-in-time recovery / backups enabled per plan.

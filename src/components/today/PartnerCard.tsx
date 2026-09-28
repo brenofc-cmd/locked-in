@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
@@ -13,7 +14,13 @@ export function PartnerCard() {
   return (
     <Link
       href="/partner"
-      aria-label={`${partner.name}: ${pv.label.toLowerCase()}, ${pv.pct}% done, ${pv.done} of ${pv.total}. Open partner.`}
+      aria-label={t.partnerCard.aria(
+        partner.name,
+        pv.label.toLowerCase(),
+        pv.pct,
+        pv.done,
+        pv.total,
+      )}
       className="flex flex-col gap-3.5 rounded-2xl border border-white/7 bg-card p-[18px] text-left transition-[box-shadow,transform] duration-700 active:scale-[.985]"
       style={{
         boxShadow: pv.flashing
@@ -74,25 +81,25 @@ export function NoPartnerCard() {
   return (
     <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-white/12 p-5">
       <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-        {waiting ? "WAITING FOR YOUR PARTNER" : "NO PARTNER YET"}
+        {waiting ? t.partnerCard.waiting : t.partnerCard.noPartner}
       </span>
       <span className="text-[15px] leading-[1.45] text-pretty">
         {waiting
-          ? `Share your code ${duo.inviteCode} with someone you trust.`
-          : "Invite someone you trust to keep you accountable."}
+          ? t.partnerCard.shareCodeLine(duo.inviteCode)
+          : t.partnerCard.inviteLine}
       </span>
       <div className="flex flex-wrap gap-2">
         {waiting ? (
           <Link href="/duo" className={CARD_LINK}>
-            SHARE CODE
+            {t.partnerCard.shareCode}
           </Link>
         ) : (
           <>
             <Link href="/duo" className={CARD_LINK}>
-              CREATE DUO
+              {t.partnerCard.createDuo}
             </Link>
             <Link href="/duo#join-code" className={CARD_LINK}>
-              JOIN DUO
+              {t.partnerCard.joinDuo}
             </Link>
           </>
         )}

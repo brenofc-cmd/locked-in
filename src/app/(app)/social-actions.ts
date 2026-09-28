@@ -1,5 +1,6 @@
 "use server";
 
+import { t } from "@/i18n/pt-BR";
 import {
   targetValue,
   validateDraft,
@@ -15,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 type Fail = { ok: false; error: string };
 
-const REACT_FAIL: Fail = { ok: false, error: "Could not send the reaction." };
+const REACT_FAIL: Fail = { ok: false, error: t.actionErrors.reactionFailed };
 
 export async function setReaction(
   eventId: string,
@@ -31,7 +32,7 @@ export async function setReaction(
     });
     if (error)
       return error.message === "LI_NOT_FOUND"
-        ? { ok: false, error: "That activity is gone." }
+        ? { ok: false, error: t.actionErrors.activityGone }
         : REACT_FAIL;
     return { ok: true };
   } catch {
@@ -59,7 +60,7 @@ export async function clearReaction(
   }
 }
 
-const LOAD_FAIL: Fail = { ok: false, error: "Could not load challenges." };
+const LOAD_FAIL: Fail = { ok: false, error: t.actionErrors.challengesLoad };
 
 export async function loadChallenges(): Promise<
   { ok: true; challenges: Challenge[] } | Fail
@@ -110,14 +111,14 @@ export async function createChallenge(
         ok: false,
         error:
           error.code === "42501"
-            ? "Challenges start today or later, with your partner in the duo."
+            ? t.actionErrors.challengeRules
             : error.code === "23505"
-              ? "That challenge already exists."
-              : "Could not create the challenge.",
+              ? t.actionErrors.challengeExists
+              : t.actionErrors.challengeCreate,
       };
     return { ok: true };
   } catch {
-    return { ok: false, error: "Could not create the challenge." };
+    return { ok: false, error: t.actionErrors.challengeCreate };
   }
 }
 
@@ -133,9 +134,9 @@ export async function deleteChallenge(
       .eq("id", id)
       .select("id");
     if (error || !data?.length)
-      return { ok: false, error: "A started challenge stays on the record." };
+      return { ok: false, error: t.actionErrors.challengeStarted };
     return { ok: true };
   } catch {
-    return { ok: false, error: "Could not delete the challenge." };
+    return { ok: false, error: t.actionErrors.challengeDelete };
   }
 }

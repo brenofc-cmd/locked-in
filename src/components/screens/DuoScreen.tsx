@@ -1,5 +1,6 @@
 "use client";
 
+import { LOCALE, t } from "@/i18n/pt-BR";
 import { useRef, useState, useTransition, type FormEvent } from "react";
 import { createDuo, joinDuo, leaveDuo } from "@/app/(app)/actions";
 import { useApp } from "@/components/app-state";
@@ -17,7 +18,7 @@ import { partnerView } from "@/lib/partner";
  */
 const since = (iso: string) =>
   iso
-    ? new Date(iso).toLocaleDateString("en-US", {
+    ? new Date(iso).toLocaleDateString(LOCALE, {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -58,7 +59,7 @@ export function DuoScreen() {
   }
 
   function create() {
-    run(createDuo, (m) => app.toast({ text: m, sub: "DUO" }));
+    run(createDuo, (m) => app.toast({ text: m, sub: t.duoScreen.toastSub }));
   }
 
   function join(e: FormEvent) {
@@ -76,11 +77,11 @@ export function DuoScreen() {
         const res = await leaveDuo();
         if (res.ok) {
           setConfirmLeave(false);
-          app.toast({ text: "The duo has ended.", sub: "NO PARTNER YET" });
+          app.toast({ text: t.duoScreen.ended, sub: t.duoScreen.endedSub });
         }
         return res;
       },
-      (m) => app.toast({ text: m, sub: "DUO" }),
+      (m) => app.toast({ text: m, sub: t.duoScreen.toastSub }),
     );
   }
 
@@ -91,14 +92,14 @@ export function DuoScreen() {
       setTimeout(() => setCopied(false), 1600);
     } catch {
       app.toast({
-        text: "Couldn't copy. The code is on screen.",
+        text: t.duoScreen.copyFailed,
         sub: inviteCode,
       });
     }
   }
 
   async function share() {
-    const text = `Join my LOCKED IN duo. Code: ${inviteCode}`;
+    const text = t.duoScreen.shareText(inviteCode);
     if (navigator.share) {
       try {
         await navigator.share({ title: "LOCKED IN", text });
@@ -110,10 +111,10 @@ export function DuoScreen() {
     }
     try {
       await navigator.clipboard.writeText(text);
-      app.toast({ text: "Invite copied.", sub: inviteCode });
+      app.toast({ text: t.duoScreen.inviteCopied, sub: inviteCode });
     } catch {
       app.toast({
-        text: "Couldn't copy. The code is on screen.",
+        text: t.duoScreen.copyFailed,
         sub: inviteCode,
       });
     }
@@ -123,14 +124,14 @@ export function DuoScreen() {
     <div className="flex max-w-[620px] flex-col gap-[30px] animate-[li-fade-up_.4s_ease]">
       <header className="flex flex-col gap-2.5">
         <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          LOCKED IN DUO
+          {t.duoScreen.title}
         </h1>
         <span className="text-[14.5px] text-muted" data-testid="duo-state">
           {state === "complete"
-            ? `You and ${app.partner.name} see each other's day.`
+            ? t.duoScreen.stateComplete(app.partner.name)
             : state === "waiting"
-              ? "Waiting for your partner. Share your code."
-              : "Two people. One standard. Invite your partner."}
+              ? t.duoScreen.stateWaiting
+              : t.duoScreen.stateNone}
         </span>
       </header>
 
@@ -145,7 +146,9 @@ export function DuoScreen() {
             <span className="text-[15px]">{app.userName}</span>
             <span className="truncate text-xs text-dim">{me.email}</span>
           </span>
-          <span className="font-mono text-[10.5px] text-dim">YOU</span>
+          <span className="font-mono text-[10.5px] text-dim">
+            {t.duoScreen.you}
+          </span>
         </div>
         {state === "complete" ? (
           <div className="flex min-h-[62px] items-center gap-3.5 border-b border-white/5 animate-[li-rise_.4s_ease]">
@@ -155,7 +158,7 @@ export function DuoScreen() {
                 {app.partner.name}
               </span>
               <span className="text-xs text-dim" data-testid="duo-since">
-                Partner · together since {since(duo?.partner?.joinedAt ?? "")}
+                {t.duoScreen.together(since(duo?.partner?.joinedAt ?? ""))}
               </span>
             </span>
             <span
@@ -176,8 +179,8 @@ export function DuoScreen() {
             />
             <span className="text-sm text-dim">
               {state === "waiting"
-                ? "Waiting for your partner to join."
-                : "No partner yet."}
+                ? t.duoScreen.waitingJoin
+                : t.duoScreen.noPartner}
             </span>
           </div>
         )}
@@ -190,7 +193,7 @@ export function DuoScreen() {
           disabled={pending}
           className="h-14 rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.24em] text-bg active:scale-[.97] disabled:opacity-60"
         >
-          {pending ? "CREATING…" : "CREATE DUO"}
+          {pending ? t.duoScreen.creating : t.duoScreen.createDuo}
         </button>
       )}
 
@@ -201,12 +204,12 @@ export function DuoScreen() {
             onClick={share}
             className="h-14 rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.24em] text-bg active:scale-[.97]"
           >
-            SHARE INVITE
+            {t.duoScreen.shareInvite}
           </button>
           <div className="flex min-h-[52px] items-center justify-between gap-3">
             <span className="flex flex-col gap-1">
               <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
-                OR SHARE YOUR CODE
+                {t.duoScreen.orShareCode}
               </span>
               <span
                 className="font-mono text-[22px] tracking-[.12em]"
@@ -220,7 +223,7 @@ export function DuoScreen() {
               onClick={copyCode}
               className="h-11 rounded-xl border border-white/12 px-4 text-[13.5px]"
             >
-              {copied ? "Copied" : "Copy code"}
+              {copied ? t.duoScreen.copied : t.duoScreen.copyCode}
             </button>
           </div>
         </div>
@@ -232,7 +235,7 @@ export function DuoScreen() {
             htmlFor="join-code"
             className="font-mono text-[10.5px] tracking-[.14em] text-dim"
           >
-            JOIN WITH A CODE
+            {t.duoScreen.joinWithCode}
           </label>
           <div className="flex gap-2">
             <input
@@ -253,7 +256,7 @@ export function DuoScreen() {
               disabled={pending || !code.trim()}
               className="h-12 rounded-xl border border-white/12 px-[18px] text-sm disabled:opacity-60"
             >
-              Join
+              {t.duoScreen.join}
             </button>
           </div>
           {joinError && (
@@ -267,7 +270,7 @@ export function DuoScreen() {
       {state === "complete" && (
         <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
           <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
-            DUO CODE
+            {t.duoScreen.duoCode}
           </span>
           <span className="font-mono text-base tracking-[.12em]">
             {inviteCode}
@@ -282,7 +285,7 @@ export function DuoScreen() {
           onClick={() => setConfirmLeave(true)}
           className="h-11 self-start rounded-xl border border-danger/30 px-[18px] text-sm text-danger"
         >
-          {state === "waiting" ? "Cancel duo" : "Leave duo"}
+          {state === "waiting" ? t.duoScreen.cancelDuo : t.duoScreen.leaveDuo}
         </button>
       )}
       {confirmLeave && (
@@ -296,15 +299,13 @@ export function DuoScreen() {
           className="flex flex-col gap-3.5 rounded-2xl border border-danger/30 p-[18px]"
         >
           <span id="leave-title" className="text-[15px] font-medium">
-            {state === "waiting" ? "Cancel this duo?" : "End this duo?"}
+            {state === "waiting" ? t.duoScreen.cancelQ : t.duoScreen.endQ}
           </span>
           <span
             id="leave-desc"
             className="text-[13.5px] leading-[1.5] text-muted"
           >
-            Leaving will end this Duo for both members. Your tasks, focus and
-            progress stay. The duo&apos;s feed, reactions and challenges are
-            removed, and a future partner never sees them.
+            {t.duoScreen.leaveDesc}
           </span>
           <div className="flex flex-wrap gap-2">
             <button
@@ -313,7 +314,7 @@ export function DuoScreen() {
               disabled={pending}
               className="h-11 rounded-xl bg-danger px-[18px] text-sm font-medium text-bg disabled:opacity-60"
             >
-              {pending ? "Ending…" : "End duo for both"}
+              {pending ? t.duoScreen.ending : t.duoScreen.endBoth}
             </button>
             <button
               type="button"
@@ -323,15 +324,13 @@ export function DuoScreen() {
               autoFocus
               className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
             >
-              Keep duo
+              {t.duoScreen.keep}
             </button>
           </div>
         </div>
       )}
 
-      <span className="text-[12.5px] text-dim">
-        Duos are two people. Small squads come later.
-      </span>
+      <span className="text-[12.5px] text-dim">{t.duoScreen.footnote}</span>
     </div>
   );
 }

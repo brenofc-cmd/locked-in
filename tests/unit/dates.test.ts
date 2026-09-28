@@ -133,12 +133,12 @@ describe("closed-history errors are friendly", () => {
   it("never shows the database code", () => {
     expect(
       taskErrorMessage({ message: "LI_HISTORY_LOCKED", code: "P0001" }),
-    ).toBe("That day is closed. Its record can't change.");
+    ).toBe("Esse dia já foi fechado. O registro dele não muda mais.");
     expect(taskErrorMessage({ message: "LI_FUTURE_TASK", code: "P0001" })).toBe(
-      "Refresh and try again.",
+      "Atualize a página e tente de novo.",
     );
     expect(
       taskErrorMessage({ message: "LI_ROUTINE_STALE", code: "P0001" }),
-    ).toBe("Refresh and try again.");
+    ).toBe("Atualize a página e tente de novo.");
   });
 });

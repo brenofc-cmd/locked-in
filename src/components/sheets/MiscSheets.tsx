@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useEffect, useState } from "react";
 import { loadDayTasks, type DayTask } from "@/app/(app)/progress-actions";
 import { useApp } from "@/components/app-state";
@@ -38,7 +39,7 @@ export function ReactSheet({
   return (
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-col gap-1.5">
-        <span className={heading}>REACT</span>
+        <span className={heading}>{t.miscSheets.react}</span>
         <span className="text-[17px]">{title}</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
@@ -52,7 +53,9 @@ export function ReactSheet({
               aria-pressed={on}
               onClick={() => void react(eventId, r)}
               aria-label={
-                isEmojiReaction(r) ? `React ${label}` : `Send “${label}”`
+                isEmojiReaction(r)
+                  ? t.miscSheets.reactAria(label)
+                  : t.miscSheets.sendAria(label)
               }
               className={cx(
                 "h-[72px] rounded-[18px] border p-0 transition-transform duration-100 active:scale-[.88]",
@@ -73,7 +76,7 @@ export function ReactSheet({
           onClick={() => void react(eventId, null)}
           className="h-11 self-start text-[13px] text-dim underline underline-offset-[3px]"
         >
-          Remove reaction
+          {t.miscSheets.removeReaction}
         </button>
       )}
     </div>
@@ -84,14 +87,14 @@ export function FocusSheet() {
   const { startFocus } = useApp();
   return (
     <div className="flex flex-col gap-5">
-      <span className={heading}>WHAT ARE YOU WORKING ON?</span>
+      <span className={heading}>{t.miscSheets.focusQuestion}</span>
       <FocusPicker compact />
       <button
         type="button"
         onClick={startFocus}
         className="h-[58px] rounded-2xl bg-accent font-mono text-[13px] font-semibold tracking-[.32em] text-bg active:scale-[.97]"
       >
-        START
+        {t.miscSheets.startFocus}
       </button>
     </div>
   );
@@ -101,26 +104,17 @@ export function StreakSheet() {
   const { tasks, standard, streak, longestStreak, closeSheet } = useApp();
   const stats = todayStats(tasks, standard);
   const rules = [
-    {
-      t: `A day counts when you complete ${standard}% of scheduled tasks.`,
-      on: true,
-    },
-    {
-      t: "Skipped tasks stay in the total and don't count as done.",
-      on: true,
-    },
-    {
-      t: "Days with nothing scheduled neither count nor break it.",
-      on: true,
-    },
-    { t: "Missing your standard resets the streak to zero.", on: false },
+    { text: t.miscSheets.ruleCounts(standard), on: true },
+    { text: t.miscSheets.ruleSkipped, on: true },
+    { text: t.miscSheets.ruleNeutral, on: true },
+    { text: t.miscSheets.ruleReset, on: false },
   ];
   const today =
     stats.total === 0
-      ? "Nothing scheduled today. The streak is safe."
+      ? t.miscSheets.todayNothing
       : stats.standardMet
-        ? `Today: ${stats.done} / ${stats.total}. Standard met — today counts.`
-        : `Today: ${stats.done} / ${stats.total}. ${stats.needed} more and today counts. Today can't break the streak before it ends.`;
+        ? t.miscSheets.todayMet(stats.done, stats.total)
+        : t.miscSheets.todayNeeds(stats.done, stats.total, stats.needed);
 
   return (
     <div className="flex flex-col gap-5">
@@ -129,16 +123,16 @@ export function StreakSheet() {
           {streak}
         </span>
         <span className="font-mono text-xs tracking-[.16em] text-muted">
-          DAY STREAK
+          {t.miscSheets.dayStreak}
         </span>
         <span className="ml-auto font-mono text-[11px] tracking-[.12em] text-dim">
-          LONGEST {longestStreak}
+          {t.miscSheets.longest(longestStreak)}
         </span>
       </div>
       <div className="flex flex-col">
         {rules.map((r) => (
           <div
-            key={r.t}
+            key={r.text}
             className="flex gap-3 border-t border-white/6 py-3 text-[14.5px] leading-[1.45]"
           >
             <span
@@ -148,7 +142,7 @@ export function StreakSheet() {
                 r.on ? "bg-accent" : "border-[1.5px] border-missed",
               )}
             />
-            <span>{r.t}</span>
+            <span>{r.text}</span>
           </div>
         ))}
       </div>
@@ -160,17 +154,13 @@ export function StreakSheet() {
         onClick={closeSheet}
         className="h-[52px] rounded-[14px] border border-white/12 text-[15px]"
       >
-        Got it
+        {t.miscSheets.gotIt}
       </button>
     </div>
   );
 }
 
-const STATE_TEXT = {
-  completed: "DONE",
-  skipped: "SKIPPED",
-  pending: "MISSED",
-} as const;
+const STATE_TEXT = t.miscSheets.stateText;
 
 /** A past day from daily_tasks history (read-only: the record). */
 export function DaySheet({ date }: { date: string }) {
@@ -201,12 +191,12 @@ export function DaySheet({ date }: { date: string }) {
   const state = dayState(total, done, standard);
   const summary =
     state === "perfect"
-      ? "Perfect day"
+      ? t.miscSheets.perfectDay
       : state === "met"
-        ? "Standard met"
+        ? t.miscSheets.standardMet
         : state === "missed"
-          ? "Standard missed"
-          : "Nothing scheduled";
+          ? t.miscSheets.standardMissed
+          : t.miscSheets.nothingScheduled;
 
   return (
     <div className="flex flex-col gap-4">
@@ -226,9 +216,9 @@ export function DaySheet({ date }: { date: string }) {
             )}
           >
             {error
-              ? "Could not load this day."
+              ? t.miscSheets.dayLoadFailed
               : items === null
-                ? "Loading…"
+                ? t.miscSheets.loading
                 : summary}
           </span>
         </span>
@@ -291,20 +281,18 @@ export function DaySheet({ date }: { date: string }) {
       {items !== null && (
         <div className="flex items-baseline justify-between border-t border-white/8 pt-3">
           <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
-            FOCUS
+            {t.miscSheets.focus}
           </span>
           <span className="text-[15px] tabular-nums" data-testid="day-focus">
             {focusLabel(focus.seconds)}
             <span className="text-dim">
               {" "}
-              · {focus.sessions} {focus.sessions === 1 ? "session" : "sessions"}
+              · {t.miscSheets.sessions(focus.sessions)}
             </span>
           </span>
         </div>
       )}
-      <span className="text-xs text-dim">
-        Skipped tasks stay in the total. Past days are the record.
-      </span>
+      <span className="text-xs text-dim">{t.miscSheets.dayNote}</span>
     </div>
   );
 }
@@ -317,7 +305,7 @@ export function TemplateSheet() {
   );
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const have = new Set(routines.map((t) => t.name.toLowerCase()));
+  const have = new Set(routines.map((r) => r.name.toLowerCase()));
 
   function choose(name: string) {
     setPick(name);
@@ -335,10 +323,10 @@ export function TemplateSheet() {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <span className={heading}>USE A TEMPLATE</span>
+      <span className={heading}>{t.miscSheets.useTemplate}</span>
       <div
         role="radiogroup"
-        aria-label="Template"
+        aria-label={t.miscSheets.templateAria}
         className="flex flex-wrap gap-1.5"
       >
         {TEMPLATE_NAMES.map((n) => (
@@ -384,7 +372,7 @@ export function TemplateSheet() {
                 {it.name}
               </span>
               <span className="font-mono text-[10px] tracking-[.12em] text-dim">
-                {owned ? "HAVE" : "NEW"}
+                {owned ? t.miscSheets.have : t.miscSheets.new}
               </span>
             </div>
           );
@@ -399,15 +387,15 @@ export function TemplateSheet() {
                 addOwn();
               }
             }}
-            placeholder="Add your own"
-            aria-label="Add item"
+            placeholder={t.miscSheets.addOwn}
+            aria-label={t.miscSheets.addItemAria}
             maxLength={80}
             className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 text-[15px] outline-none"
           />
           <button
             type="button"
             onClick={addOwn}
-            aria-label="Add"
+            aria-label={t.miscSheets.addAria}
             className="size-11 rounded-xl border border-white/12 text-xl"
           >
             +
@@ -415,7 +403,7 @@ export function TemplateSheet() {
         </div>
       </div>
       <span className="text-[12.5px] text-dim">
-        Every item repeats daily. Items you already have are skipped.
+        {t.miscSheets.templateNote}
       </span>
       <button
         type="button"
@@ -432,10 +420,10 @@ export function TemplateSheet() {
         className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg disabled:opacity-50"
       >
         {busy
-          ? "ADDING…"
+          ? t.miscSheets.adding
           : chosen.length
-            ? `ADD ${chosen.length} ${chosen.length === 1 ? "ITEM" : "ITEMS"}`
-            : "NOTHING NEW"}
+            ? t.miscSheets.addItems(chosen.length)
+            : t.miscSheets.nothingNew}
       </button>
     </div>
   );
@@ -466,12 +454,12 @@ export function ChallengeSheet() {
     const res = await createChallenge(draft, today).catch(() => null);
     setBusy(false);
     if (!res?.ok) {
-      setError(res && !res.ok ? res.error : "Network error. Try again.");
+      setError(res && !res.ok ? res.error : t.errors.network);
       return;
     }
     closeSheet();
     toast({
-      text: `Challenge set with ${partner.name}.`,
+      text: t.miscSheets.challengeSet(partner.name),
       sub: draft.title.trim().toUpperCase(),
     });
   }
@@ -488,9 +476,9 @@ export function ChallengeSheet() {
         void create();
       }}
     >
-      <span className={heading}>NEW CHALLENGE</span>
+      <span className={heading}>{t.miscSheets.newChallenge}</span>
       <label className="flex flex-col gap-2">
-        <span className={label}>TITLE</span>
+        <span className={label}>{t.miscSheets.title}</span>
         <input
           value={draft.title}
           maxLength={40}
@@ -500,7 +488,7 @@ export function ChallengeSheet() {
       </label>
       <div className="flex flex-col gap-2">
         <span className={label} id="challenge-type">
-          TYPE
+          {t.miscSheets.type}
         </span>
         <div
           role="radiogroup"
@@ -509,8 +497,8 @@ export function ChallengeSheet() {
         >
           {(
             [
-              ["standard_days", "Standard days"],
-              ["focus_seconds", "Focus time"],
+              ["standard_days", t.miscSheets.typeStandard],
+              ["focus_seconds", t.miscSheets.typeFocus],
             ] as const
           ).map(([k, l]) => (
             <button
@@ -531,10 +519,10 @@ export function ChallengeSheet() {
       </div>
       <label className="flex flex-col gap-2">
         <span className={label}>
-          GOAL ·{" "}
+          {t.miscSheets.goal} ·{" "}
           {draft.type === "standard_days"
-            ? "DAYS MEETING YOUR STANDARD"
-            : "HOURS OF FOCUS"}
+            ? t.miscSheets.goalStandard
+            : t.miscSheets.goalFocus}
         </span>
         <input
           type="number"
@@ -550,7 +538,7 @@ export function ChallengeSheet() {
       </label>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex min-w-0 flex-col gap-2">
-          <span className={label}>START</span>
+          <span className={label}>{t.miscSheets.start}</span>
           <input
             type="date"
             min={today}
@@ -560,7 +548,7 @@ export function ChallengeSheet() {
           />
         </label>
         <label className="flex min-w-0 flex-col gap-2">
-          <span className={label}>END</span>
+          <span className={label}>{t.miscSheets.end}</span>
           <input
             type="date"
             min={draft.start}
@@ -571,8 +559,7 @@ export function ChallengeSheet() {
         </label>
       </div>
       <span className="text-[12.5px] text-dim">
-        Progress comes from your tasks and focus sessions. The higher total
-        wins; the challenge never changes the weekly head-to-head.
+        {t.miscSheets.challengeNote}
       </span>
       {error && (
         <p role="alert" className="text-[13px] text-danger">
@@ -584,7 +571,7 @@ export function ChallengeSheet() {
         disabled={busy}
         className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg disabled:opacity-50"
       >
-        {busy ? "CREATING…" : "CREATE"}
+        {busy ? t.miscSheets.creating : t.miscSheets.create}
       </button>
     </form>
   );

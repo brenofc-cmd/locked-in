@@ -326,3 +326,9 @@ Status: Accepted.
 Decision: `next.config.ts` sends a CSP (self + the project's Supabase host for `connect-src`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri` / `form-action 'self'`; inline scripts / styles allowed), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, a restrictive `Permissions-Policy`, and no `X-Powered-By`. `safeNext()` refuses control characters and backslashes and re-serialises the path from a parsed URL. Auth email links use `SITE_URL` when set. After `duo_ended` the client leaves the channel immediately.
 Reason: Defence in depth without breaking Next.js; a nonce-based `script-src` would force dynamic rendering of every page and is left for after V1.
 Status: Accepted.
+
+# ADR-054 — Interface in Brazilian Portuguese from one typed catalog
+
+Decision: Every user-facing string (screens, sheets, overlays, toasts, aria labels, validation and error copy, page titles, manifest, dates) lives in `src/i18n/pt-BR.ts`: one `as const` object `t`, with functions for interpolation and plurals (`plural(n, one, many)`) and `LOCALE = "pt-BR"` for `<html lang>`, the manifest and `Intl` dates. No i18n library and no locale routing: the product ships in one language, and the catalog keeps a second one possible without touching components. The name stays in English (LOCKED IN, the LOCK IN button); the tagline is "Sem hype. Só prova.". Internal identifiers do not change (`Day` codes `MON`…`SUN`, categories, statuses, database values, error codes); only their display labels come from the catalog. Weekday abbreviations are three letters (SEG, QUA) because two would be ambiguous (QUA / QUI). Tests assert the Portuguese copy.
+Reason: The users are Brazilian. A single typed file catches a missing or misspelled key at compile time, adds no dependency or bundle cost, and keeps the copy reviewable in one place.
+Status: Accepted.

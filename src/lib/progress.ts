@@ -15,6 +15,7 @@ import {
   isoWeekday,
   weekdayName,
 } from "@/lib/local-date";
+import { t } from "@/i18n/pt-BR";
 
 export type DayStat = {
   day: string;
@@ -191,26 +192,12 @@ export type Bar = {
   current: boolean;
 };
 
-const MONTHS = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
-];
-
 export const monthLabel = (dateISO: string) =>
-  MONTHS[Number(dateISO.slice(5, 7)) - 1];
+  t.dates.monthsShort[Number(dateISO.slice(5, 7)) - 1];
 
+/** "14 SET" */
 const shortDate = (dateISO: string) =>
-  `${monthLabel(dateISO)} ${Number(dateISO.slice(8, 10))}`;
+  `${Number(dateISO.slice(8, 10))} ${monthLabel(dateISO)}`;
 
 /** Monday of the week containing the date. */
 export const weekStartOf = (dateISO: string) =>
@@ -258,11 +245,12 @@ export function chartBars(days: DayStat[], range: Range, today: string): Bar[] {
   return [...buckets.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, b]) => {
-      const label = range === "90" ? `W${isoWeekNumber(k)}` : monthLabel(k);
+      const label =
+        range === "90" ? t.progress.weekShort(isoWeekNumber(k)) : monthLabel(k);
       return {
         key: k,
         label,
-        title: `${range === "90" ? `Week ${isoWeekNumber(k)}` : label}: ${pctText(percent(b.completed, b.planned))}`,
+        title: `${range === "90" ? t.progress.week(isoWeekNumber(k)) : label}: ${pctText(percent(b.completed, b.planned))}`,
         pct: percent(b.completed, b.planned),
         current: k === current,
       };
@@ -270,7 +258,7 @@ export function chartBars(days: DayStat[], range: Range, today: string): Bar[] {
 }
 
 export const pctText = (pct: number | null) =>
-  pct === null ? "no tasks" : `${pct}%`;
+  pct === null ? t.progress.noTasks : `${pct}%`;
 
 // ---- calendar ---------------------------------------------------------------
 
@@ -325,22 +313,8 @@ export function calendarMonth(
   };
 }
 
-const FULL_MONTHS = [
-  "JANUARY",
-  "FEBRUARY",
-  "MARCH",
-  "APRIL",
-  "MAY",
-  "JUNE",
-  "JULY",
-  "AUGUST",
-  "SEPTEMBER",
-  "OCTOBER",
-  "NOVEMBER",
-  "DECEMBER",
-];
 const fullMonth = (dateISO: string) =>
-  FULL_MONTHS[Number(dateISO.slice(5, 7)) - 1];
+  t.dates.monthsLong[Number(dateISO.slice(5, 7)) - 1];
 
 // ---- competition --------------------------------------------------------------
 
@@ -427,11 +401,11 @@ export const weeksWithData = (results: WeekResult[]) =>
     (r) => r.row.me.planned > 0 || (r.row.partner && r.row.partner.planned > 0),
   );
 
-/** "SEP 14 – 20" */
+/** "14 – 20 SET" / "28 SET – 4 OUT" */
 export function weekRangeLabel(weekStart: string): string {
   const end = addDays(weekStart, 6);
   return monthLabel(weekStart) === monthLabel(end)
-    ? `${shortDate(weekStart)} – ${Number(end.slice(8, 10))}`
+    ? `${Number(weekStart.slice(8, 10))} – ${shortDate(end)}`
     : `${shortDate(weekStart)} – ${shortDate(end)}`;
 }
 
@@ -502,7 +476,7 @@ export function bestWeekday(
   const anyDay = days.find((d) => isoWeekday(d.day) === k)!.day;
   const name = weekdayName(anyDay);
   return {
-    name: name.charAt(0) + name.slice(1).toLowerCase(),
+    name: name.toLowerCase(),
     pct: percent(b.completed, b.planned) ?? 0,
   };
 }
@@ -517,15 +491,17 @@ export function insightLines(
   const { best, missed } = habitExtremes(habits);
   if (best)
     lines.push(
-      `${best.title}: ${best.completed} of ${best.planned} ${period} (${best.rate}%). Your most consistent routine.`,
+      t.progress.insightBest(
+        best.title,
+        best.completed,
+        best.planned,
+        period,
+        best.rate,
+      ),
     );
-  if (missed)
-    lines.push(
-      `${missed.title} is your least consistent routine at ${missed.rate}%.`,
-    );
+  if (missed) lines.push(t.progress.insightMissed(missed.title, missed.rate));
   const wd = bestWeekday(days);
-  if (wd)
-    lines.push(`Your strongest day ${period} is ${wd.name} (${wd.pct}%).`);
+  if (wd) lines.push(t.progress.insightWeekday(period, wd.name, wd.pct));
   return lines;
 }
 

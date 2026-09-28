@@ -1,21 +1,13 @@
-import { sortTasks } from "@/lib/task-model";
+import { t } from "@/i18n/pt-BR";
+import { dayLabel } from "@/lib/local-date";
+import { CATEGORIES, sortTasks } from "@/lib/task-model";
 import type { Category, Day, RoutineItem, SectionName, Task } from "@/types";
 
-export const SECTION_ORDER: SectionName[] = [
-  "MORNING",
-  "WORK / STUDY",
-  "BODY",
-  "NIGHT",
-  "CUSTOM",
-];
+export const SECTION_OF: Record<Category, SectionName> = t.sections;
 
-export const SECTION_OF: Record<Category, SectionName> = {
-  morning: "MORNING",
-  work_study: "WORK / STUDY",
-  body: "BODY",
-  night: "NIGHT",
-  custom: "CUSTOM",
-};
+export const SECTION_ORDER: SectionName[] = CATEGORIES.map(
+  (c) => SECTION_OF[c],
+);
 
 export type TodayStats = {
   done: number;
@@ -51,11 +43,10 @@ export function todayStats(tasks: Task[], standard: number): TodayStats {
 }
 
 export function nextLine(stats: TodayStats): string {
-  if (stats.total === 0) return "Nothing scheduled today.";
-  if (stats.perfect) return "Every task done.";
-  if (stats.standardMet)
-    return `Standard met. ${stats.left} left for a perfect day.`;
-  return `${stats.needed} more to meet your standard.`;
+  if (stats.total === 0) return t.today.nothingScheduled;
+  if (stats.perfect) return t.today.everyTaskDone;
+  if (stats.standardMet) return t.today.standardMet(stats.left);
+  return t.today.moreToStandard(stats.needed);
 }
 
 /** Routine items scheduled / not scheduled on a weekday. */
@@ -80,9 +71,9 @@ export function groupBySection(tasks: Task[]) {
 }
 
 export function scheduleLabel(days: Day[]): string {
-  if (days.length === 7) return "EVERY DAY";
+  if (days.length === 7) return t.today.everyDay;
   const weekdays: Day[] = ["MON", "TUE", "WED", "THU", "FRI"];
   if (days.length === 5 && weekdays.every((d) => days.includes(d)))
-    return "WEEKDAYS";
-  return days.map((d) => d.slice(0, 2)).join(" ");
+    return t.today.weekdays;
+  return days.map(dayLabel).join(" ");
 }

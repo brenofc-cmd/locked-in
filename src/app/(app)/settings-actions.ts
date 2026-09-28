@@ -1,5 +1,6 @@
 "use server";
 
+import { t } from "@/i18n/pt-BR";
 import { revalidatePath } from "next/cache";
 import { SETTING_COLUMNS, validSetting, type SettingKey } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ import type { Database } from "@/types/database";
 type Result = { ok: true } | { ok: false; error: string };
 type SettingsUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
 
-const FAIL: Result = { ok: false, error: "Could not save. Try again." };
+const FAIL: Result = { ok: false, error: t.actionErrors.saveFailed };
 
 async function userId() {
   const supabase = await createClient();
@@ -29,8 +30,7 @@ export async function updateSetting(
   if (!(key in SETTING_COLUMNS) || !validSetting(key, value)) return FAIL;
   try {
     const { supabase, id } = await userId();
-    if (!id)
-      return { ok: false, error: "Your session expired. Sign in again." };
+    if (!id) return { ok: false, error: t.errors.sessionExpired };
     const patch: SettingsUpdate = { [SETTING_COLUMNS[key]]: value };
     const { error } = await supabase
       .from("user_settings")
@@ -40,7 +40,7 @@ export async function updateSetting(
       return error.code === "23514"
         ? {
             ok: false,
-            error: "Quiet hours need a start and an end that differ.",
+            error: t.actionErrors.quietHoursDiffer,
           }
         : FAIL;
   } catch {
@@ -59,18 +59,17 @@ export async function updateTimezone(timeZone: string): Promise<Result> {
   } catch {
     valid = false;
   }
-  if (!valid) return { ok: false, error: "Choose a valid timezone." };
+  if (!valid) return { ok: false, error: t.actionErrors.timezoneInvalid };
   try {
     const { supabase, id } = await userId();
-    if (!id)
-      return { ok: false, error: "Your session expired. Sign in again." };
+    if (!id) return { ok: false, error: t.errors.sessionExpired };
     const { error } = await supabase
       .from("profiles")
       .update({ timezone: timeZone })
       .eq("id", id);
     if (error)
       return error.code === "22023"
-        ? { ok: false, error: "Choose a valid timezone." }
+        ? { ok: false, error: t.actionErrors.timezoneInvalid }
         : FAIL;
   } catch {
     return FAIL;
@@ -83,8 +82,7 @@ export async function updateTimezone(timeZone: string): Promise<Result> {
 export async function completeOnboarding(): Promise<Result> {
   try {
     const { supabase, id } = await userId();
-    if (!id)
-      return { ok: false, error: "Your session expired. Sign in again." };
+    if (!id) return { ok: false, error: t.errors.sessionExpired };
     const { error } = await supabase
       .from("user_settings")
       .update({ onboarding_completed_at: new Date().toISOString() })

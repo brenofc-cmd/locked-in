@@ -29,33 +29,39 @@ describe("invite codes", () => {
   });
 
   it("maps RPC errors to friendly copy and never leaks raw errors", () => {
-    expect(duoErrorMessage("LI_DUO_FULL")).toMatch(/already full/);
-    expect(duoErrorMessage("LI_INVALID_CODE")).toMatch(/doesn't match/);
-    expect(duoErrorMessage("LI_ALREADY_IN_DUO")).toMatch(/already in a duo/);
-    expect(duoErrorMessage("TypeError: fetch failed")).toMatch(/Network error/);
+    expect(duoErrorMessage("LI_DUO_FULL")).toMatch(/já está completa/);
+    expect(duoErrorMessage("LI_INVALID_CODE")).toMatch(/não corresponde/);
+    expect(duoErrorMessage("LI_ALREADY_IN_DUO")).toMatch(
+      /já está em uma dupla/,
+    );
+    expect(duoErrorMessage("TypeError: fetch failed")).toMatch(
+      /Erro de conexão/,
+    );
     const raw =
       'duplicate key value violates unique constraint "duo_members_two_seats"';
-    expect(duoErrorMessage(raw)).toBe("Something went wrong. Try again.");
+    expect(duoErrorMessage(raw)).toBe("Algo deu errado. Tente de novo.");
   });
 });
 
 describe("auth errors", () => {
   it("maps Supabase codes to friendly copy", () => {
     expect(authErrorMessage({ code: "invalid_credentials", status: 400 })).toBe(
-      "Wrong email or password.",
+      "E-mail ou senha incorretos.",
     );
     expect(authErrorMessage({ code: "email_not_confirmed" })).toMatch(
-      /Confirm your email/,
+      /Confirme seu e-mail/,
     );
-    expect(authErrorMessage({ status: 429 })).toMatch(/Too many attempts/);
+    expect(authErrorMessage({ status: 429 })).toMatch(/Muitas tentativas/);
     expect(authErrorMessage({ code: "something_new", status: 500 })).toBe(
-      "Something went wrong. Try again.",
+      "Algo deu errado. Tente de novo.",
     );
   });
 
   it("validates passwords before any request", () => {
-    expect(validatePassword("short", "short")).toMatch(/at least 8/);
-    expect(validatePassword("longenough", "different")).toMatch(/don't match/);
+    expect(validatePassword("short", "short")).toMatch(/pelo menos 8/);
+    expect(validatePassword("longenough", "different")).toMatch(
+      /não coincidem/,
+    );
     expect(validatePassword("longenough", "longenough")).toBeNull();
   });
 });

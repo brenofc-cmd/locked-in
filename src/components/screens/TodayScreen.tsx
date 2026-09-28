@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
@@ -33,17 +34,17 @@ export function TodayScreen() {
                   {dateLabel(app.today)}
                 </span>
                 <span className="font-mono text-[11.5px] tracking-[.22em] text-accent">
-                  DAY {dayNumber}
+                  {t.todayScreen.day(dayNumber)}
                 </span>
               </div>
               <h1 className="m-0 text-[25px] leading-[1.1] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-                GOOD MORNING, {app.userName.toUpperCase()}.
+                {t.todayScreen.greeting(app.userName.toUpperCase())}
               </h1>
             </div>
             <div className="flex items-end justify-between gap-4">
               <span
                 data-testid="today-pct"
-                aria-label={`${stats.pct}% complete`}
+                aria-label={t.todayScreen.pctAria(stats.pct)}
                 className={cx(
                   "flex items-baseline text-[64px] leading-[.82] font-medium tracking-[-0.055em] tabular-nums transition-colors duration-[400ms] desk:text-[84px] wide:text-[112px]",
                   stats.perfect ? "text-accent" : "text-text",
@@ -60,15 +61,15 @@ export function TodayScreen() {
                   className="text-[15px] tabular-nums"
                 >
                   {stats.done} / {stats.total}{" "}
-                  <span className="text-dim">done</span>
+                  <span className="text-dim">{t.todayScreen.done}</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => app.openSheet({ kind: "streak" })}
                   className="flex h-7 items-center gap-1.5 font-mono text-[11px] tracking-[.14em] text-muted hover:text-text"
                 >
-                  <span data-testid="today-streak">{app.streak}</span> DAY
-                  STREAK
+                  <span data-testid="today-streak">{app.streak}</span>{" "}
+                  {t.todayScreen.streakSuffix}
                   <span aria-hidden="true" className="text-faint">
                     ›
                   </span>
@@ -78,7 +79,7 @@ export function TodayScreen() {
             <div className="flex flex-col gap-2.5">
               <ProgressBar
                 pct={stats.pct}
-                label="Today's completion"
+                label={t.todayScreen.completionLabel}
                 marker={app.standard}
                 className="overflow-visible"
               />
@@ -100,30 +101,30 @@ export function TodayScreen() {
                   100%
                 </span>
                 <span className="font-mono text-[12.5px] tracking-[.28em]">
-                  STANDARD MET.
+                  {t.todayScreen.standardMet}
                 </span>
               </span>
             </div>
           )}
 
           <section
-            aria-label="Today's tasks"
+            aria-label={t.todayScreen.tasksAria}
             className="flex flex-col gap-[30px]"
           >
             {empty && (
               <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-white/12 p-5">
                 <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-                  NO ROUTINE YET
+                  {t.todayScreen.noRoutine}
                 </span>
                 <span className="text-[15px] leading-[1.45]">
-                  Build your standard.
+                  {t.todayScreen.buildStandard}
                 </span>
                 <button
                   type="button"
                   onClick={() => app.openSheet({ kind: "add", repeat: true })}
                   className="flex h-11 items-center self-start rounded-xl border border-white/14 px-[18px] font-mono text-[11.5px] font-semibold tracking-[.2em]"
                 >
-                  CREATE ROUTINE
+                  {t.todayScreen.createRoutine}
                 </button>
               </div>
             )}
@@ -135,15 +136,15 @@ export function TodayScreen() {
                   right={sec.count}
                   tracking="tracking-[.18em]"
                 />
-                {sec.tasks.map((t) => (
+                {sec.tasks.map((task) => (
                   <TaskRow
-                    key={t.id}
-                    task={t}
-                    popping={app.pop === t.id}
-                    flashing={app.flash === t.id}
-                    onToggle={() => app.toggleTask(t.id)}
+                    key={task.id}
+                    task={task}
+                    popping={app.pop === task.id}
+                    flashing={app.flash === task.id}
+                    onToggle={() => app.toggleTask(task.id)}
                     onOptions={() =>
-                      app.openSheet({ kind: "options", taskId: t.id })
+                      app.openSheet({ kind: "options", taskId: task.id })
                     }
                   />
                 ))}
@@ -154,11 +155,11 @@ export function TodayScreen() {
               onClick={() => app.openSheet({ kind: "add" })}
               className="-mt-3.5 hidden h-11 self-start rounded-xl border border-dashed border-white/16 px-4 text-sm text-muted hover:border-white/30 hover:text-text desk:block"
             >
-              + Add task
+              {t.todayScreen.addTask}
             </button>
             {rest.length > 0 && (
               <span className="text-[13px] text-dim">
-                Rest today: {rest.map((t) => t.name).join(" · ")}
+                {t.todayScreen.restToday} {rest.map((r) => r.name).join(" · ")}
               </span>
             )}
           </section>
@@ -183,14 +184,14 @@ export function TodayScreen() {
                     className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
                   />
                   <h2 className="font-mono text-[11px] font-normal tracking-[.2em]">
-                    LIVE
+                    {t.todayScreen.live}
                   </h2>
                 </span>
                 <Link
                   href="/partner"
                   className="flex h-9 items-center text-[12.5px] text-dim hover:text-text"
                 >
-                  See all
+                  {t.todayScreen.seeAll}
                 </Link>
               </div>
               <div className="flex flex-col-reverse">
@@ -205,7 +206,7 @@ export function TodayScreen() {
             onClick={() => app.openOverlay({ kind: "review" })}
             className="flex h-12 items-center justify-between border-t border-white/6 text-[13.5px] text-muted hover:text-text"
           >
-            <span>Review today</span>
+            <span>{t.todayScreen.reviewToday}</span>
             <span aria-hidden="true" className="text-faint">
               ›
             </span>
@@ -217,7 +218,7 @@ export function TodayScreen() {
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "add" })}
-          aria-label="Add task"
+          aria-label={t.todayScreen.addTaskAria}
           className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/12 bg-[#141416] text-[26px] font-light transition-transform duration-100 active:scale-[.92]"
         >
           +

@@ -4,11 +4,19 @@
  * returned by ensure_my_daily_tasks); these helpers format and compute with
  * the "YYYY-MM-DD" strings it returns, never with UTC slices of Date.
  */
+import { t } from "@/i18n/pt-BR";
 import type { Day } from "@/types";
 
-/** ISO order: index 0 = Monday = ISO 1 … index 6 = Sunday = ISO 7. */
+/**
+ * ISO order: index 0 = Monday = ISO 1 … index 6 = Sunday = ISO 7. These are
+ * identifiers (stored as ISO numbers), never shown: labels come from the
+ * catalog (DAY_LABELS, DAY_LETTERS).
+ */
 export const DAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-export const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+export const DAY_LETTERS: readonly string[] = t.dates.weekdayLetters;
+export const DAY_LABELS: readonly string[] = t.dates.weekdaysShort;
+/** "SEG" for "MON". */
+export const dayLabel = (d: Day) => DAY_LABELS[DAYS.indexOf(d)];
 
 export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -57,25 +65,10 @@ export function daysBetween(a: string, b: string): number {
   return Math.round((toUTC(b).getTime() - toUTC(a).getTime()) / 86_400_000);
 }
 
-const MONTHS = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
-];
-
-/** "THU, SEP 24" — the Today header. */
+/** "QUI, 24 SET" — the Today header. */
 export function dateLabel(dateISO: string): string {
   const d = toUTC(dateISO);
-  return `${weekdayOf(dateISO)}, ${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  return `${DAY_LABELS[isoWeekday(dateISO) - 1]}, ${d.getUTCDate()} ${t.dates.monthsShort[d.getUTCMonth()]}`;
 }
 
 /** "HH:MM" of an instant in `timeZone` (e.g. when a task was completed). */
@@ -88,19 +81,9 @@ export function localTimeHM(instant: string | Date, timeZone: string): string {
   }).format(typeof instant === "string" ? new Date(instant) : instant);
 }
 
-const WEEKDAY_NAMES = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-];
-
-/** "THURSDAY" */
+/** "QUINTA" */
 export const weekdayName = (dateISO: string) =>
-  WEEKDAY_NAMES[isoWeekday(dateISO) - 1];
+  t.dates.weekdaysLong[isoWeekday(dateISO) - 1];
 
 /** "DAY N" on Today: 1 on the day the account was created (owner's timezone). */
 export function accountDay(

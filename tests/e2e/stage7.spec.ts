@@ -122,9 +122,9 @@ const row = (page: Page, name: string) =>
 
 /** Bottom tab (client-side navigation: the page is never reloaded). */
 const tab = (page: Page, name: RegExp) =>
-  page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name });
+  page.getByRole("navigation", { name: "Abas" }).getByRole("link", { name });
 
-const shortDate = (d: string) => `${monthLabel(d)} ${Number(d.slice(8, 10))}`;
+const shortDate = (d: string) => `${Number(d.slice(8, 10))} ${monthLabel(d)}`;
 const calendarName = (d: string) =>
   `${monthLabel(d).charAt(0)}${monthLabel(d).slice(1, 3).toLowerCase()} ${Number(d.slice(8, 10))}`;
 
@@ -150,26 +150,26 @@ test("streak, standard, skipped, perfect days, chart and calendar from real hist
 
   // Today at 50 %: below the standard, but an open day never breaks the streak.
   await row(page, "Alpha").click();
-  await expect(page.getByTestId("today-count")).toHaveText("1 / 2 done");
+  await expect(page.getByTestId("today-count")).toHaveText("1 / 2 feitas");
   await expect(streak).toHaveText("3");
 
   // Skipped stays in the total: 1 done + 1 skipped is still 50 %, not 100 %.
-  await page.getByRole("button", { name: "Options for Beta" }).click();
+  await page.getByRole("button", { name: "Opções de Beta" }).click();
   await page
-    .getByRole("dialog", { name: "Task options" })
-    .getByRole("button", { name: "Rest" })
+    .getByRole("dialog", { name: "Opções da tarefa" })
+    .getByRole("button", { name: "Descanso" })
     .click();
-  await expect(page.getByText("SKIPPED · REST")).toBeVisible();
-  await expect(page.getByTestId("today-count")).toHaveText("1 / 2 done");
+  await expect(page.getByText("PULADA · DESCANSO")).toBeVisible();
+  await expect(page.getByTestId("today-count")).toHaveText("1 / 2 feitas");
   await expect(streak).toHaveText("3");
 
   // Unskip and complete: today meets the standard and counts, live.
-  await page.getByRole("button", { name: "Options for Beta" }).click();
+  await page.getByRole("button", { name: "Opções de Beta" }).click();
   await page
-    .getByRole("dialog", { name: "Task options" })
-    .getByRole("button", { name: /Unskip/ })
+    .getByRole("dialog", { name: "Opções da tarefa" })
+    .getByRole("button", { name: /Desfazer pulo/ })
     .click();
-  await expect(page.getByText("SKIPPED · REST")).toBeHidden();
+  await expect(page.getByText("PULADA · DESCANSO")).toBeHidden();
   await row(page, "Beta").click();
   await expect(streak).toHaveText("4");
   await writes.idle();
@@ -178,13 +178,13 @@ test("streak, standard, skipped, perfect days, chart and calendar from real hist
   // (T-3, T-1, today; T-2 is 80 %, not perfect), streak 4.
   await tab(page, /progress/i).click();
   await expect(page.getByTestId("progress-pct")).toHaveText("80%");
-  await expect(page.getByTestId("progress-streak")).toHaveText(/^4\s*days$/);
+  await expect(page.getByTestId("progress-streak")).toHaveText(/^4\s*dias$/);
   await expect(page.getByTestId("progress-perfect")).toHaveText("3");
   await expect(page.getByTestId("progress-focus")).toHaveText("0m");
-  const chart = page.getByRole("region", { name: "Completion chart" });
+  const chart = page.getByRole("region", { name: "Gráfico de conclusão" });
   await expect(
     chart.getByRole("listitem", {
-      name: `${shortDate(addDays(T, -4))}: no tasks`,
+      name: `${shortDate(addDays(T, -4))}: sem tarefas`,
     }),
   ).toBeAttached();
   await expect(
@@ -195,47 +195,45 @@ test("streak, standard, skipped, perfect days, chart and calendar from real hist
   if (addDays(T, -5).slice(0, 7) === T.slice(0, 7)) {
     await expect(
       page.getByRole("button", {
-        name: new RegExp(`^${calendarName(addDays(T, -5))}: missed, 0%$`),
+        name: new RegExp(`^${calendarName(addDays(T, -5))}: perdido, 0%$`),
       }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", {
-        name: new RegExp(
-          `^${calendarName(addDays(T, -4))}: nothing scheduled$`,
-        ),
+        name: new RegExp(`^${calendarName(addDays(T, -4))}: nada agendado$`),
       }),
     ).toBeDisabled();
     await page
       .getByRole("button", {
         name: new RegExp(
-          `^${calendarName(addDays(T, -2))}: standard met, 80%$`,
+          `^${calendarName(addDays(T, -2))}: padrão atingido, 80%$`,
         ),
       })
       .click();
-    const sheet = page.getByRole("dialog", { name: "Day detail" });
-    await expect(sheet.getByText("Standard met")).toBeVisible();
+    const sheet = page.getByRole("dialog", { name: "Detalhes do dia" });
+    await expect(sheet.getByText("Padrão atingido")).toBeVisible();
     await expect(sheet.getByText("80%")).toBeVisible();
-    await expect(sheet.getByText("DONE", { exact: true })).toHaveCount(4);
-    await expect(sheet.getByText("MISSED", { exact: true })).toHaveCount(1);
+    await expect(sheet.getByText("FEITA", { exact: true })).toHaveCount(4);
+    await expect(sheet.getByText("PERDIDA", { exact: true })).toHaveCount(1);
     await page.keyboard.press("Escape");
     await expect(sheet).toBeHidden();
   }
 
   // Insights: longest streak includes today live.
-  await page.getByRole("button", { name: "Show insights" }).click();
-  await expect(page.getByText("LONGEST STREAK 4 DAYS")).toBeVisible();
+  await page.getByRole("button", { name: "Mostrar análises" }).click();
+  await expect(page.getByText("MAIOR SEQUÊNCIA 4 DIAS")).toBeVisible();
 
   // Standard 90 %: T-2 (80 %) no longer counts -> streak 2 (T-1 + today),
   // recalculated over history, persisted.
-  await tab(page, /more/i).click();
-  await page.getByRole("link", { name: /settings/i }).click();
+  await tab(page, /mais/i).click();
+  await page.getByRole("link", { name: /ajustes/i }).click();
   await page.getByRole("radio", { name: "90%" }).click();
   await expect(page.getByRole("radio", { name: "90%" })).toHaveAttribute(
     "aria-checked",
     "true",
   );
   await writes.idle();
-  await tab(page, /today/i).click();
+  await tab(page, /hoje/i).click();
   await expect(streak).toHaveText("2");
   await page.reload();
   await expect(streak).toHaveText("2");
@@ -252,12 +250,12 @@ test("streak, standard, skipped, perfect days, chart and calendar from real hist
   );
   await page.getByRole("radio", { name: "80%" }).click();
   await writes.idle();
-  await tab(page, /today/i).click();
+  await tab(page, /hoje/i).click();
   await expect(streak).toHaveText("4");
 
   // Without a duo there is no competition.
-  await tab(page, /partner/i).click();
-  await expect(page.getByText("NO PARTNER YET")).toBeVisible();
+  await tab(page, /parceiro/i).click();
+  await expect(page.getByText("SEM DUPLA POR ENQUANTO")).toBeVisible();
 
   expect(c.errors).toEqual([]);
   await c.context.close();
@@ -283,15 +281,15 @@ test("weekly competition updates live on both sides; private tasks count but nev
   const b = await open(browser, users.b, "/partner");
   const aWrites = trackWrites(a.page);
   const bWrites = trackWrites(b.page);
-  const bWeek = b.page.getByRole("region", { name: "This week" });
+  const bWeek = b.page.getByRole("region", { name: "Esta semana" });
 
   await expect(bWeek.getByTestId("week-me")).toHaveText("0%");
   await expect(bWeek.getByTestId("week-partner")).toHaveText("0%");
-  await expect(bWeek.getByTestId("week-leader")).toHaveText(/^TIED/);
-  const bH2h = b.page.getByRole("region", { name: "Head to head" });
+  await expect(bWeek.getByTestId("week-leader")).toHaveText(/^EMPATADOS/);
+  const bH2h = b.page.getByRole("region", { name: "Confronto" });
   await expect(bH2h.getByTestId("h2h-score")).toHaveText(/^0\s*—\s*0$/);
   await expect(
-    bH2h.getByLabel(`Week ${isoWeekNumber(lastWeek)}: no contest`),
+    bH2h.getByLabel(`Semana ${isoWeekNumber(lastWeek)}: sem disputa`),
   ).toBeVisible();
 
   // Both connected before anything happens.
@@ -302,15 +300,15 @@ test("weekly competition updates live on both sides; private tasks count but nev
   // Alice completes a shared task: Bruno's page moves without a reload.
   // 1 / 4 = 25 % (the private task is in her total).
   await row(a.page, "Shared one").click();
-  const bActivity = b.page.getByRole("region", { name: "Activity" });
-  await expect(bActivity.getByText("completed Shared one")).toBeVisible({
+  const bActivity = b.page.getByRole("region", { name: "Atividade" });
+  await expect(bActivity.getByText("concluiu Shared one")).toBeVisible({
     timeout: LIVE,
   });
   await expect(bWeek.getByTestId("week-partner")).toHaveText("25%", {
     timeout: LIVE,
   });
   await expect(bWeek.getByTestId("week-leader")).toHaveText(
-    /ALICE IS AHEAD\s*\+25%/,
+    /ALICE ESTÁ NA FRENTE\s*\+25%/,
   );
 
   // Private completion: no title, no feed line, no toast. (No broadcast is
@@ -321,7 +319,7 @@ test("weekly competition updates live on both sides; private tasks count but nev
   await b.page.waitForTimeout(3000);
   await expect(bWeek.getByTestId("week-partner")).toHaveText(/^(25|50)%$/);
   await expect(b.page.getByText("Secret plan")).toHaveCount(0);
-  await expect(bActivity.getByText("completed Shared one")).toHaveCount(1);
+  await expect(bActivity.getByText("concluiu Shared one")).toHaveCount(1);
   await expect(b.page.getByRole("status").getByText(/Secret/)).toHaveCount(0);
 
   // The next shared completion brings the aggregate: 3 / 4 = 75 %.
@@ -333,52 +331,52 @@ test("weekly competition updates live on both sides; private tasks count but nev
   await aWrites.idle();
 
   // Alice's own view is live from her tasks.
-  await tab(a.page, /partner/i).click();
-  const aWeek = a.page.getByRole("region", { name: "This week" });
+  await tab(a.page, /parceiro/i).click();
+  const aWeek = a.page.getByRole("region", { name: "Esta semana" });
   await expect(aWeek.getByTestId("week-me")).toHaveText("75%");
   await expect(aWeek.getByTestId("week-partner")).toHaveText("0%");
   await expect(aWeek.getByTestId("week-leader")).toHaveText(
-    /YOU'RE AHEAD\s*\+75%/,
+    /VOCÊ ESTÁ NA FRENTE\s*\+75%/,
   );
 
   // Bruno completes both of his: Alice (on /partner, no reload) sees 100 %.
-  await tab(b.page, /today/i).click();
+  await tab(b.page, /hoje/i).click();
   await row(b.page, "Bruno one").click();
   await row(b.page, "Bruno two").click();
   await expect(aWeek.getByTestId("week-partner")).toHaveText("100%", {
     timeout: LIVE,
   });
   await expect(aWeek.getByTestId("week-leader")).toHaveText(
-    /BRUNO IS AHEAD\s*\+25%/,
+    /BRUNO ESTÁ NA FRENTE\s*\+25%/,
   );
   await bWrites.idle();
 
   // The current week is never a result: still 0 — 0 on both sides.
-  const aH2h = a.page.getByRole("region", { name: "Head to head" });
+  const aH2h = a.page.getByRole("region", { name: "Confronto" });
   await expect(aH2h.getByTestId("h2h-score")).toHaveText(/^0\s*—\s*0$/);
-  await tab(b.page, /partner/i).click();
+  await tab(b.page, /parceiro/i).click();
   await expect(bWeek.getByTestId("week-me")).toHaveText("100%");
   await expect(bWeek.getByTestId("week-leader")).toHaveText(
-    /YOU'RE AHEAD\s*\+25%/,
+    /VOCÊ ESTÁ NA FRENTE\s*\+25%/,
   );
   await expect(bH2h.getByTestId("h2h-score")).toHaveText(/^0\s*—\s*0$/);
 
   // Focus is shown apart and is not part of the score.
-  await expect(bWeek.getByText("FOCUS", { exact: true })).toBeVisible();
+  await expect(bWeek.getByText("FOCO", { exact: true })).toBeVisible();
 
   // Last week's review: Bruno's own numbers, no partner side, no verdict.
   await bH2h
     .getByRole("button", {
-      name: new RegExp(`^WEEK ${isoWeekNumber(lastWeek)}`),
+      name: new RegExp(`^SEMANA ${isoWeekNumber(lastWeek)} `),
     })
     .click();
   const review = b.page.getByRole("dialog", {
-    name: `Week ${isoWeekNumber(lastWeek)} review`,
+    name: `Revisão da semana ${isoWeekNumber(lastWeek)}`,
   });
   await expect(review.getByTestId("weekly-me")).toHaveText("40%");
   await expect(review.getByTestId("weekly-verdict")).toHaveCount(0);
   await expect(review.getByText("2 / 5")).toBeVisible();
-  await review.getByRole("button", { name: "CLOSE" }).click();
+  await review.getByRole("button", { name: "FECHAR" }).click();
 
   // Reload: the same numbers come back from the database.
   await b.page.reload();

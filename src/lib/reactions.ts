@@ -2,6 +2,8 @@
  * Reactions (Stage 8): the approved set only. Stored as a type key
  * (reactions.reaction_type), shown as the design's glyph or word.
  */
+import { t } from "@/i18n/pt-BR";
+
 export const REACTION_TYPES = [
   "fire",
   "lightning",
@@ -15,10 +17,10 @@ const LABEL: Record<ReactionType, string> = {
   fire: "🔥",
   lightning: "⚡",
   salute: "🫡",
-  respect: "Respect.",
+  respect: t.reactions.respect,
 };
 
-export const reactionLabel = (t: ReactionType) => LABEL[t];
+export const reactionLabel = (type: ReactionType) => LABEL[type];
 
 export function isReactionType(v: unknown): v is ReactionType {
   return (
@@ -26,8 +28,8 @@ export function isReactionType(v: unknown): v is ReactionType {
   );
 }
 
-/** Emoji reactions render large; "Respect." is a word. */
-export const isEmojiReaction = (t: ReactionType) => t !== "respect";
+/** Emoji reactions render large; "Respeito." is a word. */
+export const isEmojiReaction = (type: ReactionType) => type !== "respect";
 
 /** reactions of one event: user id -> type. */
 export type EventReactions = Record<string, ReactionType>;
@@ -71,7 +73,5 @@ export function reactionToastText(
   partnerName: string,
   target: string | null,
 ): string {
-  return target
-    ? `${partnerName} reacted to your ${target}.`
-    : `${partnerName} reacted to your activity.`;
+  return t.reactions.toast(partnerName, target);
 }

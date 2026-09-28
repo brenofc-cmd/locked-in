@@ -1,3 +1,4 @@
+import { t } from "@/i18n/pt-BR";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DailyTaskRow } from "@/lib/task-model";
 import type { Database } from "@/types/database";
@@ -57,23 +58,22 @@ export async function loadDuoData(
     supabase.rpc("partner_today"),
     supabase.rpc("partner_current_focus"),
   ]);
-  if (feed.error || day.error || focus.error)
-    throw new Error("Could not load your duo.");
+  if (feed.error || day.error || focus.error) throw new Error(t.loadErrors.duo);
   const d = day.data?.[0];
   const partnerDay = d
     ? { date: d.task_date, done: d.done, total: d.total }
     : null;
   let partnerTasks: DailyTaskRow[] = [];
   if (partnerDay) {
-    const t = await supabase
+    const res = await supabase
       .from("daily_tasks")
       .select("*")
       .neq("owner_id", userId)
       .eq("task_date", partnerDay.date)
       .order("sort_order")
       .order("created_at");
-    if (t.error) throw new Error("Could not load your duo.");
-    partnerTasks = t.data;
+    if (res.error) throw new Error(t.loadErrors.duo);
+    partnerTasks = res.data;
   }
   return {
     feed: feed.data,

@@ -51,7 +51,7 @@ describe("activity feed", () => {
     expect(e).toMatchObject({
       who: "partner",
       kind: "done",
-      text: "completed Task t1",
+      text: "concluiu Task t1",
       t: "09:27",
       taskId: "t1",
     });
@@ -76,7 +76,7 @@ describe("activity feed", () => {
       ),
     ).toMatchObject({
       kind: "focus",
-      text: "started Focus — Project",
+      text: "iniciou Foco — Project",
     });
     expect(
       eventFromActivity(
@@ -84,7 +84,7 @@ describe("activity feed", () => {
         ME,
         "UTC",
       ).text,
-    ).toBe("started Focus");
+    ).toBe("iniciou Foco");
     expect(
       eventFromActivity(
         {
@@ -97,7 +97,7 @@ describe("activity feed", () => {
         ME,
         "UTC",
       ),
-    ).toMatchObject({ kind: "focusdone", text: "completed 32 min Focus" });
+    ).toMatchObject({ kind: "focusdone", text: "concluiu 32 min de Foco" });
     expect(focusMinutes(3)).toBe("<1 min");
   });
 

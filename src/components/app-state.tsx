@@ -15,6 +15,7 @@
  *   open, morning briefing / weekly review prompts, duo joined / ended.
  * Challenges load on their own screen (use-challenges.ts). No mocks remain.
  */
+import { t } from "@/i18n/pt-BR";
 import { usePathname, useRouter } from "next/navigation";
 import { clearReaction, setReaction } from "@/app/(app)/social-actions";
 import { updateDisplayName } from "@/app/(app)/actions";
@@ -82,7 +83,7 @@ function useAppStateValue(
   const userName = session.me.displayName;
   const realPartner = session.duo?.partner ?? null;
   const hasPartner = realPartner !== null;
-  const partnerName = realPartner?.displayName ?? "Your partner";
+  const partnerName = realPartner?.displayName ?? t.hookToasts.yourPartner;
 
   // ---- real duo side (Stage 5, duo-realtime.tsx) ----------------------------
   const rt = useDuoRealtime();
@@ -170,9 +171,9 @@ function useAppStateValue(
         return;
       }
       showSnack({
-        text: `${name} completed`,
+        text: t.hookToasts.completedSnack(name),
         action: {
-          label: "UNDO",
+          label: t.hookToasts.undo,
           run: () => {
             setDone(id, false);
             dismissSnack();
@@ -185,24 +186,24 @@ function useAppStateValue(
 
   const toggleTask = useCallback(
     (id: string) => {
-      const t = tasks.find((x) => x.id === id);
-      if (!t) return;
-      if (t.skip) {
+      const task = tasks.find((x) => x.id === id);
+      if (!task) return;
+      if (task.skip) {
         unskip(id);
         return;
       }
-      setTaskDone(id, t.name, !t.done);
+      setTaskDone(id, task.name, !task.done);
     },
     [tasks, unskip, setTaskDone],
   );
 
   const skipTask = useCallback(
     (id: string, reason: string) => {
-      const t = tasks.find((x) => x.id === id);
-      if (!t) return;
+      const task = tasks.find((x) => x.id === id);
+      if (!task) return;
       real.skipTask(id, reason);
       setSheet(null);
-      toast({ text: "Skipped for today.", sub: t.name.toUpperCase() });
+      toast({ text: t.hookToasts.skippedToday, sub: task.name.toUpperCase() });
     },
     [tasks, real, toast],
   );
@@ -230,17 +231,20 @@ function useAppStateValue(
    * is sent anywhere: the app must be open (V1 has no push).
    */
   const notify = useCallback(
-    (kind: NotificationKind, t: Omit<Toast, "id"> & { id?: string }) => {
+    (kind: NotificationKind, msg: Omit<Toast, "id"> & { id?: string }) => {
       const hasApi = typeof Notification !== "undefined";
       const d = decide(kind, prefsRef.current, {
         nowHM: localTimeHM(new Date(), timeZone),
         permission: hasApi ? Notification.permission : "unsupported",
         visible: document.visibilityState === "visible",
       });
-      if (d.toast) toast(t);
+      if (d.toast) toast(msg);
       if (d.browser) {
         try {
-          new Notification("LOCKED IN", { body: t.text, tag: t.id ?? kind });
+          new Notification("LOCKED IN", {
+            body: msg.text,
+            tag: msg.id ?? kind,
+          });
         } catch {
           // Some browsers only allow notifications from a service worker.
         }
@@ -265,8 +269,8 @@ function useAppStateValue(
       if (!res?.ok) {
         setMyReaction(eventId, before);
         toast({
-          text: res && !res.ok ? res.error : "Network error. Try again.",
-          sub: "REACTION",
+          text: res && !res.ok ? res.error : t.hookToasts.networkTryAgain,
+          sub: t.hookToasts.reaction,
         });
       }
     },
@@ -319,7 +323,7 @@ function useAppStateValue(
           actions: canReact
             ? (["fire", "salute"] as const).map((r) => ({
                 label: reactionLabel(r),
-                aria: `React ${reactionLabel(r)}`,
+                aria: t.hookToasts.reactAria(reactionLabel(r)),
                 run: () => {
                   void react(event.id, r);
                   dismissToast(toastId);
@@ -341,8 +345,14 @@ function useAppStateValue(
         if (byMe) return;
         toast(
           change === "joined"
-            ? { text: "Your partner joined.", sub: "DUO COMPLETE" }
-            : { text: `${partnerName} ended the duo.`, sub: "NO PARTNER YET" },
+            ? {
+                text: t.hookToasts.partnerJoined,
+                sub: t.hookToasts.duoComplete,
+              }
+            : {
+                text: t.hookToasts.partnerEnded(partnerName),
+                sub: t.hookToasts.noPartnerYet,
+              },
         );
       }),
     [onDuoChange, router, partnerName, toast],
@@ -409,11 +419,11 @@ function useAppStateValue(
       .filter((r) => r.ms < 2 ** 31 - 1)
       .map(({ id, ms }) =>
         setTimeout(() => {
-          const t = tasks.find((x) => x.id === id);
-          if (t)
+          const task = tasks.find((x) => x.id === id);
+          if (task)
             notify("task_reminder", {
-              text: t.name,
-              sub: `REMINDER · ${t.time}`,
+              text: task.name,
+              sub: t.hookToasts.reminder(task.time),
             });
         }, ms),
       );
@@ -458,12 +468,15 @@ function useAppStateValue(
     }
     const weekStart = lastWeek.weekStart;
     notify("weekly_review", {
-      text: `Week ${lastWeek.week} is closed.`,
-      sub: isoWeekday(today) === 1 ? "MONDAY · RESULT" : "RESULT",
+      text: t.hookToasts.weekClosed(lastWeek.week),
+      sub:
+        isoWeekday(today) === 1
+          ? t.hookToasts.mondayResult
+          : t.hookToasts.result,
       actions: [
         {
-          label: "OPEN",
-          aria: "Open the weekly review",
+          label: t.hookToasts.open,
+          aria: t.hookToasts.openWeeklyReview,
           run: () => setOverlay({ kind: "weekly", weekStart }),
         },
       ],
@@ -481,9 +494,9 @@ function useAppStateValue(
   useEffect(() => {
     if (!ticking) return;
     const id = setInterval(() => {
-      const t = clockNow();
-      setNow(t);
-      checkExpiry(t);
+      const at = clockNow();
+      setNow(at);
+      checkExpiry(at);
     }, 1000);
     return () => clearInterval(id);
   }, [ticking, checkExpiry, clockNow]);
@@ -501,7 +514,7 @@ function useAppStateValue(
   const setUserName = useCallback(
     async (name: string) => {
       const res = await updateDisplayName(name);
-      if (!res.ok) toast({ text: res.error, sub: "PROFILE" });
+      if (!res.ok) toast({ text: res.error, sub: t.hookToasts.profile });
     },
     [toast],
   );

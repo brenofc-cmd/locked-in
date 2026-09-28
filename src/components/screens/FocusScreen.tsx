@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
 import { StatusDot } from "@/components/ui";
@@ -15,7 +16,7 @@ export function FocusScreen() {
     <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 animate-[li-fade-up_.4s_ease] desk:gap-12 wide:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
       <div className="flex flex-col gap-[26px]">
         <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          WHAT ARE YOU WORKING ON?
+          {t.focusUi.question}
         </h1>
         <FocusPicker />
         <button
@@ -29,7 +30,7 @@ export function FocusScreen() {
       <div className="flex flex-col gap-[22px]">
         <div className="flex flex-col gap-2.5 border-t border-white/10 pt-3.5">
           <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-            FOCUS TODAY
+            {t.focusUi.focusToday}
           </span>
           <span
             data-testid="focus-today"
@@ -47,7 +48,7 @@ export function FocusScreen() {
               <div className="flex justify-between gap-2.5">
                 <span className="text-[14.5px]">{s.task}</span>
                 <span className="font-mono text-xs text-muted">
-                  {s.min} MIN
+                  {t.focusUi.minutesShort(s.min)}
                 </span>
               </div>
               <span className="font-mono text-[11px] text-dim">

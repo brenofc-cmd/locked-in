@@ -1,3 +1,4 @@
+import { t } from "@/i18n/pt-BR";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { addDays } from "@/lib/local-date";
 import { focusLabel } from "@/lib/progress";
@@ -143,16 +144,16 @@ async function reloadConnected(page: Page) {
 }
 
 const onboarding = (page: Page) =>
-  page.getByRole("dialog", { name: "Welcome to LOCKED IN" });
+  page.getByRole("dialog", { name: "Boas-vindas ao LOCKED IN" });
 
 async function throughRoutine(page: Page, name: string, template: string) {
   const ob = onboarding(page);
   await expect(ob).toBeVisible();
-  await ob.getByRole("button", { name: "BEGIN" }).click();
-  await ob.getByLabel("YOUR NAME").fill(name);
-  await ob.getByRole("button", { name: "CONTINUE" }).click();
-  await ob.getByRole("radio", { name: /Start from a template/ }).click();
-  await ob.getByRole("button", { name: "CONTINUE" }).click();
+  await ob.getByRole("button", { name: "COMEÇAR" }).click();
+  await ob.getByLabel("SEU NOME").fill(name);
+  await ob.getByRole("button", { name: "CONTINUAR" }).click();
+  await ob.getByRole("radio", { name: /Começar com um modelo/ }).click();
+  await ob.getByRole("button", { name: "CONTINUAR" }).click();
   await ob.getByRole("radio", { name: template }).click();
 }
 
@@ -164,30 +165,30 @@ test("onboarding: a fresh user builds a routine, skips the duo, lands on Today a
   const c = await open(browser, users.c, "/today");
   const page = c.page;
 
-  await throughRoutine(page, "Carla", "Study Routine");
+  await throughRoutine(page, "Carla", "Rotina de estudos");
   const ob = onboarding(page);
   // Edit the template before it becomes real: untick one item.
-  await ob.getByRole("checkbox", { name: "Practice problems" }).click();
-  await ob.getByRole("button", { name: "CONTINUE" }).click();
+  await ob.getByRole("checkbox", { name: "Resolver exercícios" }).click();
+  await ob.getByRole("button", { name: "CONTINUAR" }).click();
   await expect(
-    ob.getByRole("heading", { name: /INVITE YOUR\s*PARTNER/ }),
+    ob.getByRole("heading", { name: /CONVIDE SUA\s*DUPLA/ }),
   ).toBeVisible();
-  await ob.getByRole("button", { name: "Do this later" }).click();
+  await ob.getByRole("button", { name: "Fazer isso depois" }).click();
 
   await expect(ob).toBeHidden({ timeout: LIVE });
   await expect(page).toHaveURL(/\/today$/);
   await expect(page.getByRole("heading", { name: /CARLA\./ })).toBeVisible();
-  for (const t of ["Study block", "Read", "Review notes"])
+  for (const t of ["Bloco de estudo", "Ler", "Revisar anotações"])
     await expect(
       page.getByRole("checkbox", { name: t, exact: true }),
     ).toBeVisible();
   await expect(
-    page.getByRole("checkbox", { name: "Practice problems" }),
+    page.getByRole("checkbox", { name: "Resolver exercícios" }),
   ).toHaveCount(0);
 
   await page.reload();
   await expect(
-    page.getByRole("checkbox", { name: "Study block" }),
+    page.getByRole("checkbox", { name: "Bloco de estudo" }),
   ).toBeVisible();
   await expect(onboarding(page)).toHaveCount(0);
   const row = (await C.from("user_settings").select("*").single()).data!;
@@ -200,9 +201,11 @@ test("onboarding: a fresh user builds a routine, skips the duo, lands on Today a
   await settings(C, { onboarding_completed_at: null });
   await page.reload();
   await expect(
-    onboarding(page).getByRole("heading", { name: /INVITE YOUR\s*PARTNER/ }),
+    onboarding(page).getByRole("heading", { name: /CONVIDE SUA\s*DUPLA/ }),
   ).toBeVisible();
-  await onboarding(page).getByRole("button", { name: "Do this later" }).click();
+  await onboarding(page)
+    .getByRole("button", { name: "Fazer isso depois" })
+    .click();
   await expect(onboarding(page)).toBeHidden({ timeout: LIVE });
   expect(
     (await C.from("routine_items").select("title").is("end_date", null)).data,
@@ -220,32 +223,32 @@ test("onboarding with a duo: A creates the invitation, B joins with the code, bo
   const a = await open(browser, users.a, "/today");
   const b = await open(browser, users.b, "/today");
 
-  await throughRoutine(a.page, "Alice", "Morning Routine");
-  await onboarding(a.page).getByRole("button", { name: "CONTINUE" }).click();
+  await throughRoutine(a.page, "Alice", "Rotina da manhã");
+  await onboarding(a.page).getByRole("button", { name: "CONTINUAR" }).click();
   await onboarding(a.page)
-    .getByRole("button", { name: "CREATE INVITE" })
+    .getByRole("button", { name: "CRIAR CONVITE" })
     .click();
   const code = onboarding(a.page).getByTestId("onboarding-code");
   await expect(code).toHaveText(/^LKD-[A-Z0-9]{6}$/, { timeout: LIVE });
   const invite = (await code.textContent())!;
 
-  await throughRoutine(b.page, "Bruno", "Training");
-  await onboarding(b.page).getByRole("button", { name: "CONTINUE" }).click();
-  await onboarding(b.page).getByLabel("Partner's code").fill(invite);
-  await onboarding(b.page).getByRole("button", { name: "Join" }).click();
+  await throughRoutine(b.page, "Bruno", "Treino");
+  await onboarding(b.page).getByRole("button", { name: "CONTINUAR" }).click();
+  await onboarding(b.page).getByLabel("Código da dupla").fill(invite);
+  await onboarding(b.page).getByRole("button", { name: "Entrar" }).click();
   await expect(onboarding(b.page).getByTestId("onboarding-partner")).toHaveText(
-    /You and Alice/,
+    /Você e Alice/,
     { timeout: LIVE },
   );
   // A learns it live (duo_joined) while still in onboarding.
   await expect(onboarding(a.page).getByTestId("onboarding-partner")).toHaveText(
-    /You and Bruno/,
+    /Você e Bruno/,
     { timeout: LIVE },
   );
 
   for (const p of [a.page, b.page]) {
     await onboarding(p)
-      .getByRole("button", { name: "ENTER LOCKED IN" })
+      .getByRole("button", { name: "ENTRAR NO LOCKED IN" })
       .click();
     await expect(onboarding(p)).toBeHidden({ timeout: LIVE });
     await expect(p).toHaveURL(/\/today$/);
@@ -266,8 +269,8 @@ test("reactions persist, update live on both sides and never leave the duo", asy
   test.setTimeout(120_000);
   const a = await open(browser, users.a, "/partner");
   const b = await open(browser, users.b, "/partner");
-  const aFeed = a.page.getByRole("region", { name: "Activity" });
-  const bFeed = b.page.getByRole("region", { name: "Activity" });
+  const aFeed = a.page.getByRole("region", { name: "Atividade" });
+  const bFeed = b.page.getByRole("region", { name: "Atividade" });
   await expect(
     a.page.getByRole("heading", { level: 1, name: "BRUNO" }),
   ).toBeVisible();
@@ -275,17 +278,17 @@ test("reactions persist, update live on both sides and never leave the duo", asy
   // A completes a shared task (through the app's database path).
   const runId = await task(A, "Morning Run");
   await A.from("daily_tasks").update({ status: "completed" }).eq("id", runId);
-  await expect(bFeed.getByText("completed Morning Run")).toBeVisible({
+  await expect(bFeed.getByText("concluiu Morning Run")).toBeVisible({
     timeout: LIVE,
   });
 
   // B reacts 🔥: A sees it on the line and gets a notice, no reload.
   await bFeed
-    .getByRole("button", { name: "React to Alice completed Morning Run" })
+    .getByRole("button", { name: "Reagir a Alice concluiu Morning Run" })
     .click();
   await b.page
-    .getByRole("dialog", { name: "React" })
-    .getByRole("button", { name: "React 🔥" })
+    .getByRole("dialog", { name: "Reagir" })
+    .getByRole("button", { name: "Reagir 🔥" })
     .click();
   const aReceived = aFeed.getByTestId("received-reaction");
   await expect(aReceived).toHaveText(/🔥\s*Bruno/, { timeout: LIVE });
@@ -294,19 +297,19 @@ test("reactions persist, update live on both sides and never leave the duo", asy
   await Promise.all([a.page.reload(), b.page.reload()]);
   await expect(aReceived).toHaveText(/🔥\s*Bruno/);
   const bButton = bFeed.getByRole("button", {
-    name: /^You reacted 🔥 to Alice completed Morning Run/,
+    name: /^Você reagiu 🔥 a Alice concluiu Morning Run/,
   });
   await expect(bButton).toBeVisible();
 
   // B changes it to 🫡: one reaction, replaced on both sides.
   await bButton.click();
   await b.page
-    .getByRole("dialog", { name: "React" })
-    .getByRole("button", { name: "React 🫡" })
+    .getByRole("dialog", { name: "Reagir" })
+    .getByRole("button", { name: "Reagir 🫡" })
     .click();
   await expect(aReceived).toHaveText(/🫡\s*Bruno/, { timeout: LIVE });
   await expect(
-    bFeed.getByRole("button", { name: /^You reacted 🫡/ }),
+    bFeed.getByRole("button", { name: /^Você reagiu 🫡/ }),
   ).toBeVisible();
   const rows = (await A.from("reactions").select("reaction_type, from_user_id"))
     .data!;
@@ -316,7 +319,7 @@ test("reactions persist, update live on both sides and never leave the duo", asy
 
   // Nobody reacts to their own line; an outsider reads nothing.
   await expect(
-    aFeed.getByRole("button", { name: /React to Alice/ }),
+    aFeed.getByRole("button", { name: /Reagir a Alice/ }),
   ).toHaveCount(0);
   expect((await C.from("reactions").select("id")).data).toEqual([]);
 
@@ -333,35 +336,37 @@ test("challenges: created together, progress derived from real tasks and focus, 
   const a = await open(browser, users.a, "/challenges");
   const b = await open(browser, users.b, "/challenges");
   const bWrites = trackWrites(b.page);
-  await expect(a.page.getByText("NO ACTIVE CHALLENGE")).toBeVisible();
+  await expect(a.page.getByText("NENHUM DESAFIO ATIVO")).toBeVisible();
 
   // A creates a standard-days challenge in the sheet.
-  await a.page.getByRole("button", { name: "New challenge" }).click();
-  const sheet = a.page.getByRole("dialog", { name: "New challenge" });
-  await sheet.getByLabel("TITLE", { exact: true }).fill("No zero days");
-  await sheet.getByLabel(/^GOAL/).fill("3");
-  await sheet.getByLabel("END", { exact: true }).fill(addDays(T, 6));
-  await sheet.getByRole("button", { name: "CREATE" }).click();
+  await a.page.getByRole("button", { name: "Novo desafio" }).click();
+  const sheet = a.page.getByRole("dialog", { name: "Novo desafio" });
+  await sheet.getByLabel("TÍTULO", { exact: true }).fill("No zero days");
+  await sheet.getByLabel(/^META/).fill("3");
+  await sheet.getByLabel("FIM", { exact: true }).fill(addDays(T, 6));
+  await sheet.getByRole("button", { name: "CRIAR" }).click();
   await expect(sheet).toBeHidden({ timeout: LIVE });
 
   // B sees it without reload (challenges_changed).
   const bCard = b.page.getByRole("article", { name: "No zero days" });
   await expect(bCard).toBeVisible({ timeout: LIVE });
-  await expect(bCard.getByTestId("challenge-status")).toHaveText("7 DAYS LEFT");
-  await expect(bCard.getByTestId("challenge-me")).toHaveText("0 days");
+  await expect(bCard.getByTestId("challenge-status")).toHaveText(
+    "FALTAM 7 DIAS",
+  );
+  await expect(bCard.getByTestId("challenge-me")).toHaveText("0 dias");
 
   // B completes today's routine (Training, from onboarding): 3 / 3 meets
   // the standard, so B's day counts — A's screen updates live.
   await b.page.goto("/today");
-  for (const t of ["Morning Run", "Gym", "Stretch"])
+  for (const t of ["Corrida matinal", "Academia", "Alongamento"])
     await b.page.getByRole("checkbox", { name: t, exact: true }).click();
   await bWrites.idle();
   const aCard = a.page.getByRole("article", { name: "No zero days" });
-  await expect(aCard.getByTestId("challenge-partner")).toHaveText("1 day", {
+  await expect(aCard.getByTestId("challenge-partner")).toHaveText("1 dia", {
     timeout: LIVE,
   });
   await expect(aCard.getByTestId("challenge-verdict")).toHaveText(
-    "BRUNO LEADS",
+    "BRUNO LIDERA",
   );
 
   // A focus challenge: completed sessions only, from the database.
@@ -413,18 +418,18 @@ test("settings persist: name, standard, timezone, briefing and notification pref
   const page = a.page;
   const writes = trackWrites(page);
 
-  await page.getByLabel(/Display name/).fill("Alice R");
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByLabel(/Nome de exibição/).fill("Alice R");
+  await page.getByRole("button", { name: "Salvar" }).click();
   await expect(page.getByRole("radio", { name: "90%" })).toBeVisible();
   await page.getByRole("radio", { name: "90%" }).click();
-  await page.getByRole("switch", { name: /Show morning briefing/ }).click();
-  await page.getByRole("switch", { name: /Partner activity/ }).click();
-  await page.getByRole("switch", { name: /Quiet hours/ }).click();
-  await page.getByLabel("Quiet hours start").fill("21:30");
-  await page.getByLabel("Quiet hours end").fill("06:45");
+  await page.getByRole("switch", { name: /Mostrar resumo da manhã/ }).click();
+  await page.getByRole("switch", { name: /Atividade da dupla/ }).click();
+  await page.getByRole("switch", { name: /Horário silencioso/ }).click();
+  await page.getByLabel("Início do horário silencioso").fill("21:30");
+  await page.getByLabel("Fim do horário silencioso").fill("06:45");
   await writes.idle();
   // Same offset, no DST: "today" cannot move.
-  await page.getByLabel(/Timezone/).selectOption("America/Bahia");
+  await page.getByLabel(/Fuso horário/).selectOption("America/Bahia");
   // The app reloads itself once saved ("today" may have moved).
   await expect
     .poll(
@@ -439,21 +444,25 @@ test("settings persist: name, standard, timezone, briefing and notification pref
     .toBe("America/Bahia");
   await page.waitForTimeout(1500); // let the app's own reload finish
   await page.goto("/settings");
-  await expect(page.getByLabel(/Display name/)).toHaveValue("Alice R");
+  await expect(page.getByLabel(/Nome de exibição/)).toHaveValue("Alice R");
   await expect(page.getByRole("radio", { name: "90%" })).toHaveAttribute(
     "aria-checked",
     "true",
   );
   // Test users start with the briefing off (support.testSettings): now on.
   await expect(
-    page.getByRole("switch", { name: /Show morning briefing/ }),
+    page.getByRole("switch", { name: /Mostrar resumo da manhã/ }),
   ).toHaveAttribute("aria-checked", "true");
   await expect(
-    page.getByRole("switch", { name: /Partner activity/ }),
+    page.getByRole("switch", { name: /Atividade da dupla/ }),
   ).toHaveAttribute("aria-checked", "false");
-  await expect(page.getByLabel("Quiet hours start")).toHaveValue("21:30");
-  await expect(page.getByLabel("Quiet hours end")).toHaveValue("06:45");
-  await expect(page.getByLabel(/Timezone/)).toHaveValue("America/Bahia");
+  await expect(page.getByLabel("Início do horário silencioso")).toHaveValue(
+    "21:30",
+  );
+  await expect(page.getByLabel("Fim do horário silencioso")).toHaveValue(
+    "06:45",
+  );
+  await expect(page.getByLabel(/Fuso horário/)).toHaveValue("America/Bahia");
 
   const s = (await A.from("user_settings").select("*").single()).data!;
   expect(s).toMatchObject({
@@ -534,7 +543,7 @@ test("notification preferences: off = no notice, on = in-app notice, quiet hours
     timeout: LIVE,
   });
   await page.waitForTimeout(4000);
-  await expect(toasts.getByText("Bruno completed Silent task")).toHaveCount(0);
+  await expect(toasts.getByText("Bruno concluiu Silent task")).toHaveCount(0);
   expect(
     await page.evaluate(
       () => (window as unknown as { __asked: number }).__asked,
@@ -561,7 +570,7 @@ test("notification preferences: off = no notice, on = in-app notice, quiet hours
     (window as unknown as { __vis: string }).__vis = "hidden";
   });
   await task(B, "Quiet task", { status: "completed" });
-  await expect(toasts.getByText("Bruno completed Quiet task")).toBeVisible({
+  await expect(toasts.getByText("Bruno concluiu Quiet task")).toBeVisible({
     timeout: LIVE,
   });
   expect(
@@ -579,7 +588,7 @@ test("notification preferences: off = no notice, on = in-app notice, quiet hours
   });
   expect(await page.evaluate(() => document.visibilityState)).toBe("hidden");
   await task(B, "Loud task", { status: "completed" });
-  await expect(toasts.getByText("Bruno completed Loud task")).toBeVisible({
+  await expect(toasts.getByText("Bruno concluiu Loud task")).toBeVisible({
     timeout: LIVE,
   });
   await expect
@@ -592,7 +601,7 @@ test("notification preferences: off = no notice, on = in-app notice, quiet hours
         timeout: LIVE,
       },
     )
-    .toEqual(["Bruno completed Loud task"]);
+    .toEqual(["Bruno concluiu Loud task"]);
   await context.close();
 });
 
@@ -607,11 +616,11 @@ test("morning briefing: real numbers once a day, skippable, preference persisted
   });
   await task(A, "Yesterday open", { date: addDays(T, -1) });
   const a = await open(browser, users.a, "/today");
-  const brief = a.page.getByRole("dialog", { name: "Morning briefing" });
+  const brief = a.page.getByRole("dialog", { name: "Resumo da manhã" });
   await expect(brief).toBeVisible({ timeout: LIVE });
   await expect(brief.getByText("50%")).toBeVisible(); // yesterday 1 / 2
   await expect(brief.getByText("BRUNO")).toBeVisible();
-  await brief.getByRole("button", { name: "Skip" }).click();
+  await brief.getByRole("button", { name: "Pular" }).click();
   await expect(brief).toBeHidden();
   await expect(a.page.getByRole("heading", { name: /ALICE/ })).toBeVisible();
 
@@ -625,7 +634,7 @@ test("morning briefing: real numbers once a day, skippable, preference persisted
   await a.page.evaluate(() => localStorage.removeItem("li:briefing-shown"));
   await a.page.reload();
   await expect(brief).toBeVisible({ timeout: LIVE });
-  await brief.getByRole("switch", { name: /Show automatically/ }).click();
+  await brief.getByRole("switch", { name: /Mostrar automaticamente/ }).click();
   await expect
     .poll(
       async () =>
@@ -647,39 +656,38 @@ test("reviews and history match the recorded numbers", async ({ browser }) => {
     /\D/g,
     "",
   );
-  await page.getByRole("button", { name: /Review today/ }).click();
-  const review = page.getByRole("dialog", { name: "Review today" });
+  await page.getByRole("button", { name: /Revisar o dia/ }).click();
+  const review = page.getByRole("dialog", { name: "Revisão do dia" });
   await expect(review.getByTestId("review-pct")).toHaveText(
     new RegExp(`^${todayPct}%`),
   );
-  await expect(review.getByTestId("review-focus")).toHaveText(/FOCUS$/);
-  await review.getByRole("button", { name: "DONE" }).click();
+  await expect(review.getByTestId("review-focus")).toHaveText(/DE FOCO$/);
+  await review.getByRole("button", { name: "PRONTO" }).click();
 
   // Weekly review of the current week: a leader, never a winner.
   await page.goto("/partner");
-  await page.getByRole("button", { name: "Review this week" }).click();
-  const weekly = page.getByRole("dialog", { name: /^Week \d+ review$/ });
-  await expect(weekly.getByTestId("weekly-title")).toHaveText(/IN PROGRESS$/);
+  await page.getByRole("button", { name: "Revisar esta semana" }).click();
+  const weekly = page.getByRole("dialog", { name: /^Revisão da semana \d+$/ });
+  await expect(weekly.getByTestId("weekly-title")).toHaveText(/EM ANDAMENTO$/);
   await expect(weekly.getByTestId("weekly-verdict")).toHaveText(
-    /^(CURRENT LEADER|NO SCORE YET)/,
+    /^(LÍDER ATUAL|SEM PLACAR AINDA)/,
   );
-  await weekly.getByRole("button", { name: "CLOSE" }).click();
+  await weekly.getByRole("button", { name: "FECHAR" }).click();
 
   // History: yesterday from the calendar = its task snapshots and focus.
   await page.goto("/progress");
   const y = addDays(T, -1);
   if (y.slice(0, 7) !== T.slice(0, 7))
-    await page.getByRole("button", { name: "Previous month" }).click();
-  const mon = new Date(`${y}T12:00:00Z`).toLocaleString("en-US", {
-    month: "short",
-    timeZone: "UTC",
-  });
+    await page.getByRole("button", { name: "Mês anterior" }).click();
+  // The calendar names a day "Set 27": first three letters of the month.
+  const long = t.dates.monthsLong[Number(y.slice(5, 7)) - 1];
+  const mon = long.charAt(0) + long.slice(1, 3).toLowerCase();
   await page
     .getByRole("button", {
       name: new RegExp(`^${mon} ${Number(y.slice(8))}: `),
     })
     .click();
-  const day = page.getByRole("dialog", { name: "Day detail" });
+  const day = page.getByRole("dialog", { name: "Detalhes do dia" });
   await expect(day.getByTestId("day-pct")).toHaveText("50%");
   await expect(day.getByText("Yesterday done")).toBeVisible();
   await expect(day.getByText("Yesterday open")).toBeVisible();
@@ -710,25 +718,27 @@ test("ending the duo: confirmed, both see NO PARTNER YET live, personal data sta
     b.page.getByRole("heading", { level: 1, name: /ALICE/ }),
   ).toBeVisible();
 
-  await a.page.getByRole("button", { name: "Leave duo" }).click();
-  const confirm = a.page.getByRole("alertdialog", { name: "End this duo?" });
+  await a.page.getByRole("button", { name: "Sair da dupla" }).click();
+  const confirm = a.page.getByRole("alertdialog", {
+    name: "Encerrar esta dupla?",
+  });
   await expect(confirm).toContainText(
-    "Leaving will end this Duo for both members.",
+    "Sair encerra esta Dupla para os dois membros.",
   );
-  await confirm.getByRole("button", { name: "End duo for both" }).click();
+  await confirm.getByRole("button", { name: "Encerrar para os dois" }).click();
   await expect(a.page.getByTestId("duo-state")).toHaveText(
-    /Two people\. One standard\./,
+    /Duas pessoas\. Um padrão\./,
     { timeout: LIVE },
   );
   // B's app learns it live (duo_ended), without a reload.
   await expect(
-    b.page.getByRole("heading", { name: "NO PARTNER YET" }),
+    b.page.getByRole("heading", { name: "SEM DUPLA POR ENQUANTO" }),
   ).toBeVisible({
     timeout: LIVE,
   });
   await a.page.goto("/partner");
   await expect(
-    a.page.getByRole("heading", { name: "NO PARTNER YET" }),
+    a.page.getByRole("heading", { name: "SEM DUPLA POR ENQUANTO" }),
   ).toBeVisible();
 
   // Personal history stays.
@@ -756,9 +766,9 @@ test("ending the duo: confirmed, both see NO PARTNER YET live, personal data sta
     .lt("task_date", T);
   expect(old.data).toEqual([]);
   const c = await open(browser, users.c, "/challenges");
-  await expect(c.page.getByText("NO ACTIVE CHALLENGE")).toBeVisible();
+  await expect(c.page.getByText("NENHUM DESAFIO ATIVO")).toBeVisible();
   await c.page.goto("/partner");
-  const cFeed = c.page.getByRole("region", { name: "Activity" });
+  const cFeed = c.page.getByRole("region", { name: "Atividade" });
   await expect(cFeed.getByText("Morning Run")).toHaveCount(0);
 
   for (const x of [a, b, c]) expect(x.errors).toEqual([]);

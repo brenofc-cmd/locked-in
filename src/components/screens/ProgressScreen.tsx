@@ -1,12 +1,13 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadDays } from "@/app/(app)/progress-actions";
 import { useSession } from "@/components/session";
 import { useApp } from "@/components/app-state";
 import { cx } from "@/components/ui";
-import { DAYS, DAY_LETTERS, addDays } from "@/lib/local-date";
+import { DAYS, DAY_LETTERS, addDays, dayLabel } from "@/lib/local-date";
 import {
   calendarMonth,
   chartBars,
@@ -25,12 +26,9 @@ import {
   type Range,
 } from "@/lib/progress";
 
-const RANGES: { k: Range; short: string; long: string }[] = [
-  { k: "7", short: "7D", long: "7 DAYS" },
-  { k: "30", short: "30D", long: "30 DAYS" },
-  { k: "90", short: "90D", long: "90 DAYS" },
-  { k: "Y", short: "YEAR", long: "YEAR" },
-];
+const RANGES: { k: Range; short: string; long: string }[] = (
+  ["7", "30", "90", "Y"] as const
+).map((k) => ({ k, ...t.progressScreen.ranges[k] }));
 
 function barColor(b: Bar, standard: number, range: Range) {
   if (b.pct === null) return "bg-white/6";
@@ -54,22 +52,22 @@ export function ProgressScreen() {
     return (
       <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
         <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
-          PROGRESS
+          {t.progressScreen.title}
         </h1>
         <p className="text-[26px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty">
-          No data yet. Start showing up.
+          {t.progressScreen.empty}
         </p>
         <Link
           href="/today"
           className="flex h-[52px] items-center self-start rounded-[14px] bg-accent px-[22px] font-mono text-xs font-semibold tracking-[.22em] text-bg"
         >
-          GO TO TODAY
+          {t.progressScreen.goToday}
         </Link>
       </div>
     );
   }
 
-  const t = totals(days, rangeFrom(range, today), today);
+  const tot = totals(days, rangeFrom(range, today), today);
   const bars = chartBars(days, range, today);
   const showValues = bars.length <= 13;
   const rangeLong = RANGES.find((r) => r.k === range)?.long ?? "";
@@ -78,18 +76,18 @@ export function ProgressScreen() {
   const lines = insightLines(
     app.progress.habits,
     days.filter((d) => d.day >= addDays(today, -30) && d.day < today),
-    "in the last 30 days",
+    t.progressScreen.insightsPeriod,
   );
 
   return (
     <div className="flex flex-col gap-8 animate-[li-fade-up_.4s_ease] desk:gap-12">
       <header className="flex items-center justify-between gap-3">
         <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          PROGRESS
+          {t.progressScreen.title}
         </h1>
         <div
           role="radiogroup"
-          aria-label="Range"
+          aria-label={t.progressScreen.rangeAria}
           className="flex gap-0.5 rounded-[11px] border border-white/8 p-[3px]"
         >
           {RANGES.map((r) => (
@@ -118,15 +116,15 @@ export function ProgressScreen() {
             data-testid="progress-pct"
             className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] tabular-nums desk:text-[84px] wide:text-[112px]"
           >
-            {t.pct ?? "—"}
-            {t.pct !== null && (
+            {tot.pct ?? "—"}
+            {tot.pct !== null && (
               <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
             )}
           </span>
           <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-            COMPLETION RATE · {rangeLong}
+            {t.progressScreen.completionRate(rangeLong)}
             <span className="sr-only">
-              {`: ${t.completed} of ${t.planned} tasks`}
+              {t.progressScreen.srTasks(tot.completed, tot.planned)}
             </span>
           </span>
         </div>
@@ -142,29 +140,34 @@ export function ProgressScreen() {
             >
               {app.streak}{" "}
               <span className="text-[13px] tracking-normal text-muted">
-                {app.streak === 1 ? "day" : "days"}
+                {t.progressScreen.days(app.streak)}
               </span>
             </span>
             <span className="font-mono text-[10px] tracking-[.14em] text-dim">
-              STREAK ›
+              {t.progressScreen.streak}
             </span>
           </button>
           <Stat
-            value={focusLabel(t.focusSeconds)}
-            label="FOCUS"
+            value={focusLabel(tot.focusSeconds)}
+            label={t.progressScreen.focus}
             testId="progress-focus"
           />
           <Stat
-            value={String(t.perfectDays)}
-            label="PERFECT DAYS"
+            value={String(tot.perfectDays)}
+            label={t.progressScreen.perfectDays}
             testId="progress-perfect"
           />
         </div>
       </div>
 
-      <section aria-label="Completion chart" className="flex flex-col gap-3">
+      <section
+        aria-label={t.progressScreen.chartAria}
+        className="flex flex-col gap-3"
+      >
         <h2 className="font-mono text-[11px] font-normal tracking-[.16em] text-muted">
-          {range === "7" ? "LAST 7 DAYS" : `COMPLETION · ${rangeLong}`}
+          {range === "7"
+            ? t.progressScreen.last7
+            : t.progressScreen.completion(rangeLong)}
         </h2>
         <div
           role="list"
@@ -231,7 +234,9 @@ export function ProgressScreen() {
                       ]
                     }
                   </span>
-                  <span className="hidden desk:inline">{b.label}</span>
+                  <span className="hidden desk:inline">
+                    {dayLabel(b.label as (typeof DAYS)[number])}
+                  </span>
                 </>
               ) : (
                 b.label
@@ -243,9 +248,12 @@ export function ProgressScreen() {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
-        <section aria-label="Weekly reviews" className="flex flex-col">
+        <section
+          aria-label={t.progressScreen.weeklyAria}
+          className="flex flex-col"
+        >
           <h2 className="border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
-            WEEKLY REVIEWS
+            {t.progressScreen.weekly}
           </h2>
           {weeks.map((w) => (
             <button
@@ -257,10 +265,10 @@ export function ProgressScreen() {
               className="grid min-h-[50px] grid-cols-[80px_1fr_auto] items-center gap-2.5 border-b border-white/5 p-0 text-left text-sm"
             >
               <span className="font-mono text-[11px] text-muted">
-                WEEK {w.week}
+                {t.progressScreen.week(w.week)}
               </span>
               <span className="tabular-nums">
-                You {w.me === null ? "—" : `${w.me}%`}
+                {t.progressScreen.you} {w.me === null ? "—" : `${w.me}%`}
                 {app.hasPartner &&
                   ` · ${app.partner.name} ${w.partner === null ? "—" : `${w.partner}%`}`}
               </span>
@@ -271,7 +279,7 @@ export function ProgressScreen() {
           ))}
           {weeks.length === 0 && (
             <span className="py-3.5 text-[13.5px] text-dim">
-              Your first review arrives after your first full week.
+              {t.progressScreen.firstReview}
             </span>
           )}
         </section>
@@ -283,7 +291,11 @@ export function ProgressScreen() {
         aria-expanded={insights}
         className="flex h-[52px] items-center justify-between border-y border-white/8 text-[14.5px]"
       >
-        <span>{insights ? "Hide insights" : "Show insights"}</span>
+        <span>
+          {insights
+            ? t.progressScreen.hideInsights
+            : t.progressScreen.showInsights}
+        </span>
         <span
           aria-hidden="true"
           className="text-dim transition-transform duration-200"
@@ -305,19 +317,17 @@ export function ProgressScreen() {
             ))}
             {lines.length === 0 && (
               <span className="text-[14px] leading-[1.5] text-dim">
-                Not enough history yet. Insights need a routine scheduled at
-                least 3 times.
+                {t.progressScreen.notEnough}
               </span>
             )}
           </div>
           <div className="flex flex-col">
             <div className="flex justify-between gap-3 border-b border-white/9 pb-2">
               <span className="font-mono text-[11px] tracking-[.16em] text-muted">
-                CONSISTENCY · 30 DAYS
+                {t.progressScreen.consistency}
               </span>
               <span className="font-mono text-[11px] text-dim">
-                LONGEST STREAK {app.longestStreak}{" "}
-                {app.longestStreak === 1 ? "DAY" : "DAYS"}
+                {t.progressScreen.longestStreak(app.longestStreak)}
               </span>
             </div>
             {habits.map((h) => (
@@ -328,7 +338,7 @@ export function ProgressScreen() {
                 <span className="truncate text-sm">
                   {h.title}
                   <span className="sr-only">
-                    {`: ${h.completed} of ${h.planned}`}
+                    {t.progressScreen.srOf(h.completed, h.planned)}
                   </span>
                 </span>
                 <div
@@ -384,14 +394,7 @@ function Stat({
   );
 }
 
-const STATE_LABEL = {
-  met: "standard met",
-  perfect: "perfect",
-  missed: "missed",
-  neutral: "nothing scheduled",
-  future: "upcoming",
-  today: "in progress",
-} as const;
+const STATE_LABEL = t.progressScreen.states;
 
 /**
  * History calendar: the current month from the loaded series; earlier months
@@ -440,11 +443,11 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
         </h2>
         <div className="flex items-center gap-1">
           <span className="hidden text-xs text-dim min-[400px]:inline">
-            Tap a day to review
+            {t.progressScreen.tapDay}
           </span>
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={t.progressScreen.prevMonth}
             disabled={month <= firstMonth}
             onClick={() => setMonth((m) => shiftMonth(m, -1))}
             className="size-11 rounded-xl text-base text-text disabled:text-off"
@@ -453,7 +456,7 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
           </button>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={t.progressScreen.nextMonth}
             disabled={month >= current}
             onClick={() => setMonth((m) => shiftMonth(m, 1))}
             className="size-11 rounded-xl text-base text-text disabled:text-off"
@@ -492,7 +495,9 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
               onClick={() => onOpen(c.date)}
               aria-label={`${title.slice(0, 3)} ${c.dayNumber}: ${
                 c.state === "today"
-                  ? `today, ${STATE_LABEL[shown === "today" ? "today" : shown]}`
+                  ? t.progressScreen.todayState(
+                      STATE_LABEL[shown === "today" ? "today" : shown],
+                    )
                   : STATE_LABEL[c.state]
               }${c.pct !== null && closed ? `, ${c.pct}%` : ""}`}
               className={cx(
@@ -524,21 +529,21 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
             aria-hidden="true"
             className="size-1.5 rounded-full bg-accent"
           />
-          Standard met
+          {t.progressScreen.legendMet}
         </span>
         <span className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
             className="size-1.5 rounded-full bg-accent shadow-[0_0_0_2px_#0A0A0B,0_0_0_3px_var(--color-accent)]"
           />
-          Perfect
+          {t.progressScreen.legendPerfect}
         </span>
         <span className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
             className="size-1.5 rounded-full border-[1.5px] border-missed"
           />
-          Missed
+          {t.progressScreen.legendMissed}
         </span>
       </div>
     </section>

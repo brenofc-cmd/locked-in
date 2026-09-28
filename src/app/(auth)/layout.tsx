@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LogoMark } from "@/components/ui";
+import { t } from "@/i18n/pt-BR";
 
 /** Auth frame from the approved "Sign in" moment (design v2): mark, wordmark, form, footnote. */
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -13,9 +14,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               LOCKED IN
             </span>
             <span className="font-mono text-xs leading-[1.7] tracking-[.26em] text-dim">
-              NO HYPE.
+              {t.app.taglineLines[0]}
               <br />
-              JUST PROOF.
+              {t.app.taglineLines[1]}
             </span>
           </div>
         </div>

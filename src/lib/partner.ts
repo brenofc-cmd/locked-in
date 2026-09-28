@@ -1,3 +1,4 @@
+import { t } from "@/i18n/pt-BR";
 import { remainingSeconds } from "@/lib/focus";
 import { formatClock } from "@/lib/format";
 import type { FeedEvent, Partner } from "@/types";
@@ -5,7 +6,8 @@ import type { FeedEvent, Partner } from "@/types";
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export type PartnerView = {
-  label: "ONLINE" | "FOCUSING" | "OFFLINE";
+  /** "ONLINE" / "EM FOCO" / "OFFLINE" (display copy). */
+  label: string;
   focusWord: string;
   /** dot / label colour class */
   live: boolean;
@@ -16,7 +18,7 @@ export type PartnerView = {
   /** one-line summary under the partner card */
   line: string;
   lineTone: "muted" | "text" | "dim";
-  /** "Online · Completed Morning Run at 09:27" */
+  /** "Online · Concluiu Morning Run às 09:27" */
   statusLine: string;
   flashing: boolean;
 };
@@ -46,26 +48,29 @@ export function partnerView(
   const timed = session !== null;
   const paused = session?.status === "paused";
   const left = session ? formatClock(remainingSeconds(session, now)) : "";
-  const label = partner.focusLabel || "Focus";
+  const label = partner.focusLabel || t.partnerStatus.focusFallback;
   const flashing = now - partner.flashAt < 2200;
 
   if (partner.status === "focusing") {
     return {
-      label: "FOCUSING",
-      focusWord: "Focusing",
+      label: t.partnerStatus.focusing,
+      focusWord: t.partnerStatus.focusingWord,
       live: true,
       pulse: "animate-[li-pulse_1.6s_ease-out_infinite]",
       done,
       total,
       pct,
-      line: [label, timed ? (paused ? `paused ${left}` : left) : ""]
+      line: [
+        label,
+        timed ? (paused ? t.partnerStatus.pausedClock(left) : left) : "",
+      ]
         .filter(Boolean)
         .join(" · "),
       lineTone: "text",
       statusLine: [
-        paused ? "Focusing (paused)" : "Focusing",
+        paused ? t.partnerStatus.focusingPaused : t.partnerStatus.focusingWord,
         partner.focusLabel,
-        timed ? `${left} left` : "",
+        timed ? t.partnerStatus.left(left) : "",
       ]
         .filter(Boolean)
         .join(" · "),
@@ -75,8 +80,8 @@ export function partnerView(
   if (partner.status === "offline") {
     // No "last seen" by design: only ONLINE / FOCUSING / OFFLINE.
     return {
-      label: "OFFLINE",
-      focusWord: "Offline",
+      label: t.partnerStatus.offline,
+      focusWord: t.partnerStatus.offlineWord,
       live: false,
       pulse: "",
       done,
@@ -84,13 +89,13 @@ export function partnerView(
       pct,
       line: last ? `${last.t} · ${cap(last.text)}` : "",
       lineTone: "dim",
-      statusLine: "Offline",
+      statusLine: t.partnerStatus.offlineWord,
       flashing,
     };
   }
   return {
-    label: "ONLINE",
-    focusWord: "Online",
+    label: t.partnerStatus.online,
+    focusWord: t.partnerStatus.onlineWord,
     live: true,
     pulse: "animate-[li-pulse_2.4s_ease-out_infinite]",
     done,
@@ -98,7 +103,9 @@ export function partnerView(
     pct,
     line: last ? `${last.t} · ${cap(last.text)}` : "",
     lineTone: "muted",
-    statusLine: last ? `Online · ${cap(last.text)} at ${last.t}` : "Online",
+    statusLine: last
+      ? t.partnerStatus.onlineWith(cap(last.text), last.t)
+      : t.partnerStatus.onlineWord,
     flashing,
   };
 }

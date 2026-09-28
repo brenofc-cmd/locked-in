@@ -181,13 +181,13 @@ describe("chart", () => {
       "FRI",
     ]);
     expect(bars[1].pct).toBeNull(); // Sunday 20th: nothing scheduled
-    expect(bars[1].title).toBe("SEP 20: no tasks");
+    expect(bars[1].title).toBe("20 SET: sem tarefas");
     expect(bars.at(-1)).toMatchObject({ pct: 75, current: true });
   });
 
   it("90D: one bar per ISO week (completed / planned of the whole week)", () => {
     const bars = chartBars(days, "90", TODAY);
-    expect(bars.map((b) => b.label)).toEqual(["W37", "W38", "W39"]);
+    expect(bars.map((b) => b.label)).toEqual(["S37", "S38", "S39"]);
     expect(bars.map((b) => b.pct)).toEqual([75, 75, 75]);
     expect(bars.at(-1)?.current).toBe(true);
   });
@@ -195,8 +195,8 @@ describe("chart", () => {
   it("YEAR: one bar per month", () => {
     const bars = chartBars([day("2026-08-31", 2, 1), ...days], "Y", TODAY);
     expect(bars.map((b) => [b.label, b.pct])).toEqual([
-      ["AUG", 50],
-      ["SEP", 75],
+      ["AGO", 50],
+      ["SET", 75],
     ]);
   });
 });
@@ -212,7 +212,7 @@ describe("calendar", () => {
       TODAY,
       80,
     );
-    expect(label).toBe("SEPTEMBER");
+    expect(label).toBe("SETEMBRO");
     // 1 September 2026 is a Tuesday: one blank cell before it.
     expect(cells[0].kind).toBe("blank");
     const days = cells.filter((c) => c.kind === "day");
@@ -241,8 +241,8 @@ describe("weeks", () => {
   });
 
   it("week labels", () => {
-    expect(weekRangeLabel("2026-09-21")).toBe("SEP 21 – 27");
-    expect(weekRangeLabel("2026-09-28")).toBe("SEP 28 – OCT 4");
+    expect(weekRangeLabel("2026-09-21")).toBe("21 – 27 SET");
+    expect(weekRangeLabel("2026-09-28")).toBe("28 SET – 4 OUT");
   });
 });
 
@@ -398,16 +398,16 @@ describe("habits and insights", () => {
         new Date(d.getTime() + n * 86_400_000).toISOString().slice(0, 10);
       days.push(day(iso(0), 2, 2), day(iso(1), 2, 1), day(iso(2), 4, 3));
     }
-    expect(bestWeekday(days)).toEqual({ name: "Monday", pct: 100 });
+    expect(bestWeekday(days)).toEqual({ name: "segunda", pct: 100 });
     expect(bestWeekday(days.slice(0, 6))).toBeNull();
   });
 
   it("insight lines are descriptive counts and rates", () => {
-    expect(insightLines(habits, [], "in the last 30 days")).toEqual([
-      "Gym: 11 of 12 in the last 30 days (92%). Your most consistent routine.",
-      "Sleep before 23:00 is your least consistent routine at 60%.",
+    expect(insightLines(habits, [], "nos últimos 30 dias")).toEqual([
+      "Gym: 11 de 12 nos últimos 30 dias (92%). Sua rotina mais consistente.",
+      "Sleep before 23:00 é a sua rotina menos consistente, com 60%.",
     ]);
-    expect(insightLines([], [], "in the last 30 days")).toEqual([]);
+    expect(insightLines([], [], "nos últimos 30 dias")).toEqual([]);
   });
 });
 

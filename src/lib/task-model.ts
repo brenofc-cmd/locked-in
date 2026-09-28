@@ -8,6 +8,7 @@ import {
   localTimeHM,
   normalizeDays,
 } from "@/lib/local-date";
+import { t } from "@/i18n/pt-BR";
 import type { Tables } from "@/types/database";
 import type { Category, Day, RoutineItem, Task, TaskStatus } from "@/types";
 
@@ -22,13 +23,7 @@ export const CATEGORIES: Category[] = [
   "custom",
 ];
 
-export const CATEGORY_LABEL: Record<Category, string> = {
-  morning: "Morning",
-  work_study: "Work / Study",
-  body: "Body",
-  night: "Night",
-  custom: "Custom",
-};
+export const CATEGORY_LABEL: Record<Category, string> = t.categories;
 
 export const TITLE_MAX = 80;
 export const NOTES_MAX = 200;
@@ -49,7 +44,7 @@ export const daysToDb = (days: readonly Day[]): number[] =>
   normalizeDays(days).map(dayToIso);
 
 export function skipLabel(reason: string | null): string {
-  return reason ? `SKIPPED · ${reason.toUpperCase()}` : "SKIPPED";
+  return reason ? t.tasks.skippedWith(reason.toUpperCase()) : t.tasks.skipped;
 }
 
 export function routineFromRow(r: RoutineRow): RoutineItem {
@@ -120,38 +115,35 @@ export type TaskInput = {
 /** Same rules as the database constraints, checked before any request. */
 export function validateTaskInput(input: TaskInput): string | null {
   const name = input.name.trim();
-  if (!name) return "Give the task a name.";
-  if (name.length > TITLE_MAX)
-    return `Keep the name under ${TITLE_MAX} characters.`;
+  if (!name) return t.tasks.nameRequired;
+  if (name.length > TITLE_MAX) return t.tasks.nameTooLong(TITLE_MAX);
   if (input.notes.trim().length > NOTES_MAX)
-    return `Keep notes under ${NOTES_MAX} characters.`;
-  if (!isCategory(input.category)) return "Pick a section.";
-  if (input.time && !timeToDb(input.time)) return "Use a time like 06:30.";
+    return t.tasks.notesTooLong(NOTES_MAX);
+  if (!isCategory(input.category)) return t.tasks.sectionRequired;
+  if (input.time && !timeToDb(input.time)) return t.tasks.timeInvalid;
   if (!input.once && normalizeDays(input.days).length === 0)
-    return "Pick at least one day.";
+    return t.tasks.daysRequired;
   return null;
 }
 
-const NETWORK = "Network error. Check your connection and try again.";
+const NETWORK = t.errors.network;
 
 /** Supabase / Postgres errors -> copy that is safe to show. */
 export function taskErrorMessage(
   error: { message?: string; code?: string } | null | undefined,
 ): string {
   const message = error?.message ?? "";
-  if (message.includes("LI_HISTORY_LOCKED"))
-    return "That day is closed. Its record can't change.";
+  if (message.includes("LI_HISTORY_LOCKED")) return t.tasks.dayClosed;
   if (
     message.includes("LI_FUTURE_TASK") ||
     message.includes("LI_ROUTINE_STALE")
   )
-    return "Refresh and try again.";
-  if (message.includes("LI_NOT_FOUND"))
-    return "That item no longer exists. Refresh and try again.";
+    return t.errors.refresh;
+  if (message.includes("LI_NOT_FOUND")) return t.tasks.itemGone;
   if (message.includes("LI_NOT_AUTHENTICATED") || error?.code === "42501")
-    return "Your session expired. Sign in again.";
+    return t.errors.sessionExpired;
   if (error?.code === "23514" || error?.code === "23502")
-    return "Check the task details and try again.";
+    return t.tasks.checkDetails;
   if (/fetch|network/i.test(message)) return NETWORK;
-  return "Couldn't save. Try again.";
+  return t.tasks.saveFailed;
 }

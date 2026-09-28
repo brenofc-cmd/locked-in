@@ -3,6 +3,8 @@
  * Mirrors public.normalize_invite_code() in the database, which stays the
  * authority; this copy only lets the UI reject obvious typos before a round trip.
  */
+import { t } from "@/i18n/pt-BR";
+
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 const CODE_RE = new RegExp(`^LKD-[${ALPHABET}]{6}$`);
 
@@ -20,17 +22,10 @@ export function isValidInviteCode(code: string): boolean {
 }
 
 /** Stable error codes raised by the duo RPCs (see supabase/migrations/*_duo_functions.sql). */
-const DUO_ERRORS: Record<string, string> = {
-  LI_INVALID_CODE: "That code doesn't match any duo. Check it and try again.",
-  LI_DUO_FULL: "That duo is already full. Duos are two people.",
-  LI_ALREADY_IN_DUO: "You're already in a duo. Leave it first to join another.",
-  LI_NOT_IN_DUO: "You're not in a duo.",
-  LI_NOT_AUTHENTICATED: "Your session expired. Sign in again.",
-};
+const DUO_ERRORS: Record<string, string> = t.duoErrors;
 
-export const NETWORK_ERROR =
-  "Network error. Check your connection and try again.";
-const GENERIC_ERROR = "Something went wrong. Try again.";
+export const NETWORK_ERROR = t.errors.network;
+const GENERIC_ERROR = t.errors.generic;
 
 /** Maps a Postgres/PostgREST error message to copy that is safe to show. */
 export function duoErrorMessage(message: string | null | undefined): string {

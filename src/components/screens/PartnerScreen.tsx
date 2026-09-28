@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { ActivityItem } from "@/components/today/ActivityItem";
@@ -32,16 +33,16 @@ export function PartnerScreen() {
     return (
       <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
         <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
-          NO PARTNER YET
+          {t.partnerScreen.noPartner}
         </h1>
         <p className="text-[26px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty">
-          Discipline is easier when somebody knows whether you showed up.
+          {t.partnerScreen.pitch}
         </p>
         <Link
           href="/duo"
           className="flex h-[52px] items-center self-start rounded-[14px] bg-accent px-[22px] font-mono text-xs font-semibold tracking-[.22em] text-bg"
         >
-          INVITE PARTNER
+          {t.partnerScreen.invite}
         </Link>
       </div>
     );
@@ -87,7 +88,7 @@ export function PartnerScreen() {
 
       <div className="flex flex-col gap-3">
         <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-          TODAY
+          {t.partnerScreen.today}
         </span>
         <div className="flex items-end justify-between gap-4">
           <span className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] tabular-nums desk:text-[84px] wide:text-[112px]">
@@ -95,30 +96,38 @@ export function PartnerScreen() {
             <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
           </span>
           <span className="pb-0.5 text-[15px] text-muted tabular-nums">
-            {pv.done} / {pv.total} done
+            {t.partnerScreen.doneCount(pv.done, pv.total)}
           </span>
         </div>
         <ProgressBar
           pct={pv.pct}
-          label={`${partner.name}'s completion today`}
+          label={t.partnerScreen.completionLabel(partner.name)}
           tone="text"
           className="overflow-hidden"
         />
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
-        <section aria-label="This week" className="flex flex-col gap-[18px]">
+        <section
+          aria-label={t.partnerScreen.thisWeekAria}
+          className="flex flex-col gap-[18px]"
+        >
           <SectionHeader
             as="h2"
-            label={`THIS WEEK · WEEK ${isoWeekNumber(week.start)}`}
+            label={t.partnerScreen.thisWeek(isoWeekNumber(week.start))}
             right={
               daysLeft === 0
-                ? "LAST DAY"
-                : `${daysLeft} ${daysLeft === 1 ? "DAY" : "DAYS"} LEFT`
+                ? t.partnerScreen.lastDay
+                : t.partnerScreen.daysLeft(daysLeft)
             }
           />
           <div className="flex flex-col gap-3.5">
-            <WeekBar who="YOU" value={mePct} me testId="week-me" />
+            <WeekBar
+              who={t.partnerScreen.you}
+              value={mePct}
+              me
+              testId="week-me"
+            />
             <WeekBar
               who={partner.name.toUpperCase()}
               value={partnerPct}
@@ -131,12 +140,12 @@ export function PartnerScreen() {
           >
             <span className="font-mono text-xs tracking-[.2em]">
               {lead.who === "me"
-                ? "YOU'RE AHEAD"
+                ? t.partnerScreen.youAhead
                 : lead.who === "partner"
-                  ? `${partner.name.toUpperCase()} IS AHEAD`
+                  ? t.partnerScreen.partnerAhead(partner.name.toUpperCase())
                   : lead.who === "tied"
-                    ? "TIED"
-                    : "NO SCORE YET"}
+                    ? t.partnerScreen.tied
+                    : t.partnerScreen.noScore}
             </span>
             {lead.margin && (
               <span
@@ -151,19 +160,22 @@ export function PartnerScreen() {
           </div>
           <div className="flex flex-col">
             <CompareRow
-              label="FOCUS"
+              label={t.partnerScreen.focus}
               me={focusLabel(week.me.focusSeconds)}
               them={week.partner ? focusLabel(week.partner.focus) : "—"}
             />
             <CompareRow
-              label="STREAK"
-              me={days(app.streak)}
-              them={partner.streak === null ? "—" : days(partner.streak)}
+              label={t.partnerScreen.streak}
+              me={t.partnerScreen.days(app.streak)}
+              them={
+                partner.streak === null
+                  ? "—"
+                  : t.partnerScreen.days(partner.streak)
+              }
             />
           </div>
           <span className="text-[12.5px] leading-[1.5] text-dim">
-            The week is won on percentage of scheduled tasks completed. Task
-            count and focus time are shown separately.
+            {t.partnerScreen.rule}
           </span>
           <button
             type="button"
@@ -172,15 +184,18 @@ export function PartnerScreen() {
             }
             className="h-11 self-start text-[13px] text-muted underline underline-offset-[3px]"
           >
-            Review this week
+            {t.partnerScreen.reviewWeek}
           </button>
         </section>
 
-        <section aria-label="Head to head" className="flex flex-col gap-[18px]">
+        <section
+          aria-label={t.partnerScreen.headToHeadAria}
+          className="flex flex-col gap-[18px]"
+        >
           <SectionHeader
             as="h2"
-            label="HEAD TO HEAD"
-            right={`LAST ${results.length} WEEKS`}
+            label={t.partnerScreen.headToHead}
+            right={t.partnerScreen.lastWeeks(results.length)}
           />
           <div className="flex items-end justify-between gap-3">
             <span
@@ -192,10 +207,10 @@ export function PartnerScreen() {
               <span className="text-dim">{score.partner}</span>
             </span>
             <span className="text-right font-mono text-[10.5px] leading-[1.8] tracking-[.14em] text-dim">
-              YOU — {partner.name.toUpperCase()}
+              {t.partnerScreen.youVs(partner.name.toUpperCase())}
               {score.draws > 0 && (
                 <span data-testid="h2h-draws" className="block">
-                  {score.draws} {score.draws === 1 ? "DRAW" : "DRAWS"}
+                  {t.partnerScreen.draws(score.draws)}
                 </span>
               )}
             </span>
@@ -212,15 +227,16 @@ export function PartnerScreen() {
                 className="flex flex-col items-center gap-1.5"
               >
                 <div
-                  aria-label={`Week ${w.week}: ${
+                  aria-label={t.partnerScreen.weekAria(
+                    w.week,
                     w.result === "me"
-                      ? "you won"
+                      ? t.partnerScreen.youWon
                       : w.result === "partner"
-                        ? `${partner.name} won`
+                        ? t.partnerScreen.partnerWon(partner.name)
                         : w.result === "draw"
-                          ? "draw"
-                          : "no contest"
-                  }`}
+                          ? t.partnerScreen.draw
+                          : t.partnerScreen.noContest,
+                  )}
                   className={cx(
                     "flex h-[30px] w-full items-center justify-center rounded-md font-mono text-[10px] font-semibold",
                     w.result === "me"
@@ -239,7 +255,7 @@ export function PartnerScreen() {
                         : "·"}
                 </div>
                 <span className="font-mono text-[9.5px] text-dim">
-                  W{w.week}
+                  {t.partnerScreen.weekShort(w.week)}
                 </span>
               </div>
             ))}
@@ -255,11 +271,11 @@ export function PartnerScreen() {
                 className="grid min-h-12 grid-cols-[80px_1fr_auto] items-center gap-2.5 border-t border-white/5 p-0 text-left text-sm"
               >
                 <span className="font-mono text-[11px] text-muted">
-                  WEEK {w.week}
+                  {t.partnerScreen.weekLabel(w.week)}
                 </span>
                 <span className="tabular-nums">
-                  You {w.me === null ? "—" : `${w.me}%`} · {partner.name}{" "}
-                  {w.partner === null ? "—" : `${w.partner}%`}
+                  {t.partnerScreen.youShort} {w.me === null ? "—" : `${w.me}%`}{" "}
+                  · {partner.name} {w.partner === null ? "—" : `${w.partner}%`}
                 </span>
                 <span aria-hidden="true" className="text-faint">
                   ›
@@ -268,7 +284,7 @@ export function PartnerScreen() {
             ))}
             {history.length === 0 && (
               <span className="border-t border-white/5 py-3.5 text-[13.5px] text-dim">
-                The first result comes after your first full week together.
+                {t.partnerScreen.firstResult}
               </span>
             )}
           </div>
@@ -276,10 +292,13 @@ export function PartnerScreen() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
-        <section aria-label={`${partner.name} today`} className="flex flex-col">
+        <section
+          aria-label={t.partnerScreen.partnerTodayAria(partner.name)}
+          className="flex flex-col"
+        >
           <SectionHeader
             as="h2"
-            label={`${partner.name.toUpperCase()} · TODAY`}
+            label={t.partnerScreen.partnerToday(partner.name.toUpperCase())}
             right={`${pv.done} / ${pv.total}`}
           />
           {app.partnerTasks.map((x) => (
@@ -296,7 +315,7 @@ export function PartnerScreen() {
               >
                 {x.name}
                 <span className="sr-only">
-                  {x.done ? ", done" : ", not done"}
+                  {x.done ? t.partnerScreen.srDone : t.partnerScreen.srNotDone}
                 </span>
               </span>
               <span className="font-mono text-[11px] text-dim">
@@ -308,7 +327,7 @@ export function PartnerScreen() {
                   return eventId ? (
                     <ReactButton
                       eventId={eventId}
-                      title={`${partner.name} completed ${x.name}`}
+                      title={t.partnerScreen.reactTitle(partner.name, x.name)}
                       name={x.name}
                     />
                   ) : null;
@@ -317,23 +336,26 @@ export function PartnerScreen() {
           ))}
           {app.partnerTasks.length === 0 && pv.total === 0 && (
             <span className="py-3.5 text-[13.5px] text-dim">
-              Nothing scheduled yet today.
+              {t.partnerScreen.nothingScheduled}
             </span>
           )}
           {pv.total > app.partnerTasks.length && (
             <span className="py-3.5 text-[13px] text-dim">
-              + {pv.total - app.partnerTasks.length} private
+              {t.partnerScreen.privateCount(pv.total - app.partnerTasks.length)}
             </span>
           )}
         </section>
-        <section aria-label="Activity" className="flex flex-col">
+        <section
+          aria-label={t.partnerScreen.activityAria}
+          className="flex flex-col"
+        >
           <div className="flex items-center gap-[9px] border-b border-white/9 pb-2">
             <span
               aria-hidden="true"
               className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
             />
             <h2 className="font-mono text-[11px] font-normal tracking-[.2em]">
-              ACTIVITY
+              {t.partnerScreen.activity}
             </h2>
           </div>
           <div className="flex flex-col-reverse">
@@ -346,8 +368,6 @@ export function PartnerScreen() {
     </div>
   );
 }
-
-const days = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
 
 function WeekBar({
   who,

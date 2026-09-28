@@ -1,9 +1,21 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-10 — Production Deployment — NEXT (not started)
+10 — Production Deployment — IN PROGRESS (PROD database, Auth, SMTP and Vercel configured; paused for the pt-BR localization; auth test and two-device acceptance pending)
 
 Previous: 9 — Final QA, Security, Integrity, Performance and Production Readiness Audit — VERIFIED / COMPLETE (2026-09-28)
+
+---
+
+# Stage 10 — pt-BR localization (2026-09-28)
+
+- The whole interface is in Brazilian Portuguese (ADR-054): one typed catalog `src/i18n/pt-BR.ts`
+  (`t`, `plural`, `LOCALE`), no new dependency. `<html lang="pt-BR">`, manifest, page titles,
+  dates (`QUI, 24 SET`, `21 – 27 SET`), aria labels, validation / error copy and toasts.
+- Kept in English: the name LOCKED IN and the LOCK IN button. Tagline: "Sem hype. Só prova.".
+- Internal identifiers unchanged (Day codes, categories, statuses, error codes, database values).
+- New `app/not-found.tsx` (the default 404 was English).
+- Unit and E2E tests assert the Portuguese copy.
 
 ---
 

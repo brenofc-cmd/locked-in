@@ -73,10 +73,11 @@ async function open(browser: Browser, user: TestUser, path: string) {
 const partnerCard = (
   page: Page,
   name: string,
-  status: "online" | "offline" | "focusing",
+  status: "online" | "offline" | "em foco",
 ) => page.getByRole("link", { name: new RegExp(`^${name}: ${status},`) });
 
-const activity = (page: Page) => page.getByRole("region", { name: "Activity" });
+const activity = (page: Page) =>
+  page.getByRole("region", { name: "Atividade" });
 
 test("A completes a task and B sees it live; undo withdraws it; a private task never shows", async ({
   browser,
@@ -95,25 +96,25 @@ test("A completes a task and B sees it live; undo withdraws it; a private task n
 
   // A: tap Morning Run. B (on /partner, no reload): activity + task list update.
   await a.page.getByRole("checkbox", { name: "Morning Run" }).click();
-  await expect(activity(b.page).getByText("completed Morning Run")).toBeVisible(
-    { timeout: LIVE },
-  );
-  const bTask = b.page.getByRole("region", { name: "Alice today" });
-  await expect(bTask.getByText("Morning Run, done")).toBeAttached({
+  await expect(activity(b.page).getByText("concluiu Morning Run")).toBeVisible({
+    timeout: LIVE,
+  });
+  const bTask = b.page.getByRole("region", { name: "Alice hoje" });
+  await expect(bTask.getByText("Morning Run, feita")).toBeAttached({
     timeout: LIVE,
   });
   await writes.idle();
 
   // A's own feed shows it once (optimistic line replaced by the real event).
   await a.page.goto("/partner");
-  await expect(activity(a.page).getByText("completed Morning Run")).toHaveCount(
+  await expect(activity(a.page).getByText("concluiu Morning Run")).toHaveCount(
     1,
   );
   await a.page.goto("/today");
 
   // Undo: B's feed stops showing it (the feed never lies).
   await a.page.getByRole("checkbox", { name: "Morning Run" }).click();
-  await expect(activity(b.page).getByText("completed Morning Run")).toHaveCount(
+  await expect(activity(b.page).getByText("concluiu Morning Run")).toHaveCount(
     0,
     { timeout: LIVE },
   );
@@ -126,10 +127,10 @@ test("A completes a task and B sees it live; undo withdraws it; a private task n
   await expect(b.page.getByText("Secret journal")).toHaveCount(0);
 
   // A completes Gym while B is on Today: B gets a toast, also without reload.
-  await b.page.getByRole("link", { name: /today/i }).first().click();
+  await b.page.getByRole("link", { name: /hoje/i }).first().click();
   await a.page.getByRole("checkbox", { name: "Gym" }).click();
   await expect(
-    b.page.getByRole("status").getByText("Alice completed Gym"),
+    b.page.getByRole("status").getByText("Alice concluiu Gym"),
   ).toBeVisible({ timeout: LIVE });
   await writes.idle();
 
@@ -153,17 +154,17 @@ test("presence: online, focusing, back online, offline on close, multiple tabs",
   // B starts a local focus session -> A sees FOCUSING (one presence update, no timer stream).
   await b.page.getByRole("button", { name: "LOCK IN" }).click();
   await expect(
-    b.page.getByRole("dialog", { name: "Focus session" }),
+    b.page.getByRole("dialog", { name: "Sessão de Foco" }),
   ).toBeVisible();
-  await expect(partnerCard(a.page, "Bruno", "focusing")).toBeVisible({
+  await expect(partnerCard(a.page, "Bruno", "em foco")).toBeVisible({
     timeout: LIVE,
   });
   await expect(a.page.getByText(/· \d\d:\d\d$/).first()).toBeVisible();
 
   // B ends it -> A sees ONLINE again.
   await b.page
-    .getByRole("dialog", { name: "Focus session" })
-    .getByRole("button", { name: "End session" })
+    .getByRole("dialog", { name: "Sessão de Foco" })
+    .getByRole("button", { name: "Encerrar sessão" })
     .click();
   await expect(partnerCard(a.page, "Bruno", "online")).toBeVisible({
     timeout: LIVE,
@@ -173,7 +174,7 @@ test("presence: online, focusing, back online, offline on close, multiple tabs",
   const tab2 = await b.context.newPage();
   await tab2.goto("/today");
   await expect(
-    tab2.getByRole("heading", { name: /GOOD MORNING, BRUNO/ }),
+    tab2.getByRole("heading", { name: /BOM DIA, BRUNO/ }),
   ).toBeVisible();
   await b.page.close();
   await a.page.waitForTimeout(5000);
@@ -207,7 +208,7 @@ test("missed while offline comes back from the database; connection loss shows a
     .eq("title", "Gym");
 
   const b = await open(browser, users.b, "/partner");
-  await expect(activity(b.page).getByText("completed Gym")).toBeVisible();
+  await expect(activity(b.page).getByText("concluiu Gym")).toBeVisible();
 
   // Network drop on B -> "Offline" pill; back -> pill gone, state refetched.
   await b.context.setOffline(true);
@@ -219,14 +220,14 @@ test("missed while offline comes back from the database; connection loss shows a
     .eq("title", "Morning Run");
   await b.context.setOffline(false);
   await expect(
-    b.page.getByRole("status").filter({ hasText: /Offline|Reconnecting/ }),
+    b.page.getByRole("status").filter({ hasText: /Offline|Reconectando/ }),
   ).toHaveCount(0, {
     timeout: 30_000,
   });
   // The completion that happened while B was offline arrives via refetch.
-  await expect(activity(b.page).getByText("completed Morning Run")).toBeVisible(
-    { timeout: LIVE },
-  );
+  await expect(activity(b.page).getByText("concluiu Morning Run")).toBeVisible({
+    timeout: LIVE,
+  });
   await b.context.close();
 });
 

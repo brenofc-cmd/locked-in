@@ -259,9 +259,9 @@ export function trackWrites(page: Page) {
 
 export async function signInUI(page: Page, user: TestUser, next = "/today") {
   await page.goto(`/login?next=${encodeURIComponent(next)}`);
-  await page.getByPlaceholder("Email").fill(user.email());
-  await page.getByPlaceholder("Password").fill(password());
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByPlaceholder("E-mail").fill(user.email());
+  await page.getByPlaceholder("Senha").fill(password());
+  await page.getByRole("button", { name: "Entrar" }).click();
   // Supabase Auth (remote DEV) can take several seconds under a full run.
   await expect(page).toHaveURL(new RegExp(`${next}$`), { timeout: 20_000 });
 }

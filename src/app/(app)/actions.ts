@@ -1,5 +1,6 @@
 "use server";
 
+import { t } from "@/i18n/pt-BR";
 import { revalidatePath } from "next/cache";
 import {
   duoErrorMessage,
@@ -54,7 +55,7 @@ export async function leaveDuo(): Promise<ActionResult> {
 
 export async function updateDisplayName(name: string): Promise<ActionResult> {
   const displayName = name.trim().slice(0, 40);
-  if (!displayName) return { ok: false, error: "Enter your name." };
+  if (!displayName) return { ok: false, error: t.actionErrors.enterName };
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const id = data?.claims?.sub;

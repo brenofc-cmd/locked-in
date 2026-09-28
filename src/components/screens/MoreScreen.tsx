@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 
@@ -8,28 +9,32 @@ export function MoreScreen() {
   const rows = [
     {
       href: "/routine",
-      label: "Routine",
-      sub: `${routines.length} items`,
+      label: t.pageTitles.routine,
+      sub: t.more.items(routines.length),
     },
     {
       href: "/challenges",
-      label: "Challenges",
-      sub: hasPartner ? "With your partner" : "Needs a partner",
+      label: t.pageTitles.challenges,
+      sub: hasPartner ? t.more.withPartner : t.more.needsPartner,
     },
     {
       href: "/duo",
-      label: "Invite partner",
-      sub: hasPartner ? `Duo with ${partner.name}` : "No partner yet",
+      label: t.more.invitePartner,
+      sub: hasPartner ? t.more.duoWith(partner.name) : t.more.noPartner,
     },
-    { href: "/settings", label: "Settings", sub: "Standard, notifications" },
+    {
+      href: "/settings",
+      label: t.pageTitles.settings,
+      sub: t.more.settingsSub,
+    },
   ];
 
   return (
     <div className="flex flex-col gap-[30px] animate-[li-fade-up_.4s_ease]">
       <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-        MORE
+        {t.more.title}
       </h1>
-      <nav aria-label="More" className="flex flex-col">
+      <nav aria-label={t.more.navAria} className="flex flex-col">
         {rows.map((m) => (
           <Link
             key={m.href}

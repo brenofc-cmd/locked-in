@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -22,25 +23,33 @@ import { Avatar, LogoMark, StatusDot, cx } from "@/components/ui";
 import { partnerView } from "@/lib/partner";
 
 const MAIN_NAV = [
-  { href: "/today", label: "Today" },
-  { href: "/partner", label: "Partner" },
-  { href: "/focus", label: "Focus" },
-  { href: "/progress", label: "Progress" },
+  { href: "/today", label: t.pageTitles.today },
+  { href: "/partner", label: t.pageTitles.partner },
+  { href: "/focus", label: t.pageTitles.focus },
+  { href: "/progress", label: t.pageTitles.progress },
 ];
 
 const SUB_NAV = [
-  { href: "/routine", label: "Routine" },
-  { href: "/challenges", label: "Challenges" },
-  { href: "/duo", label: "Duo" },
-  { href: "/settings", label: "Settings" },
+  { href: "/routine", label: t.pageTitles.routine },
+  { href: "/challenges", label: t.pageTitles.challenges },
+  { href: "/duo", label: t.pageTitles.duo },
+  { href: "/settings", label: t.pageTitles.settings },
 ];
 
 const TABS = [
-  { href: "/today", label: "TODAY", Icon: TodayIcon },
-  { href: "/partner", label: "PARTNER", Icon: PartnerIcon },
-  { href: "/focus", label: "FOCUS", Icon: FocusIcon },
-  { href: "/progress", label: "PROGRESS", Icon: ProgressIcon },
-  { href: "/more", label: "MORE", Icon: MoreIcon },
+  { href: "/today", label: t.pageTitles.today.toUpperCase(), Icon: TodayIcon },
+  {
+    href: "/partner",
+    label: t.pageTitles.partner.toUpperCase(),
+    Icon: PartnerIcon,
+  },
+  { href: "/focus", label: t.pageTitles.focus.toUpperCase(), Icon: FocusIcon },
+  {
+    href: "/progress",
+    label: t.pageTitles.progress.toUpperCase(),
+    Icon: ProgressIcon,
+  },
+  { href: "/more", label: t.pageTitles.more.toUpperCase(), Icon: MoreIcon },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -86,7 +95,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
           LOCKED IN
         </span>
       </Link>
-      <nav aria-label="Main" className="flex flex-col gap-0.5">
+      <nav aria-label={t.shell.mainNav} className="flex flex-col gap-0.5">
         {MAIN_NAV.map((n) => {
           const on = pathname.startsWith(n.href);
           return (
@@ -108,7 +117,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
           );
         })}
       </nav>
-      <nav aria-label="Secondary" className="flex flex-col gap-0.5">
+      <nav aria-label={t.shell.secondaryNav} className="flex flex-col gap-0.5">
         {SUB_NAV.map((n) => {
           const on = pathname.startsWith(n.href);
           return (
@@ -135,7 +144,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
         <span className="flex flex-col gap-0.5">
           <span className="text-[13px]">{userName}</span>
           <span className="font-mono text-[10px] tracking-[.1em] text-dim">
-            LOCKED IN DUO
+            {t.shell.duoFooter}
           </span>
         </span>
       </div>
@@ -151,7 +160,7 @@ function MobileHeader() {
       <Link
         href="/today"
         className="flex items-center gap-[9px]"
-        aria-label="LOCKED IN, Today"
+        aria-label={t.shell.homeAria}
       >
         <LogoMark />
         <span className="font-mono text-[11.5px] font-semibold tracking-[.24em]">
@@ -161,7 +170,11 @@ function MobileHeader() {
       {hasPartner && (
         <Link
           href="/partner"
-          aria-label={`${partner.name} is ${pv.focusWord.toLowerCase()}, ${pv.pct}% done today`}
+          aria-label={t.shell.partnerChipAria(
+            partner.name,
+            pv.focusWord.toLowerCase(),
+            pv.pct,
+          )}
           className="flex h-9 items-center gap-2 rounded-full border border-white/8 px-3 text-[12.5px] text-muted"
         >
           <StatusDot live={pv.live} pulse={pv.pulse} />
@@ -177,13 +190,13 @@ function BottomNav({ pathname }: { pathname: string }) {
   const mainTabs = ["/today", "/partner", "/focus", "/progress"];
   return (
     <nav
-      aria-label="Tabs"
+      aria-label={t.shell.tabsNav}
       className="flex shrink-0 border-t border-white/6 bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] desk:hidden"
     >
       {TABS.map(({ href, label, Icon }) => {
         const on =
           href === "/more"
-            ? !mainTabs.some((t) => pathname.startsWith(t))
+            ? !mainTabs.some((tab) => pathname.startsWith(tab))
             : pathname.startsWith(href);
         const isFocus = href === "/focus";
         return (

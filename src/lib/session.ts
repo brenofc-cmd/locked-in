@@ -1,3 +1,4 @@
+import { t } from "@/i18n/pt-BR";
 import { loadDuoData, type DuoData } from "@/lib/duo-data";
 import { loadFocusData, type FocusData } from "@/lib/focus-data";
 import type { ProgressData } from "@/lib/progress";
@@ -64,8 +65,7 @@ export async function loadAppData(): Promise<AppData | null> {
   async function loadTasks(): Promise<TasksData> {
     // Materialise routine occurrences up to the user's local today (idempotent).
     const ensured = await supabase.rpc("ensure_my_daily_tasks");
-    if (ensured.error || !ensured.data)
-      throw new Error("Could not load today.");
+    if (ensured.error || !ensured.data) throw new Error(t.loadErrors.today);
     const today = ensured.data;
     const [tasks, routines] = await Promise.all([
       supabase
@@ -83,7 +83,7 @@ export async function loadAppData(): Promise<AppData | null> {
         .order("sort_order")
         .order("created_at"),
     ]);
-    if (tasks.error || routines.error) throw new Error("Could not load today.");
+    if (tasks.error || routines.error) throw new Error(t.loadErrors.today);
     return { today, tasks: tasks.data, routines: routines.data };
   }
 
@@ -106,11 +106,11 @@ export async function loadAppData(): Promise<AppData | null> {
       loadFocusData(supabase),
     ]);
   if (profiles.error || duos.error || members.error || settings.error) {
-    throw new Error("Could not load your account. Try again.");
+    throw new Error(t.loadErrors.account);
   }
 
   const mine = profiles.data.find((p) => p.id === userId);
-  if (!mine) throw new Error("Profile missing for signed-in user.");
+  if (!mine) throw new Error(t.loadErrors.profileMissing);
 
   const partnerMember = members.data.find((m) => m.user_id !== userId);
   const partnerId = partnerMember?.user_id;

@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import type { ReactNode } from "react";
 import { useApp } from "@/components/app-state";
 import {
@@ -16,18 +17,7 @@ import {
   TaskOptionsSheet,
 } from "@/components/sheets/TaskSheets";
 
-const LABEL = {
-  add: "Add task",
-  edit: "Edit task",
-  editRoutine: "Edit task",
-  options: "Task options",
-  react: "React",
-  focus: "Start focus",
-  streak: "Streak",
-  day: "Day detail",
-  template: "Use a template",
-  challenge: "New challenge",
-} as const;
+const LABEL = t.sheetLabels;
 
 export function SheetHost() {
   const { sheet, closeSheet, tasks, routines } = useApp();

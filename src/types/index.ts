@@ -3,8 +3,8 @@ export type Day = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 /** Stored values (daily_tasks / routine_items.category). Labels: CATEGORY_LABEL. */
 export type Category = "morning" | "work_study" | "body" | "night" | "custom";
 
-export type SectionName =
-  "MORNING" | "WORK / STUDY" | "BODY" | "NIGHT" | "CUSTOM";
+/** Section header shown on Today (copy from the i18n catalog). */
+export type SectionName = string;
 
 export type TaskStatus = "pending" | "completed" | "skipped";
 

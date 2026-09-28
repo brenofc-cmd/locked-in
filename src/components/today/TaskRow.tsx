@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useRef, useState, type PointerEvent } from "react";
 import { CheckPath, cx } from "@/components/ui";
 import type { Task } from "@/types";
@@ -99,13 +100,13 @@ export function TaskRow({
           )}
           style={{ opacity: leftOpacity }}
         >
-          {task.done ? "UNDO" : "COMPLETE"}
+          {task.done ? t.taskRow.undo : t.taskRow.complete}
         </div>
         <div
           className="flex flex-1 items-center justify-end bg-chip pr-5 font-mono text-[11px] tracking-[.2em] text-muted"
           style={{ opacity: dx < 0 ? 1 : 0 }}
         >
-          OPTIONS
+          {t.taskRow.options}
         </div>
       </div>
 
@@ -192,8 +193,8 @@ export function TaskRow({
           >
             {task.unsynced && (
               <span
-                title="Will sync"
-                aria-label="Will sync"
+                title={t.taskRow.willSync}
+                aria-label={t.taskRow.willSync}
                 className="size-[7px] rounded-full border-[1.5px] border-dim"
               />
             )}
@@ -201,7 +202,7 @@ export function TaskRow({
               <span id={`${task.id}-skip`}>{task.skip}</span>
             ) : task.done ? (
               <span>
-                <span className="hidden desk:inline">DONE </span>
+                <span className="hidden desk:inline">{t.taskRow.done}</span>
                 {task.doneAt}
               </span>
             ) : null}
@@ -211,7 +212,7 @@ export function TaskRow({
         <button
           type="button"
           onClick={onOptions}
-          aria-label={`Options for ${task.name}`}
+          aria-label={t.taskRow.optionsFor(task.name)}
           className="flex h-11 w-9 shrink-0 items-center justify-center gap-[3px] rounded-lg hover:bg-white/4"
         >
           <span

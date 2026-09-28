@@ -6,6 +6,7 @@
  */
 import { addDays, daysBetween } from "@/lib/local-date";
 import { focusLabel, monthLabel } from "@/lib/progress";
+import { t } from "@/i18n/pt-BR";
 
 export type ChallengeType = "standard_days" | "focus_seconds";
 
@@ -34,19 +35,18 @@ export function challengeStatus(
   return "active";
 }
 
-/** "12 days" / "8h 42m" */
+/** "12 dias" / "8h 42m" */
 export function formatValue(type: ChallengeType, value: number): string {
   if (type === "focus_seconds") return focusLabel(value);
-  return `${value} ${value === 1 ? "day" : "days"}`;
+  return t.challenges.days(value);
 }
 
-/** Goal line: "20 STANDARD DAYS" / "10 HOURS". */
+/** Goal line: "20 DIAS NO PADRÃO" / "10 HORAS". */
 export function goalLabel(type: ChallengeType, target: number): string {
-  if (type === "standard_days")
-    return `${target} STANDARD ${target === 1 ? "DAY" : "DAYS"}`;
+  if (type === "standard_days") return t.challenges.goalStandardDays(target);
   const hours = target / 3600;
   return Number.isInteger(hours)
-    ? `${hours} ${hours === 1 ? "HOUR" : "HOURS"}`
+    ? t.challenges.goalHours(hours)
     : focusLabel(target).toUpperCase();
 }
 
@@ -76,9 +76,9 @@ export function challengeLeader(
   return c.me > c.partner ? "me" : "partner";
 }
 
-/** "SEP 25 → OCT 24" */
+/** "25 SET → 24 OUT" */
 export function periodLabel(start: string, end: string): string {
-  const d = (x: string) => `${monthLabel(x)} ${Number(x.slice(8, 10))}`;
+  const d = (x: string) => `${Number(x.slice(8, 10))} ${monthLabel(x)}`;
   return `${d(start)} → ${d(end)}`;
 }
 
@@ -90,11 +90,11 @@ export function statusLabel(
   const s = challengeStatus(c, today);
   if (s === "upcoming") {
     const n = daysBetween(today, c.start);
-    return n === 1 ? "STARTS TOMORROW" : `STARTS IN ${n} DAYS`;
+    return n === 1 ? t.challenges.startsTomorrow : t.challenges.startsIn(n);
   }
-  if (s === "completed") return "COMPLETED";
+  if (s === "completed") return t.challenges.completed;
   const left = daysBetween(today, c.end);
-  return left === 0 ? "LAST DAY" : `${left + 1} DAYS LEFT`;
+  return left === 0 ? t.challenges.lastDay : t.challenges.daysLeft(left + 1);
 }
 
 export type ChallengeDraft = {
@@ -113,14 +113,14 @@ export function defaultDraft(
 ): ChallengeDraft {
   return type === "standard_days"
     ? {
-        title: "NO ZERO DAYS",
+        title: t.challenges.defaultStandardTitle,
         type,
         goal: 20,
         start: today,
         end: addDays(today, 29),
       }
     : {
-        title: "DEEP WORK WEEK",
+        title: t.challenges.defaultFocusTitle,
         type,
         goal: 10,
         start: today,
@@ -131,23 +131,23 @@ export function defaultDraft(
 /** Client-side validation, same rules as the database. null = valid. */
 export function validateDraft(d: ChallengeDraft, today: string): string | null {
   const title = d.title.trim();
-  if (!title) return "Give the challenge a title.";
-  if (title.length > 40) return "Keep the title under 40 characters.";
+  if (!title) return t.challenges.titleRequired;
+  if (title.length > 40) return t.challenges.titleTooLong;
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(d.start) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(d.end)
   )
-    return "Choose the dates.";
-  if (d.start < today) return "A challenge starts today or later.";
-  if (d.end < d.start) return "The end is before the start.";
+    return t.challenges.datesRequired;
+  if (d.start < today) return t.challenges.startInPast;
+  if (d.end < d.start) return t.challenges.endBeforeStart;
   const days = daysBetween(d.start, d.end) + 1;
-  if (days > 366) return "Keep it under a year.";
-  if (!Number.isFinite(d.goal) || d.goal <= 0) return "Set a goal above zero.";
+  if (days > 366) return t.challenges.tooLong;
+  if (!Number.isFinite(d.goal) || d.goal <= 0) return t.challenges.goalPositive;
   if (d.type === "standard_days") {
-    if (!Number.isInteger(d.goal)) return "Days are whole numbers.";
-    if (d.goal > days) return `At most ${days} days in this period.`;
+    if (!Number.isInteger(d.goal)) return t.challenges.wholeDays;
+    if (d.goal > days) return t.challenges.maxDays(days);
   } else if (d.goal > days * 24) {
-    return `At most ${days * 24} hours in this period.`;
+    return t.challenges.maxHours(days * 24);
   }
   return null;
 }

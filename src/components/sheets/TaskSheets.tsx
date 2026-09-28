@@ -1,9 +1,10 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useState } from "react";
 import { useApp, type TaskInput } from "@/components/app-state";
 import { SwitchTrack, chipTone, cx } from "@/components/ui";
-import { DAYS, DAY_LETTERS } from "@/lib/local-date";
+import { DAYS, DAY_LETTERS, dayLabel } from "@/lib/local-date";
 import { SKIP_REASONS } from "@/lib/constants";
 import {
   CATEGORIES,
@@ -14,17 +15,18 @@ import { SECTION_OF, scheduleLabel } from "@/lib/today";
 import type { Category, Day, RoutineItem, Task } from "@/types";
 
 const WEEKDAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI"];
-type Repeat = "Every day" | "Weekdays" | "Custom";
+type Repeat = keyof typeof t.taskSheet.repeatModes;
+const REPEAT_MODES: Repeat[] = ["daily", "weekdays", "custom"];
 
 const monoLabel = "font-mono text-[10.5px] tracking-[.16em] text-dim";
 const field =
   "rounded-xl border border-white/10 bg-bg text-text outline-none focus:border-white/30";
 
 function repeatOf(days: Day[]): Repeat {
-  if (days.length === 7) return "Every day";
+  if (days.length === 7) return "daily";
   if (days.length === 5 && WEEKDAYS.every((d) => days.includes(d)))
-    return "Weekdays";
-  return "Custom";
+    return "weekdays";
+  return "custom";
 }
 
 /**
@@ -48,7 +50,7 @@ export function TaskFormSheet({
     routine ? true : editing ? !editing.once : repeatByDefault,
   );
   const [repeatMode, setRepeatMode] = useState<Repeat>(
-    source && source.days.length ? repeatOf(source.days) : "Every day",
+    source && source.days.length ? repeatOf(source.days) : "daily",
   );
   const [days, setDays] = useState<Day[]>(
     source && source.days.length ? source.days : DAYS,
@@ -71,9 +73,9 @@ export function TaskFormSheet({
   function input(): TaskInput {
     const d: Day[] = !repeat
       ? []
-      : repeatMode === "Every day"
+      : repeatMode === "daily"
         ? DAYS
-        : repeatMode === "Weekdays"
+        : repeatMode === "weekdays"
           ? WEEKDAYS
           : days;
     return {
@@ -121,28 +123,28 @@ export function TaskFormSheet({
     return (
       <div className="flex flex-col gap-2 animate-[li-fade-up_.2s_ease]">
         <span className="pb-2 font-mono text-[11px] tracking-[.18em] text-muted">
-          APPLY CHANGE TO
+          {t.taskSheet.applyTo}
         </span>
         <button
           type="button"
           onClick={() => run(() => app.updateToday(editing.id, input()))}
           className="h-14 rounded-[14px] border border-white/10 bg-raised text-base"
         >
-          Today only
+          {t.taskSheet.todayOnly}
         </button>
         <button
           type="button"
           onClick={() => run(() => app.updateRoutine(routineId, input()))}
           className="h-14 rounded-[14px] bg-text text-base font-semibold text-bg"
         >
-          Today and future days
+          {t.taskSheet.todayAndFuture}
         </button>
         <button
           type="button"
           onClick={() => setConfirm(false)}
           className="h-12 text-sm text-dim"
         >
-          Cancel
+          {t.taskSheet.cancel}
         </button>
       </div>
     );
@@ -162,7 +164,7 @@ export function TaskFormSheet({
     >
       <div className="flex min-h-8 items-center justify-between">
         <span className="font-mono text-[11px] tracking-[.18em] text-muted">
-          {source ? "EDIT TASK" : "ADD TASK"}
+          {source ? t.taskSheet.editTask : t.taskSheet.addTask}
         </span>
         {source && (
           <button
@@ -170,7 +172,7 @@ export function TaskFormSheet({
             onClick={remove}
             className="h-9 rounded-lg px-2.5 text-sm text-danger"
           >
-            Delete
+            {t.taskSheet.delete}
           </button>
         )}
       </div>
@@ -181,13 +183,17 @@ export function TaskFormSheet({
           setError(null);
         }}
         maxLength={80}
-        placeholder="Finish Physics exercise"
-        aria-label="Task name"
+        placeholder={t.taskSheet.namePlaceholder}
+        aria-label={t.taskSheet.nameAria}
         enterKeyHint="done"
         className="h-14 rounded-[14px] border border-white/12 bg-bg px-4 text-[17px] outline-none focus:border-white/30"
       />
       {!source && (
-        <div role="radiogroup" aria-label="When" className="flex gap-1.5">
+        <div
+          role="radiogroup"
+          aria-label={t.taskSheet.whenAria}
+          className="flex gap-1.5"
+        >
           {(["Today", "Repeat"] as const).map((w) => {
             const on = (w === "Repeat") === repeat;
             return (
@@ -202,7 +208,9 @@ export function TaskFormSheet({
                   chipTone(on),
                 )}
               >
-                {w}
+                {w === "Repeat"
+                  ? t.taskSheet.whenRepeat
+                  : t.taskSheet.whenToday}
               </button>
             );
           })}
@@ -210,9 +218,13 @@ export function TaskFormSheet({
       )}
       {repeat && (
         <div className="flex flex-col gap-2.5 animate-[li-fade-up_.2s_ease]">
-          <span className={monoLabel}>REPEAT</span>
-          <div role="radiogroup" aria-label="Repeat" className="flex gap-1.5">
-            {(["Every day", "Weekdays", "Custom"] as const).map((r) => (
+          <span className={monoLabel}>{t.taskSheet.repeat}</span>
+          <div
+            role="radiogroup"
+            aria-label={t.taskSheet.repeatAria}
+            className="flex gap-1.5"
+          >
+            {REPEAT_MODES.map((r) => (
               <button
                 key={r}
                 type="button"
@@ -224,11 +236,11 @@ export function TaskFormSheet({
                   chipTone(repeatMode === r),
                 )}
               >
-                {r}
+                {t.taskSheet.repeatModes[r]}
               </button>
             ))}
           </div>
-          {repeatMode === "Custom" && (
+          {repeatMode === "custom" && (
             <div className="grid grid-cols-7 gap-1.5">
               {DAYS.map((d, i) => {
                 const on = days.includes(d);
@@ -236,7 +248,7 @@ export function TaskFormSheet({
                   <button
                     key={d}
                     type="button"
-                    aria-label={d}
+                    aria-label={dayLabel(d)}
                     aria-pressed={on}
                     onClick={() =>
                       setDays(
@@ -264,7 +276,7 @@ export function TaskFormSheet({
         aria-expanded={more}
         className="flex h-12 items-center justify-between border-t border-white/6 text-sm text-muted"
       >
-        <span>More options</span>
+        <span>{t.taskSheet.moreOptions}</span>
         <span className="text-xs text-dim">
           {moreSummary}{" "}
           <span
@@ -280,7 +292,7 @@ export function TaskFormSheet({
         <div className="flex flex-col gap-4 animate-[li-fade-up_.2s_ease]">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex min-w-0 flex-col gap-2">
-              <span className={monoLabel}>TIME</span>
+              <span className={monoLabel}>{t.taskSheet.time}</span>
               <input
                 type="time"
                 value={time}
@@ -298,18 +310,18 @@ export function TaskFormSheet({
               onClick={() => setReminder((r) => !r)}
               className="flex flex-col gap-2 text-left"
             >
-              <span className={monoLabel}>REMINDER</span>
+              <span className={monoLabel}>{t.taskSheet.reminder}</span>
               <span className="flex h-[46px] w-full items-center justify-between rounded-xl border border-white/10 px-3 text-sm">
-                {reminder ? "On" : "Off"}
+                {reminder ? t.taskSheet.on : t.taskSheet.off}
                 <SwitchTrack on={reminder} compact />
               </span>
             </button>
           </div>
           <div className="flex flex-col gap-2">
-            <span className={monoLabel}>SECTION</span>
+            <span className={monoLabel}>{t.taskSheet.section}</span>
             <div
               role="radiogroup"
-              aria-label="Section"
+              aria-label={t.taskSheet.sectionAria}
               className="flex flex-wrap gap-1.5"
             >
               {CATEGORIES.map((c) => (
@@ -338,19 +350,17 @@ export function TaskFormSheet({
           >
             <span className="flex flex-col gap-[3px]">
               <span className="text-[14.5px]">
-                Visible to {app.partner.name}
+                {t.taskSheet.visibleTo(app.partner.name)}
               </span>
-              <span className="text-xs text-dim">
-                Hidden tasks still count toward your score.
-              </span>
+              <span className="text-xs text-dim">{t.taskSheet.hiddenNote}</span>
             </span>
             <SwitchTrack on={visible} />
           </button>
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notes"
-            aria-label="Notes"
+            placeholder={t.taskSheet.notes}
+            aria-label={t.taskSheet.notes}
             maxLength={200}
             className={cx(field, "h-[46px] px-3.5 text-base")}
           />
@@ -369,7 +379,7 @@ export function TaskFormSheet({
           valid ? "bg-accent text-bg" : "bg-selected text-ghost",
         )}
       >
-        {source ? "SAVE" : "ADD"}
+        {source ? t.taskSheet.save : t.taskSheet.add}
       </button>
     </form>
   );
@@ -381,7 +391,7 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
   const meta = [
     SECTION_OF[task.category],
     task.time,
-    task.once ? "TODAY ONLY" : scheduleLabel(task.days),
+    task.once ? t.taskSheet.todayOnlyTag : scheduleLabel(task.days),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -396,7 +406,7 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
       </div>
       {task.skip === null ? (
         <div className="flex flex-col gap-2.5">
-          <span className={monoLabel}>SKIP TODAY</span>
+          <span className={monoLabel}>{t.taskSheet.skipToday}</span>
           <div className="grid grid-cols-2 gap-1.5">
             {SKIP_REASONS.map((r) => (
               <button
@@ -409,10 +419,7 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
               </button>
             ))}
           </div>
-          <span className="text-xs text-dim">
-            Skipped tasks stay in today&apos;s total and don&apos;t count as
-            done.
-          </span>
+          <span className="text-xs text-dim">{t.taskSheet.skipNote}</span>
         </div>
       ) : (
         <button
@@ -420,7 +427,9 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
           onClick={() => app.unskipTask(task.id)}
           className="h-[52px] rounded-[14px] border border-white/10 bg-raised text-[15px]"
         >
-          Unskip · {task.skip.replace("SKIPPED · ", "").toLowerCase()}
+          {t.taskSheet.unskip(
+            task.skip.replace(t.tasks.skippedWith(""), "").toLowerCase(),
+          )}
         </button>
       )}
       <div className="flex flex-col">
@@ -429,7 +438,7 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
           onClick={() => app.openSheet({ kind: "edit", taskId: task.id })}
           className="flex h-[54px] items-center justify-between border-t border-white/6 text-[15.5px]"
         >
-          <span>Edit</span>
+          <span>{t.taskSheet.edit}</span>
           <span aria-hidden="true" className="text-faint">
             ›
           </span>
@@ -442,7 +451,7 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
           }}
           className="flex h-[54px] items-center border-t border-white/6 text-[15.5px] text-danger"
         >
-          {task.once ? "Delete" : "Remove from routine"}
+          {task.once ? t.taskSheet.delete : t.taskSheet.removeFromRoutine}
         </button>
       </div>
     </div>

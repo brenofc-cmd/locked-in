@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
@@ -15,7 +16,7 @@ export function ReactButton({
   name,
 }: {
   eventId: string;
-  /** Sheet title, e.g. "Lucas completed Morning Run". */
+  /** Sheet title, e.g. "Lucas concluiu Morning Run". */
   title: string;
   /** Short label for the button's accessible name, e.g. "Morning Run". */
   name: string;
@@ -29,8 +30,8 @@ export function ReactButton({
       onClick={() => openSheet({ kind: "react", eventId, title })}
       aria-label={
         mine
-          ? `You reacted ${reactionLabel(mine)} to ${name}. Change reaction`
-          : `React to ${name}`
+          ? t.reactButton.reacted(reactionLabel(mine), name)
+          : t.reactButton.reactTo(name)
       }
       data-testid="react-button"
       className={cx(
@@ -38,7 +39,7 @@ export function ReactButton({
         mine ? "border-accent-line text-text" : "border-white/9 text-muted",
       )}
     >
-      {mine ? reactionLabel(mine) : "React"}
+      {mine ? reactionLabel(mine) : t.reactButton.react}
     </button>
   );
 }

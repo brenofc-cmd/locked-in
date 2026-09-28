@@ -1,5 +1,6 @@
 "use server";
 
+import { t } from "@/i18n/pt-BR";
 import { addDays } from "@/lib/local-date";
 import type { DayStat, Habit, ProgressData } from "@/lib/progress";
 import { loadDuoProgress, loadHabits, loadProgress } from "@/lib/progress-data";
@@ -12,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
-const ERROR = "Could not load progress.";
+const ERROR = t.actionErrors.progressLoad;
 
 export async function refreshProgress(): Promise<
   Result<{ data: ProgressData }>
@@ -58,20 +59,19 @@ export async function setDailyStandard(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const value = Math.round(percent);
   if (!(value >= 1 && value <= 100))
-    return { ok: false, error: "Choose a standard between 1% and 100%." };
+    return { ok: false, error: t.actionErrors.standardRange };
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
     const id = data?.claims?.sub;
-    if (!id)
-      return { ok: false, error: "Your session expired. Sign in again." };
+    if (!id) return { ok: false, error: t.errors.sessionExpired };
     const { error } = await supabase
       .from("profiles")
       .update({ daily_standard_percent: value })
       .eq("id", id);
-    if (error) return { ok: false, error: "Could not save your standard." };
+    if (error) return { ok: false, error: t.actionErrors.standardSave };
   } catch {
-    return { ok: false, error: "Could not save your standard." };
+    return { ok: false, error: t.actionErrors.standardSave };
   }
   // The client refetches: the streak is recalculated over history.
   return { ok: true };

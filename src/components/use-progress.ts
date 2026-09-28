@@ -10,6 +10,7 @@
  * - the partner's side (this week, history, streak) is re-read after the
  *   realtime provider refetches the partner (partner events, reconnect).
  */
+import { t } from "@/i18n/pt-BR";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   refreshDuoProgress,
@@ -80,8 +81,8 @@ export function useProgress({
           summary: { ...d.summary, standard: before },
         }));
         toast({
-          text: res && !res.ok ? res.error : "Could not save your standard.",
-          sub: "STANDARD",
+          text: res && !res.ok ? res.error : t.hookToasts.standardSaveFailed,
+          sub: t.hookToasts.standard,
         });
         return;
       }

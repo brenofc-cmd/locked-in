@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/app/(auth)/actions";
 import { MIN_PASSWORD } from "@/lib/auth-errors";
 
-// Field and button styles from the v2 "Sign in" moment.
+// Field and button styles from the v2 "Sign in" moment. Copy: t.auth.
 const FIELD =
   "h-[52px] rounded-xl border border-white/10 bg-field px-4 text-[15px] text-text outline-none placeholder:text-dim focus:border-white/28";
 const PRIMARY =
@@ -85,8 +86,8 @@ function Sent({
         {title}
       </h1>
       <p className="text-[15px] leading-[1.5]">
-        We sent a link to <span className="font-medium">{email}</span>. Open it
-        on this device to continue.
+        {t.auth.sentLinkBefore} <span className="font-medium">{email}</span>
+        {t.auth.sentLinkAfter}
       </p>
       {children}
     </div>
@@ -108,43 +109,39 @@ export function LoginForm({
       <form
         action={action}
         className="flex flex-col gap-2.5"
-        aria-label="Sign in"
+        aria-label={t.auth.signIn}
       >
-        <h1 className="sr-only">Sign in</h1>
+        <h1 className="sr-only">{t.auth.signIn}</h1>
         <input type="hidden" name="next" value={next} />
         <Field
           name="email"
-          label="Email"
+          label={t.auth.email}
           type="email"
           autoComplete="email"
           defaultValue={state.email}
         />
         <Field
           name="password"
-          label="Password"
+          label={t.auth.password}
           type="password"
           autoComplete="current-password"
         />
         <FormError
-          message={
-            state.error ??
-            (linkError
-              ? "That link is invalid or has expired. Request a new one."
-              : undefined)
-          }
+          message={state.error ?? (linkError ? t.auth.linkInvalid : undefined)}
         />
         <button type="submit" disabled={pending} className={PRIMARY}>
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? t.auth.signingIn : t.auth.signIn}
         </button>
       </form>
       <Footer>
         <span>
-          <TextLink href="/forgot-password">Forgot password?</TextLink>
+          <TextLink href="/forgot-password">{t.auth.forgotPassword}</TextLink>
         </span>
         <span>
-          New here? <TextLink href="/signup">Create an account</TextLink>
+          {t.auth.newHere}{" "}
+          <TextLink href="/signup">{t.auth.createAnAccount}</TextLink>
         </span>
-        <span>Private by default. Only your partner sees your day.</span>
+        <span>{t.auth.privateByDefault}</span>
       </Footer>
     </>
   );
@@ -162,10 +159,11 @@ export function SignupForm() {
 
   if (state.sentTo) {
     return (
-      <Sent title="CONFIRM YOUR EMAIL" email={state.sentTo}>
+      <Sent title={t.auth.confirmEmailTitle} email={state.sentTo}>
         <Footer>
           <span>
-            Confirmed already? <TextLink href="/login">Sign in</TextLink>
+            {t.auth.confirmedAlready}{" "}
+            <TextLink href="/login">{t.auth.signIn}</TextLink>
           </span>
         </Footer>
       </Sent>
@@ -177,47 +175,48 @@ export function SignupForm() {
       <form
         action={action}
         className="flex flex-col gap-2.5"
-        aria-label="Create account"
+        aria-label={t.auth.createAccount}
       >
-        <h1 className="sr-only">Create account</h1>
+        <h1 className="sr-only">{t.auth.createAccount}</h1>
         <input ref={tzRef} type="hidden" name="timezone" defaultValue="" />
         <Field
           name="name"
-          label="Name"
+          label={t.auth.name}
           autoComplete="given-name"
           defaultValue={state.name}
         />
         <Field
           name="email"
-          label="Email"
+          label={t.auth.email}
           type="email"
           autoComplete="email"
           defaultValue={state.email}
         />
         <Field
           name="password"
-          label="Password"
+          label={t.auth.password}
           type="password"
           autoComplete="new-password"
           minLength={MIN_PASSWORD}
         />
         <Field
           name="confirm"
-          label="Confirm password"
+          label={t.auth.confirmPassword}
           type="password"
           autoComplete="new-password"
           minLength={MIN_PASSWORD}
         />
         <FormError message={state.error} />
         <button type="submit" disabled={pending} className={PRIMARY}>
-          {pending ? "Creating account…" : "Create account"}
+          {pending ? t.auth.creatingAccount : t.auth.createAccount}
         </button>
       </form>
       <Footer>
         <span>
-          Have an account? <TextLink href="/login">Sign in</TextLink>
+          {t.auth.haveAccount}{" "}
+          <TextLink href="/login">{t.auth.signIn}</TextLink>
         </span>
-        <span>Your partner will see your name.</span>
+        <span>{t.auth.partnerSeesName}</span>
       </Footer>
     </>
   );
@@ -231,13 +230,11 @@ export function ForgotPasswordForm() {
 
   if (state.sentTo) {
     return (
-      <Sent title="CHECK YOUR EMAIL" email={state.sentTo}>
+      <Sent title={t.auth.checkEmailTitle} email={state.sentTo}>
         <Footer>
+          <span>{t.auth.resetExplainer}</span>
           <span>
-            If an account exists for this email, the link sets a new password.
-          </span>
-          <span>
-            <TextLink href="/login">Back to sign in</TextLink>
+            <TextLink href="/login">{t.auth.backToSignIn}</TextLink>
           </span>
         </Footer>
       </Sent>
@@ -249,26 +246,26 @@ export function ForgotPasswordForm() {
       <form
         action={action}
         className="flex flex-col gap-2.5"
-        aria-label="Reset password"
+        aria-label={t.auth.resetPasswordLabel}
       >
         <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
-          RESET PASSWORD
+          {t.auth.resetPasswordTitle}
         </h1>
         <Field
           name="email"
-          label="Email"
+          label={t.auth.email}
           type="email"
           autoComplete="email"
           defaultValue={state.email}
         />
         <FormError message={state.error} />
         <button type="submit" disabled={pending} className={PRIMARY}>
-          {pending ? "Sending…" : "Send reset link"}
+          {pending ? t.auth.sending : t.auth.sendResetLink}
         </button>
       </form>
       <Footer>
         <span>
-          <TextLink href="/login">Back to sign in</TextLink>
+          <TextLink href="/login">{t.auth.backToSignIn}</TextLink>
         </span>
       </Footer>
     </>
@@ -281,14 +278,14 @@ export function ResetPasswordForm() {
     <form
       action={action}
       className="flex flex-col gap-2.5"
-      aria-label="Set a new password"
+      aria-label={t.auth.setNewPasswordLabel}
     >
       <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
-        NEW PASSWORD
+        {t.auth.newPasswordTitle}
       </h1>
       <Field
         name="password"
-        label="New password"
+        label={t.auth.newPassword}
         type="password"
         autoComplete="new-password"
         minLength={MIN_PASSWORD}
@@ -296,14 +293,14 @@ export function ResetPasswordForm() {
       />
       <Field
         name="confirm"
-        label="Confirm new password"
+        label={t.auth.confirmNewPassword}
         type="password"
         autoComplete="new-password"
         minLength={MIN_PASSWORD}
       />
       <FormError message={state.error} />
       <button type="submit" disabled={pending} className={PRIMARY}>
-        {pending ? "Saving…" : "Save password"}
+        {pending ? t.auth.saving : t.auth.savePassword}
       </button>
     </form>
   );

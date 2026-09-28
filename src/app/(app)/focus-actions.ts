@@ -1,5 +1,6 @@
 "use server";
 
+import { t } from "@/i18n/pt-BR";
 import { focusErrorMessage, type FocusRow } from "@/lib/focus";
 import { loadFocusData, type FocusData } from "@/lib/focus-data";
 import { createClient } from "@/lib/supabase/server";
@@ -42,9 +43,9 @@ export async function startFocus(input: {
   const title = input.title.trim().slice(0, 80);
   const minutes = Math.round(input.minutes);
   if (!title || !(minutes >= 1 && minutes <= MAX_MINUTES)) {
-    return { ok: false, error: "Could not start Focus." };
+    return { ok: false, error: t.actionErrors.focusStart };
   }
-  return one("Could not start Focus.", (s) =>
+  return one(t.actionErrors.focusStart, (s) =>
     s.rpc("start_focus_session", {
       p_title: title,
       p_planned_seconds: minutes * 60,
@@ -54,19 +55,19 @@ export async function startFocus(input: {
 }
 
 export async function pauseFocus(id: string): Promise<Result> {
-  return one("Could not pause.", (s) =>
+  return one(t.actionErrors.focusPause, (s) =>
     s.rpc("pause_focus_session", { p_id: id }),
   );
 }
 
 export async function resumeFocus(id: string): Promise<Result> {
-  return one("Could not resume.", (s) =>
+  return one(t.actionErrors.focusResume, (s) =>
     s.rpc("resume_focus_session", { p_id: id }),
   );
 }
 
 export async function completeFocus(id: string): Promise<Result> {
-  return one("Could not finish Focus.", (s) =>
+  return one(t.actionErrors.focusFinish, (s) =>
     s.rpc("complete_focus_session", { p_id: id }),
   );
 }
@@ -76,7 +77,7 @@ export async function saveReflection(
   reflection: string,
 ): Promise<Result> {
   const text = reflection.trim().slice(0, 1000);
-  return one("Could not save your note.", (s) =>
+  return one(t.actionErrors.focusNote, (s) =>
     s.rpc("save_focus_reflection", { p_id: id, p_reflection: text }),
   );
 }
@@ -88,6 +89,6 @@ export async function loadMyFocus(): Promise<
   try {
     return { ok: true, ...(await loadFocusData(await createClient())) };
   } catch {
-    return { ok: false, error: "Could not load Focus." };
+    return { ok: false, error: t.actionErrors.focusLoad };
   }
 }

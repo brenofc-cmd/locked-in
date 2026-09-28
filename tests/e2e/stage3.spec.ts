@@ -25,7 +25,7 @@ async function signedInPage(browser: Browser, user: TestUser) {
 }
 
 const greeting = (page: Page, name: string) =>
-  page.getByRole("heading", { name: `GOOD MORNING, ${name.toUpperCase()}.` });
+  page.getByRole("heading", { name: `BOM DIA, ${name.toUpperCase()}.` });
 
 test("private routes redirect to sign in without rendering private content", async ({
   page,
@@ -45,17 +45,17 @@ test("private routes redirect to sign in without rendering private content", asy
     await expect(page).toHaveURL(`/login?next=${encodeURIComponent(path)}`);
     // The redirect happens on the server: the private page never reached the browser.
     expect(response?.request().redirectedFrom()?.url()).toContain(path);
-    await expect(page.getByText("GOOD MORNING")).toHaveCount(0);
+    await expect(page.getByText("BOM DIA")).toHaveCount(0);
   }
 });
 
 test("wrong password shows a friendly error", async ({ page }) => {
   await page.goto("/login");
-  await page.getByPlaceholder("Email").fill(users.a.email());
-  await page.getByPlaceholder("Password").fill("not-the-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByPlaceholder("E-mail").fill(users.a.email());
+  await page.getByPlaceholder("Senha").fill("not-the-password");
+  await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.locator(`p[role="alert"]`)).toHaveText(
-    "Wrong email or password.",
+    "E-mail ou senha incorretos.",
   );
   await expect(page.getByText(/AuthApiError|invalid_credentials/)).toHaveCount(
     0,
@@ -71,13 +71,13 @@ test("sign up validates locally and detects the browser timezone", async ({
   await expect(page.locator('input[name="timezone"]')).toHaveValue(
     "Asia/Tokyo",
   );
-  await page.getByPlaceholder("Name").fill("Test");
-  await page.getByPlaceholder("Email").fill("nobody@example.com");
-  await page.getByPlaceholder("Password", { exact: true }).fill("longenough1");
-  await page.getByPlaceholder("Confirm password").fill("different11");
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByPlaceholder("Nome").fill("Test");
+  await page.getByPlaceholder("E-mail").fill("nobody@example.com");
+  await page.getByPlaceholder("Senha", { exact: true }).fill("longenough1");
+  await page.getByPlaceholder("Confirmar senha").fill("different11");
+  await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page.locator(`p[role="alert"]`)).toHaveText(
-    "Passwords don't match.",
+    "As senhas não coincidem.",
   );
   await context.close();
 });
@@ -96,29 +96,29 @@ test("A creates a duo, B joins, both see each other, C is refused; state survive
   // A: no duo -> create -> waiting with a real invite code.
   await a.goto("/duo");
   await expect(a.getByTestId("duo-state")).toHaveText(
-    "Two people. One standard. Invite your partner.",
+    "Duas pessoas. Um padrão. Convide sua dupla.",
   );
-  await a.getByRole("button", { name: "CREATE DUO" }).click();
+  await a.getByRole("button", { name: "CRIAR DUPLA" }).click();
   const codeEl = a.getByTestId("invite-code");
   await expect(codeEl).toHaveText(/^LKD-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/);
   const code = (await codeEl.textContent())!;
   await expect(a.getByTestId("duo-state")).toHaveText(
-    "Waiting for your partner. Share your code.",
+    "Aguardando sua dupla. Compartilhe seu código.",
   );
 
   // No fake partner while waiting.
   await a.goto("/today");
-  await expect(a.getByText("WAITING FOR YOUR PARTNER")).toBeVisible();
+  await expect(a.getByText("ESPERANDO SUA DUPLA")).toBeVisible();
   await expect(a.getByText("Lucas")).toHaveCount(0);
 
   // B: joins with a sloppy code (lower case, no dash).
   await b.goto("/duo");
   await b
-    .getByLabel("JOIN WITH A CODE")
+    .getByLabel("ENTRAR COM UM CÓDIGO")
     .fill(code.toLowerCase().replace("-", " "));
-  await b.getByRole("button", { name: "Join" }).click();
+  await b.getByRole("button", { name: "Entrar" }).click();
   await expect(b.getByTestId("duo-state")).toHaveText(
-    "You and Alice see each other's day.",
+    "Você e Alice veem o dia um do outro.",
   );
   await expect(b.getByTestId("duo-partner-name")).toHaveText("Alice");
 
@@ -130,21 +130,21 @@ test("A creates a duo, B joins, both see each other, C is refused; state survive
 
   // C: the duo is full.
   await c.goto("/duo");
-  await c.getByLabel("JOIN WITH A CODE").fill(code);
-  await c.getByRole("button", { name: "Join" }).click();
+  await c.getByLabel("ENTRAR COM UM CÓDIGO").fill(code);
+  await c.getByRole("button", { name: "Entrar" }).click();
   await expect(c.locator(`p[role="alert"]`)).toHaveText(
-    "That duo is already full. Duos are two people.",
+    "Essa dupla já está completa. Uma dupla tem duas pessoas.",
   );
   await c.reload();
   await expect(c.getByTestId("duo-state")).toHaveText(
-    "Two people. One standard. Invite your partner.",
+    "Duas pessoas. Um padrão. Convide sua dupla.",
   );
 
   // Invalid code is caught with friendly copy.
-  await c.getByLabel("JOIN WITH A CODE").fill("LKD-ZZZZZZ");
-  await c.getByRole("button", { name: "Join" }).click();
+  await c.getByLabel("ENTRAR COM UM CÓDIGO").fill("LKD-ZZZZZZ");
+  await c.getByRole("button", { name: "Entrar" }).click();
   await expect(c.locator(`p[role="alert"]`)).toHaveText(
-    "That code doesn't match any duo. Check it and try again.",
+    "Esse código não corresponde a nenhuma dupla. Confira e tente de novo.",
   );
 
   // Refresh keeps everyone signed in and the duo intact.
@@ -153,7 +153,7 @@ test("A creates a duo, B joins, both see each other, C is refused; state survive
 
   // A: sign out -> private routes are closed -> sign in again -> duo is still there.
   await a.goto("/settings");
-  await a.getByRole("button", { name: "Sign out" }).click();
+  await a.getByRole("button", { name: "Sair" }).click();
   await expect(a).toHaveURL(/\/login$/);
   await a.goto("/today");
   await expect(a).toHaveURL(/\/login\?next=%2Ftoday$/);

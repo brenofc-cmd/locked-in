@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useState, type KeyboardEvent, type PointerEvent } from "react";
 import { useApp } from "@/components/app-state";
 import { cx } from "@/components/ui";
@@ -54,10 +55,10 @@ export function RoutineScreen() {
     <div className="flex flex-col gap-[26px] animate-[li-fade-up_.4s_ease]">
       <header className="flex flex-col gap-2.5">
         <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          ROUTINE
+          {t.routineScreen.title}
         </h1>
         <span className="text-[14.5px] text-muted">
-          Repeats automatically. Tap to edit, hold the handle to reorder.
+          {t.routineScreen.subtitle}
         </span>
       </header>
       <div className="flex flex-wrap gap-2">
@@ -66,34 +67,32 @@ export function RoutineScreen() {
           onClick={() => app.openSheet({ kind: "add", repeat: true })}
           className="h-11 rounded-xl bg-text px-4 text-sm font-semibold text-bg active:scale-[.97]"
         >
-          + Add item
+          {t.routineScreen.addItem}
         </button>
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "template" })}
           className="h-11 rounded-xl border border-white/12 px-4 text-sm"
         >
-          Use template
+          {t.routineScreen.useTemplate}
         </button>
       </div>
       {items.length === 0 && (
-        <span className="text-[13.5px] text-dim">
-          No routine yet. Add your first item or start from a template.
-        </span>
+        <span className="text-[13.5px] text-dim">{t.routineScreen.empty}</span>
       )}
       <ul className="flex flex-col border-t border-white/9">
-        {items.map((t, i) => {
-          const dragging = drag === t.id;
-          const sched = [t.time, scheduleLabel(t.days), SECTION_OF[t.category]]
+        {items.map((r, i) => {
+          const dragging = drag === r.id;
+          const sched = [r.time, scheduleLabel(r.days), SECTION_OF[r.category]]
             .filter(Boolean)
             .join(" · ");
           return (
             <li
-              key={t.id}
-              data-rid={t.id}
+              key={r.id}
+              data-rid={r.id}
               className={cx(
                 "relative flex min-h-[62px] items-center gap-2 border-b border-t-2 border-b-white/5 transition-[background,box-shadow,transform] duration-200",
-                drag && over === t.id && !dragging
+                drag && over === r.id && !dragging
                   ? "border-t-accent"
                   : "border-t-transparent",
                 dragging
@@ -104,8 +103,8 @@ export function RoutineScreen() {
               <span
                 role="button"
                 tabIndex={0}
-                aria-label={`Reorder ${t.name}. Use arrow keys to move.`}
-                onPointerDown={(e) => onHandleDown(t.id, e)}
+                aria-label={t.routineScreen.reorderAria(r.name)}
+                onPointerDown={(e) => onHandleDown(r.id, e)}
                 onPointerMove={onHandleMove}
                 onPointerUp={onHandleUp}
                 onPointerCancel={onHandleUp}
@@ -126,12 +125,12 @@ export function RoutineScreen() {
               <button
                 type="button"
                 onClick={() =>
-                  app.openSheet({ kind: "editRoutine", routineId: t.id })
+                  app.openSheet({ kind: "editRoutine", routineId: r.id })
                 }
                 className="flex min-h-[58px] min-w-0 flex-1 items-center justify-between gap-2.5 pr-1 text-left"
               >
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-[15.5px]">{t.name}</span>
+                  <span className="text-[15.5px]">{r.name}</span>
                   <span className="truncate font-mono text-[10.5px] tracking-[.08em] text-dim">
                     {sched}
                   </span>

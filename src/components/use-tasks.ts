@@ -7,6 +7,7 @@
  * rolled back with a message. No realtime (Stage 5): other devices see
  * changes on their next load.
  */
+import { t } from "@/i18n/pt-BR";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   addTask as addTaskAction,
@@ -137,8 +138,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       }
       patch(id, before);
       fx.toast({
-        text:
-          res?.error ?? "Network error. Check your connection and try again.",
+        text: res?.error ?? t.errors.network,
         sub: before.name.toUpperCase(),
       });
       return false;
@@ -216,15 +216,14 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       if (!res?.ok) {
         if (tempId) setTasks((ts) => ts.filter((t) => t.id !== tempId));
         fx.toast({
-          text:
-            res?.error ?? "Network error. Check your connection and try again.",
-          sub: "NOT SAVED",
+          text: res?.error ?? t.errors.network,
+          sub: t.taskToasts.notSaved,
         });
         return false;
       }
       merge(res.routines, res.tasks, tempId ? [tempId] : []);
       fx.toast({
-        text: input.once ? "Added to today." : "Added to your standard.",
+        text: input.once ? t.taskToasts.addedToday : t.taskToasts.addedStandard,
         sub: input.name.trim().toUpperCase(),
       });
       return true;
@@ -241,7 +240,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       const have = new Set(routines.map((r) => r.name.toLowerCase()));
       const fresh = items.filter((i) => !have.has(i.name.toLowerCase()));
       if (fresh.length === 0) {
-        fx.toast({ text: "Nothing new to add.", sub: "ROUTINE" });
+        fx.toast({ text: t.taskToasts.nothingNew, sub: t.taskToasts.routine });
         return true;
       }
       applying.current = true;
@@ -249,18 +248,16 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       applying.current = false;
       if (!res?.ok) {
         fx.toast({
-          text: res?.error ?? "Network error. Try again.",
-          sub: "ROUTINE",
+          text: res?.error ?? t.taskToasts.networkTryAgain,
+          sub: t.taskToasts.routine,
         });
         return false;
       }
       merge(res.routines, res.tasks);
       const n = res.routines.length;
       fx.toast({
-        text: n
-          ? `${n} ${n === 1 ? "item" : "items"} added.`
-          : "Nothing new to add.",
-        sub: "ROUTINE",
+        text: n ? t.taskToasts.itemsAdded(n) : t.taskToasts.nothingNew,
+        sub: t.taskToasts.routine,
       });
       return true;
     },
@@ -288,13 +285,16 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       if (!isLatest(id, v)) return true;
       if (res?.ok) {
         patch(id, taskFromRow(res.task, routineMapRef.current, timeZone));
-        fx.toast({ text: "Task updated.", sub: "TODAY ONLY" });
+        fx.toast({
+          text: t.taskToasts.taskUpdated,
+          sub: t.taskToasts.todayOnly,
+        });
         return true;
       }
       patch(id, before);
       fx.toast({
-        text: res?.error ?? "Network error. Try again.",
-        sub: "NOT SAVED",
+        text: res?.error ?? t.taskToasts.networkTryAgain,
+        sub: t.taskToasts.notSaved,
       });
       return false;
     },
@@ -310,8 +310,8 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       }).catch(() => null);
       if (!res?.ok) {
         fx.toast({
-          text: res?.error ?? "Network error. Try again.",
-          sub: "NOT SAVED",
+          text: res?.error ?? t.taskToasts.networkTryAgain,
+          sub: t.taskToasts.notSaved,
         });
         return false;
       }
@@ -320,7 +320,10 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         .filter((t) => t.routineId === routineId)
         .map((t) => t.id);
       merge(res.routines, res.tasks, stale);
-      fx.toast({ text: "Routine updated.", sub: "TODAY AND FUTURE DAYS" });
+      fx.toast({
+        text: t.taskToasts.routineUpdated,
+        sub: t.taskToasts.todayAndFuture,
+      });
       return true;
     },
     [fx, merge],
@@ -344,13 +347,13 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         setRoutines(beforeRoutines);
         setTasks(beforeTasks);
         fx.toast({
-          text: res?.error ?? "Network error. Try again.",
-          sub: "NOT REMOVED",
+          text: res?.error ?? t.taskToasts.networkTryAgain,
+          sub: t.taskToasts.notRemoved,
         });
         return false;
       }
       fx.toast({
-        text: "Removed from your routine. History kept.",
+        text: t.taskToasts.removedFromRoutine,
         sub: name.toUpperCase(),
       });
       return true;
@@ -369,12 +372,15 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       if (!res?.ok) {
         setTasks((ts) => [...ts, task]);
         fx.toast({
-          text: res?.error ?? "Network error. Try again.",
-          sub: "NOT DELETED",
+          text: res?.error ?? t.taskToasts.networkTryAgain,
+          sub: t.taskToasts.notDeleted,
         });
         return false;
       }
-      fx.toast({ text: "Task deleted.", sub: task.name.toUpperCase() });
+      fx.toast({
+        text: t.taskToasts.taskDeleted,
+        sub: task.name.toUpperCase(),
+      });
       return true;
     },
     [archive, fx],
@@ -408,8 +414,8 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
           if (res?.ok) return;
           setRoutines(before);
           fx.toast({
-            text: res?.error ?? "Network error. Order not saved.",
-            sub: "ROUTINE",
+            text: res?.error ?? t.taskToasts.networkOrderNotSaved,
+            sub: t.taskToasts.routine,
           });
         });
     },

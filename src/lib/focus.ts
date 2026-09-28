@@ -5,6 +5,7 @@
  * ever decremented: every tick recomputes from the timestamps, so background
  * tabs, sleeps and reloads cannot drift.
  */
+import { t } from "@/i18n/pt-BR";
 import { localDateISO, localTimeHM } from "@/lib/local-date";
 import type { Tables } from "@/types/database";
 
@@ -20,7 +21,7 @@ export type FocusTimes = {
 };
 
 /** Default activities offered next to today's tasks (product constants). */
-export const FOCUS_PRESETS = ["Project", "Physics", "Reading", "Study"];
+export const FOCUS_PRESETS: readonly string[] = t.focusPresets;
 
 /**
  * Seconds of focus so far: (paused_at or now) - started_at - pauses.
@@ -109,12 +110,7 @@ export function clockOffset(
   return Date.parse(serverIso) - (sentAtMs + receivedAtMs) / 2;
 }
 
-const MESSAGES: Record<string, string> = {
-  LI_FOCUS_RUNNING: "You already have a Focus session running.",
-  LI_FOCUS_FINISHED: "That Focus session has already finished.",
-  LI_NOT_FOUND: "That Focus session no longer exists.",
-  LI_NOT_AUTHENTICATED: "Your session expired. Sign in again.",
-};
+const MESSAGES: Record<string, string> = t.focusErrors;
 
 /** Postgres / network errors -> safe copy, with an action-specific fallback. */
 export function focusErrorMessage(
@@ -123,7 +119,6 @@ export function focusErrorMessage(
 ): string {
   const code = Object.keys(MESSAGES).find((k) => message?.includes(k));
   if (code) return MESSAGES[code];
-  if (message && /fetch|network/i.test(message))
-    return "Network error. Check your connection and try again.";
+  if (message && /fetch|network/i.test(message)) return t.errors.network;
   return fallback;
 }

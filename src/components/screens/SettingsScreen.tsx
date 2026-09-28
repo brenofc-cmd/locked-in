@@ -1,5 +1,6 @@
 "use client";
 
+import { LOCALE, t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import {
   useEffect,
@@ -18,7 +19,7 @@ import { STANDARD_OPTIONS } from "@/lib/constants";
 import type { SettingKey, UserSettings } from "@/lib/settings";
 
 const since = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", {
+  new Date(iso).toLocaleDateString(LOCALE, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -33,23 +34,23 @@ type BoolKey = {
 const NOTIFY: { k: BoolKey; label: string; d: string }[] = [
   {
     k: "notifyPartnerActivity",
-    label: "Partner activity",
-    d: "When your partner completes a task or a focus session.",
+    label: t.settings.notifyPartner,
+    d: t.settings.notifyPartnerD,
   },
   {
     k: "notifyReactions",
-    label: "Reactions",
-    d: "When your partner reacts to your work.",
+    label: t.settings.notifyReactions,
+    d: t.settings.notifyReactionsD,
   },
   {
     k: "notifyTaskReminders",
-    label: "Task reminders",
-    d: "At a task's time, for tasks with a reminder.",
+    label: t.settings.notifyReminders,
+    d: t.settings.notifyRemindersD,
   },
   {
     k: "notifyWeeklyReview",
-    label: "Weekly review",
-    d: "Last week's result when a new week starts.",
+    label: t.settings.notifyWeekly,
+    d: t.settings.notifyWeeklyD,
   },
 ];
 
@@ -67,8 +68,8 @@ export function SettingsScreen() {
     if (!res?.ok) {
       setLocal((l) => ({ ...l, [key]: before }));
       app.toast({
-        text: res && !res.ok ? res.error : "Network error. Try again.",
-        sub: "SETTINGS",
+        text: res && !res.ok ? res.error : t.errors.network,
+        sub: t.settings.toastSub,
       });
     }
   }
@@ -76,19 +77,17 @@ export function SettingsScreen() {
   return (
     <div className="flex max-w-[620px] flex-col gap-9 animate-[li-fade-up_.4s_ease]">
       <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-        SETTINGS
+        {t.settings.title}
       </h1>
 
       <Profile />
 
       <section aria-labelledby="standard-h" className="flex flex-col gap-3">
         <h2 id="standard-h" className={heading}>
-          DAILY STANDARD
+          {t.settings.dailyStandard}
         </h2>
         <span className="text-[13.5px] leading-[1.5] text-dim">
-          Days at or above your Standard build your streak. Changing it
-          recalculates your streak over your whole history; the weekly
-          competition always uses raw completion.
+          {t.settings.standardHelp}
         </span>
         <div
           role="radiogroup"
@@ -123,17 +122,17 @@ export function SettingsScreen() {
           id="daily-h"
           className={cx(heading, "border-b border-white/9 pb-2")}
         >
-          DAILY
+          {t.settings.daily}
         </h2>
         <Toggle
-          label="Show morning briefing"
-          d="Once a day, the first time you open the app. Always skippable."
+          label={t.settings.briefing}
+          d={t.settings.briefingD}
           on={s.showMorningBriefing}
           onChange={(v) => void save("showMorningBriefing", v)}
         />
         <Toggle
-          label={`Share new tasks with ${duo?.partner?.displayName ?? "your partner"}`}
-          d="Default for new routine items and one-off tasks. Each task can still be hidden."
+          label={t.settings.shareNew(duo?.partner?.displayName)}
+          d={t.settings.shareNewD}
           on={s.shareNewTasks}
           onChange={(v) => void save("shareNewTasks", v)}
         />
@@ -144,7 +143,7 @@ export function SettingsScreen() {
           id="notif-h"
           className={cx(heading, "border-b border-white/9 pb-2")}
         >
-          NOTIFICATIONS
+          {t.settings.notifications}
         </h2>
         {NOTIFY.map((n) => (
           <Toggle
@@ -156,18 +155,18 @@ export function SettingsScreen() {
           />
         ))}
         <Toggle
-          label="Quiet hours"
-          d="No browser notifications in this window. The app still updates."
+          label={t.settings.quietHours}
+          d={t.settings.quietHoursD}
           on={s.quietHoursEnabled}
           onChange={(v) => void save("quietHoursEnabled", v)}
         />
         {s.quietHoursEnabled && (
           <div className="flex items-center gap-3 border-b border-white/5 py-3 text-sm">
             <label className="flex items-center gap-2">
-              <span className="text-dim">From</span>
+              <span className="text-dim">{t.settings.from}</span>
               <input
                 type="time"
-                aria-label="Quiet hours start"
+                aria-label={t.settings.quietStart}
                 value={s.quietHoursStart}
                 onChange={(e) =>
                   e.target.value && void save("quietHoursStart", e.target.value)
@@ -176,10 +175,10 @@ export function SettingsScreen() {
               />
             </label>
             <label className="flex items-center gap-2">
-              <span className="text-dim">to</span>
+              <span className="text-dim">{t.settings.to}</span>
               <input
                 type="time"
-                aria-label="Quiet hours end"
+                aria-label={t.settings.quietEnd}
                 value={s.quietHoursEnd}
                 onChange={(e) =>
                   e.target.value && void save("quietHoursEnd", e.target.value)
@@ -191,25 +190,22 @@ export function SettingsScreen() {
         )}
         <BrowserNotifications />
         <span className="pt-3 text-[12.5px] leading-[1.5] text-dim">
-          Notifications work while LOCKED IN is open (in a tab or installed).
-          Nothing is sent when the app is closed.
+          {t.settings.notifyNote}
         </span>
       </section>
 
       <section aria-labelledby="privacy-h" className="flex flex-col gap-1.5">
         <h2 id="privacy-h" className={heading}>
-          PRIVACY
+          {t.settings.privacy}
         </h2>
         <span className="text-[13.5px] leading-[1.5] text-dim">
-          Hide a single task from its options. Hidden tasks still count in your
-          numbers; your partner never sees their names. Your partner only sees
-          Online, Focusing or Offline.
+          {t.settings.privacyText}
         </span>
       </section>
 
       <section aria-labelledby="duo-h" className="flex flex-col">
         <h2 id="duo-h" className={cx(heading, "border-b border-white/9 pb-2")}>
-          DUO
+          {t.settings.duo}
         </h2>
         <Link
           href="/duo"
@@ -217,10 +213,10 @@ export function SettingsScreen() {
         >
           <span>
             {duo?.partner
-              ? `Duo with ${duo.partner.displayName}`
+              ? t.settings.duoWith(duo.partner.displayName)
               : duo
-                ? "Waiting for your partner"
-                : "No partner yet"}
+                ? t.settings.waitingPartner
+                : t.settings.noPartner}
           </span>
           <span aria-hidden="true" className="text-faint">
             ›
@@ -236,11 +232,11 @@ export function SettingsScreen() {
             type="submit"
             className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
           >
-            Sign out
+            {t.settings.signOut}
           </button>
         </form>
         <span className="text-[12.5px] text-dim">
-          {me.email} · since {since(me.createdAt)}
+          {t.settings.since(me.email, since(me.createdAt))}
         </span>
       </div>
     </div>
@@ -295,7 +291,7 @@ function Profile() {
   return (
     <section aria-labelledby="profile-h" className="flex flex-col gap-4">
       <h2 id="profile-h" className={heading}>
-        PROFILE
+        {t.settings.profile}
       </h2>
       <form
         className="flex flex-col gap-2"
@@ -308,7 +304,7 @@ function Profile() {
         }}
       >
         <label htmlFor="display-name" className="text-[13px] text-dim">
-          Display name · your partner sees this
+          {t.settings.displayName}
         </label>
         <div className="flex gap-2">
           <input
@@ -324,13 +320,13 @@ function Profile() {
             disabled={!dirtyName || pending}
             className="h-12 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-50"
           >
-            {pending ? "Saving…" : "Save"}
+            {pending ? t.settings.saving : t.settings.save}
           </button>
         </div>
       </form>
       <div className="flex flex-col gap-2">
         <label htmlFor="timezone" className="text-[13px] text-dim">
-          Timezone · defines when your day starts
+          {t.settings.timezone}
         </label>
         <select
           id="timezone"
@@ -345,8 +341,8 @@ function Profile() {
               if (!res?.ok) {
                 setTz(before);
                 app.toast({
-                  text: res && !res.ok ? res.error : "Network error.",
-                  sub: "TIMEZONE",
+                  text: res && !res.ok ? res.error : t.errors.network,
+                  sub: t.settings.timezoneSub,
                 });
               } else {
                 // "Today" may now be another date: start it from the database.
@@ -363,7 +359,7 @@ function Profile() {
           ))}
         </select>
         <span className="text-[12.5px] leading-[1.5] text-dim">
-          Past days keep the dates they were recorded on.
+          {t.settings.timezoneNote}
         </span>
       </div>
     </section>
@@ -387,16 +383,16 @@ function BrowserNotifications() {
   return (
     <div className="flex min-h-[62px] items-center justify-between gap-4 border-b border-white/5 py-2">
       <span className="flex flex-col gap-1">
-        <span className="text-[14.5px]">Browser notifications</span>
+        <span className="text-[14.5px]">{t.settings.browserNotifications}</span>
         <span
           className="text-[12.5px] text-dim"
           data-testid="browser-permission"
         >
           {perm === "granted"
-            ? "On for this browser while the app is open in the background."
+            ? t.settings.permGranted
             : perm === "denied"
-              ? "Blocked in this browser's site settings."
-              : "Off. In-app notices still show."}
+              ? t.settings.permDenied
+              : t.settings.permDefault}
         </span>
       </span>
       {perm === "default" && (
@@ -408,7 +404,7 @@ function BrowserNotifications() {
           }}
           className="h-11 shrink-0 rounded-xl border border-white/12 px-4 text-sm"
         >
-          Allow
+          {t.settings.allow}
         </button>
       )}
     </div>
@@ -439,10 +435,8 @@ function InstallApp() {
       className="flex min-h-[56px] items-center justify-between gap-3 border-y border-white/7 text-left text-[14.5px]"
     >
       <span className="flex flex-col gap-1">
-        <span>Install LOCKED IN</span>
-        <span className="text-[12.5px] text-dim">
-          Opens like an app, from your home screen.
-        </span>
+        <span>{t.settings.install}</span>
+        <span className="text-[12.5px] text-dim">{t.settings.installD}</span>
       </span>
       <span aria-hidden="true" className="text-faint">
         ›

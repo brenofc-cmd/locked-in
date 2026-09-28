@@ -7,6 +7,7 @@ import {
   type Page,
   type APIRequestContext,
 } from "@playwright/test";
+import { t } from "@/i18n/pt-BR";
 import { addDays } from "@/lib/local-date";
 import type { Database } from "@/types/database";
 import {
@@ -118,8 +119,9 @@ async function open(browser: Browser, user: TestUser, path = "/today") {
 }
 
 const tab = (page: Page, name: RegExp) =>
-  page.getByRole("navigation", { name: "Tabs" }).getByRole("link", { name });
-const activity = (page: Page) => page.getByRole("region", { name: "Activity" });
+  page.getByRole("navigation", { name: "Abas" }).getByRole("link", { name });
+const activity = (page: Page) =>
+  page.getByRole("region", { name: "Atividade" });
 const duoJoins = (t: Traffic) =>
   t.filter(
     (x) =>
@@ -397,21 +399,19 @@ test("closed history cannot be rewritten through the API, the UI or a timezone c
   const b = await open(browser, users.b, "/progress");
   const y = addDays(T, -5);
   if (y.slice(0, 7) !== T.slice(0, 7))
-    await b.page.getByRole("button", { name: "Previous month" }).click();
-  const mon = new Date(`${y}T12:00:00Z`).toLocaleString("en-US", {
-    month: "short",
-    timeZone: "UTC",
-  });
+    await b.page.getByRole("button", { name: "Mês anterior" }).click();
+  const long = t.dates.monthsLong[Number(y.slice(5, 7)) - 1];
+  const mon = long.charAt(0) + long.slice(1, 3).toLowerCase();
   await b.page
     .getByRole("button", {
       name: new RegExp(`^${mon} ${Number(y.slice(8))}: `),
     })
     .click();
-  const day = b.page.getByRole("dialog", { name: "Day detail" });
+  const day = b.page.getByRole("dialog", { name: "Detalhes do dia" });
   await expect(day.getByText("B five days ago")).toBeVisible();
   await expect(day.getByRole("checkbox")).toHaveCount(0);
   await expect(
-    day.getByRole("button", { name: /Options|Edit|Skip|Delete/ }),
+    day.getByRole("button", { name: /Opções|Editar|Pular|Excluir/ }),
   ).toHaveCount(0);
   expect(b.errors).toEqual([]);
   await b.context.close();
@@ -579,7 +579,7 @@ test("after END DUO the old channel goes quiet: nothing of the new duo reaches t
 
   await A.rpc("leave_duo");
   await expect(
-    b.page.getByRole("heading", { name: "NO PARTNER YET" }),
+    b.page.getByRole("heading", { name: "SEM DUPLA POR ENQUANTO" }),
   ).toBeVisible({ timeout: LIVE });
   // B's app left the old topic right away.
   await expect
@@ -650,7 +650,7 @@ test("one channel per duo, no polling, clean reconnect", async ({
     .toBe(1);
 
   for (let i = 0; i < 3; i++) {
-    for (const name of [/PARTNER/, /FOCUS/, /PROGRESS/, /MORE/, /TODAY/]) {
+    for (const name of [/PARCEIRO/, /FOCO/, /PROGRESSO/, /MAIS/, /HOJE/]) {
       await tab(a.page, name).click();
       await a.page.waitForTimeout(250);
     }
@@ -658,7 +658,7 @@ test("one channel per duo, no polling, clean reconnect", async ({
   expect(duoJoins(a.traffic)).toHaveLength(1);
 
   // Idle on Progress: no HTTP request, no client message except heartbeats.
-  await tab(a.page, /PROGRESS/).click();
+  await tab(a.page, /PROGRESSO/).click();
   await a.page.waitForTimeout(1500);
   const from = Date.now();
   await a.page.waitForTimeout(8000);
@@ -669,7 +669,7 @@ test("one channel per duo, no polling, clean reconnect", async ({
   ).toEqual([]);
 
   // Offline -> online: one rejoin, no duplicated feed lines.
-  await tab(a.page, /PARTNER/).click();
+  await tab(a.page, /PARCEIRO/).click();
   const lines = await activity(a.page).getByRole("listitem").count();
   await a.context.setOffline(true);
   await expect(
@@ -677,7 +677,7 @@ test("one channel per duo, no polling, clean reconnect", async ({
   ).toBeVisible({ timeout: LIVE });
   await a.context.setOffline(false);
   await expect(
-    a.page.getByRole("status").filter({ hasText: /Offline|Reconnecting/ }),
+    a.page.getByRole("status").filter({ hasText: /Offline|Reconectando/ }),
   ).toHaveCount(0, { timeout: 30_000 });
   await a.page.waitForTimeout(2000);
   expect(await activity(a.page).getByRole("listitem").count()).toBe(lines);
@@ -746,9 +746,9 @@ test("HTTP hardening: headers, private routes and redirects", async ({
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(`/login?next=${encodeURIComponent(next)}`);
-    await page.getByPlaceholder("Email").fill(users.c.email());
-    await page.getByPlaceholder("Password").fill(process.env.E2E_PASSWORD!);
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.getByPlaceholder("E-mail").fill(users.c.email());
+    await page.getByPlaceholder("Senha").fill(process.env.E2E_PASSWORD!);
+    await page.getByRole("button", { name: "Entrar" }).click();
     await expect(page).toHaveURL(/\/today$/);
     expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
     await context.close();
@@ -766,10 +766,10 @@ test("user content is always text: no script runs, no SQL runs, layout holds", a
   const a = await open(browser, users.a, "/today");
   const writes = trackWrites(a.page);
   for (const title of hostile) {
-    await a.page.getByRole("button", { name: "Add task" }).click();
-    const add = a.page.getByRole("dialog", { name: "Add task" });
-    await add.getByRole("textbox", { name: "Task name" }).fill(title);
-    await add.getByRole("button", { name: "ADD", exact: true }).click();
+    await a.page.getByRole("button", { name: "Adicionar tarefa" }).click();
+    const add = a.page.getByRole("dialog", { name: "Adicionar tarefa" });
+    await add.getByRole("textbox", { name: "Nome da tarefa" }).fill(title);
+    await add.getByRole("button", { name: "ADICIONAR", exact: true }).click();
     await expect(
       a.page.getByRole("checkbox", { name: title, exact: true }),
     ).toBeVisible();
@@ -902,10 +902,10 @@ test("keyboard: sheets and the end-duo confirmation open, trap nothing and close
 }) => {
   await A.from("daily_tasks").insert({ title: "Keyboard task" });
   const a = await open(browser, users.a, "/today");
-  const add = a.page.getByRole("button", { name: "Add task" });
+  const add = a.page.getByRole("button", { name: "Adicionar tarefa" });
   await add.focus();
   await a.page.keyboard.press("Enter");
-  const sheet = a.page.getByRole("dialog", { name: "Add task" });
+  const sheet = a.page.getByRole("dialog", { name: "Adicionar tarefa" });
   await expect(sheet).toBeVisible();
   // Focus moved into the sheet, and Tab keeps moving (no trap on one element).
   await expect
@@ -921,13 +921,19 @@ test("keyboard: sheets and the end-duo confirmation open, trap nothing and close
   await expect(add).toBeFocused();
 
   await a.page.goto("/duo");
-  await a.page.getByRole("button", { name: "Leave duo" }).click();
-  const confirm = a.page.getByRole("alertdialog", { name: "End this duo?" });
+  await a.page.getByRole("button", { name: "Sair da dupla" }).click();
+  const confirm = a.page.getByRole("alertdialog", {
+    name: "Encerrar esta dupla?",
+  });
   await expect(confirm).toBeVisible();
-  await expect(confirm.getByRole("button", { name: "Keep duo" })).toBeFocused();
+  await expect(
+    confirm.getByRole("button", { name: "Manter dupla" }),
+  ).toBeFocused();
   await a.page.keyboard.press("Escape");
   await expect(confirm).toBeHidden();
-  await expect(a.page.getByRole("button", { name: "Leave duo" })).toBeFocused();
+  await expect(
+    a.page.getByRole("button", { name: "Sair da dupla" }),
+  ).toBeFocused();
   await expect(a.page.getByTestId("duo-partner-name")).toHaveText("Bruno");
   expect(a.errors).toEqual([]);
   await a.context.close();

@@ -1,3 +1,4 @@
+import { t } from "@/i18n/pt-BR";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clockOffset, type FocusRow } from "@/lib/focus";
 import type { Database } from "@/types/database";
@@ -25,13 +26,13 @@ export async function loadFocusData(
     supabase.rpc("my_active_focus"),
     supabase.rpc("server_now").then((r) => ({ ...r, receivedAt: Date.now() })),
   ]);
-  if (active.error) throw new Error("Could not load Focus.");
+  if (active.error) throw new Error(t.loadErrors.focus);
   const recent = await supabase
     .from("focus_sessions")
     .select("*")
     .gte("started_at", new Date(Date.now() - 36 * 3600_000).toISOString())
     .order("started_at");
-  if (recent.error) throw new Error("Could not load Focus.");
+  if (recent.error) throw new Error(t.loadErrors.focus);
   return {
     active: active.data?.[0] ?? null,
     recent: recent.data,

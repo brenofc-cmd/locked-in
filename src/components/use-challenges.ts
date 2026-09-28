@@ -7,6 +7,7 @@
  * after every partner refetch (their tasks / focus changed) and when my own
  * completions or focus change. No polling, no progress broadcast.
  */
+import { t } from "@/i18n/pt-BR";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { deleteChallenge, loadChallenges } from "@/app/(app)/social-actions";
 import { useApp } from "@/components/app-state";
@@ -42,8 +43,8 @@ export function useChallenges() {
       const res = await deleteChallenge(id).catch(() => null);
       if (!res?.ok) {
         toast({
-          text: res && !res.ok ? res.error : "Network error. Try again.",
-          sub: "CHALLENGE",
+          text: res && !res.ok ? res.error : t.hookToasts.networkTryAgain,
+          sub: t.hookToasts.challenge,
         });
         return;
       }

@@ -1,14 +1,15 @@
 "use client";
 
+import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
 import { chipTone, cx } from "@/components/ui";
 import type { FocusDuration } from "@/types";
 
 const DURATIONS: { value: FocusDuration; n: string; u: string }[] = [
-  { value: 25, n: "25", u: "MIN" },
-  { value: 50, n: "50", u: "MIN" },
-  { value: 90, n: "90", u: "MIN" },
-  { value: "custom", n: "—", u: "CUSTOM" },
+  { value: 25, n: "25", u: t.focusUi.min },
+  { value: 50, n: "50", u: t.focusUi.min },
+  { value: 90, n: "90", u: t.focusUi.min },
+  { value: "custom", n: "—", u: t.focusUi.custom },
 ];
 
 /**
@@ -23,7 +24,7 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
     <>
       <div
         role="radiogroup"
-        aria-label="What are you working on?"
+        aria-label={t.focusUi.questionAria}
         className="flex flex-col"
       >
         {focusOptions.map(({ title: label, taskId }) => {
@@ -60,7 +61,7 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
       </div>
       <div
         role="radiogroup"
-        aria-label="Duration"
+        aria-label={t.focusUi.durationAria}
         className="grid grid-cols-4 gap-2"
       >
         {DURATIONS.map((d) => {
@@ -72,7 +73,9 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               role="radio"
               aria-checked={on}
               aria-label={
-                d.value === "custom" ? "Custom duration" : `${d.n} minutes`
+                d.value === "custom"
+                  ? t.focusUi.customDurationAria
+                  : t.focusUi.minutesAria(d.n)
               }
               onClick={() => setFocusDur(d.value)}
               className={cx(
@@ -106,11 +109,11 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
             value={focus.custom}
             onChange={(e) => setFocusCustom(e.target.value)}
             placeholder="45"
-            aria-label="Custom minutes"
+            aria-label={t.focusUi.customMinutesAria}
             className="h-12 w-[110px] rounded-xl border border-white/12 bg-bg px-3.5 text-lg outline-none"
           />
           <span className="font-mono text-[11px] tracking-[.14em] text-dim">
-            MINUTES
+            {t.focusUi.minutes}
           </span>
         </div>
       )}

@@ -73,7 +73,7 @@ describe("partner view", () => {
       feed,
       at,
     );
-    expect(focusing.label).toBe("FOCUSING");
+    expect(focusing.label).toBe("EM FOCO");
     expect(focusing.line).toBe("Mathematics · 34:21");
 
     // Paused 2 minutes later: the clock stays where the pause happened.
@@ -92,7 +92,7 @@ describe("partner view", () => {
       feed,
       at + 120_000,
     );
-    expect(paused.line).toBe("Mathematics · paused 34:21");
+    expect(paused.line).toBe("Mathematics · pausado 34:21");
 
     // Private session: no title, only that they are focusing.
     const privateFocus = partnerView(
@@ -101,8 +101,8 @@ describe("partner view", () => {
       feed,
       at,
     );
-    expect(privateFocus.line).toBe("Focus · 34:21");
-    expect(privateFocus.statusLine).toBe("Focusing · 34:21 left");
+    expect(privateFocus.line).toBe("Foco · 34:21");
+    expect(privateFocus.statusLine).toBe("Em foco · faltam 34:21");
   });
 
   it("offline has no last seen", () => {

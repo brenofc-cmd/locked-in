@@ -140,16 +140,16 @@ describe("focus today", () => {
 describe("errors", () => {
   it("maps database errors to friendly copy", () => {
     expect(focusErrorMessage("LI_FOCUS_RUNNING", "x")).toBe(
-      "You already have a Focus session running.",
+      "Você já tem uma sessão de Foco em andamento.",
     );
     expect(
       focusErrorMessage(
         'new row violates check constraint "focus_sessions_planned"',
-        "Could not start Focus.",
+        "Não foi possível iniciar o Foco.",
       ),
-    ).toBe("Could not start Focus.");
+    ).toBe("Não foi possível iniciar o Foco.");
     expect(focusErrorMessage("TypeError: fetch failed", "x")).toMatch(
-      /Network/,
+      /conexão/,
     );
   });
 });
