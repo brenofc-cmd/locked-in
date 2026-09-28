@@ -302,3 +302,27 @@ Status: Accepted.
 Decision: `tests/e2e/stage8.spec.ts` (project `stage8`, after `stage7`, serial, Alice / Bruno / Carla) covers onboarding, reactions, challenges, settings, notification preferences (stubbed Notification API, forced background visibility), briefing, reviews / history, duo end with a new partner, and the manifest. `support.testSettings()` (called by `resetTasks` / `resetDuo`) keeps the older suites on onboarded users with the briefing and weekly notice off. Waits for the channel join use the browser's first `partner_today` read.
 Reason: Deterministic suites that still exercise the first-open behaviour where it is tested.
 Status: Accepted.
+
+# ADR-050 — Closed history is immutable, enforced by the database
+
+Decision: A local day that has ended is final. Triggers refuse, for the API roles (`anon`, `authenticated`, also through INVOKER RPCs), any insert / update / delete of a `daily_tasks` row dated on a closed day, completing / skipping a future day in advance, and routine-template changes that would manufacture or suppress past occurrences (past `start_date`, client writes of `materialized_through`, edits before catch-up, reopening an old archive). Catch-up stays possible because `private.materialize_tasks` is SECURITY DEFINER (runs as the owner, which the guards trust) and only creates occurrences from protected templates, for the caller or the caller's partner. The boundary is `greatest(profiles.history_locked_through, local date − 1)`; `history_locked_through` has no client grant and a timezone change stores the boundary reached under the old timezone, so it only moves forward and "today" never moves back (moving west keeps the later date until the new local date catches up). Errors: `LI_HISTORY_LOCKED`, `LI_FUTURE_TASK`, `LI_ROUTINE_STALE`.
+Reason: Hiding buttons is not integrity. The weekly winner, head-to-head, streak, perfect days and challenge results must be a record nobody can rewrite, while missed days still materialise.
+Status: Accepted. Replaces the Stage 4 rule that owners could edit any of their rows.
+
+# ADR-051 — Focus days and challenge results are frozen
+
+Decision: `focus_sessions.local_date` is set by the lifecycle trigger at start (owner's today) and never changes; progress and challenges group focus by it (a timezone change no longer moves sessions between days). A paused session of a closed day cannot be resumed; `reconcile_my_focus()` completes it with the time before the pause. Challenges store `creator_standard` / `partner_standard` at creation (no client grant) and judge `standard_days` with them; focus challenges count every session's effective seconds (`private.focus_seconds`), so finalising a session never changes a result. Identical challenges (duo, title case-insensitive, type, period) are refused by a unique index.
+Reason: A closed challenge must not flip because of a later Settings change, a late reconciliation or a double submit. The streak keeps recalculating with the current standard (ADR-038): it is personal and never part of a competition.
+Status: Accepted. Refines ADR-044.
+
+# ADR-052 — DEV-only fixtures for past data in end-to-end tests
+
+Decision: `supabase/dev/test_fixtures.sql` (not a migration, applied to DEV by hand) defines SECURITY DEFINER `dev_fixture_reset_history`, `dev_fixture_add_tasks`, `dev_fixture_backdate_routine`, limited to the `li-…@example.com` test accounts. Playwright uses them to prepare closed days; every permission / attack assertion still uses real user tokens on the public API. Production must never contain them (docs/PRODUCTION_CHECKLIST.md).
+Reason: With closed history locked, no client can create yesterday; tests still need yesterday. No service-role key in tests.
+Status: Accepted.
+
+# ADR-053 — HTTP security headers and redirect hardening
+
+Decision: `next.config.ts` sends a CSP (self + the project's Supabase host for `connect-src`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri` / `form-action 'self'`; inline scripts / styles allowed), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, a restrictive `Permissions-Policy`, and no `X-Powered-By`. `safeNext()` refuses control characters and backslashes and re-serialises the path from a parsed URL. Auth email links use `SITE_URL` when set. After `duo_ended` the client leaves the channel immediately.
+Reason: Defence in depth without breaking Next.js; a nonce-based `script-src` would force dynamic rendering of every page and is left for after V1.
+Status: Accepted.
