@@ -419,11 +419,16 @@ test("a running focus sends nothing per second: no writes, no broadcasts, no pre
   expect(
     received.filter((f) => FOCUS_FRAME.test(f) || ANY_BROADCAST.test(f)),
   ).toEqual([]);
-  // A sent no presence above; B may still get A's join once, late (Realtime
-  // replicates presence between nodes), but never a stream of updates.
-  expect(received.filter((f) => /presence/.test(f)).length).toBeLessThanOrEqual(
-    1,
-  );
+  // A sent no presence above. A joined the channel on each of its two page
+  // loads (sign-in to /focus, then LOCK IN's goto), tracking "online" once per
+  // join, and Realtime may deliver those joins to B late (replication between
+  // nodes). So B may see up to two join-only diffs — never an update stream.
+  const presence = received.filter((f) => /presence/.test(f));
+  expect(presence.length).toBeLessThanOrEqual(2);
+  for (const f of presence) {
+    expect(f).toContain('"presence_diff"');
+    expect(f).toContain('"leaves":{}');
+  }
 
   await overlay(a.page).getByRole("button", { name: "End session" }).click();
   await a.page
