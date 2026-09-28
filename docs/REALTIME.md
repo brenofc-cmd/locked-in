@@ -53,10 +53,16 @@ the duo, its feed rows and future broadcasts (sent to members of existing duos o
 the next join is refused. The app also removes the channel as soon as the layout reloads without a
 duo.
 
-**Public channels.** LOCKED IN never uses them. Recommended for production (Stage 10), in the
-Supabase Dashboard: _Project Settings → Realtime → disable "Allow public access"_, so only private
-channels can be joined at all. Not changed in DEV (it cannot be verified or reverted from the tools
-used here); it does not affect security of duo data, which lives only in private channels.
+**Public channels.** LOCKED IN never uses them. **MANUAL STAGE 10 PRODUCTION GATE:** in the
+Supabase Dashboard of the production project, _Project Settings → Realtime → disable "Allow public
+access"_, so only private channels can be joined at all (docs/PRODUCTION_CHECKLIST.md §2). Not
+changed in DEV: it is a dashboard setting that the tools used in Stage 9 (SQL / MCP) can neither read
+nor change. It does not affect the security of duo data, which lives only in private channels
+guarded by `realtime.messages` RLS (pgTAP stage 5 / 9, e2e stage 5 / 9).
+
+**Ending a duo (Stage 9).** On `duo_ended` the provider untracks presence and unsubscribes at once
+(instead of waiting for the session to reload), so no presence or broadcast of the ended duo reaches
+that tab afterwards; the effect cleanup then removes the channel for good.
 
 ## Broadcast events (database → duo)
 

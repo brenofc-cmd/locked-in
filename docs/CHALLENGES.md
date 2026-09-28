@@ -6,14 +6,16 @@ unit-tested), `src/components/use-challenges.ts`, `ChallengesScreen`, `Challenge
 
 ## Stored vs derived
 
-Stored (`public.challenges`): duo, author, title, type, target, start date, end date. Nothing else.
+Stored (`public.challenges`): duo, author, title, type, target, start date, end date, and (Stage 9)
+both members' Daily Standard at creation (`creator_standard`, `partner_standard`, set by the
+database, never writable). No progress is stored.
 
 Derived by `duo_challenges()` for both members, never stored:
 
-| Type            | Progress                                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `standard_days` | Days in the period meeting **that member's** Daily Standard (exact ratio, skipped in the total, neutral days never count; today counts once met) |
-| `focus_seconds` | `actual_focus_seconds` of **completed** sessions that started in the period (local start date, as in Stage 7)                                    |
+| Type            | Progress                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `standard_days` | Days in the period meeting **that member's** Daily Standard **as snapshotted at creation** (exact ratio, skipped in the total, neutral days never count; today counts once met) |
+| `focus_seconds` | Effective focus seconds (`private.focus_seconds`) of every session whose `local_date` (fixed at start) is in the period; a running session counts its elapsed time              |
 
 Each member is counted up to their own local today. Private tasks and sessions count in the
 aggregate; nothing about them is listed. `duo_challenges()` is SECURITY DEFINER for that reason
@@ -34,6 +36,10 @@ Derived on the client (`src/lib/challenges.ts`), from my local today:
 - **Delete** only before the challenge starts (either member). After that it is part of the record.
   No edits.
 - Challenges belong to the duo: ending the duo deletes them; a new partner never sees them.
+- **Stable results (Stage 9, ADR-051):** closed days are immutable (ADR-050), standards are the
+  creation snapshot and focus is counted from frozen session days, so a finished challenge's result
+  never changes afterwards. An identical challenge (same duo, title ignoring case, type and period)
+  is refused by a unique index, so a double submit creates one.
 
 ## Live updates
 

@@ -181,9 +181,12 @@ partner too, so a partner who has not opened the app today is still compared on 
   re-read.
 - Weeks are framed by the viewer's Monday; with members in far-apart time zones the two views of the
   same week can differ by a day at the edges.
-- **Open for Stage 9:** past tasks can still be inserted or changed through the API by their owner
-  (Stage 4 grants), so closed weeks are not frozen. Stage 8 adds no interface that edits past days;
-  freezing / protecting closed competition history is on the Stage 9 checklist.
+- **Closed history is frozen (Stage 9, ADR-050 / ADR-051):** tasks of a closed local day cannot be
+  inserted, changed or deleted through the API, routine templates cannot manufacture or suppress
+  past occurrences, focus days are fixed at start, and the boundary never moves back on a timezone
+  change (docs/DATABASE.md → Closed history). A closed week's result, a past streak inside a fixed
+  standard and a finished challenge therefore cannot be rewritten. The streak still recalculates
+  when the owner changes their own Daily Standard (ADR-038): it is personal, never a competition.
 
 ## Tests
 

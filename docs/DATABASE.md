@@ -57,6 +57,7 @@ Migrations applied to DEV (`supabase_migrations.schema_migrations`):
 | `avatar_url`             | text        | nullable, ≤ 500 chars                                         |
 | `timezone`               | text        | not null, default `UTC`, must be a real IANA name (trigger)   |
 | `daily_standard_percent` | smallint    | not null, default 80, `check (1..100)` (Stage 7)              |
+| `history_locked_through` | date        | nullable; database-owned closed-history boundary (Stage 9)    |
 | `created_at`             | timestamptz | not null default now()                                        |
 | `updated_at`             | timestamptz | not null default now(); always set by trigger on update       |
 
@@ -197,6 +198,7 @@ timestamps. Owner-only table (RLS); the partner sees a limited projection, never
 | `actual_focus_seconds`      | integer     | 0…planned, set on completion                                                     |
 | `reflection`                | text        | ≤ 1000, optional, **owner only**                                                 |
 | `visible_to_partner`        | boolean     | false → partner and feed never see the title (forced false for a private task)   |
+| `local_date`                | date        | owner's local date at start, set by the trigger, never changes (Stage 9)         |
 
 Constraints: a state check (active ⇒ no `paused_at` / `ended_at`; paused ⇒ `paused_at`; completed ⇒
 `ended_at` + `actual_focus_seconds`); partial unique index `focus_sessions_one_unfinished (user_id)
@@ -245,10 +247,40 @@ broadcasts `reaction` (ids and type, no title).
 | `challenge_type`          | text    | `standard_days` / `focus_seconds`                            |
 | `target_value`            | integer | > 0; standard days ≤ days in the period; focus ≤ 24 h × days |
 | `start_date` / `end_date` | date    | end ≥ start, at most 365 days apart                          |
+| `creator_standard`        | integer | author's Daily Standard at creation (trigger, Stage 9)       |
+| `partner_standard`        | integer | partner's Daily Standard at creation (trigger, Stage 9)      |
 
 RLS: read = my duo; insert = my complete duo, author = me, start ≥ my today; delete = my duo and not
 started yet; no update. Progress: `duo_challenges()` (DEFINER, CHALLENGES.md). A trigger broadcasts
-`challenges_changed`.
+`challenges_changed`. The standard snapshots have no client grant; `standard_days` is judged with
+them, so a later Settings change never moves a result (ADR-051). `challenges_no_duplicate_idx`
+unique `(duo_id, lower(title), challenge_type, start_date, end_date)` refuses a double submit.
+
+## Closed history (Stage 9, ADR-050 / ADR-051)
+
+A local day that has ended is final. Enforced by triggers for the API roles (`anon`,
+`authenticated`, also through INVOKER RPCs); trusted database code (migrations, `postgres`-owned
+DEFINER functions, DEV fixtures) is not blocked.
+
+- **Boundary:** `private.history_locked_through(user)` =
+  `greatest(profiles.history_locked_through, local today − 1)`. `profiles.history_locked_through`
+  has no client grant; `private.keep_history_boundary()` stores the boundary reached under the old
+  timezone whenever the timezone changes, so it only moves forward and a move west never reopens a
+  day.
+- **`daily_tasks`** (`private.guard_task_history()`, BEFORE INSERT / UPDATE / DELETE): a row dated on
+  or before the boundary cannot be inserted, updated or deleted (`LI_HISTORY_LOCKED`); a row dated
+  after the open day (boundary + 1) can only be `pending` (`LI_FUTURE_TASK`).
+- **`routine_items`** (`private.guard_routine_history()`): no `start_date` in the past, no client
+  write of `materialized_through`, no template change while missed days are not yet materialised
+  (`LI_ROUTINE_STALE`), no archive date moved into closed days, no reopening an old archive.
+- **Catch-up** still fills missed closed days as `pending`: `private.materialize_tasks` is SECURITY
+  DEFINER (runs as the owner the guards trust) and only creates occurrences from protected
+  templates, for the caller or the caller's partner.
+- **Focus:** `local_date` is set at start and frozen; a completed session changes only its
+  reflection; a paused session of a closed day cannot be resumed — `resume_focus_session()` /
+  `reconcile_my_focus()` complete it with the time before the pause.
+- **Challenges:** standards snapshotted at creation; focus challenges count every session's
+  effective seconds (`private.focus_seconds`), so finalising a session never changes a result.
 
 ## Focus lifecycle and timer maths (Stage 6)
 
@@ -357,11 +389,12 @@ requests (B and C racing for the same code, 10 + 5 rounds: always exactly one wi
 | `routine_items_id_owner_key (id, owner_id)` unique                 | target of the composite FK                       |
 | `daily_tasks_owner_date_idx (owner_id, task_date)`                 | Today query, RLS, future history (Stage 7)       |
 | `daily_tasks_routine_date_key (routine_item_id, task_date)` unique | one occurrence per date, routine lookups         |
-
-| `focus_sessions_one_unfinished (user_id)` unique partial | one active / paused session per user |
-| `focus_sessions_user_started_idx (user_id, started_at desc)` | active session, recent sessions, focus today |
-| `focus_sessions_task_idx (daily_task_id)` | FK set-null when a task is deleted |
-| `focus_sessions_duo_idx (duo_id)` | FK set-null when a duo ends |
+| `focus_sessions_one_unfinished (user_id)` unique partial           | one active / paused session per user             |
+| `focus_sessions_user_started_idx (user_id, started_at desc)`       | active session, recent sessions                  |
+| `focus_sessions_user_day_idx (user_id, local_date)`                | focus per day (progress, challenges)             |
+| `focus_sessions_task_idx (daily_task_id)`                          | FK set-null when a task is deleted               |
+| `focus_sessions_duo_idx (duo_id)`                                  | FK set-null when a duo ends                      |
+| `challenges_no_duplicate_idx (duo_id, lower(title), …)` unique     | no duplicate challenge from a double submit      |
 
 Advisor 0001 reports the composite FKs `(routine_item_id, owner_id)` and `(daily_task_id, user_id)`
 (focus_sessions) as not covered by an exact index. Accepted: the leading-column indexes serve them.
@@ -407,7 +440,7 @@ checked when a routine is hard-deleted, which clients cannot do.
 | `public.my_habits(from, to)`                         | invoker  | `authenticated`                      | recurring tasks' consistency over closed days                    |
 | `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only         |
 | `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                        |
-| `private.materialize_tasks(user)`                    | invoker  | `authenticated` (schema not exposed) | the Stage 4 materialisation for one user                         |
+| `private.materialize_tasks(user)`                    | DEFINER  | `authenticated` (schema not exposed) | materialisation for the caller or the caller's partner only      |
 | `private.day_stats(user, from, to)`                  | invoker  | `authenticated` (schema not exposed) | one row per day; RLS applies to the caller                       |
 | `private.streaks(user)`                              | invoker  | `authenticated` (schema not exposed) | closed-day streak inputs                                         |
 | `private.local_today / standard_met / focus_seconds` | invoker  | `authenticated` (schema not exposed) | helpers                                                          |
@@ -418,6 +451,11 @@ checked when a routine is hard-deleted, which clients cannot do.
 | `private.duo_is_complete()`                          | DEFINER  | `authenticated` (schema not exposed) | my duo has two members                                           |
 | `private.duo_together_since(owner)`                  | invoker  | `authenticated` (schema not exposed) | date the duo became complete, in the owner's calendar            |
 | `private.challenge_value(...)`                       | invoker  | nobody (called by `duo_challenges`)  | one member's progress in a period                                |
+| `private.history_locked_through(user)`               | invoker  | `authenticated` (schema not exposed) | closed-history boundary (Stage 9)                                |
+| `private.guard_task_history()`                       | invoker  | trigger only                         | refuses closed-day / premature task writes                       |
+| `private.guard_routine_history()`                    | invoker  | trigger only                         | refuses template writes that would rewrite the past              |
+| `private.keep_history_boundary()`                    | invoker  | trigger only                         | keeps the boundary monotonic across timezone changes             |
+| `private.normalize_challenge()`                      | invoker  | trigger only                         | trims the title, snapshots both standards at creation            |
 
 Stage 4 functions are all SECURITY INVOKER (ADR-020): they run as the caller, so RLS and column
 grants apply exactly as for direct API calls, and none of them takes an owner id. Errors:
@@ -435,6 +473,20 @@ Stage 7: the owner progress functions are INVOKER (RLS applies). `duo_weeks` and
 `partner_progress_summary` are DEFINER (they must count the partner's private tasks), derive the
 partner from `auth.uid()` → membership, take no user id and return integers only; accepted under
 advisor 0029 like `partner_today` (ADR-040). Errors: `LI_NOT_AUTHENTICATED`, `LI_INVALID_RANGE`.
+
+Stage 9 audit (2026-09-28, catalog + source review on DEV): the SECURITY DEFINER set is exactly
+`create_duo`, `join_duo`, `leave_duo`, `partner_today`, `partner_current_focus`,
+`partner_progress_summary`, `duo_weeks`, `duo_challenges`, `private.current_duo_id`,
+`private.duo_is_complete`, `private.materialize_tasks` and the triggers `handle_new_user`,
+`handle_new_profile_settings`, `sync_task_activity`, `sync_focus_activity`, `sync_reaction`,
+`sync_challenge` (asserted by `stage9_integrity.test.sql`). All pin `search_path = ''`, use
+schema-qualified names, derive identity from `auth.uid()` → membership, are owned by `postgres`,
+and are not executable by PUBLIC or `anon`; triggers are executable by nobody. The only DEFINER with
+a user-id parameter, `private.materialize_tasks(p_user)`, returns `null` unless `p_user` is the
+caller or the caller's current partner. Cross-owner ids cannot be injected: `daily_tasks` and
+`focus_sessions` reference their parent through composite `(id, owner)` foreign keys. Advisor 0029
+lists the eight public ones: accepted (ADR-015 / 034 / 040 / 044). DEV additionally contains the
+three `dev_fixture_*` functions (ADR-052), which must never exist in production.
 
 ## Invite codes
 
@@ -454,10 +506,10 @@ Grants decide which operations a role may attempt; policies decide which rows.
 No INSERT / DELETE grants on these three: profiles come from the trigger, duos and memberships from
 the RPCs.
 
-| Role            | routine_items                                                                                                                             | daily_tasks                                                                                                                                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `anon`          | —                                                                                                                                         | —                                                                                                                                                                                                                                   |
-| `authenticated` | SELECT; INSERT (template columns, `owner_id`, `start_date`); UPDATE (template columns, `end_date`, `materialized_through`); **no DELETE** | SELECT, DELETE; INSERT (snapshot columns, `owner_id`, `routine_item_id`, `task_date`, `status`, `skip_reason`); UPDATE (snapshot columns, `status`, `skip_reason`) — never `task_date`, `owner_id`, `routine_item_id` or timestamps |
+| Role            | routine_items                                                                                                                                          | daily_tasks                                                                                                                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `anon`          | —                                                                                                                                                      | —                                                                                                                                                                                                                                   |
+| `authenticated` | SELECT; INSERT (template columns, `owner_id`, `start_date`); UPDATE (template columns, `end_date`); **no DELETE** (Stage 9: no `materialized_through`) | SELECT, DELETE; INSERT (snapshot columns, `owner_id`, `routine_item_id`, `task_date`, `status`, `skip_reason`); UPDATE (snapshot columns, `status`, `skip_reason`) — never `task_date`, `owner_id`, `routine_item_id` or timestamps |
 
 `activity_events`: `authenticated` SELECT only (no INSERT / UPDATE / DELETE); `anon` nothing.
 
@@ -503,7 +555,7 @@ migrations already grant explicitly; keep doing so.
   anon denied everywhere, A / B / C (own profile, partner visibility, outsider isolation, no
   cross-profile updates, duo full, already in a duo, invalid code, direct-write denial, schema
   backstops, leave).
-- `supabase/tests/stage4_tasks.test.sql` — pgTAP, 71 assertions: timezone (UTC+14 vs UTC-11 users),
+- `supabase/tests/stage4_tasks.test.sql` — pgTAP, 72 assertions: timezone (UTC+14 vs UTC-11 users),
   generation on the right ISO weekdays, nothing before `start_date` or after `end_date`,
   idempotency, one occurrence per date, catch-up of unopened days, status timestamps, missed not
   storable, snapshots (rename, Today only, Today and future incl. completed occurrences), archive,
@@ -542,6 +594,17 @@ migrations already grant explicitly; keep doing so.
   broadcast), templates (dedupe, double click), duo end (atomic, third party untouched, personal
   history kept, old duo data gone, broadcast), a new partner seeing nothing of the old duo, grants.
 
+- `supabase/tests/stage9_integrity.test.sql` — pgTAP, 69 assertions: closed history (complete /
+  undo / skip / delete / rename / visibility / backdated insert refused, future only pending,
+  today fully editable), routine guards (past start, stale template, `materialized_through`,
+  archive into the past, reopening an old archive), catch-up still materialises missed days as
+  locked, closed week / streak unchanged after every attempt, focus immutability (duration, start,
+  day, reopening, backdated insert; a closed day's paused session completes instead of resuming),
+  closed challenges stable after both standards change, standard snapshot, duplicate challenge,
+  timezone move west keeps the boundary, outsider (tasks, challenges, catch-up for someone else,
+  realtime topic), and the privilege model (exact DEFINER set, empty `search_path`, nothing for
+  PUBLIC / anon, triggers not callable, RLS on every table, no views, default privileges).
+
 Each file runs in one transaction and rolls back (broadcasts sent inside it are never delivered).
 
 How to run:
@@ -552,14 +615,16 @@ How to run:
   DEV (SQL editor or the Supabase MCP `execute_sql`). The script captures every assertion's TAP line
   into a temp table and ends with a `raise exception` that prints
   `TAP FAILED=<n> PLANNED=<p> RAN=<r>` and any failing lines. The exception aborts the transaction,
-  so users, rows and the pgtap extension are all rolled back. Results on 2026-09-25 (after the
-  Stage 8 migrations): stage 3 `51/51`, stage 4 `71/71`, stage 5 `40/40`, stage 6 `63/63`, stage 7
-  `78/78`, stage 8 `84/84` (387/387), `FAILED=0`; DEV verified free of fixtures afterwards.
+  so users, rows and the pgtap extension are all rolled back. Results on 2026-09-28 (final Stage 9
+  run, all 29 migrations): stage 3 `51/51`, stage 4 `72/72`, stage 5 `40/40`, stage 6 `63/63`,
+  stage 7 `78/78`, stage 8 `84/84`, stage 9 `69/69` (457/457), `FAILED=0`; DEV verified free of
+  fixtures afterwards.
 
 End-to-end coverage of the same rules through the public API (publishable key, real sessions):
 `tests/e2e/stage3.spec.ts` → "database rules hold through the public API" and
 `tests/e2e/stage4.spec.ts` (partner / outsider / spoofing, 5 concurrent `ensure_my_daily_tasks`
-calls, catch-up, snapshot, timezone).
+calls, catch-up, snapshot, timezone) and `tests/e2e/stage9.spec.ts` (closed-history, focus,
+challenge and IDOR attacks with real user tokens; DEV-only fixtures prepare past days, ADR-052).
 
 ## Test users (DEV only)
 
