@@ -5,7 +5,7 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 8 — complete product verified; Stage 9 (QA, security, integrity audit) next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **Stage 9 — QA, security and integrity audit verified; Stage 10 (production deployment) next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Stack
 
@@ -45,6 +45,8 @@ npm run dev                  # http://localhost:3000
 - [Analytics](docs/ANALYTICS.md) — progress, streak, standard and competition rules
 - [Challenges](docs/CHALLENGES.md) — duo challenges, derived progress
 - [Notifications](docs/NOTIFICATIONS.md) — what is notified, and what V1 does not do
+- [Security](docs/SECURITY.md) — auth, RLS / table matrix, DEFINER functions, closed history, advisors
+- [Production checklist](docs/PRODUCTION_CHECKLIST.md) — Stage 10 steps and manual gates
 - [Decisions](docs/DECISIONS.md) — ADRs
 - [Progress](docs/PROGRESS.md) — current status
 - [CLAUDE.md](CLAUDE.md) — rules for AI agents working on this repo
@@ -56,9 +58,14 @@ No custom infrastructure is needed; the app is a standard Next.js project.
 1. Push the repo to GitHub.
 2. In Vercel, **Add New → Project**, import the repo. Framework preset: Next.js (auto-detected).
    Build command `npm run build`, output handled by Vercel.
-3. In **Settings → Environment Variables**, add `NEXT_PUBLIC_SUPABASE_URL` and
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for Production and Preview.
-4. In Supabase **Auth → URL Configuration**, add the Vercel production and preview URLs as redirect URLs.
+3. In **Settings → Environment Variables** (Production), add `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and the server-only `SITE_URL` of the production project.
+   Preview deployments must **not** use the production keys.
+4. In Supabase **Auth → URL Configuration**, set the Site URL to the production origin and the
+   redirect URL to exactly `https://<domain>/auth/confirm` (no wildcards, no localhost).
 5. Every push to `main` deploys to production; pull requests get preview deployments.
+
+The full, ordered list — including the two manual dashboard gates (Realtime "Allow public access"
+OFF, leaked-password protection ON) — is [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
 
 Secrets are never committed; `.env.local` is git-ignored.

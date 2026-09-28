@@ -1,9 +1,140 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current Stage:
-9 — Final QA, Security, Integrity, Performance and Production Readiness Audit — IN PROGRESS (started 2026-09-25)
+10 — Production Deployment — NEXT (not started)
 
-Previous: 8 — Complete Product — VERIFIED / COMPLETE (2026-09-25)
+Previous: 9 — Final QA, Security, Integrity, Performance and Production Readiness Audit — VERIFIED / COMPLETE (2026-09-28)
+
+---
+
+# Stage 9 record
+
+Stage 9 — Final QA, Security, Integrity, Performance and Production Readiness Audit — VERIFIED / COMPLETE (2026-09-28)
+
+Completed (Stage 9):
+
+- **Closed history frozen in the database** (ADR-050): migrations `…163557_history_integrity`,
+  `…163955_history_guard_rls_order`, `…164538_history_boundary_owner_and_challenge_dedupe`; guards on
+  `daily_tasks` / `routine_items` for the API roles, monotonic `profiles.history_locked_through`,
+  catch-up still materialises missed days (DEFINER `private.materialize_tasks`)
+- **Focus days and challenge results frozen** (ADR-051): `focus_sessions.local_date` fixed at start,
+  a closed day's paused session completes instead of resuming, challenge standards snapshotted,
+  focus challenges on effective seconds (`…165621`), duplicate challenges refused
+- **HTTP / auth hardening** (ADR-053): CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`,
+  `Permissions-Policy`, no `X-Powered-By`; `safeNext()` hardened; auth email links from `SITE_URL`
+- **Realtime:** the ended duo's channel is left immediately on `duo_ended`
+- **Accessibility:** WCAG AA text contrast; keyboard-safe end-duo confirmation
+- **Tests:** pgTAP `stage9_integrity` (69), e2e `stage9` (9: IDOR / anon, closed history through
+  API + UI + timezone, concurrency, realtime isolation after END DUO, one channel / no polling /
+  reconnect, HTTP headers and redirects, XSS / SQL text, axe, keyboard), unit date torture
+  (`dates.test.ts`: midnight, DST, week / year / leap boundaries); DEV-only fixtures (ADR-052)
+- **Audit docs:** docs/SECURITY.md (new: auth, table matrix, DEFINER model, closed history,
+  advisors, accepted risks), docs/PRODUCTION_CHECKLIST.md (new: Stage 10 steps and manual gates),
+  DATABASE, ANALYTICS, CHALLENGES, REALTIME, README, CLAUDE.md, ROADMAP, ADR-050…053
+
+SECURITY DEFINER audit (2026-09-28, catalog + source on DEV):
+
+- 17 production DEFINER functions (8 public RPCs, 3 private helpers, 6 triggers) + 3 DEV-only
+  `dev_fixture_*` (+ `private.dev_is_test_user`). Every one: `search_path = ''`, schema-qualified,
+  owner `postgres`, no EXECUTE for PUBLIC / anon; triggers executable by nobody
+- Identity only from `auth.uid()` → membership; no public RPC takes a user id. The only DEFINER with
+  one, `private.materialize_tasks(p_user)`, returns `null` unless `p_user` is the caller or the
+  caller's current partner (pgTAP: outsider gets `null`). Composite FKs block cross-owner ids
+  (`daily_tasks → routine_items`, `focus_sessions → daily_tasks`). No IDOR found
+- Broadcast triggers send only to `duo:<the actor's duo>`, never a private title, note or reflection
+
+RLS / table matrix: docs/SECURITY.md → "Table matrix". All 10 tables RLS on; `anon` has no table,
+column or function privilege; owner / partner / outsider rules match the policies and column grants
+read from the catalog.
+
+Advisors (DEV, 2026-09-28) — classification in docs/SECURITY.md:
+
+- Security: 0029 × 8 public DEFINER RPCs → ACCEPTED WITH JUSTIFICATION; 0029 × 3 `dev_fixture_*` →
+  NOT APPLICABLE (DEV-only, checklist verifies absence in PROD); `auth_leaked_password_protection`
+  → STAGE 10 / MANUAL CONFIGURATION REQUIRED
+- Performance: 0001 × 2 composite FKs → ACCEPTED (leading column indexed); 0005 × 2 unused indexes →
+  ACCEPTED (DEV traffic; FK cascade support)
+- FIXED in this run: none needed (no code-fixable finding remained)
+
+Verified (2026-09-28, clean `.next`):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm audit` — 0 vulnerabilities
+- `npm test` — 9 files, 124 tests passed
+- Date / time torture: `dates`, `progress`, `focus`, `product` unit files (79 tests) passed twice under
+  each of `TZ` = UTC, America/Sao_Paulo, America/New_York, Europe/London, Pacific/Kiritimati
+  (UTC+14), Pacific/Pago_Pago (UTC−11), Australia/Lord_Howe (30-min DST) — 14 / 14 green
+- `npm run test:e2e` — **67 passed**, 0 failed, 0 retries (setup 1, 390 9, 1440 9, focus 2, 375 2,
+  430 2, stage3 5, stage4 4, stage5 4, stage6 7, stage7 3, stage8 10, stage9 9)
+- Flakiness: setup + stage3 (duo race) + stage4 (concurrent catch-up) + stage5 (realtime) + stage9
+  (adversarial, concurrency, realtime, closed history) re-run three more times: run 2 — 43 / 43 green; run 3 — 1 failure in stage6 (test bound, fixed, see below); run 4 (after the fix) — 1 failure in stage8 "reactions persist, update live" (live delivery, see Known Issues), the rest green. Then in isolation, serially: the fixed stage6 test 6 / 6 (+ 8 / 8 instrumented), the whole stage8 file 15 × (150 / 150, the reactions test 15 / 15). Final full suite after the fix: **67 passed**, 0 retries
+- pgTAP on DEV (all 29 migrations applied, list identical to `supabase/migrations/`): stage 3 51/51,
+  stage 4 72/72, stage 5 40/40, stage 6 63/63, stage 7 78/78, stage 8 84/84, stage 9 69/69
+  (**457/457**, FAILED=0); DEV free of fixtures and of the pgtap extension afterwards
+- Integrity re-confirmed (pgTAP stage 9 + e2e stage 9): closed history immutable (complete / undo /
+  skip / delete / rename / visibility / backdate refused; closed week and streak unchanged after
+  every attempt); a timezone move west does not reopen a day and the boundary only moves forward;
+  focus history cannot be forged (timestamps, day, duration, backdated insert, reopening); closed
+  challenges stable after both standards change; an old duo leaks nothing to a new partner;
+  Realtime isolated (other duo, no duo, fake topic, anon, ended duo)
+- Secret audit: only `.env.example` tracked; `.env*`, `tests/e2e/.auth/`, `test-results/`,
+  `playwright-report/` ignored; full git history scanned (JWTs, `sb_secret_`, service role, private
+  keys, passwords) — nothing; no service-role use in `src` / `tests` / `scripts`; only
+  `NEXT_PUBLIC_SUPABASE_URL` / `_PUBLISHABLE_KEY` reach the browser; the DEV seed uses a
+  `__E2E_PASSWORD__` placeholder; no `dangerouslySetInnerHTML` / `innerHTML` / `eval` in `src`
+- Clean clone of `04db328`: `git clone`, `npm ci`, lint, typecheck, unit (124), build, format:check, `npm audit` (0) — pass; only `.env.example` tracked
+- Performance: production build (Turbopack) compiles in ~6 s, 21 routes (7 static); client JS 22
+  chunks, 1008 KB raw / 290 KB gzip in total, largest chunk 79 KB gzip; no polling (the only
+  interval is a local 1 s clock tick while a focus clock is on screen; the e2e asserts no request
+  and no socket frame except heartbeats during a running focus); progress is derived in SQL with
+  indexed `(owner_id, task_date)` / `(user_id, local_date)` lookups
+- Responsive: 375 / 390 / 430 / 1440 automated (layout + full suites, no overflow); Stage 9 changed
+  only colours and the end-duo confirmation, both covered at 390 / 1440 and by axe / keyboard tests
+- Accessibility: axe — no serious / critical violation on the main screens and login; keyboard —
+  sheets and the end-duo confirmation open, trap nothing, close with Escape
+
+Fixed during the final Stage 9 run (2026-09-28):
+
+- **Flaky e2e assertion (test, not product):** `stage6` "a running focus sends nothing per second"
+  failed once in a critical rerun (B received 2 presence frames in the 12 s window, bound was ≤ 1).
+  In that same failing run the sender assertions passed: A sent no HTTP request and no WebSocket
+  frame except heartbeats. Logging the frames (8 serial repeats) showed they are always join-only
+  `presence_diff` (`"leaves":{}`, `state: "online"`) — late delivery of A's channel joins, one per
+  page load, and A loads the page twice right before the window. The assertion now allows up to two
+  join-only diffs and still refuses any update or stream; 6 / 6 serial repeats green, then the full
+  suite and the critical chain again (below)
+- Docs out of date with the Stage 9 migrations: DATABASE (`materialize_tasks` is DEFINER, routine
+  grants, new columns / index / functions, Closed history section, Stage 9 tests), ANALYTICS
+  (closed history no longer open), CHALLENGES (standard snapshot, effective focus seconds),
+  REALTIME / README (manual gates, Preview must not use PROD keys, exact redirect URL)
+
+Manual Stage 10 production gates (not blockers of code, database, security or integrity):
+
+- **MANUAL STAGE 10 PRODUCTION GATE** — Realtime "Allow public access" OFF (dashboard only)
+- **MANUAL STAGE 10 PRODUCTION GATE** — Leaked password protection ON (dashboard only, plan-dependent)
+
+Neither was changed: the tools available here (SQL / Supabase MCP) cannot read or set them. Exact
+steps: docs/PRODUCTION_CHECKLIST.md §2.
+
+Known Issues / accepted (docs/SECURITY.md → Accepted risks):
+
+- CSP allows inline scripts / styles (Next.js bootstrap; nonce policy after V1)
+- Invite codes are guessable only in theory (887 M space, open duos only, no per-RPC rate limit)
+- Notifications only while the app is open (ADR-045)
+- Far-apart timezones frame a week by the viewer's Monday; a running focus session on a challenge's
+  last day keeps adding (≤ 12 h) until it ends; the streak recalculates with the owner's own
+  standard (ADR-038, personal only)
+- A broadcast in the first moments after joining can be missed live; the next refetch recovers it
+- **Open (non-blocking) — rare live-delivery miss:** once in 19 runs of stage8 "reactions persist,
+  update live" today (in the long chained rerun on shared DEV users, never in 15 isolated repeats),
+  A's page missed both the `activity` and the `reaction` broadcasts although presence worked. The
+  data was persisted correctly (the same test's reload / persistence checks and every other run
+  pass), isolation is unaffected, and the next refetch (reconnect, tab visible, partner event,
+  reload) shows it. Root cause not proven (no frames captured from a failing run); consistent with
+  the join warm-up above. Watch in Stage 10 real-device acceptance; no code changed for it
+- "destination stream closed early" server log from aborted RSC streams on navigation; no user
+  impact
+- `npx supabase test db` still cannot run locally (Docker); pgTAP runs on DEV via the script
 
 ---
 

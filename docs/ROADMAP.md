@@ -12,22 +12,30 @@ Ten stages. Each stage ends only when its behaviour is verified and `docs/PROGRE
 | 6   | Focus                  | **VERIFIED / COMPLETE** | Focus Mode, timer, sessions, notes, partner sees focusing                                               |
 | 7   | Progress + Competition | **VERIFIED / COMPLETE** | Streaks, standard, progress stats and charts, weekly comparison, head-to-head                           |
 | 8   | Produto completo       | **VERIFIED / COMPLETE** | Reactions, challenges, briefing, review day, weekly review, onboarding, settings, history               |
-| 9   | QA + Security          | **IN PROGRESS**         | RLS audit, e2e coverage of core loop, accessibility, performance, edge cases                            |
+| 9   | QA + Security          | **VERIFIED / COMPLETE** | RLS audit, e2e coverage of core loop, accessibility, performance, edge cases                            |
 | 10  | Production             | PENDING                 | Vercel production deploy, env setup, domain, monitoring                                                 |
 
 ## Stage 9 checklist (carried from Stages 7–8)
 
 Must be done in Stage 9 — they are not optional and were intentionally left out of Stage 8:
 
-- [ ] **FREEZE / PROTECT CLOSED COMPETITION HISTORY** — owners can still insert / edit / skip
-      past-dated `daily_tasks` (and their focus data) through the API (Stage 4 grants), which can
-      change a closed week's result, a past streak or a finished challenge. Audit first, then lock
-      the past in the database (no UI edits closed days today; keep it that way).
-- [ ] Disable Realtime "Allow public access" (private channels only) in the Supabase dashboard.
-- [ ] Enable leaked password protection (Supabase Auth).
-- [ ] Review every SECURITY DEFINER function (`search_path = ''`, `auth.uid()` only, minimal
-      grants, projection only): including `duo_weeks`, `partner_progress_summary`,
-      `partner_current_focus`, `duo_challenges` and the broadcast triggers.
-- [ ] Final Supabase advisors (security + performance) and a security scan; zero unexplained items.
-- [ ] RLS audit of all ten tables, e2e coverage of the core loop, accessibility, performance, edge
-      cases (docs/PROGRESS.md → Known Issues).
+- [x] **FREEZE / PROTECT CLOSED COMPETITION HISTORY** — locked in the database (ADR-050 / ADR-051,
+      migrations `…163557` … `…165621`, pgTAP `stage9_integrity`, e2e `stage9`).
+- [x] Realtime "Allow public access" OFF → moved to Stage 10 as a **MANUAL STAGE 10 PRODUCTION
+      GATE** (dashboard-only; not readable / changeable from SQL or MCP; no code depends on it).
+      Exact step: docs/PRODUCTION_CHECKLIST.md §2.
+- [x] Leaked password protection ON → moved to Stage 10 as a **MANUAL STAGE 10 PRODUCTION GATE**
+      (dashboard-only, plan-dependent). Exact step: docs/PRODUCTION_CHECKLIST.md §2.
+- [x] Review every SECURITY DEFINER function — docs/SECURITY.md, docs/DATABASE.md → Functions
+      (Stage 9 audit); the set is asserted by `stage9_integrity.test.sql`.
+- [x] Final Supabase advisors (security + performance) and a security scan; every item classified
+      in docs/SECURITY.md → "Supabase advisors".
+- [x] RLS audit of all ten tables (docs/SECURITY.md → table matrix), e2e coverage of the core loop,
+      accessibility (axe, keyboard), performance, edge cases (midnight / DST / week / year / leap,
+      timezone moves, concurrency).
+
+## Stage 10 checklist
+
+docs/PRODUCTION_CHECKLIST.md, in order. It starts with the two **MANUAL STAGE 10 PRODUCTION GATES**
+carried from Stage 9 (Realtime "Allow public access" OFF, leaked password protection ON) and must
+never apply `supabase/dev/*.sql` to production.

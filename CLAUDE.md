@@ -62,7 +62,7 @@ A task is done only when its behavior has been verified.
 
 ## Standard verification commands
 
-All verified working (Windows, Node 22; last run at the end of Stage 8):
+All verified working (Windows, Node 22; last run at the end of Stage 9, 2026-09-28):
 
 ```bash
 npm install
@@ -75,10 +75,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 (serial, shared DEV users; stage5-8 = 2-3 browsers)
+                       #   → stage7 → stage8 → stage9 (serial, shared DEV users; stage5-9 = 2-3
+                       #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage8), needs Docker. Without Docker:
+npm audit              # dependency advisories (0 at the end of Stage 9)
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -122,7 +124,15 @@ routing changed; run the pgTAP suite when a migration changed.
   app is open — no push, service worker or cron (docs/NOTIFICATIONS.md); permission only on an
   explicit click; ending a duo is one atomic delete that removes its feed / reactions / challenges;
   a partner reads shared tasks only from the day the duo formed. Never add an interface that edits
-  past days (closed competition history is frozen in Stage 9).
+  past days.
+- Stage 9 rules (docs/SECURITY.md, ADR-050…053): closed local days are immutable in the database
+  (`LI_HISTORY_LOCKED`, `LI_FUTURE_TASK`, `LI_ROUTINE_STALE`); never add a grant, RPC or trusted
+  path that writes a closed day, `materialized_through`, `history_locked_through`, a focus
+  session's `local_date` / timestamps or a challenge's standard snapshot. The SECURITY DEFINER set is
+  fixed and asserted by `stage9_integrity.test.sql`: a new DEFINER function means updating that
+  test, docs/SECURITY.md and an ADR. `supabase/dev/*.sql` (fixtures, test users) is DEV-only and
+  must never reach production. Keep the CSP / headers in `next.config.ts` and `safeNext()` for
+  every redirect.
 - Progress (docs/ANALYTICS.md): every number is derived in SQL from `daily_tasks` and
   `focus_sessions` — never add a stats / cache table or store a computed number. Skipped stays in
   the denominator; a day with 0 planned is neutral (null, never 0 % or 100 %); standard met uses
