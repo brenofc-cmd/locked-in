@@ -8,6 +8,11 @@ export function MoreScreen() {
   const { routines, hasPartner, partner } = useApp();
   const rows = [
     {
+      href: "/goals",
+      label: t.pageTitles.goals,
+      sub: t.more.goalsSub,
+    },
+    {
       href: "/planner",
       label: t.pageTitles.planner,
       sub: t.more.plannerSub,
