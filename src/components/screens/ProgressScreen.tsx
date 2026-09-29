@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { loadDays } from "@/app/(app)/progress-actions";
 import { useSession } from "@/components/session";
 import { useApp } from "@/components/app-state";
+import { useResumeValue } from "@/components/resume/use-resume";
 import { cx } from "@/components/ui";
 import { DAYS, DAY_LETTERS, addDays, dayLabel } from "@/lib/local-date";
 import {
@@ -25,6 +26,7 @@ import {
   type DayStat,
   type Range,
 } from "@/lib/progress";
+import { rememberProgress } from "@/lib/resume-state";
 
 const RANGES: { k: Range; short: string; long: string }[] = (
   ["7", "30", "90", "Y"] as const
@@ -43,7 +45,18 @@ const barHeight = (pct: number | null) =>
 
 export function ProgressScreen() {
   const app = useApp();
-  const [range, setRange] = useState<Range>("7");
+  const { me } = useSession();
+  // V2 Resume State: the last range chosen on this device (UI only).
+  const [picked, setPicked] = useState<Range | null>(null);
+  const stored = useResumeValue(
+    me.id,
+    (s) => s.progress?.range,
+  ) as Range | null;
+  const range: Range = picked ?? stored ?? "7";
+  const setRange = (r: Range) => {
+    setPicked(r);
+    rememberProgress(me.id, { range: r });
+  };
   const [insights, setInsights] = useState(false);
   const today = app.today;
   const days = app.progressDays;
@@ -404,13 +417,25 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
   const app = useApp();
   const { me } = useSession();
   const current = app.today.slice(0, 7);
-  const [month, setMonth] = useState(current);
   const [extra, setExtra] = useState<Record<string, DayStat>>({});
   const loadedFrom = app.progressDays[0]?.day ?? app.today;
   const firstMonth = [
     me.createdAt.slice(0, 7),
     loadedFrom.slice(0, 7),
   ].sort()[0];
+  // V2 Resume State: an earlier month left open on this device is reopened
+  // (only the month; its days are always read from the database).
+  const [picked, setPicked] = useState<string | null>(null);
+  const stored = useResumeValue(me.id, (s) => s.progress?.month);
+  const wanted = picked ?? stored ?? current;
+  const month =
+    wanted < firstMonth ? firstMonth : wanted > current ? current : wanted;
+  const setMonth = (change: (m: string) => string) => {
+    const next = change(month);
+    setPicked(next);
+    // The current month is the default: nothing to remember.
+    rememberProgress(me.id, { month: next < current ? next : undefined });
+  };
 
   useEffect(() => {
     const { from, to } = monthRange(month);

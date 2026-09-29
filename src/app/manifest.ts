@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: t.app.tagline,
     lang: LOCALE,
     id: "/",
-    start_url: "/today",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

@@ -14,6 +14,7 @@ import {
 } from "@/components/icons";
 import { FocusOverlay } from "@/components/overlays/FocusOverlay";
 import { MomentOverlays } from "@/components/overlays/MomentOverlays";
+import { useResumeShell } from "@/components/resume/use-resume";
 import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
 import { useSession } from "@/components/session";
 import { DevPanel } from "@/components/shell/DevPanel";
@@ -56,11 +57,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
   // Until onboarding is finished (persisted), it replaces the app (Stage 8).
-  const { settings } = useSession();
+  const { settings, me } = useSession();
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
   }, [pathname]);
+  // V2: last route + scroll of this device (after the reset above).
+  useResumeShell(me.id, pathname, mainRef);
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden bg-bg desk:flex-row">
