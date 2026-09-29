@@ -76,7 +76,8 @@ device (docs/RESUME_STATE.md).
 
 ## Future (not in Phase 3)
 
-- Phase 4 — North Star + Morning Experience (a vision / goal on Today).
+- Phase 4 — North Star + Morning Experience: **done** — see docs/NORTH_STAR.md (featured ◇ / ◆
+  toggle on each active item, one per kind, shown on Today).
 - Phase 5 — Goal → Action → Proof (real progress from actions, no manual percentage).
 
 ## Code and tests
@@ -84,3 +85,10 @@ device (docs/RESUME_STATE.md).
 `src/lib/goals.ts` (pure), `src/lib/goals-data.ts`, `src/app/(app)/goals-actions.ts`,
 `src/components/screens/GoalsScreen.tsx`. Tests: `tests/unit/goals.test.ts`,
 `supabase/tests/v2_phase3_goals.test.sql`, `tests/e2e/v2-phase3.spec.ts`.
+
+## Featured (V2 Phase 4)
+
+Each active vision, goal and mirror item has a discreet ◇ / ◆ button ("Destacar no Hoje: …",
+`aria-pressed`) and shows **EM DESTAQUE** when featured. One per kind and user (database); featuring
+another replaces it; archiving, achieving or deactivating removes the flag, and Today falls back to
+the documented order (docs/NORTH_STAR.md).

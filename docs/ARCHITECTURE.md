@@ -220,6 +220,15 @@ Details in [PLANNER.md](PLANNER.md), [REALTIME.md](REALTIME.md) → Last seen, A
   `src/app/(app)/planner-actions.ts`, re-reads on `planner_changed` (duo channel) and on visible,
   and schedules the in-app reminders. The month grid reads its own month.
 
+## V2 Phase 4 — North Star, Top 3 and the morning
+
+Details in [NORTH_STAR.md](NORTH_STAR.md), ADR-060…062. `/today` became an async Server Component:
+`loadNorthStar()` reads the active visions / goals / mirror items in parallel (owner-only RLS),
+`pickNorthStar()` picks on the server and `TodayScreen` receives at most three short items (never the
+lists; not part of the layout load; no realtime). The Top 3 is `daily_tasks.priority_rank`, carried
+by the existing task state (`Task.priority`) and written through `setDailyPriorities` →
+`set_my_priorities`. The Stage 8 briefing overlay is gone: `MorningCard` is inline on Today.
+
 ## V2 Phase 3 — goals, vision and the mirror
 
 Details in [GOALS.md](GOALS.md), ADR-058 / ADR-059. `/goals` is a Server Component that reads its

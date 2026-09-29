@@ -594,6 +594,13 @@ migrations already grant explicitly; keep doing so.
   broadcast), templates (dedupe, double click), duo end (atomic, third party untouched, personal
   history kept, old duo data gone, broadcast), a new partner seeing nothing of the old duo, grants.
 
+- `supabase/tests/v2_phase4_north_star.test.sql` — pgTAP, 57 assertions (V2 Phase 4): one
+  featured vision / goal / mirror item per owner (replace on feature, unique index without the
+  trigger too), no featured on insert, archive / achieve / deactivate drops it and an inactive item
+  cannot be featured, other users cannot feature or read; Top 3: ranks 1..3 in order, a fourth /
+  duplicates / rank 0 / 4 refused, unique rank per day, reorder, completion and skip keep the rank,
+  private stays private, partner / outsider cannot set or clear, per-user ranks, delete frees the
+  rank, closed days frozen, INVOKER functions and grants. Full DEV run 2026-09-29: **638/638**.
 - `supabase/tests/v2_phase3_goals.test.sql` — pgTAP, 61 assertions (V2 Phase 3): owner CRUD of
   visions, goals, milestones and mirror items; owner from the session, no spoofing / moving;
   blank / too long / invalid type / invalid status refused; `achieved_at` stamped, kept on archive,
@@ -695,6 +702,7 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `planner_events`            | `20260929114909` | `20260929130241` |
 | `goals_vision_mirror`       | `20260929132309` | `20260929160137` |
 | `goal_milestones_owner_idx` | `20260929152035` | `20260929160140` |
+| `north_star_priorities`     | `20260929162654` | (see PROGRESS)   |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -733,3 +741,20 @@ FKs: `goals (vision_id, owner_id) → vision_items (id, owner_id) on delete set 
 `goal_milestones (goal_id, owner_id) → goals (id, owner_id) on delete cascade`; every `owner_id →
 profiles on delete cascade`. Triggers: `goals_stamp_achieved` (`private.stamp_goal_achieved`,
 INVOKER) and `*_set_updated_at` (the shared `private.set_updated_at`).
+
+## V2 Phase 4 columns (migration `20260929162654_north_star_priorities`)
+
+North Star and Top 3 (docs/NORTH_STAR.md, ADR-060 / ADR-061). Backward compatible (defaulted /
+nullable columns).
+
+| Table                  | Column                              | Rules                                                                                       |
+| ---------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| `vision_items`         | `is_featured boolean default false` | unique `(owner_id) where is_featured`; check not archived; update-only grant                |
+| `goals`                | `is_featured boolean default false` | unique `(owner_id) where is_featured`; check `status = 'active'`; update-only grant         |
+| `accountability_items` | `is_featured boolean default false` | unique `(owner_id) where is_featured`; check `is_active`; update-only grant                 |
+| `daily_tasks`          | `priority_rank smallint null`       | check 1..3; unique `(owner_id, task_date, priority_rank) where not null`; update-only grant |
+
+Trigger `*_keep_one_featured` (`private.keep_one_featured`, INVOKER): leaving the active state drops
+the flag; featuring one item un-features the owner's previous one. Function
+`public.set_my_priorities(p_ids uuid[]) returns setof daily_tasks` (INVOKER): replaces the caller's
+Top 3 of `my_today()`.

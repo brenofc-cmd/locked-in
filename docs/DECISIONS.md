@@ -362,3 +362,21 @@ Status: Accepted.
 Decision: A goal is active, achieved or archived — nothing else — and never shows a percentage or a progress bar. Milestones are shown as a count ("1 de 2 marcos"). `achieved_at` is stamped by the database (set on achieve, cleared on reactivate, kept on archive) so later phases can use it. Real progress will come from Goal → Action → Proof (Phase 5).
 Reason: LOCKED IN is "proof over hype": a number the user types is not proof, and a fake 73 % would make the whole Progress area less trustworthy.
 Status: Accepted.
+
+# ADR-060 — North Star: the user's own words, manual featured + deterministic fallback; no generated content
+
+Decision: Today shows at most one vision, one active goal and one active mirror item, exactly as the user wrote them. The user features one per kind on /goals (`is_featured`, one per owner and table by partial unique index; featuring replaces the previous one in a trigger; leaving the active state drops the flag; an inactive item cannot be featured). Without a featured item a documented, deterministic fallback applies (first active vision / mirror by order; first active goal 90 DIAS → ESTE MÊS → LONGO PRAZO). No random pick, no motivational quote, no AI-generated coaching, recommendation or inferred judgement anywhere; objective facts only (streak, standard, planned tasks, planner). The pick is made on the server from owner-only rows and loaded by /today, not by the app layout; no realtime.
+Reason: The reminder only works if it is the user's own direction; random or generated phrases are noise and erode trust. The fallback makes the card useful on day one while leaving control to the user; the database guarantees the "one" so no client bug can show two.
+Status: Accepted.
+
+# ADR-061 — Top 3 points to real daily tasks (`daily_tasks.priority_rank`)
+
+Decision: The Top 3 is a nullable rank 1..3 on today's `daily_tasks`, unique per owner and date (partial unique index), set only through the INVOKER function `set_my_priorities(ids)` (or a direct update, same constraints). No separate priorities table, no copied title or status. Completion and skip keep the rank; deleting the task removes it; closed days are frozen by the Stage 9 guard; RLS is unchanged (a private task stays private). Nothing is chosen automatically.
+Reason: A second list would drift from the real tasks and double the model; a column on the task keeps one source of truth and inherits ownership, privacy and history rules for free.
+Status: Accepted.
+
+# ADR-062 — The morning is an inline card once per user and local day; device marks are user-scoped
+
+Decision: The Stage 8 full-screen briefing becomes an inline card at the top of Today, shown on the first open of the local day (database `my_today()`), closable, never a modal and never restored; the greeting follows the daypart in the user's timezone. "Already shown" marks live in `locked-in:v2:<userId>:daily` (briefing and weekly notice), validated in `src/lib/resume-state.ts`; the V1 unscoped `li:briefing-shown` / `li:weekly-shown` are removed on first read and never trusted; sign-out clears the user's marks.
+Reason: A blocking screen every morning is irritating and hides Today; a card keeps the task list reachable. Unscoped keys let one account's "already seen" silence another account on the same browser.
+Status: Accepted.

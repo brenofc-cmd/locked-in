@@ -10,8 +10,9 @@ V2 is built in ten phases, each on its own branch, merged to `main` only when VE
 | 1    | Foundation + Restore State            | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md)              |
 | 2    | School Planner + Shared Calendar      | **VERIFIED** | Planner (PRÓXIMOS / CALENDÁRIO, sharing, reminders, Today card, Add to tasks) + Partner Presence 2.0 / last seen (PLANNER.md) |
 | 3    | Goals, Vision & Accountability Mirror | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)          |
-| 4    | North Star + Morning Experience       | NEXT         | Not started                                                                                                                   |
-| 5–10 | —                                     | PENDING      | Defined when each phase starts (Goal → Action → Proof: Phase 5; Web Push: Phase 10)                                           |
+| 4    | North Star + Morning Experience       | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)       |
+| 5    | Goals → Actions → Proof               | NEXT         | Not started                                                                                                                   |
+| 6–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                           |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
 new animations, Web Push, new gamification.

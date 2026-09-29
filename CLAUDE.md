@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 + v2_phase3), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 + v2_phase3 + v2_phase4), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -179,7 +179,14 @@ routing changed; run the pgTAP suite when a migration changed.
   an explicit product decision. Never send `owner_id`; keep the composite FKs (a goal only points at
   the owner's vision, a milestone only lives in the owner's goal). Goal status is only active /
   achieved / archived; never show or store a manual percentage (milestones are a count).
-- Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button (briefing only; partner and
-  connection are real).
+- V2 Phase 4 (docs/NORTH_STAR.md, ADR-060…062): the North Star shows only what the user wrote —
+  never add random, motivational or AI-generated text. One featured item per kind is a database
+  rule (partial unique indexes + `keep_one_featured`); keep the fallback in `pickNorthStar()`. The Top
+  3 is `daily_tasks.priority_rank` (1..3, unique per owner / day) written through
+  `set_my_priorities` — never a second task list, never automatic. The morning card is inline, once
+  per user and day via `setMark` — never a modal, a route or Resume State; device marks are always
+  user-scoped (no `li:*` keys).
+- Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button ("Resumo do dia de novo" clears
+  today's briefing mark; partner and connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without
   checking `design-reference/`.

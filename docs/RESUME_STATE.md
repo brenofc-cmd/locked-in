@@ -119,9 +119,8 @@ still keeps the next user out of it.
 
 ## Legacy keys
 
-V1 keeps two small unscoped keys that are not Resume State: `li:briefing-shown` and
-`li:weekly-shown` (the local date / week a notice was last shown). They hold no user data and are
-unchanged in this phase.
+V1 kept two small unscoped keys: `li:briefing-shown` and `li:weekly-shown`. Since V2 Phase 4 they
+are replaced by the per-user `locked-in:v2:<userId>:daily` (below) and removed on first read.
 
 ## V2 Phase 2 additions
 
@@ -141,3 +140,12 @@ unchanged in this phase.
 - `goals: { section }` (vision / goals / mirror) and `goalDrafts: { vision?, goal?, mirror? }` —
   drafts of a **new** item only, 24 h, validated field by field in `parseResume()`, per user, removed
   on sign-out. Optional fields: `v` stays 1. No goal, vision or mirror data is ever stored.
+
+## V2 Phase 4 additions — daily marks
+
+- `locked-in:v2:<userId>:daily` → `{ v: 1, briefing?: "YYYY-MM-DD", weekly?: "YYYY-MM-DD" }`: the
+  local day the morning card was last shown and the week whose result notice was last offered.
+  Read / written only through `loadMarks` / `setMark` / `clearMark` in `src/lib/resume-state.ts`,
+  validated (dates only), per user, cleared on sign-out with the rest.
+- The unscoped `li:briefing-shown` / `li:weekly-shown` are removed on first read and never trusted.
+- The morning card is **not** Resume State: it is not a route, never restored once closed.

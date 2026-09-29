@@ -205,3 +205,21 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - Verified: pgTAP `v2_phase3_goals` (61) + the full suite on DEV (581/581), e2e `v2-phase3` (partner
   and outsider read / change nothing via the API, IDOR, spoofing). Advisors: one new INFO finding
   (unindexed `goal_milestones.owner_id`) fixed by `…152035_goal_milestones_owner_idx`.
+
+## V2 Phase 4 — North Star and the Top 3 (2026-09-29)
+
+- `is_featured` on `vision_items`, `goals`, `accountability_items`: update-only grant (not on
+  insert), owner-only RLS unchanged; one per owner and table by partial unique index (not only the
+  trigger — the pgTAP disables the trigger and still gets `23505`); an archived / achieved / inactive
+  item cannot be featured (check constraint). Trigger `private.keep_one_featured` is INVOKER, not
+  callable, and only updates rows of `new.owner_id`.
+- `daily_tasks.priority_rank`: update-only grant, check 1..3, unique per owner and date; RLS and the
+  Stage 9 history guard unchanged (a closed day's Top 3 is frozen; a private task stays private — for
+  a shared task the partner could read the rank like any other column of that row, no partner screen
+  shows it). `public.set_my_priorities(uuid[])` is INVOKER: only my tasks of my today, at most 3,
+  distinct; `execute` for `authenticated` only.
+- No new SECURITY DEFINER function (stage 9 asserts the reviewed set); no broadcast, no feed event.
+- Device marks (`locked-in:v2:<userId>:daily`) hold two dates only; the unscoped V1 keys are removed.
+- Verified: pgTAP `v2_phase4_north_star` (57) + the full suite on DEV (638/638); e2e `v2-phase4`
+  (private priority invisible to the partner through the API and the UI, partner / outsider cannot
+  set or clear A's Top 3).

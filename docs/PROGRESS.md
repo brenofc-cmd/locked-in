@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 3 — Goals, Vision & Accountability Mirror — VERIFIED (2026-09-29); next: Phase 4 — North Star + Morning Experience (not started)
+LOCKED IN V2 — Phase 4 — North Star + Morning Experience — VERIFIED (2026-09-29); next: Phase 5 — Goals → Actions → Proof (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -19,6 +19,48 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
   had just expired (refresh race between the proxy and the layout). Not reproduced in e2e; not
   fixed in Phase 3 (does not block tests). Next step: reproduce with an expired token and check the
   cookie refresh path in `src/lib/supabase/proxy.ts` → `loadAppData()`.
+
+## Phase 4 — North Star + Morning Experience — VERIFIED (2026-09-29)
+
+Scope: docs/NORTH_STAR.md, ADR-060 / ADR-061 / ADR-062. Branch `v2-phase-4-north-star-morning`.
+
+Done:
+
+- **LEMBRE-SE DO PORQUÊ** on Today (side column; after the tasks on a phone): 1 vision, 1 active
+  goal ("META ATUAL"), 1 mirror item — featured, else the documented fallback; partial data shows
+  only what exists; empty → DEFINA SUA DIREÇÃO → /goals; GERENCIAR → /goals; compact + "Ver tudo"
+- /goals: ◇ / ◆ "Destacar no Hoje" on every active vision, goal and mirror item, EM DESTAQUE label;
+  one per kind (database); archive / achieve / deactivate drops it
+- **TOP 3 DE HOJE**: up to three of today's real tasks (`priority_rank`), DEFINIR / EDITAR sheet
+  (pick in order, ↑ / ↓, ×, SALVAR), task options "Marcar como prioridade" / "Remover" and "JÁ HÁ 3
+  PRIORIDADES — substituir qual?"; completed / skipped stay; nothing automatic
+- **Morning card** (replaces the Stage 8 full-screen briefing): inline, first open of the local day
+  per user, real facts (streak, PADRÃO, tasks, yesterday), the North Star, Top 3 progress / DEFINIR
+  TOP 3, the next planner event, the partner's Presence 2.0 status; COMEÇAR O DIA / × (keyboard),
+  "Mostrar toda manhã"; greeting by daypart in the user's timezone (header too)
+- Device marks per user (`locked-in:v2:<userId>:daily`), V1 `li:briefing-shown` / `li:weekly-shown`
+  removed; the weekly-result notice uses the same mark; the DEV panel can clear the briefing mark
+- Migration `20260929162654_north_star_priorities` (backward compatible; no DEFINER)
+
+Verified (2026-09-29, DEV):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm audit` — 0 vulnerabilities
+- `npm test` — 14 files, **224 passed** (north-star 26 new: selection, fallbacks, exclusions, daypart
+  boundaries, UTC+14 / UTC-11 / DST / 23:59 → 00:00, next event, Top 3 helpers, user-scoped marks,
+  legacy keys, blocked storage)
+- pgTAP on DEV (all 34 migrations): stage 3 51, stage 4 72, stage 5 40, stage 6 63, stage 7 78,
+  stage 8 84, stage 9 69, v2 phase 2 63, v2 phase 3 61, v2 phase 4 57 — **638/638**, FAILED=0
+- `npm run test:e2e` — see the final run below; Phase 4 spec 11 / 11 (axe included) at 390 and at
+  375, 430, 768, 1180, 1440: 55 / 55
+- Screens checked at 390 and 1440 (morning card open / closed, Top 3 sheet, /goals)
+- Fixed during the run: V1 greeting tests expected "BOM DIA" at any hour (now any daypart); the
+  Stage 8 briefing test follows the inline card; Phase 3 row selectors exclude the new ◇ buttons;
+  Phase 2 "· VISTO …" on the desktop partner card had too little contrast (`text-faint` →
+  `text-dim`, axe wcag2aa)
+- Scope decisions: the North Star lives after the tasks on a phone (task list first); while the
+  morning card is open it repeats the North Star lines (the card is the "start of the day", the side
+  card the permanent reference)
 
 ## Phase 3 — Goals, Vision & Accountability Mirror — VERIFIED (2026-09-29)
 

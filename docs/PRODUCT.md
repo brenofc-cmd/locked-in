@@ -89,3 +89,11 @@ More → **Metas & Visão**: VISÃO (the life you want to build), METAS (90 dias
 optionally linked to a vision; concluded and archived kept) and ESPELHO (what you need to face). Direction,
 not daily execution: no percentages, no streaks, no competition, and private to you — nothing is shared
 with the partner.
+
+### V2 Phase 4 — Lembre-se do porquê
+
+Today now reminds you why: **LEMBRE-SE DO PORQUÊ** shows your vision, your current goal and one
+mirror item — what you wrote, the one you chose (◆ on Metas & Visão) or a predictable default.
+**TOP 3 DE HOJE**: pick up to three of today's tasks that matter most; done or skipped, they stay
+there. The first open of the day brings a short **morning card** (inline, never blocking) with your
+streak, standard, today's tasks, the Top 3 and the next school event. No quotes, no AI coach.
