@@ -146,6 +146,14 @@ export default defineConfig({
         viewport: { width: 1440, height: 900 },
       },
     },
+    // V2 Phase 2 — presence / last seen and the planner (2–3 browsers,
+    // Alice / Bruno / Carla again), after Phase 1.
+    {
+      name: "v2p2-390",
+      testMatch: /v2-phase2\.spec\.ts/,
+      dependencies: ["v2-1440"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
