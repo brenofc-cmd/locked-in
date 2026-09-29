@@ -123,6 +123,7 @@ async function clearPlanner(api: Api) {
 }
 
 test.beforeAll(async () => {
+  test.setTimeout(120_000); // resets several DEV users
   A = await apiAs(users.a);
   B = await apiAs(users.b);
   C = await apiAs(users.c);

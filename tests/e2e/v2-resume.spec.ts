@@ -129,6 +129,7 @@ async function oneTaskToday(api: Api, title: string) {
 }
 
 test.beforeAll(async () => {
+  test.setTimeout(120_000); // resets several DEV users
   A = await apiAs(users.a);
   B = await apiAs(users.b);
   aId = (await A.auth.getUser()).data.user!.id;
