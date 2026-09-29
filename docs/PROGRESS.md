@@ -53,6 +53,21 @@ Verified (2026-09-29, DEV, clean `.next`):
   `dev_*` function, nothing for anon, trigger functions not callable, INVOKER heartbeat; pgTAP
   `v2_phase2_presence_planner` **63/63** on PROD (rolled back; no leftover user, row or extension);
   advisors unchanged (the accepted 0029 items + leaked-password protection, a manual gate)
+- **Production (2026-09-29)**: `main` fast-forwarded to `db8751e`, Vercel Production deployment
+  `success`. Smoke on https://locked-in-rust.vercel.app with the real signed-in account (Chrome,
+  1440): Planner and sidebar / More entry load; a shared exam created (listed under HOJE, bound to the
+  duo, one `planner_changed` with ids only, no title in any payload) and its in-app reminder toast
+  shown; a private homework created (no duo, no broadcast); the real partner's RLS view (simulated
+  read-only session) returns only the shared event; the shared event edited (`update` broadcast);
+  calendar day `29 de setembro, 2 eventos`; Today PRÓXIMOS card; ADICIONAR ÀS TAREFAS opened
+  Quick Add pre-filled and the task was created only on confirm; then the task and both events were
+  deleted through the UI (`delete` broadcast for the shared one only) — PROD left with 0 test
+  events / tasks / feed lines. **Not verified in production** (needs both people on their own
+  devices; covered by the e2e with real browsers and sockets): live ONLINE → last seen → ONLINE → EM
+  FOCO between two users, the partner seeing planner changes live, and the heartbeat (the automation
+  window was not visible, so — correctly — no heartbeat was sent; `user_presence` is empty until
+  each of you opens the new version). The first load after an hour idle returned a server error once
+  (a single 401 on the V1 feed read with an expired session token), fine on reload — see warnings
 - Fixed during the run (tests only): stage6 read A's sessions with a 400-id `in()` list that
   exceeded the URL limit as DEV history grew → now by owner; the `/` restore assertions get 15 s
   under a full-suite load; the V2 `beforeAll` resets get 120 s
