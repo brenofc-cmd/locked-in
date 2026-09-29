@@ -55,6 +55,14 @@ Verified (2026-09-29, DEV, clean `.next`):
   new indexes, composite FKs, DEFINER count unchanged (18), no `dev_*`, nothing for anon, trigger
   functions not callable; pgTAP `v2_phase3_goals` **61/61** on PROD (rolled back, no leftover);
   advisors: no new finding
+- **Production (2026-09-29)**: `main` fast-forwarded to `fb9291f`, Vercel Production deployment
+  success; `/goals` signed out → 307 to sign-in. Smoke in the real app (owner account, `[teste V3]`
+  data): vision created (draft kept after closing the sheet, restored on reopen), 90-day goal linked
+  to it → MARCAR COMO CONCLUÍDA (CONCLUÍDAS, `achieved_at` set), monthly goal created → edited →
+  archived (ARQUIVADAS), mirror item created; `/` restored `/goals` with ESPELHO open. Security smoke
+  on PROD (read-only, simulated sessions): the real partner and a random outsider read **0** rows
+  from all four tables. Cleanup as the owner through RLS: deleting the vision unlinked its goal
+  (`set null`), then goals and the mirror item removed — PROD goals tables left with 0 rows
 - Fixed during the run (tests only): V1 `openToday` got the 15 s restore allowance already used by
   the V2 specs (`/` → `/today` under a loaded run); V1 focus test read the paused clock before the
   pause write was confirmed (intermittent 24:59 vs 24:58) → waits for the write now
