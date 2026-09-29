@@ -5,7 +5,11 @@
  * service worker, nothing while the app is closed. Pure and unit-tested.
  */
 export type NotificationKind =
-  "partner_activity" | "reaction" | "task_reminder" | "weekly_review";
+  | "partner_activity"
+  | "reaction"
+  | "task_reminder"
+  | "weekly_review"
+  | "planner_reminder";
 
 export type NotificationPrefs = {
   partnerActivity: boolean;
@@ -40,6 +44,8 @@ const PREF: Record<NotificationKind, keyof NotificationPrefs> = {
   partner_activity: "partnerActivity",
   reaction: "reactions",
   task_reminder: "taskReminders",
+  // V2 Phase 2: planner reminders follow the same "Lembretes" preference.
+  planner_reminder: "taskReminders",
   weekly_review: "weeklyReview",
 };
 

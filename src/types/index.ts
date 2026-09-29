@@ -1,3 +1,4 @@
+import type { PlannerEvent } from "@/lib/planner";
 export type Day = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 
 /** Stored values (daily_tasks / routine_items.category). Labels: CATEGORY_LABEL. */
@@ -116,7 +117,7 @@ export type FocusState = {
 export type ConnectionState = "connected" | "reconnecting" | "offline";
 
 export type Sheet =
-  | { kind: "add"; repeat?: boolean }
+  | { kind: "add"; repeat?: boolean; prefill?: string }
   | { kind: "edit"; taskId: string }
   | { kind: "editRoutine"; routineId: string }
   | { kind: "options"; taskId: string }
@@ -125,7 +126,9 @@ export type Sheet =
   | { kind: "streak" }
   | { kind: "day"; date: string }
   | { kind: "template" }
-  | { kind: "challenge" };
+  | { kind: "challenge" }
+  /** V2 Phase 2: new (optional date) or existing planner event. */
+  | { kind: "planner"; event?: PlannerEvent; date?: string };
 
 export type Overlay =
   | { kind: "review" }

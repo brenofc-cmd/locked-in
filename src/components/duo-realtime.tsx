@@ -97,6 +97,8 @@ function useDuoRealtimeValue(initial: DuoData) {
   );
   /** Bumped when the duo's challenges change or its progress may have. */
   const [challengesVersion, setChallengesVersion] = useState(0);
+  /** V2 Phase 2: bumped by planner_changed (a shared event changed). */
+  const [plannerVersion, setPlannerVersion] = useState(0);
   const [partnerCounts, setPartnerCounts] = useState(() => ({
     done: initial.partnerDay?.done ?? 0,
     total: initial.partnerDay?.total ?? 0,
@@ -285,6 +287,10 @@ function useDuoRealtimeValue(initial: DuoData) {
         .on("broadcast", { event: "challenges_changed" }, () => {
           setChallengesVersion((v) => v + 1);
         })
+        // Ids and the operation only; the planner re-reads through RLS.
+        .on("broadcast", { event: "planner_changed" }, ({ payload }) => {
+          if (payload.actor_id !== me.id) setPlannerVersion((v) => v + 1);
+        })
         .on("broadcast", { event: "duo_joined" }, ({ payload }) => {
           duoListeners.current.forEach((l) =>
             l("joined", payload.actor_id === me.id),
@@ -444,6 +450,7 @@ function useDuoRealtimeValue(initial: DuoData) {
     onPartnerReaction,
     onDuoChange,
     challengesVersion,
+    plannerVersion,
     flashAt,
     onMyFocus,
     addLocalCompletion,

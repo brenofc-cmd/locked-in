@@ -31,6 +31,7 @@ const MAIN_NAV = [
 ];
 
 const SUB_NAV = [
+  { href: "/planner", label: t.pageTitles.planner },
   { href: "/routine", label: t.pageTitles.routine },
   { href: "/challenges", label: t.pageTitles.challenges },
   { href: "/duo", label: t.pageTitles.duo },

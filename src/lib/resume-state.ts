@@ -16,6 +16,12 @@
  */
 import { CATEGORIES } from "@/lib/task-model";
 import { DAYS } from "@/lib/local-date";
+import {
+  EVENT_TYPES,
+  REMINDERS,
+  type EventType,
+  type Reminder,
+} from "@/lib/planner";
 import type { Range } from "@/lib/progress";
 import type { Category, Day } from "@/types";
 
@@ -44,6 +50,7 @@ export const RESTORABLE_ROUTES = [
   "/challenges",
   "/duo",
   "/settings",
+  "/planner",
 ] as const;
 export type RestorableRoute = (typeof RESTORABLE_ROUTES)[number];
 
@@ -53,6 +60,7 @@ export const SCROLL_ROUTES: readonly string[] = [
   "/partner",
   "/progress",
   "/routine",
+  "/planner",
 ];
 
 export const FALLBACK_ROUTE = "/today";
@@ -74,12 +82,34 @@ export type TaskDraft = {
   updatedAt: number;
 };
 
+/** V2 Phase 2: the fields of an unsent NEW planner event (never an edit). */
+export type PlannerDraft = {
+  title: string;
+  type: EventType;
+  subject: string;
+  date: string;
+  time: string;
+  notes: string;
+  important: boolean;
+  shared: boolean;
+  reminder: Reminder;
+  updatedAt: number;
+};
+
+export type PlannerView = "upcoming" | "calendar";
+
+/**
+ * Fields added in V2 Phase 2 (planner, plannerDraft) are optional and
+ * validated like the rest, so a Phase 1 value stays valid and `v` stays 1.
+ */
 export type ResumeState = {
   v: typeof RESUME_VERSION;
   lastRoute?: { path: RestorableRoute; at: number };
   progress?: { range?: Range; month?: string };
   scroll?: Record<string, { y: number; at: number }>;
   drafts?: Partial<Record<DraftKind, TaskDraft>>;
+  planner?: { view?: PlannerView; month?: string };
+  plannerDraft?: PlannerDraft;
 };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -174,6 +204,50 @@ function parseDraft(x: unknown, now: number): TaskDraft | undefined {
   };
 }
 
+const DATE_ISO = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+function parsePlannerDraft(x: unknown, now: number): PlannerDraft | undefined {
+  if (!isRecord(x) || !isTime(x.updatedAt, now)) return undefined;
+  if (now - x.updatedAt > DRAFT_TTL_MS) return undefined;
+  const {
+    title,
+    type,
+    subject,
+    date,
+    time,
+    notes,
+    important,
+    shared,
+    reminder,
+  } = x;
+  if (
+    typeof title !== "string" ||
+    !(EVENT_TYPES as readonly unknown[]).includes(type) ||
+    typeof subject !== "string" ||
+    typeof date !== "string" ||
+    !(date === "" || DATE_ISO.test(date)) ||
+    typeof time !== "string" ||
+    !TIME.test(time) ||
+    typeof notes !== "string" ||
+    typeof important !== "boolean" ||
+    typeof shared !== "boolean" ||
+    !(REMINDERS as readonly unknown[]).includes(reminder)
+  )
+    return undefined;
+  return {
+    title: title.slice(0, NAME_MAX),
+    type: type as EventType,
+    subject: subject.slice(0, 40),
+    date,
+    time,
+    notes: notes.slice(0, NOTES_MAX),
+    important,
+    shared,
+    reminder: reminder as Reminder,
+    updatedAt: x.updatedAt,
+  };
+}
+
 /**
  * Validates any JSON value into a ResumeState: unknown keys are dropped,
  * invalid fields are dropped one by one, expired drafts / scroll offsets and
@@ -228,6 +302,16 @@ export function parseResume(raw: unknown, now = Date.now()): ResumeState {
     }
     if (Object.keys(d).length) out.drafts = d;
   }
+
+  if (isRecord(raw.planner)) {
+    const p: NonNullable<ResumeState["planner"]> = {};
+    const { view, month } = raw.planner;
+    if (view === "upcoming" || view === "calendar") p.view = view;
+    if (typeof month === "string" && MONTH.test(month)) p.month = month;
+    if (p.view || p.month) out.planner = p;
+  }
+  const pd = parsePlannerDraft(raw.plannerDraft, now);
+  if (pd) out.plannerDraft = pd;
   return out;
 }
 
@@ -239,6 +323,7 @@ export function serializeResume(state: ResumeState): string {
     v: state.v,
     lastRoute: state.lastRoute,
     progress: state.progress,
+    planner: state.planner,
   });
   return json.length <= MAX_BYTES ? json : JSON.stringify(EMPTY);
 }
@@ -298,6 +383,7 @@ export function clearResume(
   if (!key || !storage) return;
   try {
     storage.removeItem(key);
+    storage.removeItem(remindedKey(userId)!);
     log("cleared");
   } catch {
     // Storage blocked: nothing was stored either.
@@ -411,4 +497,106 @@ export function clearDraft(
     Date.now(),
     storage,
   );
+}
+
+// ------------------------------------------------------------ planner (V2.2)
+
+export function rememberPlanner(
+  userId: string,
+  patch: { view?: PlannerView; month?: string },
+  now = Date.now(),
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  updateResume(
+    userId,
+    (s) => ({ ...s, planner: { ...s.planner, ...patch } }),
+    now,
+    storage,
+  );
+}
+
+/** Saves the new-event draft; a form without a title or notes removes it. */
+export function savePlannerDraft(
+  userId: string,
+  draft: Omit<PlannerDraft, "updatedAt">,
+  now = Date.now(),
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  const empty = !draft.title.trim() && !draft.notes.trim();
+  updateResume(
+    userId,
+    (s) => {
+      const next = { ...s };
+      if (empty) delete next.plannerDraft;
+      else next.plannerDraft = { ...draft, updatedAt: now };
+      return next;
+    },
+    now,
+    storage,
+  );
+}
+
+export function loadPlannerDraft(
+  userId: string,
+  now = Date.now(),
+  storage: StorageLike | null = defaultStorage(),
+): PlannerDraft | null {
+  return loadResume(userId, now, storage).plannerDraft ?? null;
+}
+
+export function clearPlannerDraft(
+  userId: string,
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  updateResume(
+    userId,
+    (s) => {
+      const next = { ...s };
+      delete next.plannerDraft;
+      return next;
+    },
+    Date.now(),
+    storage,
+  );
+}
+
+/**
+ * Planner reminders already shown on this device ("<eventId>:<due date>"),
+ * so a reminder appears once. Per user, cleared on sign-out, at most 200.
+ */
+export function remindedKey(userId: string): string | null {
+  return USER_ID.test(userId)
+    ? `${NAMESPACE}:${userId.toLowerCase()}:planner-reminded`
+    : null;
+}
+
+export function loadReminded(
+  userId: string,
+  storage: StorageLike | null = defaultStorage(),
+): string[] {
+  const key = remindedKey(userId);
+  if (!key || !storage) return [];
+  try {
+    const raw: unknown = JSON.parse(storage.getItem(key) ?? "[]");
+    return Array.isArray(raw)
+      ? raw.filter((x): x is string => typeof x === "string").slice(-200)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function markReminded(
+  userId: string,
+  ids: string[],
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  const key = remindedKey(userId);
+  if (!key || !storage || !ids.length) return;
+  try {
+    const next = [...new Set([...loadReminded(userId, storage), ...ids])];
+    storage.setItem(key, JSON.stringify(next.slice(-200)));
+  } catch {
+    // Storage blocked: the reminder may show again next time, never an error.
+  }
 }

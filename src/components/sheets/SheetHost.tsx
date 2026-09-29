@@ -11,6 +11,7 @@ import {
   StreakSheet,
   TemplateSheet,
 } from "@/components/sheets/MiscSheets";
+import { PlannerSheet } from "@/components/sheets/PlannerSheet";
 import { Sheet } from "@/components/sheets/Sheet";
 import {
   TaskFormSheet,
@@ -26,7 +27,9 @@ export function SheetHost() {
   let body: ReactNode = null;
   switch (sheet.kind) {
     case "add":
-      body = <TaskFormSheet repeatByDefault={sheet.repeat} />;
+      body = (
+        <TaskFormSheet repeatByDefault={sheet.repeat} prefill={sheet.prefill} />
+      );
       break;
     case "edit":
     case "options": {
@@ -64,13 +67,20 @@ export function SheetHost() {
     case "challenge":
       body = <ChallengeSheet />;
       break;
+    case "planner":
+      body = <PlannerSheet event={sheet.event} date={sheet.date} />;
+      break;
   }
 
   // key: switching between sheets (options → edit) remounts the content.
   return (
     <Sheet
       key={JSON.stringify(sheet)}
-      label={LABEL[sheet.kind]}
+      label={
+        sheet.kind === "planner" && sheet.event && !sheet.event.mine
+          ? LABEL.plannerView
+          : LABEL[sheet.kind]
+      }
       onClose={closeSheet}
     >
       {body}

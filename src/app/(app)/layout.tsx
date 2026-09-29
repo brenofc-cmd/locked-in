@@ -21,6 +21,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           initialTasks={data.tasks}
           initialFocus={data.focus}
           initialProgress={data.progress}
+          initialPlanner={data.planner}
         >
           <AppShell>{children}</AppShell>
         </AppStateProvider>

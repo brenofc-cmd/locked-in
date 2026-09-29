@@ -20,6 +20,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { clearReaction, setReaction } from "@/app/(app)/social-actions";
 import { updateDisplayName } from "@/app/(app)/actions";
 import { useHeartbeat } from "@/components/use-heartbeat";
+import { usePlanner } from "@/components/use-planner";
+import type { PlannerRow } from "@/lib/planner";
 import { useDuoRealtime } from "@/components/duo-realtime";
 import { useSession } from "@/components/session";
 import { useFocus } from "@/components/use-focus";
@@ -74,6 +76,7 @@ function useAppStateValue(
   initialTasks: TasksData,
   initialFocus: InitialFocus,
   initialProgress: ProgressData,
+  initialPlanner: PlannerRow[],
 ) {
   const pathname = usePathname();
   const router = useRouter();
@@ -255,6 +258,18 @@ function useAppStateValue(
     },
     [toast, timeZone],
   );
+
+  // ---- planner: REAL (V2 Phase 2, use-planner.ts) ----------------------------
+
+  const planner = usePlanner({
+    initial: initialPlanner,
+    me: session.me.id,
+    today: real.today,
+    timeZone,
+    version: rt.plannerVersion,
+    notify,
+    toast,
+  });
 
   // ---- reactions: REAL (Stage 8) --------------------------------------------
 
@@ -590,6 +605,7 @@ function useAppStateValue(
     pop: real.pop,
     flash: real.flash,
     now,
+    ...planner,
   };
 }
 
@@ -601,14 +617,21 @@ export function AppStateProvider({
   initialTasks,
   initialFocus,
   initialProgress,
+  initialPlanner,
   children,
 }: {
   initialTasks: TasksData;
   initialFocus: InitialFocus;
   initialProgress: ProgressData;
+  initialPlanner: PlannerRow[];
   children: ReactNode;
 }) {
-  const value = useAppStateValue(initialTasks, initialFocus, initialProgress);
+  const value = useAppStateValue(
+    initialTasks,
+    initialFocus,
+    initialProgress,
+    initialPlanner,
+  );
   return (
     <AppStateContext.Provider value={value}>
       {children}

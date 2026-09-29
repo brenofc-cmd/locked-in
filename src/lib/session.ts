@@ -2,6 +2,9 @@ import { t } from "@/i18n/pt-BR";
 import { loadDuoData, type DuoData } from "@/lib/duo-data";
 import { loadFocusData, type FocusData } from "@/lib/focus-data";
 import type { ProgressData } from "@/lib/progress";
+import { addDays } from "@/lib/local-date";
+import { UPCOMING_DAYS, type PlannerRow } from "@/lib/planner";
+import { loadPlannerRows } from "@/lib/planner-data";
 import { loadProgress } from "@/lib/progress-data";
 import { settingsFromRow, type UserSettings } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -47,6 +50,8 @@ export type AppData = {
   duo: DuoData;
   focus: FocusData & { serverNow: number };
   progress: ProgressData;
+  /** V2 Phase 2: planner events from today to today + UPCOMING_DAYS. */
+  planner: PlannerRow[];
 };
 
 /**
@@ -88,23 +93,36 @@ export async function loadAppData(): Promise<AppData | null> {
   }
 
   // Progress after the tasks: both materialise today's routine first.
-  const tasksAndProgress = loadTasks().then(async (tasks) => ({
-    tasks,
-    progress: await loadProgress(supabase),
-  }));
-
-  const [profiles, duos, members, settings, { tasks, progress }, duo, focus] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, display_name, timezone, created_at"),
-      supabase.from("duos").select("id, invite_code").maybeSingle(),
-      supabase.from("duo_members").select("user_id, joined_at"),
-      supabase.from("user_settings").select("*").maybeSingle(),
-      tasksAndProgress,
-      loadDuoData(supabase, userId),
-      loadFocusData(supabase),
+  const tasksAndProgress = loadTasks().then(async (tasks) => {
+    const [progress, planner] = await Promise.all([
+      loadProgress(supabase),
+      // V2 Phase 2: the upcoming window (Today card, reminders, Planner).
+      loadPlannerRows(
+        supabase,
+        tasks.today,
+        addDays(tasks.today, UPCOMING_DAYS),
+      ),
     ]);
+    return { tasks, progress, planner };
+  });
+
+  const [
+    profiles,
+    duos,
+    members,
+    settings,
+    { tasks, progress, planner },
+    duo,
+    focus,
+  ] = await Promise.all([
+    supabase.from("profiles").select("id, display_name, timezone, created_at"),
+    supabase.from("duos").select("id, invite_code").maybeSingle(),
+    supabase.from("duo_members").select("user_id, joined_at"),
+    supabase.from("user_settings").select("*").maybeSingle(),
+    tasksAndProgress,
+    loadDuoData(supabase, userId),
+    loadFocusData(supabase),
+  ]);
   if (profiles.error || duos.error || members.error || settings.error) {
     throw new Error(t.loadErrors.account);
   }
@@ -149,5 +167,6 @@ export async function loadAppData(): Promise<AppData | null> {
     // Database clock at render: the client derives its display offset from it.
     focus: { ...focus, serverNow: Date.now() + focus.dbOffset },
     progress,
+    planner,
   };
 }
