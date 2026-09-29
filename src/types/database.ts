@@ -293,6 +293,72 @@ export type Database = {
           },
         ];
       };
+      planner_events: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          duo_id: string | null;
+          event_date: string;
+          event_time: string | null;
+          event_type: string;
+          id: string;
+          owner_id: string;
+          priority: string;
+          reminder_days_before: number | null;
+          shared_with_partner: boolean;
+          subject: string | null;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          duo_id?: string | null;
+          event_date: string;
+          event_time?: string | null;
+          event_type: string;
+          id?: string;
+          owner_id?: string;
+          priority?: string;
+          reminder_days_before?: number | null;
+          shared_with_partner?: boolean;
+          subject?: string | null;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          duo_id?: string | null;
+          event_date?: string;
+          event_time?: string | null;
+          event_type?: string;
+          id?: string;
+          owner_id?: string;
+          priority?: string;
+          reminder_days_before?: number | null;
+          shared_with_partner?: boolean;
+          subject?: string | null;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "planner_events_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "planner_events_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -381,6 +447,29 @@ export type Database = {
             foreignKeyName: "routine_items_owner_id_fkey";
             columns: ["owner_id"];
             isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_presence: {
+        Row: {
+          last_seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          last_seen_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          last_seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
@@ -664,6 +753,7 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
       };
+      touch_last_seen: { Args: never; Returns: string };
       update_routine_item: {
         Args: {
           p_category: string;
