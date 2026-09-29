@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { t } from "@/i18n/pt-BR";
 import {
   expect,
@@ -370,6 +371,39 @@ test("10: / reopens /goals on the mirror", async ({ browser }) => {
     "true",
   );
   await expect(a.page.getByText("Perco foco com o celular.")).toBeVisible();
+  expect(a.errors).toEqual([]);
+  await a.context.close();
+});
+
+test("11: accessibility — no serious or critical axe violation on /goals and its forms", async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const a = await open(browser, users.a, "/goals");
+  const report: string[] = [];
+  const scan = async (where: string) => {
+    const { violations } = await new AxeBuilder({ page: a.page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    for (const v of violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    ))
+      report.push(
+        `${where} ${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`,
+      );
+  };
+  for (const s of ["vision", "goals", "mirror"] as const) {
+    await section(a.page, s).click();
+    await a.page.waitForTimeout(300);
+    await scan(s);
+  }
+  await section(a.page, "goals").click();
+  await a.page.getByRole("button", { name: t.goals.addGoal }).click();
+  await expect(titleField(a.page)).toBeFocused(); // focus moves into the dialog
+  await scan("goal form");
+  await a.page.keyboard.press("Escape");
+  await expect(dialog(a.page)).toHaveCount(0);
+  expect(report).toEqual([]);
   expect(a.errors).toEqual([]);
   await a.context.close();
 });
