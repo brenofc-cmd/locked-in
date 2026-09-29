@@ -188,3 +188,20 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - Advisors after the migrations (DEV): no new finding (same items as the Stage 9 table above).
 - Verified: pgTAP `v2_phase2_presence_planner` (63) + full suite on DEV (520/520), e2e `v2-phase2`
   (API attacks by the partner and an outsider, old duo → new duo).
+
+## V2 Phase 3 — goals, vision and the mirror (2026-09-29)
+
+| Table                  | RLS | anon | Owner                                                          | Partner / outsider |
+| ---------------------- | --- | ---- | -------------------------------------------------------------- | ------------------ |
+| `vision_items`         | on  | —    | S · I / U (title, description, sort_order, is_archived) · D    | —                  |
+| `goals`                | on  | —    | S · I / U (no owner_id / achieved_at grant) · D                | —                  |
+| `goal_milestones`      | on  | —    | S · I / U (goal_id insert only; title, is_completed, sort) · D | —                  |
+| `accountability_items` | on  | —    | S · I / U (text, is_active, sort_order) · D                    | —                  |
+
+- Owner-only policies, no partner / duo condition, no broadcast, no realtime, no DEFINER function
+  (the reviewed DEFINER set is unchanged). `owner_id` is never granted.
+- IDOR impossible by composite foreign keys (`goals (vision_id, owner_id)`, `goal_milestones
+(goal_id, owner_id)`): pointing at another user's vision / goal fails with `23503`.
+- Verified: pgTAP `v2_phase3_goals` (61) + the full suite on DEV (581/581), e2e `v2-phase3` (partner
+  and outsider read / change nothing via the API, IDOR, spoofing). Advisors: one new INFO finding
+  (unindexed `goal_milestones.owner_id`) fixed by `…152035_goal_milestones_owner_idx`.

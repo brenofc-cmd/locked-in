@@ -522,7 +522,7 @@ planned_seconds, paused_at, accumulated_pause_seconds` — never the reflection,
 history. Outsiders get nothing. Focus errors: `LI_FOCUS_RUNNING`, `LI_FOCUS_FINISHED`,
 `LI_NOT_FOUND`, `LI_NOT_AUTHENTICATED` (mapped by `focusErrorMessage()` in `src/lib/focus.ts`).
 
-RLS is enabled on all twelve tables (V2 Phase 2 adds `user_presence`, `planner_events`), and on `realtime.messages` (Realtime Authorization, see
+RLS is enabled on all sixteen tables (V2 Phase 2 adds `user_presence`, `planner_events`; V2 Phase 3 adds `vision_items`, `goals`, `goal_milestones`, `accountability_items`), and on `realtime.messages` (Realtime Authorization, see
 REALTIME.md).
 
 | Policy                                                                | Table             | Rule                                                                                                     |
@@ -594,6 +594,13 @@ migrations already grant explicitly; keep doing so.
   broadcast), templates (dedupe, double click), duo end (atomic, third party untouched, personal
   history kept, old duo data gone, broadcast), a new partner seeing nothing of the old duo, grants.
 
+- `supabase/tests/v2_phase3_goals.test.sql` — pgTAP, 61 assertions (V2 Phase 3): owner CRUD of
+  visions, goals, milestones and mirror items; owner from the session, no spoofing / moving;
+  blank / too long / invalid type / invalid status refused; `achieved_at` stamped, kept on archive,
+  cleared on reactivate, not writable; IDOR (goal → another user's vision, milestone → another user's
+  goal) refused; partner, outsider and anon see / change nothing; deleting a vision unlinks its goals,
+  deleting a goal removes its milestones; RLS on, anon nothing, owner-only policies, no DEFINER, no
+  sharing or percentage column. Full DEV run 2026-09-29: **581/581**.
 - `supabase/tests/v2_phase2_presence_planner.test.sql` — pgTAP, 63 assertions (V2 Phase 2): last
   seen (database clock, one row per user, no update / insert / delete for someone else, no spoofed
   time or user id, partner reads, outsider / no duo / anon nothing, old partner loses it, new partner
@@ -681,11 +688,13 @@ Migrations are applied with the Supabase MCP (`apply_migration`), which stamps t
 time of application. The repository files carry the DEV versions; PROD has the same SQL under its own
 versions. Never re-apply a migration to fix a version and never edit `supabase_migrations` by hand.
 
-| Migration (name)          | Repository / DEV | PROD             |
-| ------------------------- | ---------------- | ---------------- |
-| V1 (29 files)             | identical        | identical        |
-| `user_presence_last_seen` | `20260929114849` | `20260929130221` |
-| `planner_events`          | `20260929114909` | `20260929130241` |
+| Migration (name)            | Repository / DEV | PROD             |
+| --------------------------- | ---------------- | ---------------- |
+| V1 (29 files)               | identical        | identical        |
+| `user_presence_last_seen`   | `20260929114849` | `20260929130221` |
+| `planner_events`            | `20260929114909` | `20260929130241` |
+| `goals_vision_mirror`       | `20260929132309` | (see PROGRESS)   |
+| `goal_milestones_owner_idx` | `20260929152035` | (see PROGRESS)   |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -708,3 +717,19 @@ trims, keeps `owner_id`, derives `duo_id` from sharing, `LI_PLANNER_NO_PARTNER`;
 turns the event private), `planner_events_set_updated_at`, `planner_events_broadcast`
 (`private.sync_planner_event`, DEFINER). Indexes `(owner_id, event_date)`, partial
 `(duo_id, event_date) where duo_id is not null`. FK `duo_id → duos on delete set null`.
+
+## V2 Phase 3 tables (migrations `20260929132309_goals_vision_mirror`, `20260929152035_goal_milestones_owner_idx`)
+
+Private to the owner (docs/GOALS.md, ADR-058 / ADR-059).
+
+| Table                  | Columns                                                                                                                                         | Indexes                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `vision_items`         | id, owner_id, title (1–120), description (≤ 1000), sort_order, is_archived, timestamps; unique (id, owner_id)                                   | (owner_id, is_archived, sort_order)                  |
+| `goals`                | id, owner_id, vision_id, title (1–120), description, goal_type, target_date, status, achieved_at, sort_order, timestamps; unique (id, owner_id) | (owner_id, status, goal_type), (vision_id, owner_id) |
+| `goal_milestones`      | id, goal_id, owner_id, title (1–120), is_completed, sort_order, timestamps                                                                      | (goal_id, owner_id, sort_order), (owner_id)          |
+| `accountability_items` | id, owner_id, text (1–300), is_active, sort_order, timestamps                                                                                   | (owner_id, is_active, sort_order)                    |
+
+FKs: `goals (vision_id, owner_id) → vision_items (id, owner_id) on delete set null (vision_id)`;
+`goal_milestones (goal_id, owner_id) → goals (id, owner_id) on delete cascade`; every `owner_id →
+profiles on delete cascade`. Triggers: `goals_stamp_achieved` (`private.stamp_goal_achieved`,
+INVOKER) and `*_set_updated_at` (the shared `private.set_updated_at`).

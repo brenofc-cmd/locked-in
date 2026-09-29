@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0 — VERIFIED (2026-09-29); next: Phase 3 — Goals, Vision & Accountability Mirror (not started)
+LOCKED IN V2 — Phase 3 — Goals, Vision & Accountability Mirror — VERIFIED (2026-09-29); next: Phase 4 — North Star + Morning Experience (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -19,6 +19,39 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
   had just expired (refresh race between the proxy and the layout). Not reproduced in e2e; not
   fixed in Phase 3 (does not block tests). Next step: reproduce with an expired token and check the
   cookie refresh path in `src/lib/supabase/proxy.ts` → `loadAppData()`.
+
+## Phase 3 — Goals, Vision & Accountability Mirror — VERIFIED (2026-09-29)
+
+Scope: docs/GOALS.md, ADR-058 / ADR-059. Branch `v2-phase-3-goals-vision`.
+
+Done:
+
+- More → **Metas & Visão** (`/goals`, sidebar); sections VISÃO / METAS / ESPELHO (remembered)
+- Vision: create / edit / archive (ARQUIVADAS) / delete (confirmed); cards with description
+- Goals: 90 DIAS / ESTE MÊS / LONGO PRAZO, optional vision link, optional target date (ATÉ … /
+  EM X DIAS / PRAZO PASSOU), MARCAR COMO CONCLUÍDA (CONCLUÍDAS, `achieved_at` from the database),
+  archive, reactivate, delete; simple milestones shown as a count — no percentage anywhere
+- Mirror: "O que você precisa encarar." — add / edit / deactivate (DESATIVADOS) / delete
+- Keyboard ↑ / ↓ reorder (no drag library); empty states; limits 120 / 1000 / 300
+- Private: owner-only RLS, no sharing, no realtime, no DEFINER; composite FKs block IDOR
+- Resume State: `/goals`, section, scroll, 24 h drafts of a new vision / goal / mirror item
+- Migrations: `20260929132309_goals_vision_mirror`, `20260929152035_goal_milestones_owner_idx`
+  (advisor 0001 found after the first one)
+
+Verified (2026-09-29, DEV, clean `.next`):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm audit` — 0 vulnerabilities
+- `npm test` — 13 files, **198 passed** (goals 18 new)
+- pgTAP on DEV (all 33 migrations): stage 3 51, stage 4 72, stage 5 40, stage 6 63, stage 7 78,
+  stage 8 84, stage 9 69, v2 phase 2 63, v2 phase 3 61 — **581/581**, FAILED=0
+- Supabase advisors (DEV): security unchanged; performance: only "unused index" for the new index
+  (DEV traffic)
+- `npm run test:e2e` — **99 passed** (67 V1 + 16 Phase 1 + 10 Phase 2 + 6 Phase 3), then the
+  Phase 3 spec with its axe test (7 / 7); Phase 3 spec also at 375, 430, 768, 1180, 1440: 30 / 30
+- Fixed during the run (tests only): V1 `openToday` got the 15 s restore allowance already used by
+  the V2 specs (`/` → `/today` under a loaded run); V1 focus test read the paused clock before the
+  pause write was confirmed (intermittent 24:59 vs 24:58) → waits for the write now
 
 ## Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0 — VERIFIED (2026-09-29)
 

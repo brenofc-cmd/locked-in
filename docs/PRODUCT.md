@@ -82,3 +82,10 @@ from the database, signing out forgets it, and two people on one phone never see
   pre-fills Quick Add. Not a calendar app: no colours per subject, no recurring events.
 - **Partner status 2.0**: EM FOCO (persistent focus) > ONLINE (presence) > OFFLINE with
   "Visto por último há 12 min" — the same everywhere.
+
+### V2 Phase 3 — Metas & Visão
+
+More → **Metas & Visão**: VISÃO (the life you want to build), METAS (90 dias, este mês, longo prazo,
+optionally linked to a vision; concluded and archived kept) and ESPELHO (what you need to face). Direction,
+not daily execution: no percentages, no streaks, no competition, and private to you — nothing is shared
+with the partner.

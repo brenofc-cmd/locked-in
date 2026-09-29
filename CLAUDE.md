@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 + v2_phase3), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -174,6 +174,11 @@ routing changed; run the pgTAP suite when a migration changed.
   (the database derives sharing from the current duo; ending a duo makes shared events private);
   partner read-only; `planner_changed` carries ids only. An event and a task stay independent.
   Dates are local `YYYY-MM-DD` strings (`src/lib/planner.ts`), never UTC.
+- V2 Phase 3 (docs/GOALS.md, ADR-058 / ADR-059): vision, goals, milestones and the mirror are
+  owner-only — never add a partner policy, a sharing column, a broadcast or realtime for them without
+  an explicit product decision. Never send `owner_id`; keep the composite FKs (a goal only points at
+  the owner's vision, a milestone only lives in the owner's goal). Goal status is only active /
+  achieved / archived; never show or store a manual percentage (milestones are a count).
 - Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button (briefing only; partner and
   connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without

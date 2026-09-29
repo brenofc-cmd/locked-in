@@ -220,6 +220,13 @@ Details in [PLANNER.md](PLANNER.md), [REALTIME.md](REALTIME.md) → Last seen, A
   `src/app/(app)/planner-actions.ts`, re-reads on `planner_changed` (duo channel) and on visible,
   and schedules the in-app reminders. The month grid reads its own month.
 
+## V2 Phase 3 — goals, vision and the mirror
+
+Details in [GOALS.md](GOALS.md), ADR-058 / ADR-059. `/goals` is a Server Component that reads its
+four owner-only tables through RLS (`loadGoalsData()`, four queries in parallel) — not part of the app
+layout load — and renders `GoalsScreen`; writes go through `src/app/(app)/goals-actions.ts`. No
+realtime (private data), no DEFINER, no sharing.
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to

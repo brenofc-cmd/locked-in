@@ -350,3 +350,15 @@ Status: Accepted. Refines ADR-031.
 Decision: `public.planner_events` holds exams, assignments, homework, deadlines and school events (local `date` / `time`, never UTC). The owner has full CRUD; sharing is stored as the duo it was shared with — `duo_id` is set by the database from the owner's current complete duo (clients cannot write `duo_id` or `owner_id`), and `ON DELETE SET NULL` + the normalise trigger make the event private again when that duo ends, so an old partner loses it and a new partner never inherits it. The partner reads shared events only. Changes of shared events are announced on the existing duo channel as `planner_changed` with ids only (DEFINER `sync_planner_event`, the one new DEFINER); the partner re-reads through RLS. Reminders reuse the in-app / open-browser notification path (Lembretes preference, quiet hours); Web Push waits for Phase 10. "Add to tasks" pre-fills Quick Add — an event and a task are independent entities.
 Reason: School deadlines are the main planning need of the duo; keeping the planner as a small owned table with a derived share keeps the privacy and isolation rules the same shape as tasks and challenges, and keeps LOCKED IN from becoming a calendar.
 Status: Accepted.
+
+# ADR-058 — Goals, vision and the mirror are private by default; no realtime
+
+Decision: `vision_items`, `goals`, `goal_milestones` and `accountability_items` are owner-only (one policy each, `owner_id = auth.uid()`, no partner condition, no sharing column, no broadcast, no DEFINER function). `owner_id` defaults to `auth.uid()` and is not granted; composite foreign keys tie a goal to the owner's own vision and a milestone to the owner's own goal, so another user's rows can never be referenced. The mirror is as private as the rest. No realtime: the data is only the owner's, and another tab sees changes on its next load. `/goals` reads its data on the page, not with the app layout.
+Reason: Visions, goals and especially the mirror are personal; building the private structure first keeps the privacy rule trivial to audit. Sharing with the partner is a future, explicit product decision — never added "because it is easy".
+Status: Accepted.
+
+# ADR-059 — No manual progress percentage for goals
+
+Decision: A goal is active, achieved or archived — nothing else — and never shows a percentage or a progress bar. Milestones are shown as a count ("1 de 2 marcos"). `achieved_at` is stamped by the database (set on achieve, cleared on reactivate, kept on archive) so later phases can use it. Real progress will come from Goal → Action → Proof (Phase 5).
+Reason: LOCKED IN is "proof over hype": a number the user types is not proof, and a fake 73 % would make the whole Progress area less trustworthy.
+Status: Accepted.

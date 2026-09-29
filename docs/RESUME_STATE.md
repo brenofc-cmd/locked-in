@@ -134,3 +134,10 @@ unchanged in this phase.
   `locked-in:v2:<userId>:planner-reminded` (ids + due dates only), also removed by `clearResume()` on
   sign-out.
 - "Add to tasks" opens Quick Add pre-filled; such a form is never saved as the Quick Add draft.
+
+## V2 Phase 3 additions
+
+- `/goals` joined `RESTORABLE_ROUTES` and `SCROLL_ROUTES`.
+- `goals: { section }` (vision / goals / mirror) and `goalDrafts: { vision?, goal?, mirror? }` —
+  drafts of a **new** item only, 24 h, validated field by field in `parseResume()`, per user, removed
+  on sign-out. Optional fields: `v` stays 1. No goal, vision or mirror data is ever stored.

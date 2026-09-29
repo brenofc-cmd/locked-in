@@ -6,7 +6,7 @@ Mobile-first discipline and accountability app for two people: each runs a daily
 off, and sees the partner do the same in real time.
 
 Status: **V1 in production** (https://locked-in-rust.vercel.app). **V2 Phase 1 — Foundation + Restore
-State** verified; **V2 Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0** verified. See [docs/PROGRESS.md](docs/PROGRESS.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+State** verified; **V2 Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0** verified. **V2 Phase 3 — Goals, Vision & Accountability Mirror** verified. See [docs/PROGRESS.md](docs/PROGRESS.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Stack
 
@@ -43,6 +43,7 @@ npm run dev                  # http://localhost:3000
 - [Realtime](docs/REALTIME.md) — private duo channel, presence, broadcasts, recovery
 - [Design reference](docs/DESIGN_REFERENCE.md) — the approved Claude Design and how to read it
 - [Roadmap](docs/ROADMAP.md) — V1's 10 stages and the V2 phases
+- [Goals](docs/GOALS.md) — V2: vision, goals, milestones and the accountability mirror (private)
 - [Planner](docs/PLANNER.md) — V2: school events, sharing with the duo, reminders, Add to tasks
 - [Resume State](docs/RESUME_STATE.md) — V2: what the device remembers between visits, and what it never stores
 - [Analytics](docs/ANALYTICS.md) — progress, streak, standard and competition rules
