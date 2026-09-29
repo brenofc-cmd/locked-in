@@ -45,7 +45,7 @@ export function PartnerCard() {
               <StatusDot live={pv.live} pulse={pv.pulse} size={6} />
               {pv.label}
               {pv.seen && (
-                <span data-testid="partner-seen" className="text-faint">
+                <span data-testid="partner-seen" className="text-dim">
                   · {pv.seen.toUpperCase()}
                 </span>
               )}

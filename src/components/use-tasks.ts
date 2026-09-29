@@ -15,6 +15,7 @@ import {
   archiveRoutine,
   deleteOneOff,
   reorderRoutines,
+  setDailyPriorities,
   setTaskStatus,
   updateRoutine as updateRoutineAction,
   updateTaskToday,
@@ -205,6 +206,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
           reminder: input.reminder,
           notes: input.notes.trim(),
           sortOrder: 100000,
+          priority: null,
           unsynced: false,
         };
         setTasks((ts) => [...ts, temp]);
@@ -422,6 +424,34 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     [fx, routines],
   );
 
+  // ---- Top 3 (V2 Phase 4) -----------------------------------------------------
+
+  /** Replaces today's priorities with `ids` in rank order (0..3). */
+  const setPriorities = useCallback(
+    async (ids: string[]) => {
+      const before = tasksRef.current;
+      const rank = new Map(ids.map((id, i) => [id, i + 1]));
+      setTasks((ts) =>
+        ts.map((t) => ({ ...t, priority: rank.get(t.id) ?? null })),
+      );
+      const res = await setDailyPriorities(ids).catch(() => null);
+      if (!res?.ok) {
+        setTasks(before);
+        fx.toast({
+          text: res?.error ?? t.errors.network,
+          sub: t.top3.toastSub,
+        });
+        return false;
+      }
+      const fresh = new Map(res.tasks.map((r) => [r.id, r.priority_rank]));
+      setTasks((ts) =>
+        ts.map((x) => ({ ...x, priority: fresh.get(x.id) ?? null })),
+      );
+      return true;
+    },
+    [fx],
+  );
+
   return {
     today,
     tasks,
@@ -438,5 +468,6 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     archiveRoutine: archive,
     deleteTask,
     moveRoutine,
+    setPriorities,
   };
 }

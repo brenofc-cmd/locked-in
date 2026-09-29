@@ -3,38 +3,32 @@
 import { t } from "@/i18n/pt-BR";
 import { useEffect, useState, type ReactNode } from "react";
 import { loadWeekHabits } from "@/app/(app)/progress-actions";
-import { updateSetting } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
-import {
-  accountDay,
-  addDays,
-  localTimeHM,
-  weekdayName,
-} from "@/lib/local-date";
+import { accountDay, weekdayName } from "@/lib/local-date";
 import { usePartnerView } from "@/components/use-partner-view";
 import {
   completedWeeks,
   focusLabel,
   habitExtremes,
   headToHead,
-  percent,
   reviewWeeks,
   weekRangeLabel,
   type Habit,
 } from "@/lib/progress";
 import { todayStats } from "@/lib/today";
 
-/** Review day, weekly review and morning briefing (full-screen moments). */
+/** Review day and weekly review (full-screen moments). The morning briefing
+ *  is an inline card on Today since V2 Phase 4 (MorningCard). */
 export function MomentOverlays() {
   const { overlay } = useApp();
   if (!overlay) return null;
   if (overlay.kind === "review") return <ReviewDay />;
   if (overlay.kind === "weekly")
     return <WeeklyReview start={overlay.weekStart} />;
-  return <Briefing />;
+  return null;
 }
 
 function Frame({
@@ -398,140 +392,6 @@ function WeeklyReview({ start }: { start: string }) {
       >
         {t.moments.close}
       </button>
-    </Frame>
-  );
-}
-
-/**
- * Morning briefing (Stage 8): optional, real numbers only — today's tasks,
- * yesterday's completion, my streak and my partner's. Never blocks Today;
- * "Show automatically each morning" is the persisted setting.
- */
-function Briefing() {
-  const app = useApp();
-  const { closeOverlay, tasks, userName, today, progressDays, streak } = app;
-  const { me, settings } = useSession();
-  const [auto, setAuto] = useState(settings.showMorningBriefing);
-  const total = tasks.length;
-  const y = progressDays.find((d) => d.day === addDays(today, -1));
-  const yesterday = y ? percent(y.completed, y.planned) : null;
-  const pv = usePartnerView();
-
-  const rows = [
-    { k: t.moments.today, v: String(total), unit: t.moments.tasks(total) },
-    {
-      k: t.moments.yesterday,
-      v: yesterday === null ? "—" : `${yesterday}%`,
-      unit: "",
-    },
-    { k: t.moments.streak, v: String(streak), unit: t.moments.days(streak) },
-    ...(app.hasPartner
-      ? [
-          {
-            k: app.partner.name.toUpperCase(),
-            v: app.partner.streak === null ? "—" : String(app.partner.streak),
-            unit: t.moments.partnerStreak(app.partner.streak, pv.label),
-          },
-        ]
-      : []),
-  ];
-
-  async function toggleAuto() {
-    const next = !auto;
-    setAuto(next);
-    const res = await updateSetting("showMorningBriefing", next).catch(
-      () => null,
-    );
-    if (!res?.ok) {
-      setAuto(!next);
-      app.toast({ text: t.moments.couldNotSave, sub: t.moments.briefingSub });
-    }
-  }
-
-  return (
-    <Frame label={t.moments.briefingAria} width="max-w-[480px]">
-      <div className="flex flex-col gap-9">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-sm text-dim tabular-nums">
-            {localTimeHM(new Date(), me.timezone)} · {weekdayName(today)}
-          </span>
-          <button
-            type="button"
-            onClick={closeOverlay}
-            className="h-11 px-1 text-sm text-dim"
-          >
-            {t.moments.skip}
-          </button>
-        </div>
-        <div className="flex flex-col gap-4">
-          <h1 className={bigTitle}>
-            {t.moments.goodMorning}
-            <br />
-            {userName.toUpperCase()}.
-          </h1>
-          <span className="font-mono text-[13px] tracking-[.26em] text-accent">
-            {t.moments.day(accountDay(me.createdAt, me.timezone, today))}
-          </span>
-        </div>
-        <div className="flex flex-col">
-          {rows.map((r) => (
-            <div
-              key={r.k}
-              className="flex items-baseline justify-between border-t border-white/7 py-4"
-            >
-              <span className="font-mono text-[11px] tracking-[.18em] text-dim">
-                {r.k}
-              </span>
-              <span className="text-[34px] leading-none font-medium tracking-[-0.045em] desk:text-[46px]">
-                {r.v}{" "}
-                {r.unit && (
-                  <span className="text-[15px] tracking-[.06em] text-muted">
-                    {r.unit}
-                  </span>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col items-center gap-[18px]">
-        <button type="button" onClick={closeOverlay} className={lightButton}>
-          {t.moments.startDay}
-        </button>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={auto}
-          onClick={() => void toggleAuto()}
-          className="flex h-11 items-center gap-2.5 text-[13px] text-dim"
-        >
-          <span
-            aria-hidden="true"
-            className={cx(
-              "flex size-[18px] items-center justify-center rounded-[5px] border-[1.5px]",
-              auto ? "border-text bg-text" : "border-white/20",
-            )}
-          >
-            <svg width="11" height="11" viewBox="0 0 16 16">
-              <path
-                d="M3.5 8.5l3 3 6-7"
-                fill="none"
-                stroke="#0A0A0B"
-                strokeWidth="2.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ opacity: auto ? 1 : 0 }}
-              />
-            </svg>
-          </span>
-          {t.moments.autoShow}
-        </button>
-        <span className="text-center font-mono text-[10.5px] leading-[1.9] tracking-[.28em] text-quiet">
-          {t.app.taglineLines[0]}
-          <br />
-          {t.app.taglineLines[1]}
-        </span>
-      </div>
     </Frame>
   );
 }

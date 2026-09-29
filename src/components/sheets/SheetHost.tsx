@@ -12,6 +12,7 @@ import {
   TemplateSheet,
 } from "@/components/sheets/MiscSheets";
 import { PlannerSheet } from "@/components/sheets/PlannerSheet";
+import { PrioritiesSheet } from "@/components/sheets/PrioritiesSheet";
 import { Sheet } from "@/components/sheets/Sheet";
 import {
   TaskFormSheet,
@@ -69,6 +70,9 @@ export function SheetHost() {
       break;
     case "planner":
       body = <PlannerSheet event={sheet.event} date={sheet.date} />;
+      break;
+    case "priorities":
+      body = <PrioritiesSheet />;
       break;
   }
 

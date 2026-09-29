@@ -6,14 +6,24 @@ import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { LockGlyph } from "@/components/icons";
 import { ActivityItem } from "@/components/today/ActivityItem";
+import { MorningCard } from "@/components/today/MorningCard";
+import { NorthStarCard } from "@/components/today/NorthStarCard";
 import { NoPartnerCard, PartnerCard } from "@/components/today/PartnerCard";
 import { TaskRow } from "@/components/today/TaskRow";
+import { TopThree } from "@/components/today/TopThree";
 import { UpcomingCard } from "@/components/today/UpcomingCard";
 import { ProgressBar, SectionHeader, cx } from "@/components/ui";
 import { accountDay, dateLabel, weekdayOf } from "@/lib/local-date";
+import { daypartAt, type NorthStar } from "@/lib/north-star";
 import { groupBySection, nextLine, routinesOn, todayStats } from "@/lib/today";
 
-export function TodayScreen() {
+/**
+ * Today = execution. V2 Phase 4 order: header → morning card (first open of
+ * the day) → TOP 3 → tasks; the North Star sits with the partner and the
+ * planner (after the tasks on a phone, in the side column on desktop), so
+ * the task list is never pushed far down (docs/NORTH_STAR.md).
+ */
+export function TodayScreen({ northStar }: { northStar: NorthStar }) {
   const app = useApp();
   const { me } = useSession();
   // Real: today's daily_tasks. Rest = routine items not scheduled today.
@@ -38,8 +48,14 @@ export function TodayScreen() {
                   {t.todayScreen.day(dayNumber)}
                 </span>
               </div>
-              <h1 className="m-0 text-[25px] leading-[1.1] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-                {t.todayScreen.greeting(app.userName.toUpperCase())}
+              <h1
+                suppressHydrationWarning
+                className="m-0 text-[25px] leading-[1.1] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]"
+              >
+                {t.todayScreen.greeting(
+                  daypartAt(app.now, me.timezone),
+                  app.userName.toUpperCase(),
+                )}
               </h1>
             </div>
             <div className="flex items-end justify-between gap-4">
@@ -95,6 +111,8 @@ export function TodayScreen() {
             </div>
           </header>
 
+          <MorningCard star={northStar} />
+
           {stats.perfect && (
             <div className="flex items-center justify-between gap-4 rounded-[14px] bg-accent-wash px-5 py-[18px] animate-[li-glow_3.6s_ease-in-out_infinite]">
               <span className="flex items-baseline gap-4">
@@ -107,6 +125,8 @@ export function TodayScreen() {
               </span>
             </div>
           )}
+
+          <TopThree />
 
           <section
             aria-label={t.todayScreen.tasksAria}
@@ -169,6 +189,7 @@ export function TodayScreen() {
         <aside className="flex min-w-0 flex-col gap-7 wide:sticky wide:top-0">
           {app.hasPartner ? <PartnerCard /> : <NoPartnerCard />}
           <UpcomingCard />
+          <NorthStarCard star={northStar} />
           <button
             type="button"
             onClick={() => app.openSheet({ kind: "focus" })}

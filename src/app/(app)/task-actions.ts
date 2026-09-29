@@ -33,6 +33,7 @@ async function guard<T>(fn: () => Promise<T | Fail>): Promise<T | Fail> {
 }
 
 const STATUSES: TaskStatus[] = ["pending", "completed", "skipped"];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function setTaskStatus(
   id: string,
@@ -198,6 +199,31 @@ export async function deleteOneOff(id: string): Promise<{ ok: true } | Fail> {
   });
 }
 
+/**
+ * V2 Phase 4: replaces today's Top 3 with `ids` in rank order (0..3 of my own
+ * tasks dated today). The database checks ownership, the date, the limit and
+ * closed history (set_my_priorities, INVOKER).
+ */
+export async function setDailyPriorities(
+  ids: string[],
+): Promise<{ ok: true; tasks: DailyTaskRow[] } | Fail> {
+  if (
+    !Array.isArray(ids) ||
+    ids.length > 3 ||
+    new Set(ids).size !== ids.length ||
+    !ids.every((id) => typeof id === "string" && UUID.test(id))
+  )
+    return fail({ message: "LI_INVALID_PRIORITIES" });
+  return guard(async () => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("set_my_priorities", {
+      p_ids: ids,
+    });
+    if (error || !data) return fail(error);
+    return { ok: true as const, tasks: data };
+  });
+}
+
 export async function reorderRoutines(
   ids: string[],
 ): Promise<{ ok: true } | Fail> {
@@ -211,7 +237,6 @@ export async function reorderRoutines(
   });
 }
 
-/** Creates one routine item per template entry (every day), in order. */
 /**
  * Template / onboarding items in one database call (Stage 8): items already
  * in the active routine are skipped and calls are serialised per user, so a

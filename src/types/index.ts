@@ -37,6 +37,8 @@ export type Task = {
   reminder: boolean;
   notes: string;
   sortOrder: number;
+  /** V2 Phase 4: Top 3 rank of the day (1..3), null when not a priority. */
+  priority: number | null;
   /** Mock connection simulation (Stage 5): shows the "Will sync" marker. */
   unsynced: boolean;
 };
@@ -128,12 +130,11 @@ export type Sheet =
   | { kind: "template" }
   | { kind: "challenge" }
   /** V2 Phase 2: new (optional date) or existing planner event. */
-  | { kind: "planner"; event?: PlannerEvent; date?: string };
+  | { kind: "planner"; event?: PlannerEvent; date?: string }
+  | { kind: "priorities" };
 
 export type Overlay =
-  | { kind: "review" }
-  | { kind: "weekly"; weekStart: string }
-  | { kind: "briefing" };
+  { kind: "review" } | { kind: "weekly"; weekStart: string };
 
 export type Toast = {
   id: string;

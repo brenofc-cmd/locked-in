@@ -88,6 +88,7 @@ export function taskFromRow(
     reminder: r.reminder,
     notes: r.notes,
     sortOrder: r.sort_order,
+    priority: r.priority_rank,
     unsynced: false,
   };
 }
@@ -140,6 +141,8 @@ export function taskErrorMessage(
   )
     return t.errors.refresh;
   if (message.includes("LI_NOT_FOUND")) return t.tasks.itemGone;
+  if (message.includes("LI_TOO_MANY_PRIORITIES")) return t.top3.max;
+  if (message.includes("LI_INVALID_PRIORITIES")) return t.errors.refresh;
   if (message.includes("LI_NOT_AUTHENTICATED") || error?.code === "42501")
     return t.errors.sessionExpired;
   if (error?.code === "23514" || error?.code === "23502")

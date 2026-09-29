@@ -13,6 +13,13 @@ import {
   validateTaskInput,
 } from "@/lib/task-model";
 import { SECTION_OF, scheduleLabel } from "@/lib/today";
+import {
+  addPriority,
+  priorityIds,
+  removePriority,
+  replacePriority,
+  topThree,
+} from "@/lib/north-star";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/resume-state";
 import type { Category, Day, RoutineItem, Task } from "@/types";
 
@@ -455,9 +462,25 @@ export function TaskFormSheet({
   );
 }
 
-/** Skip / edit / delete for one task. */
+/** Skip / edit / delete for one task; V2 Phase 4: mark as a Top 3 priority. */
 export function TaskOptionsSheet({ task }: { task: Task }) {
   const app = useApp();
+  const [replacing, setReplacing] = useState(false);
+  const ids = priorityIds(app.tasks);
+  const temp = task.id.startsWith("tmp-");
+
+  async function prioritize(next: string[]) {
+    if (await app.setPriorities(next)) {
+      app.toast({ text: t.top3.saved, sub: task.name.toUpperCase() });
+      app.closeSheet();
+    }
+  }
+  function mark() {
+    const next = addPriority(ids, task.id);
+    if (next) void prioritize(next);
+    else setReplacing(true);
+  }
+
   const meta = [
     SECTION_OF[task.category],
     task.time,
@@ -502,7 +525,53 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
           )}
         </button>
       )}
+      {!temp && replacing && (
+        <div
+          role="group"
+          aria-labelledby="top3-full"
+          className="flex flex-col gap-2 rounded-2xl border border-white/10 p-4"
+        >
+          <span id="top3-full" className={monoLabel}>
+            {t.top3.fullTitle}
+          </span>
+          <span className="text-[13px] text-dim">{t.top3.fullHint}</span>
+          {topThree(app.tasks).map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              aria-label={t.top3.replace(p.name)}
+              onClick={() =>
+                void prioritize(replacePriority(ids, p.id, task.id))
+              }
+              className="flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-raised px-3 text-left text-sm"
+            >
+              <span className="font-mono text-[12px] text-accent">
+                {p.priority}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{p.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-col">
+        {!temp && !replacing && (
+          <button
+            type="button"
+            onClick={() =>
+              task.priority !== null
+                ? void prioritize(removePriority(ids, task.id))
+                : mark()
+            }
+            className="flex h-[54px] items-center justify-between border-t border-white/6 text-[15.5px]"
+          >
+            <span>{task.priority !== null ? t.top3.unmark : t.top3.mark}</span>
+            {task.priority !== null && (
+              <span className="font-mono text-[11px] tracking-[.14em] text-accent">
+                {task.priority}
+              </span>
+            )}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "edit", taskId: task.id })}
