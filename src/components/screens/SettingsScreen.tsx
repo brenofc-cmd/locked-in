@@ -14,6 +14,7 @@ const noSubscribe = () => () => {};
 import { updateSetting, updateTimezone } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
+import { clearResume } from "@/lib/resume-state";
 import { SwitchTrack, cx } from "@/components/ui";
 import { STANDARD_OPTIONS } from "@/lib/constants";
 import type { SettingKey, UserSettings } from "@/lib/settings";
@@ -227,7 +228,14 @@ export function SettingsScreen() {
       <InstallApp />
 
       <div className="flex flex-wrap items-center gap-3">
-        <form action="/auth/signout" method="post">
+        {/* V2: an explicit sign-out forgets this user's Resume State on
+            this device (route, scroll, drafts), so the next person to use
+            it never lands on the previous user's screen. */}
+        <form
+          action="/auth/signout"
+          method="post"
+          onSubmit={() => clearResume(me.id)}
+        >
           <button
             type="submit"
             className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"

@@ -1,8 +1,9 @@
 "use client";
 
 import { t } from "@/i18n/pt-BR";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp, type TaskInput } from "@/components/app-state";
+import { useSession } from "@/components/session";
 import { SwitchTrack, chipTone, cx } from "@/components/ui";
 import { DAYS, DAY_LETTERS, dayLabel } from "@/lib/local-date";
 import { SKIP_REASONS } from "@/lib/constants";
@@ -12,6 +13,7 @@ import {
   validateTaskInput,
 } from "@/lib/task-model";
 import { SECTION_OF, scheduleLabel } from "@/lib/today";
+import { clearDraft, loadDraft, saveDraft } from "@/lib/resume-state";
 import type { Category, Day, RoutineItem, Task } from "@/types";
 
 const WEEKDAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI"];
@@ -44,27 +46,67 @@ export function TaskFormSheet({
   repeatByDefault?: boolean;
 }) {
   const app = useApp();
+  const { me } = useSession();
   const source = editing ?? routine;
-  const [name, setName] = useState(source?.name ?? "");
+  // V2 Resume State: a new task / routine item that was typed but never
+  // saved comes back when the sheet is opened again (drafts expire after
+  // 24 h). Edits are never drafted: they would overwrite newer data.
+  const draftKind = repeatByDefault ? "routine" : "task";
+  const [draft] = useState(() => (source ? null : loadDraft(me.id, draftKind)));
+  const [name, setName] = useState(draft?.name ?? source?.name ?? "");
   const [repeat, setRepeat] = useState(
-    routine ? true : editing ? !editing.once : repeatByDefault,
+    draft?.repeat ??
+      (routine ? true : editing ? !editing.once : repeatByDefault),
   );
   const [repeatMode, setRepeatMode] = useState<Repeat>(
-    source && source.days.length ? repeatOf(source.days) : "daily",
+    draft?.repeatMode ??
+      (source && source.days.length ? repeatOf(source.days) : "daily"),
   );
   const [days, setDays] = useState<Day[]>(
-    source && source.days.length ? source.days : DAYS,
+    draft?.days ?? (source && source.days.length ? source.days : DAYS),
   );
   const [more, setMore] = useState(false);
-  const [time, setTime] = useState(source?.time ?? "");
-  const [reminder, setReminder] = useState(source?.reminder ?? false);
+  const [time, setTime] = useState(draft?.time ?? source?.time ?? "");
+  const [reminder, setReminder] = useState(
+    draft?.reminder ?? source?.reminder ?? false,
+  );
   const [category, setCategory] = useState<Category>(
-    source?.category ?? "custom",
+    draft?.category ?? source?.category ?? "custom",
   );
   const [visible, setVisible] = useState(
-    source?.visible ?? app.settings.shareNewTasks,
+    draft?.visible ?? source?.visible ?? app.settings.shareNewTasks,
   );
-  const [notes, setNotes] = useState(source?.notes ?? "");
+  const [notes, setNotes] = useState(draft?.notes ?? source?.notes ?? "");
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (source || submitted) return;
+    saveDraft(me.id, draftKind, {
+      name,
+      repeat,
+      repeatMode,
+      days,
+      time,
+      reminder,
+      category,
+      visible,
+      notes,
+    });
+  }, [
+    source,
+    submitted,
+    me.id,
+    draftKind,
+    name,
+    repeat,
+    repeatMode,
+    days,
+    time,
+    reminder,
+    category,
+    visible,
+    notes,
+  ]);
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,7 +152,26 @@ export function TaskFormSheet({
       return;
     }
     if (editing) return run(() => app.updateToday(editing.id, data));
-    run(() => app.addTask(data));
+    // The draft goes with the submit; a failed save (rolled back with a
+    // toast) puts it back so nothing typed is lost.
+    const form = {
+      name,
+      repeat,
+      repeatMode,
+      days,
+      time,
+      reminder,
+      category,
+      visible,
+      notes,
+    };
+    setSubmitted(true);
+    clearDraft(me.id, draftKind);
+    run(async () => {
+      const ok = await app.addTask(data);
+      if (!ok) saveDraft(me.id, draftKind, form);
+      return ok;
+    });
   }
 
   function remove() {
