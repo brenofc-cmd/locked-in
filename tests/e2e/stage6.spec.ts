@@ -297,8 +297,11 @@ test("the partner sees focus live: start, pause, resume, end, app closed; privat
     (r) => r.id,
   );
   expect(aIds.length).toBeGreaterThan(0);
+  // By owner, not by id list: A's history grows with every run and a long
+  // id list would exceed the URL limit (the request fails, data = null).
+  const aUser = (await A.auth.getUser()).data.user!.id;
   expect(
-    (await B.from("focus_sessions").select("id").in("id", aIds)).data,
+    (await B.from("focus_sessions").select("id").eq("user_id", aUser)).data,
   ).toEqual([]);
   const projection = (await B.rpc("partner_current_focus")).data!;
   expect(projection).toHaveLength(1);
