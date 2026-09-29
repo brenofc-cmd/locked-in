@@ -161,6 +161,13 @@ export default defineConfig({
       dependencies: ["v2p2-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 4 — North Star, Top 3 and the morning card, after Phase 3.
+    {
+      name: "v2p4-390",
+      testMatch: /v2-phase4\.spec\.ts/,
+      dependencies: ["v2p3-390"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,

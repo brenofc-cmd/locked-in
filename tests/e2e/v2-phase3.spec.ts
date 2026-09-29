@@ -61,6 +61,9 @@ async function open(browser: Browser, user: TestUser, path: string) {
 const section = (page: Page, name: keyof typeof t.goals.sections) =>
   page.getByRole("radio", { name: t.goals.sections[name], exact: true });
 const dialog = (page: Page) => page.getByRole("dialog");
+/** A goal's row button (not its move or feature buttons). */
+const ROW = (title: string) =>
+  new RegExp(`^(?!Mover|Destacar|Remover destaque).*${title}`);
 const titleField = (page: Page) =>
   dialog(page).getByRole("textbox", { name: t.goals.fields.title });
 const save = (page: Page) =>
@@ -141,9 +144,10 @@ test("2 + 3 + 4: a 90-day goal linked to the vision; achieved stays in CONCLUÍD
   await expect(group.getByText("TER INDEPENDÊNCIA FINANCEIRA")).toBeVisible();
   await expect(a.page.getByRole("main").getByText(/%/)).toHaveCount(0); // no fake percentage
 
-  // A milestone (a count, never a percentage).
+  // A milestone (a count, never a percentage). The row button, not the
+  // ↑ / ↓ or the V2 Phase 4 feature (◇) buttons of the same goal.
   await group
-    .getByRole("button", { name: /^(?!Mover).*Lançar um produto pago/ })
+    .getByRole("button", { name: ROW("Lançar um produto pago") })
     .click();
   await dialog(a.page)
     .getByRole("textbox", { name: t.goals.fields.milestonePlaceholder })
@@ -161,7 +165,7 @@ test("2 + 3 + 4: a 90-day goal linked to the vision; achieved stays in CONCLUÍD
 
   // 3 · achieve.
   await group
-    .getByRole("button", { name: /^(?!Mover).*Lançar um produto pago/ })
+    .getByRole("button", { name: ROW("Lançar um produto pago") })
     .click();
   await dialog(a.page).getByRole("button", { name: t.goals.achieve }).click();
   await expect(dialog(a.page)).toHaveCount(0);
@@ -191,9 +195,7 @@ test("2 + 3 + 4: a 90-day goal linked to the vision; achieved stays in CONCLUÍD
   await save(a.page).click();
   const monthly = a.page.getByRole("region", { name: t.goals.types.monthly });
   await expect(monthly.getByText("Ler 2 livros")).toBeVisible();
-  await monthly
-    .getByRole("button", { name: /^(?!Mover).*Ler 2 livros/ })
-    .click();
+  await monthly.getByRole("button", { name: ROW("Ler 2 livros") }).click();
   await dialog(a.page).getByRole("button", { name: t.goals.archive }).click();
   await expect(
     a.page.getByRole("region", { name: t.goals.types.monthly }),

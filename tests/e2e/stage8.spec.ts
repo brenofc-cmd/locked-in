@@ -608,6 +608,8 @@ test("notification preferences: off = no notice, on = in-app notice, quiet hours
 test("morning briefing: real numbers once a day, skippable, preference persisted", async ({
   browser,
 }) => {
+  // V2 Phase 4: the briefing is an inline card on Today (not a dialog),
+  // once per user and day (docs/NORTH_STAR.md).
   test.setTimeout(90_000);
   await settings(A, { show_morning_briefing: true });
   await task(A, "Yesterday done", {
@@ -616,11 +618,12 @@ test("morning briefing: real numbers once a day, skippable, preference persisted
   });
   await task(A, "Yesterday open", { date: addDays(T, -1) });
   const a = await open(browser, users.a, "/today");
-  const brief = a.page.getByRole("dialog", { name: "Resumo da manhã" });
+  const brief = a.page.getByRole("region", { name: t.morning.aria });
   await expect(brief).toBeVisible({ timeout: LIVE });
-  await expect(brief.getByText("50%")).toBeVisible(); // yesterday 1 / 2
+  await expect(brief.getByText(/ONTEM 50%/)).toBeVisible(); // yesterday 1 / 2
   await expect(brief.getByText("BRUNO")).toBeVisible();
-  await brief.getByRole("button", { name: "Pular" }).click();
+  await expect(a.page.getByRole("dialog")).toHaveCount(0);
+  await brief.getByRole("button", { name: t.morning.close }).click();
   await expect(brief).toBeHidden();
   await expect(a.page.getByRole("heading", { name: /ALICE/ })).toBeVisible();
 
@@ -631,10 +634,14 @@ test("morning briefing: real numbers once a day, skippable, preference persisted
   await expect(brief).toHaveCount(0);
 
   // Turning it off inside the briefing persists.
-  await a.page.evaluate(() => localStorage.removeItem("li:briefing-shown"));
+  const aId = await uid(A);
+  await a.page.evaluate(
+    (key) => localStorage.removeItem(key),
+    `locked-in:v2:${aId}:daily`,
+  );
   await a.page.reload();
   await expect(brief).toBeVisible({ timeout: LIVE });
-  await brief.getByRole("switch", { name: /Mostrar automaticamente/ }).click();
+  await brief.getByRole("switch", { name: t.morning.autoShow }).click();
   await expect
     .poll(
       async () =>

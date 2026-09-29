@@ -31,6 +31,7 @@ const today: Task[] = DESIGN_DAY.filter((d) => d.today !== false).map(
     reminder: false,
     notes: d.notes,
     sortOrder: (i + 1) * 10,
+    priority: null,
     unsynced: false,
   }),
 );

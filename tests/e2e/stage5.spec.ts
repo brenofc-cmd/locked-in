@@ -174,7 +174,7 @@ test("presence: online, focusing, back online, offline on close, multiple tabs",
   const tab2 = await b.context.newPage();
   await tab2.goto("/today");
   await expect(
-    tab2.getByRole("heading", { name: /BOM DIA, BRUNO/ }),
+    tab2.getByRole("heading", { name: /(BOM DIA|BOA TARDE|BOA NOITE), BRUNO/ }),
   ).toBeVisible();
   await b.page.close();
   await a.page.waitForTimeout(5000);

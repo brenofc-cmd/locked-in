@@ -25,7 +25,11 @@ async function signedInPage(browser: Browser, user: TestUser) {
 }
 
 const greeting = (page: Page, name: string) =>
-  page.getByRole("heading", { name: `BOM DIA, ${name.toUpperCase()}.` });
+  page.getByRole("heading", {
+    name: new RegExp(
+      `^(BOM DIA|BOA TARDE|BOA NOITE), ${name.toUpperCase()}\\.$`,
+    ),
+  });
 
 test("private routes redirect to sign in without rendering private content", async ({
   page,
@@ -45,7 +49,7 @@ test("private routes redirect to sign in without rendering private content", asy
     await expect(page).toHaveURL(`/login?next=${encodeURIComponent(path)}`);
     // The redirect happens on the server: the private page never reached the browser.
     expect(response?.request().redirectedFrom()?.url()).toContain(path);
-    await expect(page.getByText("BOM DIA")).toHaveCount(0);
+    await expect(page.getByText(/BOM DIA|BOA TARDE|BOA NOITE/)).toHaveCount(0);
   }
 });
 

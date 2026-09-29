@@ -46,6 +46,7 @@ const goal = (over: Partial<Goal> = {}): Goal => ({
   targetDate: "",
   status: "active",
   achievedAt: null,
+  featured: false,
   sortOrder: 10,
   createdAt: "2026-09-01T00:00:00Z",
   milestones: [],
@@ -106,15 +107,36 @@ describe("goals: grouping and sorting", () => {
 
   it("vision and mirror active / archived splits", () => {
     const v = [
-      { id: "2", title: "b", description: "", sortOrder: 20, archived: false },
-      { id: "1", title: "a", description: "", sortOrder: 10, archived: false },
-      { id: "3", title: "c", description: "", sortOrder: 5, archived: true },
+      {
+        id: "2",
+        title: "b",
+        description: "",
+        sortOrder: 20,
+        archived: false,
+        featured: false,
+      },
+      {
+        id: "1",
+        title: "a",
+        description: "",
+        sortOrder: 10,
+        archived: false,
+        featured: false,
+      },
+      {
+        id: "3",
+        title: "c",
+        description: "",
+        sortOrder: 5,
+        archived: true,
+        featured: false,
+      },
     ];
     expect(activeVisions(v).map((x) => x.id)).toEqual(["1", "2"]);
     expect(archivedVisions(v).map((x) => x.id)).toEqual(["3"]);
     const m = [
-      { id: "a", text: "x", active: true, sortOrder: 20 },
-      { id: "b", text: "y", active: false, sortOrder: 10 },
+      { id: "a", text: "x", active: true, sortOrder: 20, featured: false },
+      { id: "b", text: "y", active: false, sortOrder: 10, featured: false },
     ];
     expect(activeMirror(m).map((x) => x.id)).toEqual(["a"]);
     expect(inactiveMirror(m).map((x) => x.id)).toEqual(["b"]);
@@ -138,6 +160,7 @@ describe("goals: grouping and sorting", () => {
       title: "T",
       description: null,
       goal_type: "monthly",
+      is_featured: false,
       target_date: null,
       status: "active",
       achieved_at: null,

@@ -104,6 +104,7 @@ const routineRow: RoutineRow = {
 const taskRow: DailyTaskRow = {
   id: "t1",
   owner_id: "u1",
+  priority_rank: null,
   routine_item_id: "r1",
   task_date: "2026-09-24",
   title: "Morning Run",

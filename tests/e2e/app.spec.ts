@@ -10,6 +10,9 @@ import { trackWrites } from "./support";
 test.describe.configure({ mode: "serial" });
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 780;
+/** V2 Phase 4: the greeting follows the daypart in the user's timezone. */
+const GREETING = (name: string) =>
+  new RegExp(`^(BOM DIA|BOA TARDE|BOA NOITE), ${name}\\.$`);
 
 /** Primary navigation: bottom tabs on mobile, sidebar from 780px. */
 function nav(page: Page) {
@@ -24,7 +27,7 @@ async function openToday(page: Page) {
   // remote DEV project (V2): allow for a loaded full-suite run.
   await expect(page).toHaveURL(/\/today$/, { timeout: 15_000 });
   await expect(
-    page.getByRole("heading", { name: "BOM DIA, BRENDON." }),
+    page.getByRole("heading", { name: GREETING("BRENDON") }),
   ).toBeVisible();
 }
 
@@ -66,11 +69,11 @@ test.describe("layout @layout", () => {
 test("navigation reaches every main section", async ({ page }) => {
   await openToday(page);
   const n = nav(page);
-  const targets: [RegExp, string, string][] = [
+  const targets: [RegExp, string, string | RegExp][] = [
     [/parceiro/i, "/partner", "LUCAS"],
     [/foco/i, "/focus", "NO QUE VOCÊ VAI TRABALHAR?"],
     [/progress/i, "/progress", "PROGRESSO"],
-    [/hoje/i, "/today", "BOM DIA, BRENDON."],
+    [/hoje/i, "/today", GREETING("BRENDON")],
   ];
   for (const [name, url, heading] of targets) {
     await n.getByRole("link", { name }).click();
