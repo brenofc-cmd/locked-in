@@ -21,7 +21,7 @@ import { DevPanel } from "@/components/shell/DevPanel";
 import { Feedback } from "@/components/shell/Feedback";
 import { SheetHost } from "@/components/sheets/SheetHost";
 import { Avatar, LogoMark, StatusDot, cx } from "@/components/ui";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 
 const MAIN_NAV = [
   { href: "/today", label: t.pageTitles.today },
@@ -156,8 +156,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
 }
 
 function MobileHeader() {
-  const { hasPartner, partner, partnerCounts, feed, now } = useApp();
-  const pv = partnerView(partner, partnerCounts, feed, now);
+  const { hasPartner, partner } = useApp();
+  const pv = usePartnerView();
   return (
     <div className="flex h-[52px] shrink-0 items-center justify-between bg-bg px-[18px] desk:hidden">
       <Link

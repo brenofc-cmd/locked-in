@@ -207,7 +207,9 @@ export const t = {
       pct: number,
       done: number,
       total: number,
-    ) => `${name}: ${status}, ${pct}% feito, ${done} de ${total}. Abrir dupla.`,
+      seen = "",
+    ) =>
+      `${name}: ${status}, ${pct}% feito, ${done} de ${total}.${seen ? ` ${seen[0].toUpperCase()}${seen.slice(1)}.` : ""} Abrir dupla.`,
     waiting: "ESPERANDO SUA DUPLA",
     noPartner: "SEM DUPLA POR ENQUANTO",
     shareCodeLine: (code: string) =>
@@ -847,6 +849,24 @@ export const t = {
     focusingPaused: "Em foco (pausado)",
     left: (left: string) => `faltam ${left}`,
     onlineWith: (text: string, time: string) => `Online · ${text} às ${time}`,
+  },
+
+  // V2 Phase 2: partner last seen (viewer's timezone).
+  lastSeen: {
+    long: {
+      now: "Visto por último agora",
+      minutes: (n: number) => `Visto por último há ${n} min`,
+      today: (hm: string) => `Visto por último hoje às ${hm}`,
+      yesterday: (hm: string) => `Visto por último ontem às ${hm}`,
+      date: (dm: string, hm: string) => `Visto por último em ${dm} às ${hm}`,
+    },
+    short: {
+      now: "visto agora",
+      minutes: (n: number) => `visto há ${n} min`,
+      today: (hm: string) => `visto hoje ${hm}`,
+      yesterday: (hm: string) => `visto ontem ${hm}`,
+      date: (dm: string, hm: string) => `visto ${dm} ${hm}`,
+    },
   },
 
   loadErrors: {

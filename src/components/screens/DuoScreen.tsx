@@ -7,7 +7,7 @@ import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { Avatar, StatusDot, cx } from "@/components/ui";
 import { NETWORK_ERROR } from "@/lib/invite-code";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 
 /**
  * Duo management (Stages 3, 5, 8): NO DUO -> WAITING FOR PARTNER -> ACTIVE.
@@ -39,7 +39,7 @@ export function DuoScreen() {
     setConfirmLeave(false);
     requestAnimationFrame(() => leaveButton.current?.focus());
   };
-  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
+  const pv = usePartnerView();
 
   const state = !duo ? "none" : duo.partner ? "complete" : "waiting";
   const inviteCode = duo?.inviteCode ?? "";
@@ -168,7 +168,7 @@ export function DuoScreen() {
               )}
             >
               <StatusDot live={pv.live} size={6} />
-              {pv.label}
+              {pv.seen ? pv.seen.toUpperCase() : pv.label}
             </span>
           </div>
         ) : (

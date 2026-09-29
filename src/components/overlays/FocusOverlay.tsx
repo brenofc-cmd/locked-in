@@ -4,7 +4,7 @@ import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
 import { StatusDot, cx } from "@/components/ui";
 import { formatClock } from "@/lib/format";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 
 const RING = 917.35; // circumference of r=146 in the 296 viewBox
 
@@ -12,10 +12,10 @@ const RING = 917.35; // circumference of r=146 in the 296 viewBox
 export function FocusOverlay() {
   const app = useApp();
   const { focus } = app;
+  const pv = usePartnerView();
   if (focus.phase === "setup") return null;
 
   if (focus.phase === "running") {
-    const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
     const offset = focus.total
       ? (RING * (focus.left / focus.total)).toFixed(2)
       : RING;

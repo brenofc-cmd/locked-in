@@ -26,6 +26,11 @@ export type DuoData = {
    * title only when shared; never the reflection). null when not focusing.
    */
   partnerFocus: PartnerFocus | null;
+  /**
+   * V2 Phase 2: the partner's last heartbeat (user_presence, RLS: current
+   * partner only). Shown only while they are neither focusing nor online.
+   */
+  partnerLastSeen: string | null;
 };
 
 export type PartnerFocus = {
@@ -47,7 +52,7 @@ export async function loadDuoData(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<DuoData> {
-  const [feed, day, focus] = await Promise.all([
+  const [feed, day, focus, seen] = await Promise.all([
     supabase
       .from("activity_events")
       .select(
@@ -57,8 +62,14 @@ export async function loadDuoData(
       .limit(20),
     supabase.rpc("partner_today"),
     supabase.rpc("partner_current_focus"),
+    supabase
+      .from("user_presence")
+      .select("last_seen_at")
+      .neq("user_id", userId)
+      .maybeSingle(),
   ]);
-  if (feed.error || day.error || focus.error) throw new Error(t.loadErrors.duo);
+  if (feed.error || day.error || focus.error || seen.error)
+    throw new Error(t.loadErrors.duo);
   const d = day.data?.[0];
   const partnerDay = d
     ? { date: d.task_date, done: d.done, total: d.total }
@@ -80,5 +91,6 @@ export async function loadDuoData(
     partnerDay,
     partnerTasks,
     partnerFocus: focus.data?.[0] ?? null,
+    partnerLastSeen: seen.data?.last_seen_at ?? null,
   };
 }

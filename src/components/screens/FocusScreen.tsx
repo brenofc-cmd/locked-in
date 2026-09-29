@@ -5,11 +5,11 @@ import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
 import { StatusDot } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 
 export function FocusScreen() {
   const app = useApp();
-  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
+  const pv = usePartnerView();
   const sessions = [...app.sessions].reverse();
 
   return (

@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { Avatar, StatusDot, cx } from "@/components/ui";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 
 export function PartnerCard() {
-  const { partner, partnerCounts, feed, now } = useApp();
-  const pv = partnerView(partner, partnerCounts, feed, now);
+  const { partner } = useApp();
+  const pv = usePartnerView();
 
   return (
     <Link
@@ -20,6 +20,7 @@ export function PartnerCard() {
         pv.pct,
         pv.done,
         pv.total,
+        pv.seen,
       )}
       className="flex flex-col gap-3.5 rounded-2xl border border-white/7 bg-card p-[18px] text-left transition-[box-shadow,transform] duration-700 active:scale-[.985]"
       style={{
@@ -43,6 +44,11 @@ export function PartnerCard() {
             >
               <StatusDot live={pv.live} pulse={pv.pulse} size={6} />
               {pv.label}
+              {pv.seen && (
+                <span data-testid="partner-seen" className="text-faint">
+                  · {pv.seen.toUpperCase()}
+                </span>
+              )}
             </span>
           </span>
         </span>

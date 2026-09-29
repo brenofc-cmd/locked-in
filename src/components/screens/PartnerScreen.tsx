@@ -14,7 +14,7 @@ import {
   cx,
 } from "@/components/ui";
 import { isoWeekday } from "@/lib/local-date";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 import {
   completedWeeks,
   focusLabel,
@@ -27,6 +27,7 @@ import {
 
 export function PartnerScreen() {
   const app = useApp();
+  const pv = usePartnerView();
   const { partner } = app;
 
   if (!app.hasPartner) {
@@ -48,7 +49,6 @@ export function PartnerScreen() {
     );
   }
 
-  const pv = partnerView(partner, app.partnerCounts, app.feed, app.now);
   // This week: mine live, theirs from duo_weeks; completed weeks only in H2H.
   const { week } = app;
   const mePct = percent(week.me.completed, week.me.planned);
@@ -81,7 +81,9 @@ export function PartnerScreen() {
           </h1>
           <span className="flex items-center gap-2 text-[13.5px] text-muted">
             <StatusDot live={pv.live} pulse={pv.pulse} />
-            <span className="truncate">{pv.statusLine}</span>
+            <span className="truncate" data-testid="partner-status">
+              {pv.statusLine}
+            </span>
           </span>
         </span>
       </header>

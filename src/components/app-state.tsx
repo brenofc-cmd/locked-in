@@ -19,6 +19,7 @@ import { t } from "@/i18n/pt-BR";
 import { usePathname, useRouter } from "next/navigation";
 import { clearReaction, setReaction } from "@/app/(app)/social-actions";
 import { updateDisplayName } from "@/app/(app)/actions";
+import { useHeartbeat } from "@/components/use-heartbeat";
 import { useDuoRealtime } from "@/components/duo-realtime";
 import { useSession } from "@/components/session";
 import { useFocus } from "@/components/use-focus";
@@ -87,6 +88,8 @@ function useAppStateValue(
 
   // ---- real duo side (Stage 5, duo-realtime.tsx) ----------------------------
   const rt = useDuoRealtime();
+  // V2 Phase 2: my own last seen, for my partner's "visto por último".
+  useHeartbeat(true);
   // Server-corrected clock: starts at the server's render time (identical on
   // server and client, so no hydration mismatch), then device time + offset.
   const [now, setNow] = useState(() => initialFocus.serverNow);
@@ -103,7 +106,7 @@ function useAppStateValue(
     status: partnerStatus(rt.partnerOnline, rt.partnerFocus, now),
     focusLabel: rt.partnerFocus?.title ?? "",
     focusSession: rt.partnerFocus,
-    seenAt: "",
+    seenAt: rt.partnerLastSeen ?? "",
     flashAt: rt.flashAt,
   };
   const [sheet, setSheet] = useState<Sheet | null>(null);

@@ -109,6 +109,13 @@ function useDuoRealtimeValue(initial: DuoData) {
   const [partnerFocus, setPartnerFocus] = useState<PartnerFocus | null>(
     initial.partnerFocus,
   );
+  // V2 Phase 2 last seen: the partner's heartbeat (database) and the moment
+  // this device saw their presence drop; the later of the two is shown.
+  const [partnerSeenDb, setPartnerSeenDb] = useState<string | null>(
+    initial.partnerLastSeen,
+  );
+  const [partnerLeftAt, setPartnerLeftAt] = useState<string | null>(null);
+  const wasOnline = useRef(false);
   const [conn, setConn] = useState<ConnectionState>("connected");
   const [flashAt, setFlashAt] = useState(0);
 
@@ -154,6 +161,7 @@ function useDuoRealtimeValue(initial: DuoData) {
         setPartnerVersion((v) => v + 1);
         setChallengesVersion((v) => v + 1);
         if (seq === focusSeq.current) setPartnerFocus(data.partnerFocus);
+        setPartnerSeenDb(data.partnerLastSeen);
         // A duo_joined / duo_ended broadcast can be missed (sent before this
         // tab joined the channel, or while offline): the database is the
         // truth, so a refetch that finds the partner arrived or gone tells
@@ -209,7 +217,11 @@ function useDuoRealtimeValue(initial: DuoData) {
       channelRef.current = ch;
       ch.on("presence", { event: "sync" }, () => {
         if (!partnerId) return;
-        setPartnerOnline(presenceOnline(ch.presenceState(), partnerId));
+        const on = presenceOnline(ch.presenceState(), partnerId);
+        if (wasOnline.current && !on)
+          setPartnerLeftAt(new Date().toISOString());
+        wasOnline.current = on;
+        setPartnerOnline(on);
       })
         .on("broadcast", { event: "activity" }, ({ payload }) => {
           const record: ActivityRecord = {
@@ -293,6 +305,8 @@ function useDuoRealtimeValue(initial: DuoData) {
         })
         .subscribe((status) => {
           lastStatus = status;
+          // My own connection dropped: the next sync is not the partner leaving.
+          if (status !== "SUBSCRIBED") wasOnline.current = false;
           update();
           if (status === "SUBSCRIBED") {
             publishPresence(ch);
@@ -324,6 +338,8 @@ function useDuoRealtimeValue(initial: DuoData) {
         .then(() => (channel ? supabase.removeChannel(channel) : undefined))
         .catch(() => undefined);
       setPartnerOnline(false);
+      wasOnline.current = false;
+      setPartnerLeftAt(null);
       setConn("connected");
     };
   }, [duoId, partnerId, me.id, tz, publishPresence, refetch]);
@@ -409,10 +425,16 @@ function useDuoRealtimeValue(initial: DuoData) {
     };
   }, []);
 
+  const partnerLastSeen =
+    [partnerSeenDb, partnerLeftAt]
+      .filter((x): x is string => !!x)
+      .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
+
   return {
     conn,
     feed,
     partnerOnline,
+    partnerLastSeen,
     partnerFocus,
     partnerCounts,
     partnerTasks,

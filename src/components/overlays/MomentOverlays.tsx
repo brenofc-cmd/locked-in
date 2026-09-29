@@ -14,7 +14,7 @@ import {
   localTimeHM,
   weekdayName,
 } from "@/lib/local-date";
-import { partnerView } from "@/lib/partner";
+import { usePartnerView } from "@/components/use-partner-view";
 import {
   completedWeeks,
   focusLabel,
@@ -75,7 +75,7 @@ function ReviewDay() {
   const { me } = useSession();
   const list = app.tasks;
   const stats = todayStats(list, app.standard);
-  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
+  const pv = usePartnerView();
   const notDone = list.filter((x) => !x.done && !x.skip).map((x) => x.name);
   const doneNames = list.filter((x) => x.done).map((x) => x.name);
   const skipped = list.filter((x) => x.skip).map((x) => x.name);
@@ -415,7 +415,7 @@ function Briefing() {
   const total = tasks.length;
   const y = progressDays.find((d) => d.day === addDays(today, -1));
   const yesterday = y ? percent(y.completed, y.planned) : null;
-  const pv = partnerView(app.partner, app.partnerCounts, app.feed, app.now);
+  const pv = usePartnerView();
 
   const rows = [
     { k: t.moments.today, v: String(total), unit: t.moments.tasks(total) },

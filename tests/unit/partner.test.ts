@@ -105,7 +105,7 @@ describe("partner view", () => {
     expect(privateFocus.statusLine).toBe("Em foco · faltam 34:21");
   });
 
-  it("offline has no last seen", () => {
+  it("offline without a known last seen stays Offline", () => {
     const off = partnerView(
       { ...online, status: "offline" },
       { done: 1, total: 2 },
