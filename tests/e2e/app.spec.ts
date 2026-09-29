@@ -20,7 +20,9 @@ function nav(page: Page) {
 
 async function openToday(page: Page) {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/today$/);
+  // "/" restores by a client navigation that loads the whole layout from the
+  // remote DEV project (V2): allow for a loaded full-suite run.
+  await expect(page).toHaveURL(/\/today$/, { timeout: 15_000 });
   await expect(
     page.getByRole("heading", { name: "BOM DIA, BRENDON." }),
   ).toBeVisible();
