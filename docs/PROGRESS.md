@@ -44,6 +44,17 @@ Verified (2026-09-29, clean `.next`, branch `v2-phase-1-foundation-resume`):
   and `?next` win
 - No migration; PROD database untouched
 
+Production (2026-09-29): `main` fast-forwarded to `b2c3401`, Vercel Production deployment for that
+SHA `success`; `manifest.webmanifest` serves `start_url: "/"`. Smoke on
+https://locked-in-rust.vercel.app with the real signed-in account (Chrome, 1440): `/` → Today (nothing
+stored yet); Progress → 30D → previous month; tab closed, new tab at `/` → Progress, 30D, August;
+explicit `/today` stays Today; Quick Add draft typed, tab closed with the sheet open, reopened: sheet
+closed, draft back on opening; emptied (nothing submitted, no data written); Focus screen from the
+database (no running session); Partner screen and feed load; no console errors; storage holds only
+the Resume State key (no auth / token key). Left at 7D / current month / Today. Not done in
+production (covered by e2e): sign-out / sign-in (needs the user's password) and a live two-person
+realtime event (the partner was offline).
+
 Parked (not part of V2 Phase 1): uncommitted V1 work found on `main` at the start (change password
 in Settings + show / hide password toggle) was committed unreviewed to the local branch
 `wip-v1-change-password`, so `main` matched production.
