@@ -788,7 +788,7 @@ test("installable: manifest, icons and app metadata, no session needed", async (
     name: "LOCKED IN",
     short_name: "LOCKED IN",
     display: "standalone",
-    start_url: "/today",
+    start_url: "/", // V2 Phase 1: "/" restores the last route (ADR-055)
     background_color: "#0A0A0B",
     theme_color: "#0A0A0B",
   });
