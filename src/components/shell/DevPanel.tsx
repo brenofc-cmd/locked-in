@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
-import { loadResume } from "@/lib/resume-state";
+import { clearMark, loadMarks, loadResume } from "@/lib/resume-state";
 
 /**
  * Development shortcuts. Only rendered in development and only when the URL
@@ -29,7 +28,6 @@ export function DevPanel() {
   // Server snapshot is always false, so hydration never mismatches.
   const enabled = useSyncExternalStore(noopSubscribe, devFlag, () => false);
   const [open, setOpen] = useState(false);
-  const app = useApp();
   const { me } = useSession();
 
   useEffect(() => {
@@ -46,7 +44,13 @@ export function DevPanel() {
   // Partner presence, activity and connection are real since Stage 5, so the
   // panel no longer simulates them (it would fight the realtime state).
   const actions: [string, () => void][] = [
-    ["Resumo da manhã", () => app.openOverlay({ kind: "briefing" })],
+    [
+      "Resumo do dia de novo",
+      () => {
+        clearMark(me.id, "briefing");
+        window.location.reload();
+      },
+    ],
   ];
 
   return (
@@ -73,7 +77,11 @@ export function DevPanel() {
           ))}
           {/* V2 Resume State of this user on this device (read on open). */}
           <pre className="max-h-48 overflow-auto rounded-md bg-bg p-2 text-[10px] leading-[1.4] whitespace-pre-wrap text-dim">
-            {JSON.stringify(loadResume(me.id), null, 1)}
+            {JSON.stringify(
+              { resume: loadResume(me.id), daily: loadMarks(me.id) },
+              null,
+              1,
+            )}
           </pre>
         </div>
       )}

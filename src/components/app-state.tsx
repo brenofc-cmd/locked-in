@@ -52,6 +52,7 @@ import {
   type ReactionType,
 } from "@/lib/reactions";
 import { notificationPrefs } from "@/lib/settings";
+import { setMark } from "@/lib/resume-state";
 import type { TasksData } from "@/lib/session";
 import {
   createContext,
@@ -85,6 +86,7 @@ function useAppStateValue(
 
   // ---- real identity (Stage 3) ----------------------------------------------
   const userName = session.me.displayName;
+  const userId = session.me.id;
   const realPartner = session.duo?.partner ?? null;
   const hasPartner = realPartner !== null;
   const partnerName = realPartner?.displayName ?? t.hookToasts.yourPartner;
@@ -448,24 +450,8 @@ function useAppStateValue(
     return () => timers.forEach(clearTimeout);
   }, [settings.notifyTaskReminders, tasks, timeZone, clockNow, notify]);
 
-  // Morning briefing: optional, once per local day on the first open, never
-  // over onboarding. Which day it was last shown is a presentation detail of
-  // this browser (localStorage); whether to show it is a real setting.
-  const briefingChecked = useRef(false);
-  useEffect(() => {
-    if (briefingChecked.current) return;
-    briefingChecked.current = true;
-    if (!settings.onboarded || !settings.showMorningBriefing) return;
-    try {
-      if (localStorage.getItem("li:briefing-shown") === today) return;
-      localStorage.setItem("li:briefing-shown", today);
-    } catch {
-      return;
-    }
-    // After hydration, so the server render never contains the overlay.
-    const id = setTimeout(() => setOverlay({ kind: "briefing" }), 0);
-    return () => clearTimeout(id);
-  }, [settings.onboarded, settings.showMorningBriefing, today]);
+  // Morning briefing: V2 Phase 4 moved it into Today (MorningCard), once per
+  // user and local day (docs/NORTH_STAR.md).
 
   // A new week: offer last week's result once (in-app toast).
   const weeklyChecked = useRef(false);
@@ -477,13 +463,8 @@ function useAppStateValue(
   useEffect(() => {
     if (weeklyChecked.current || !settings.onboarded || !lastWeek) return;
     weeklyChecked.current = true;
-    const key = weekStartOf(today);
-    try {
-      if (localStorage.getItem("li:weekly-shown") === key) return;
-      localStorage.setItem("li:weekly-shown", key);
-    } catch {
-      return;
-    }
+    // Once per user and week on this device (V2 Phase 4: user-scoped mark).
+    if (!setMark(userId, "weekly", weekStartOf(today))) return;
     const weekStart = lastWeek.weekStart;
     notify("weekly_review", {
       text: t.hookToasts.weekClosed(lastWeek.week),
@@ -499,7 +480,7 @@ function useAppStateValue(
         },
       ],
     });
-  }, [settings.onboarded, lastWeek, today, notify]);
+  }, [settings.onboarded, lastWeek, today, notify, userId]);
 
   const startFocus = useCallback(() => {
     setSheet(null);
@@ -561,6 +542,7 @@ function useAppStateValue(
     skipTask,
     unskipTask,
     moveRoutine: real.moveRoutine,
+    setPriorities: real.setPriorities,
     applyTemplate: real.applyTemplate,
     feed,
     partner: { ...partner, streak: pg.partnerStreak } satisfies Partner,

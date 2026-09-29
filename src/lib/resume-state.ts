@@ -461,6 +461,7 @@ export function clearResume(
   try {
     storage.removeItem(key);
     storage.removeItem(remindedKey(userId)!);
+    storage.removeItem(marksKey(userId)!);
     log("cleared");
   } catch {
     // Storage blocked: nothing was stored either.
@@ -739,4 +740,85 @@ export function clearGoalDraft(
     Date.now(),
     storage,
   );
+}
+
+// ------------------------------------------------------- daily marks (V2.4)
+
+/**
+ * "Already shown today" markers of this device, per user (V2 Phase 4): the
+ * day the morning briefing was last shown and the week whose result notice
+ * was last offered. Replaces the V1 unscoped `li:briefing-shown` /
+ * `li:weekly-shown`, which let two accounts on one browser share them; the
+ * old keys are removed on first read and never trusted (they cannot say
+ * whose they were — at worst the briefing shows once more that day).
+ *   locked-in:v2:<userId>:daily  →  { v: 1, briefing?: "YYYY-MM-DD", weekly?: "YYYY-MM-DD" }
+ */
+export type DailyMarks = { v: 1; briefing?: string; weekly?: string };
+export const LEGACY_MARK_KEYS = ["li:briefing-shown", "li:weekly-shown"];
+
+export function marksKey(userId: string): string | null {
+  return USER_ID.test(userId)
+    ? `${NAMESPACE}:${userId.toLowerCase()}:daily`
+    : null;
+}
+
+export function parseMarks(raw: unknown): DailyMarks {
+  const out: DailyMarks = { v: 1 };
+  if (!isRecord(raw) || raw.v !== 1) return out;
+  if (typeof raw.briefing === "string" && DATE_ISO.test(raw.briefing))
+    out.briefing = raw.briefing;
+  if (typeof raw.weekly === "string" && DATE_ISO.test(raw.weekly))
+    out.weekly = raw.weekly;
+  return out;
+}
+
+export function loadMarks(
+  userId: string,
+  storage: StorageLike | null = defaultStorage(),
+): DailyMarks {
+  const key = marksKey(userId);
+  if (!key || !storage) return { v: 1 };
+  try {
+    for (const legacy of LEGACY_MARK_KEYS) storage.removeItem(legacy);
+    const raw = storage.getItem(key);
+    return raw ? parseMarks(JSON.parse(raw)) : { v: 1 };
+  } catch {
+    return { v: 1 };
+  }
+}
+
+/** Records the mark; returns false when it was already set to that date. */
+export function setMark(
+  userId: string,
+  kind: "briefing" | "weekly",
+  date: string,
+  storage: StorageLike | null = defaultStorage(),
+): boolean {
+  const key = marksKey(userId);
+  if (!key || !storage || !DATE_ISO.test(date)) return false;
+  const marks = loadMarks(userId, storage);
+  if (marks[kind] === date) return false;
+  try {
+    storage.setItem(key, JSON.stringify({ ...marks, [kind]: date }));
+  } catch {
+    // Storage blocked: the moment may show again, never an error.
+  }
+  return true;
+}
+
+/** Forgets one mark (development shortcut: see the briefing again today). */
+export function clearMark(
+  userId: string,
+  kind: "briefing" | "weekly",
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  const key = marksKey(userId);
+  if (!key || !storage) return;
+  const marks = loadMarks(userId, storage);
+  delete marks[kind];
+  try {
+    storage.setItem(key, JSON.stringify(marks));
+  } catch {
+    // Storage blocked: nothing was stored either.
+  }
 }

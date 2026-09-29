@@ -15,6 +15,7 @@ import {
   TEMPLATE_NAMES,
   templateCategory,
 } from "@/lib/routine-templates";
+import { setMark } from "@/lib/resume-state";
 
 const PATHS = [
   {
@@ -39,7 +40,7 @@ const PATHS = [
  */
 export function OnboardingScreen() {
   const app = useApp();
-  const { duo } = useSession();
+  const { duo, me } = useSession();
   const router = useRouter();
   const [step, setStep] = useState<OnboardingStep>(
     () =>
@@ -83,11 +84,7 @@ export function OnboardingScreen() {
       return;
     }
     // Just set up: nothing to brief today (the briefing starts tomorrow).
-    try {
-      localStorage.setItem("li:briefing-shown", app.today);
-    } catch {
-      // Storage blocked: the briefing may show once, still skippable.
-    }
+    setMark(me.id, "briefing", app.today);
     router.replace("/today");
   }
 
