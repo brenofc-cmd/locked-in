@@ -21,6 +21,7 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
+          is_featured: boolean;
           is_active: boolean;
           owner_id: string;
           sort_order: number;
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           id?: string;
+          is_featured?: boolean;
           is_active?: boolean;
           owner_id?: string;
           sort_order?: number;
@@ -39,6 +41,7 @@ export type Database = {
         Update: {
           created_at?: string;
           id?: string;
+          is_featured?: boolean;
           is_active?: boolean;
           owner_id?: string;
           sort_order?: number;
@@ -114,6 +117,7 @@ export type Database = {
           id: string;
           notes: string;
           owner_id: string;
+          priority_rank: number | null;
           reminder: boolean;
           routine_item_id: string | null;
           scheduled_time: string | null;
@@ -133,6 +137,7 @@ export type Database = {
           id?: string;
           notes?: string;
           owner_id?: string;
+          priority_rank?: number | null;
           reminder?: boolean;
           routine_item_id?: string | null;
           scheduled_time?: string | null;
@@ -152,6 +157,7 @@ export type Database = {
           id?: string;
           notes?: string;
           owner_id?: string;
+          priority_rank?: number | null;
           reminder?: boolean;
           routine_item_id?: string | null;
           scheduled_time?: string | null;
@@ -386,6 +392,7 @@ export type Database = {
           description: string | null;
           goal_type: string;
           id: string;
+          is_featured: boolean;
           owner_id: string;
           sort_order: number;
           status: string;
@@ -400,6 +407,7 @@ export type Database = {
           description?: string | null;
           goal_type: string;
           id?: string;
+          is_featured?: boolean;
           owner_id?: string;
           sort_order?: number;
           status?: string;
@@ -414,6 +422,7 @@ export type Database = {
           description?: string | null;
           goal_type?: string;
           id?: string;
+          is_featured?: boolean;
           owner_id?: string;
           sort_order?: number;
           status?: string;
@@ -603,6 +612,7 @@ export type Database = {
           created_at: string;
           description: string | null;
           id: string;
+          is_featured: boolean;
           is_archived: boolean;
           owner_id: string;
           sort_order: number;
@@ -613,6 +623,7 @@ export type Database = {
           created_at?: string;
           description?: string | null;
           id?: string;
+          is_featured?: boolean;
           is_archived?: boolean;
           owner_id?: string;
           sort_order?: number;
@@ -623,6 +634,7 @@ export type Database = {
           created_at?: string;
           description?: string | null;
           id?: string;
+          is_featured?: boolean;
           is_archived?: boolean;
           owner_id?: string;
           sort_order?: number;
@@ -930,6 +942,10 @@ export type Database = {
       save_focus_reflection: {
         Args: { p_id: string; p_reflection: string };
         Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
+      set_my_priorities: {
+        Args: { p_ids: string[] };
+        Returns: Database["public"]["Tables"]["daily_tasks"]["Row"][];
       };
       start_focus_session: {
         Args: {
