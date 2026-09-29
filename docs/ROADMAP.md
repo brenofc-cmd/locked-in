@@ -5,11 +5,12 @@
 V1 (the ten stages below) is in production: `main` at `606546f`, https://locked-in-rust.vercel.app.
 V2 is built in ten phases, each on its own branch, merged to `main` only when VERIFIED.
 
-| #    | Phase                            | Status       | Scope                                                                                                            |
-| ---- | -------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| 1    | Foundation + Restore State       | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md) |
-| 2    | School Planner + Shared Calendar | NEXT         | Not started                                                                                                      |
-| 3–10 | —                                | PENDING      | Defined when each phase starts                                                                                   |
+| #    | Phase                                 | Status       | Scope                                                                                                                         |
+| ---- | ------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Foundation + Restore State            | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md)              |
+| 2    | School Planner + Shared Calendar      | **VERIFIED** | Planner (PRÓXIMOS / CALENDÁRIO, sharing, reminders, Today card, Add to tasks) + Partner Presence 2.0 / last seen (PLANNER.md) |
+| 3    | Goals, Vision & Accountability Mirror | NEXT         | Not started                                                                                                                   |
+| 4–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                           |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
 new animations, Web Push, new gamification.

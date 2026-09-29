@@ -55,3 +55,10 @@ not a checkbox for V1 (ADR-045).
   reconnect), but no live notice is shown for it.
 - The morning briefing is a presentation choice, not a notification: `show_morning_briefing`
   (setting) + the day it was last shown in this browser (`localStorage`).
+
+## Planner reminders (V2 Phase 2)
+
+Kind `planner_reminder`, governed by the same **Lembretes** preference as task reminders and by quiet
+hours (browser notification only). Due from 08:00 local on the reminder day (0 / 1 / 3 / 7 days
+before), once per event and due date per device; my own events only. Details: docs/PLANNER.md. Still
+no Web Push (V2 Phase 10).

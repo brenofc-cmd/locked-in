@@ -86,7 +86,8 @@ user_id)`.
     → membership, integers / dates / shared titles only;
   - helpers: `private.current_duo_id`, `private.duo_is_complete`, `private.materialize_tasks`
     (catch-up; only for the caller or the caller's partner);
-  - triggers: `handle_new_user`, `handle_new_profile_settings`, `sync_*` (feed + broadcasts).
+  - triggers: `handle_new_user`, `handle_new_profile_settings`, `sync_*` (feed + broadcasts;
+    V2 Phase 2 adds `sync_planner_event`, same pattern: ids and the operation only).
 - Every DEFINER function: `set search_path = ''`, schema-qualified names, identity from
   `auth.uid()` only, `revoke all … from public, anon`, `grant execute` to `authenticated` only
   (triggers: to nobody). PostgreSQL's global default gives PUBLIC `EXECUTE` on new functions, so each
@@ -167,3 +168,23 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
   (capped at its plan, ≤ 12 h) until it ends.
 - The Daily Standard recalculates the streak (a personal view, ADR-038); competitions never use the
   standard and challenges use their snapshot.
+
+## V2 Phase 2 — last seen and planner (2026-09-29)
+
+| Table            | RLS | anon | Owner                                                                            | Current partner                                   | Old partner / outsider |
+| ---------------- | --- | ---- | -------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------- |
+| `user_presence`  | on  | —    | S · I own (`user_id` only) · U `last_seen_at` (always the database clock) · no D | S                                                 | —                      |
+| `planner_events` | on  | —    | S · I / U (no `owner_id` / `duo_id` grant) · D                                   | S shared rows of the current duo only · no writes | —                      |
+
+- `public.touch_last_seen()` is INVOKER and takes no argument: it can only touch the caller's row.
+  A client-sent time is replaced by `now()` (trigger); `user_id` is not writable.
+- `planner_events.duo_id` is derived by the database from the owner's current complete duo when
+  shared, cleared when unshared, and set to null (event private again) when that duo ends — an old
+  partner loses access and a new partner never inherits old events. Sharing without a partner →
+  `LI_PLANNER_NO_PARTNER`.
+- New DEFINER function: `private.sync_planner_event` (trigger, executable by nobody) — required
+  because `realtime.send` is not granted to users; the reviewed set in `stage9_integrity` includes
+  it. No other DEFINER was added.
+- Advisors after the migrations (DEV): no new finding (same items as the Stage 9 table above).
+- Verified: pgTAP `v2_phase2_presence_planner` (63) + full suite on DEV (520/520), e2e `v2-phase2`
+  (API attacks by the partner and an outsider, old duo → new duo).

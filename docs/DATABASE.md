@@ -522,7 +522,7 @@ planned_seconds, paused_at, accumulated_pause_seconds` — never the reflection,
 history. Outsiders get nothing. Focus errors: `LI_FOCUS_RUNNING`, `LI_FOCUS_FINISHED`,
 `LI_NOT_FOUND`, `LI_NOT_AUTHENTICATED` (mapped by `focusErrorMessage()` in `src/lib/focus.ts`).
 
-RLS is enabled on all ten tables, and on `realtime.messages` (Realtime Authorization, see
+RLS is enabled on all twelve tables (V2 Phase 2 adds `user_presence`, `planner_events`), and on `realtime.messages` (Realtime Authorization, see
 REALTIME.md).
 
 | Policy                                                                | Table             | Rule                                                                                                     |
@@ -594,6 +594,14 @@ migrations already grant explicitly; keep doing so.
   broadcast), templates (dedupe, double click), duo end (atomic, third party untouched, personal
   history kept, old duo data gone, broadcast), a new partner seeing nothing of the old duo, grants.
 
+- `supabase/tests/v2_phase2_presence_planner.test.sql` — pgTAP, 63 assertions (V2 Phase 2): last
+  seen (database clock, one row per user, no update / insert / delete for someone else, no spoofed
+  time or user id, partner reads, outsider / no duo / anon nothing, old partner loses it, new partner
+  gets it), planner (owner CRUD, trimmed text, owner / duo from the database, spoofed `owner_id` /
+  `duo_id`, invalid type / title / priority / reminder / length, partner read-only both ways, private
+  invisible, outsider / no duo / anon, broadcasts with ids only, unsharing tells the old duo, duo end
+  makes shared events private, new partner sees none of them), grants / RLS / INVOKER heartbeat.
+  Full DEV run 2026-09-29 after the V2 migrations: stage 3–9 unchanged (457/457) + 63 = **520/520**.
 - `supabase/tests/stage9_integrity.test.sql` — pgTAP, 69 assertions: closed history (complete /
   undo / skip / delete / rename / visibility / backdated insert refused, future only pending,
   today fully editable), routine guards (past start, stale template, `materialized_through`,
@@ -666,3 +674,25 @@ E2E_LAYOUT_EMAIL=li-e2e-layout@example.com
 After each migration regenerate `src/types/database.ts` with the Supabase type generator
 (`npx supabase gen types typescript --project-id oavhuxaanztrughyrckb`, or the Supabase MCP
 `generate_typescript_types`) and keep the header comment.
+
+## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
+
+### `public.user_presence` — partner last seen (ADR-056)
+
+| Column         | Type        | Notes                                                 |
+| -------------- | ----------- | ----------------------------------------------------- |
+| `user_id`      | uuid PK     | default `auth.uid()`, FK `profiles` on delete cascade |
+| `last_seen_at` | timestamptz | always `now()` (trigger `user_presence_stamp`)        |
+
+Written only through `public.touch_last_seen()` (INVOKER upsert of the caller's row). Grants:
+select; insert (`user_id`); update (`last_seen_at`). Policies: read own or current duo member;
+insert / update own. A separate table (not a `profiles` column) so heartbeats never run the profile
+triggers.
+
+### `public.planner_events` — school planner (ADR-057)
+
+Columns, constraints and access: docs/PLANNER.md. Triggers: `planner_events_normalize` (INVOKER:
+trims, keeps `owner_id`, derives `duo_id` from sharing, `LI_PLANNER_NO_PARTNER`; after a duo ends
+turns the event private), `planner_events_set_updated_at`, `planner_events_broadcast`
+(`private.sync_planner_event`, DEFINER). Indexes `(owner_id, event_date)`, partial
+`(duo_id, event_date) where duo_id is not null`. FK `duo_id → duos on delete set null`.

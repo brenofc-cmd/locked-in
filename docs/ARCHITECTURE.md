@@ -207,6 +207,19 @@ Details in [RESUME_STATE.md](RESUME_STATE.md), ADR-055.
   `useResumeValue()` (`useSyncExternalStore`, server snapshot null → no hydration mismatch).
 - Sign-out ("Sair") clears the user's value before `POST /auth/signout`.
 
+## V2 Phase 2 — partner status and planner
+
+Details in [PLANNER.md](PLANNER.md), [REALTIME.md](REALTIME.md) → Last seen, ADR-056 / ADR-057.
+
+- Partner status: `usePartnerView()` (`src/components/use-partner-view.ts`) is the only way a
+  screen gets the partner's status — `partnerView()` decides EM FOCO > ONLINE > OFFLINE + last seen.
+- Heartbeat: `useHeartbeat()` in the app state writes my own `user_presence` row
+  (`touch_last_seen()`); the partner's last seen arrives with `loadDuoData()`.
+- Planner: `loadAppData()` also loads the upcoming window (today → +60 days) after `my_today()`;
+  `usePlanner()` (inside `AppStateProvider`) holds it, writes through
+  `src/app/(app)/planner-actions.ts`, re-reads on `planner_changed` (duo channel) and on visible,
+  and schedules the in-app reminders. The month grid reads its own month.
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to

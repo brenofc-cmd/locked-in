@@ -122,3 +122,15 @@ still keeps the next user out of it.
 V1 keeps two small unscoped keys that are not Resume State: `li:briefing-shown` and
 `li:weekly-shown` (the local date / week a notice was last shown). They hold no user data and are
 unchanged in this phase.
+
+## V2 Phase 2 additions
+
+- `/planner` joined `RESTORABLE_ROUTES` and `SCROLL_ROUTES`.
+- New optional fields `planner: { view, month }` (PRÓXIMOS / CALENDÁRIO and an explicitly chosen
+  month) and `plannerDraft` (a **new** event, 24 h; edits are never drafted), validated in
+  `parseResume()`. They are optional, so a Phase 1 value is still valid and `v` stays 1. Events are
+  never stored.
+- Planner reminders already shown live in a separate per-user key
+  `locked-in:v2:<userId>:planner-reminded` (ids + due dates only), also removed by `clearResume()` on
+  sign-out.
+- "Add to tasks" opens Quick Add pre-filled; such a form is never saved as the Quick Add draft.

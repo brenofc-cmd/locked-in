@@ -31,7 +31,8 @@ serious tool where **one trusted person** sees whether you actually showed up to
 5. **Honest scoring.** The day is judged on the percentage of scheduled tasks completed. A skipped
    task stays in the total and does not count as completed (ADR-022). Unchecking withdraws the feed
    event.
-6. **Minimal privacy leakage.** The partner sees Online / Focusing / Offline, never more. Individual tasks
+6. **Minimal privacy leakage.** The partner sees Em foco / Online / Offline (+ when they were last
+   seen, V2 Phase 2), never more. Individual tasks
    can be hidden but still count.
 7. **Dark, serious, minimal, premium.** No generic dashboard aesthetic, few cards, thumb-friendly controls.
 
@@ -72,3 +73,12 @@ screen, the same Progress period and History month, the same scroll, and any tas
 but had not saved (for 24 h). It is only interface memory on your device — your data always comes
 from the database, signing out forgets it, and two people on one phone never see each other's place
 ([RESUME_STATE.md](RESUME_STATE.md)).
+
+### V2 Phase 2 — school planner and partner last seen
+
+- **Planner** (More → Planner): exams, assignments, homework, deadlines and school events with
+  subject, optional time, importance, reminders and notes; PRÓXIMOS and CALENDÁRIO; optionally
+  shared with the partner (read-only for them); the next events on Today; "Add to tasks"
+  pre-fills Quick Add. Not a calendar app: no colours per subject, no recurring events.
+- **Partner status 2.0**: EM FOCO (persistent focus) > ONLINE (presence) > OFFLINE with
+  "Visto por último há 12 min" — the same everywhere.

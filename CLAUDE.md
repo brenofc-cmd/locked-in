@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -166,6 +166,14 @@ routing changed; run the pgTAP suite when a migration changed.
   reset, `?next` and onboarding always win. Never reopen a sheet or dialog. A new field needs
   validation in `parseResume()`, a unit test and, for a new shape, a version bump. Sign-out must
   keep calling `clearResume()`.
+- V2 Phase 2 (docs/PLANNER.md, REALTIME.md → Last seen, ADR-056 / ADR-057): the partner's status
+  comes only from `usePartnerView()` / `partnerView()` — EM FOCO (persistent focus) > ONLINE
+  (presence) > OFFLINE + last seen; never infer ONLINE from `last_seen_at`. The heartbeat writes
+  only my own row through `touch_last_seen()`, ~5 min while visible, never while hidden; never poll
+  the partner or add a channel for it. Planner events: owner CRUD; never send `owner_id` / `duo_id`
+  (the database derives sharing from the current duo; ending a duo makes shared events private);
+  partner read-only; `planner_changed` carries ids only. An event and a task stay independent.
+  Dates are local `YYYY-MM-DD` strings (`src/lib/planner.ts`), never UTC.
 - Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button (briefing only; partner and
   connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without

@@ -80,6 +80,7 @@ never notes, reflections, timezone, email or private titles.
 | `challenges_changed` | a challenge is created or deleted (Stage 8)                                                               | `actor_id, challenge_id`                                                                                          |
 | `duo_joined`         | the second member joins (Stage 8)                                                                         | `actor_id`                                                                                                        |
 | `duo_ended`          | a member ends the duo, sent just before the atomic delete (Stage 8)                                       | `actor_id`                                                                                                        |
+| `planner_changed`    | a shared planner event is created / updated / deleted, or stops being shared (V2 Phase 2)                 | `actor_id, event_id, operation` (never a title, subject, date or time)                                            |
 
 Private tasks (`visible_to_partner = false`) emit nothing at all — no title, no timing. Edits,
 reorders, archives, renames, settings and page views emit nothing ("magical, not noisy").
@@ -94,7 +95,7 @@ Key = the user id, so every tab / device of a user is one entry. Payload `{ user
   Offline is never published; it is the absence of presence.
 - Closing one of two tabs keeps the user online; closing the last makes them offline within a few
   seconds (≈ 3 s measured).
-- No "last seen" by design.
+- V1 had no "last seen"; V2 Phase 2 adds it as a fallback (below), without touching presence.
 
 ## Focus (Stage 6)
 
@@ -177,3 +178,25 @@ Still one channel per duo; the four new events above reuse it.
   new subscription. State is always recovered by the next refetch; only the live notice is lost.
 
 No mocks remain after Stage 8.
+
+## Last seen (V2 Phase 2, ADR-056)
+
+The partner's status everywhere comes from one function (`partnerView()` via `usePartnerView()`):
+
+1. a valid persistent focus session (`partner_current_focus()`) → **EM FOCO**;
+2. Realtime Presence on `duo:<duo_id>` → **ONLINE**;
+3. neither → **OFFLINE**, plus "Visto por último …" when known.
+
+A recent last seen never makes the partner ONLINE.
+
+- **Heartbeat** (`useHeartbeat`, `public.touch_last_seen()`): my own row in `user_presence`, stamped
+  with the database clock — on open, on every return to `visible`, every ~5 min while visible
+  (never more than once a minute), nothing while hidden, nothing on close (`beforeunload` is not
+  relied on; accuracy is a few minutes).
+- **Reading**: the partner's `last_seen_at` comes with the duo data (layout load and every duo
+  refetch, e.g. back to visible), RLS: current partner only. The client also notes the moment it
+  saw the partner's presence drop (ignored when its own connection was the one that dropped); the
+  later of the two is shown. No polling, no new channel, no broadcast for last seen.
+- **Format** (`lastSeen()` / `lastSeenText()`, viewer's profile timezone like every time in the
+  app): agora (< 1 min) · há X min (1–59) · hoje às HH:mm · ontem às HH:mm · em DD/MM às HH:mm.
+  Only the components showing it redraw once a minute.

@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 1 — Foundation + Restore State — VERIFIED (2026-09-29); next: Phase 2 — School Planner + Shared Calendar (not started)
+LOCKED IN V2 — Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0 — VERIFIED (2026-09-29); next: Phase 3 — Goals, Vision & Accountability Mirror (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -9,6 +9,46 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ---
 
 # LOCKED IN V2
+
+## Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0 — VERIFIED (2026-09-29)
+
+Scope: docs/PLANNER.md, docs/REALTIME.md → Last seen, ADR-056 / ADR-057. Branch
+`v2-phase-2-school-planner` (renamed from the local `v2-partner-last-seen`, whose only content was
+the uncommitted last-seen draft migration; that draft was replaced by a dedicated table).
+
+Done:
+
+- **Partner Presence 2.0**: one status for every screen (`usePartnerView()` → `partnerView()`):
+  EM FOCO (persistent focus) > ONLINE (presence) > OFFLINE + "Visto por último …" (viewer's
+  timezone: agora / há X min / hoje às / ontem às / em DD/MM às). `user_presence` table,
+  `touch_last_seen()` heartbeat (open, visible, ~5 min while visible, never hidden / on close),
+  partner reads with the duo data, no polling, no new channel
+- **Planner**: `planner_events` (owner CRUD, sharing derived from the current duo, private
+  invisible, duo end → private again), `/planner` (PRÓXIMOS / CALENDÁRIO), event sheet (5 types,
+  subject, date, optional time, important, share, reminder 0 / 1 / 3 / 7, notes, delete with
+  confirmation), partner events read-only, `planner_changed` realtime (ids only), Today PRÓXIMOS
+  card, countdowns, reminders in-app (+ browser while open; Lembretes preference, quiet hours),
+  Add to tasks (pre-filled Quick Add), More → Planner and sidebar
+- **Resume State**: `/planner`, view, month, scroll, 24 h new-event draft; reminder dedupe per
+  user, cleared on sign-out
+- Migrations: `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`; one new
+  DEFINER (`private.sync_planner_event`, trigger) added to the reviewed set
+
+Verified (2026-09-29, DEV, clean `.next`):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm audit` — 0 vulnerabilities
+- `npm test` — 12 files, **180 passed** (last-seen 13 + planner 22 new)
+- pgTAP on DEV (all 31 migrations): stage 3 51, stage 4 72, stage 5 40, stage 6 63, stage 7 78,
+  stage 8 84, stage 9 69 (DEFINER set updated), v2 phase 2 63 — **520/520**, FAILED=0; DEV left
+  clean (every run rolls back)
+- Supabase advisors (DEV, after the migrations): no new finding
+- `npm run test:e2e` — **93 passed**, 0 failed, 0 retries (67 V1 + 16 Phase 1 + 10 Phase 2)
+- Phase 2 spec also at 375, 430, 768, 1180 and 1440 (temporary config): all green (DEV Auth was
+  briefly unavailable once — 502 / 20 s on `/auth/v1/health` — and the affected widths were re-run)
+- Fixed during the run (tests only): stage6 read A's sessions with a 400-id `in()` list that
+  exceeded the URL limit as DEV history grew → now by owner; the `/` restore assertions get 15 s
+  under a full-suite load; the V2 `beforeAll` resets get 120 s
 
 ## Phase 1 — Foundation + Restore State — VERIFIED (2026-09-29)
 
