@@ -77,7 +77,7 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
@@ -158,6 +158,14 @@ routing changed; run the pgTAP suite when a migration changed.
 - Realtime: one private channel per duo, Postgres is the source of truth (docs/REALTIME.md). Never
   add polling, per-second presence updates, client-sent broadcasts or extra channels; new feed
   events come from database triggers.
+- V2 Resume State (docs/RESUME_STATE.md, ADR-055): interface context only, one versioned value per
+  user (`locked-in:v2:<userId>:resume`), read / written only through `src/lib/resume-state.ts` —
+  never call `localStorage` for it from a component, never use an unscoped key. Never store product
+  data (tasks, focus / timer, partner, feed, numbers), tokens, passwords, emails or anything from
+  auth. Restore routes only at `/` and only from `RESTORABLE_ROUTES`; explicit URLs, `/auth/*`,
+  reset, `?next` and onboarding always win. Never reopen a sheet or dialog. A new field needs
+  validation in `parseResume()`, a unit test and, for a new shape, a version bump. Sign-out must
+  keep calling `clearResume()`.
 - Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button (briefing only; partner and
   connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without

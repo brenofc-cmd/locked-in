@@ -193,6 +193,20 @@ Details in [ANALYTICS.md](ANALYTICS.md).
   metadata in `src/app/layout.tsx`; no service worker.
 - Details: [NOTIFICATIONS.md](NOTIFICATIONS.md), [CHALLENGES.md](CHALLENGES.md).
 
+## Resume State (V2 Phase 1)
+
+Details in [RESUME_STATE.md](RESUME_STATE.md), ADR-055.
+
+- Interface context only (last route, Progress range / month, scroll, new-task drafts), in
+  `localStorage` under `locked-in:v2:<userId>:resume`, through `src/lib/resume-state.ts` only.
+  Never product data: every screen still renders from the database.
+- `/` is a dynamic page: signed out → `/login` (proxy); signed in → `ResumeEntry` replaces it with
+  the last safe route or `/today`. `manifest.start_url` is `/`.
+- `useResumeShell()` in `AppShell` saves the route and the throttled scroll of `<main>` (the scroll
+  container) and restores the scroll once per page load; screens read stored values with
+  `useResumeValue()` (`useSyncExternalStore`, server snapshot null → no hydration mismatch).
+- Sign-out ("Sair") clears the user's value before `POST /auth/signout`.
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to

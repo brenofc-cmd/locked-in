@@ -5,7 +5,8 @@
 Mobile-first discipline and accountability app for two people: each runs a daily routine, checks tasks
 off, and sees the partner do the same in real time.
 
-Status: **Stage 9 — QA, security and integrity audit verified; Stage 10 (production deployment) next**. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Status: **V1 in production** (https://locked-in-rust.vercel.app). **V2 Phase 1 — Foundation + Restore
+State** verified. See [docs/PROGRESS.md](docs/PROGRESS.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Stack
 
@@ -41,7 +42,8 @@ npm run dev                  # http://localhost:3000
 - [Database](docs/DATABASE.md) — schema, RLS, functions, migrations, tests, test users
 - [Realtime](docs/REALTIME.md) — private duo channel, presence, broadcasts, recovery
 - [Design reference](docs/DESIGN_REFERENCE.md) — the approved Claude Design and how to read it
-- [Roadmap](docs/ROADMAP.md) — the 10 stages
+- [Roadmap](docs/ROADMAP.md) — V1's 10 stages and the V2 phases
+- [Resume State](docs/RESUME_STATE.md) — V2: what the device remembers between visits, and what it never stores
 - [Analytics](docs/ANALYTICS.md) — progress, streak, standard and competition rules
 - [Challenges](docs/CHALLENGES.md) — duo challenges, derived progress
 - [Notifications](docs/NOTIFICATIONS.md) — what is notified, and what V1 does not do

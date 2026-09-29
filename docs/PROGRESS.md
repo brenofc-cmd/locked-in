@@ -1,5 +1,59 @@
 # LOCKED IN DEVELOPMENT STATUS
 
+Current:
+LOCKED IN V2 — Phase 1 — Foundation + Restore State — VERIFIED (2026-09-29); next: Phase 2 — School Planner + Shared Calendar (not started)
+
+V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
+GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
+
+---
+
+# LOCKED IN V2
+
+## Phase 1 — Foundation + Restore State — VERIFIED (2026-09-29)
+
+Scope: docs/RESUME_STATE.md, ADR-055. No database migration, no new dependency.
+
+Done:
+
+- `src/lib/resume-state.ts`: one versioned JSON per user (`locked-in:v2:<userId>:resume`),
+  validated field by field, SSR-safe, never throws, ≤ 4 KB, logout cleanup
+- `/` restores the last safe private route (else `/today`); `manifest.start_url` is `/`; explicit
+  URLs, `/auth/*`, reset, `?next` and onboarding are untouched
+- Progress range and an earlier History (calendar) month restored; scroll of Today / Partner /
+  Progress / Routine restored once per page load after content, saved at most every 400 ms
+- Drafts of a new task / routine item (24 h), never auto-opening a sheet; removed on submit
+- Explicit sign-out clears the user's Resume State; users on one device are isolated by key
+- Focus unchanged: restored from `focus_sessions` only
+- Tests: unit `resume-state.test.ts` (21), e2e `v2-resume.spec.ts` (8 × 390 / 1440)
+
+Verified (2026-09-29, clean `.next`, branch `v2-phase-1-foundation-resume`):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass
+- `npm audit` — 0 vulnerabilities
+- `npm test` — 10 files, **145 passed** (124 V1 + 21 `resume-state`)
+- `npm run test:e2e` — **83 passed**, 0 failed, 0 retries (the 67 V1 tests + `v2-390` 8 + `v2-1440`
+  8). One V1 assertion changed on purpose: stage8 "installable" now expects `start_url: "/"`
+- The V2 spec also at 375, 430, 768 and 1180 (temporary config): 32 / 32 passed
+- Production-like: all e2e run against `next build` + `next start` with real Chromium, real
+  DEV Supabase sign-in and real `localStorage`; "close / reopen" = new browser context with the
+  saved cookies + storage
+- Security: the e2e asserts no token / JWT / password / email in any `localStorage` value, no
+  focus session / title in Resume State, sign-out removes the key, a second user gets no route,
+  scroll, draft or Progress choice of the first; explicit URL, `/auth/confirm`, `/reset-password`
+  and `?next` win
+- No migration; PROD database untouched
+
+Parked (not part of V2 Phase 1): uncommitted V1 work found on `main` at the start (change password
+in Settings + show / hide password toggle) was committed unreviewed to the local branch
+`wip-v1-change-password`, so `main` matched production.
+
+---
+
+# LOCKED IN V1
+
+Stage status at the end of V1 (history below, unchanged):
+
 Current Stage:
 10 — Production Deployment — IN PROGRESS (PROD database, Auth, SMTP and Vercel configured; paused for the pt-BR localization; auth test and two-device acceptance pending)
 

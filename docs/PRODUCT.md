@@ -63,3 +63,12 @@ community, XP / coins / achievements, projects or documents. LOCKED IN stays a s
 discipline system for two.
 
 See [ROADMAP.md](ROADMAP.md) for when each lands.
+
+## V2
+
+V2 builds on the production V1 in ten phases ([ROADMAP.md](ROADMAP.md)). Phase 1 makes the app
+**remember where you were**: reopening LOCKED IN (browser or installed app) returns to the last
+screen, the same Progress period and History month, the same scroll, and any task you were typing
+but had not saved (for 24 h). It is only interface memory on your device — your data always comes
+from the database, signing out forgets it, and two people on one phone never see each other's place
+([RESUME_STATE.md](RESUME_STATE.md)).

@@ -1,5 +1,21 @@
 # Roadmap
 
+## LOCKED IN V2
+
+V1 (the ten stages below) is in production: `main` at `606546f`, https://locked-in-rust.vercel.app.
+V2 is built in ten phases, each on its own branch, merged to `main` only when VERIFIED.
+
+| #    | Phase                            | Status       | Scope                                                                                                            |
+| ---- | -------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| 1    | Foundation + Restore State       | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md) |
+| 2    | School Planner + Shared Calendar | NEXT         | Not started                                                                                                      |
+| 3–10 | —                                | PENDING      | Defined when each phase starts                                                                                   |
+
+Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
+new animations, Web Push, new gamification.
+
+## V1
+
 Ten stages. Each stage ends only when its behaviour is verified and `docs/PROGRESS.md` is updated.
 
 | #   | Stage                  | Status                  | Scope                                                                                                   |
