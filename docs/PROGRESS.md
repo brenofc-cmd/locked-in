@@ -49,6 +49,12 @@ Verified (2026-09-29, DEV, clean `.next`):
   (DEV traffic)
 - `npm run test:e2e` — **99 passed** (67 V1 + 16 Phase 1 + 10 Phase 2 + 6 Phase 3), then the
   Phase 3 spec with its axe test (7 / 7); Phase 3 spec also at 375, 430, 768, 1180, 1440: 30 / 30
+- **PROD migrations (after VERIFIED)**: `20260929160137_goals_vision_mirror`,
+  `20260929160140_goal_milestones_owner_idx` (repository / DEV: `…132309`, `…152035`). Validated on
+  PROD: RLS on the four tables, owner-only `ALL` policies, no `owner_id` / `achieved_at` grant, the
+  new indexes, composite FKs, DEFINER count unchanged (18), no `dev_*`, nothing for anon, trigger
+  functions not callable; pgTAP `v2_phase3_goals` **61/61** on PROD (rolled back, no leftover);
+  advisors: no new finding
 - Fixed during the run (tests only): V1 `openToday` got the 15 s restore allowance already used by
   the V2 specs (`/` → `/today` under a loaded run); V1 focus test read the paused clock before the
   pause write was confirmed (intermittent 24:59 vs 24:58) → waits for the write now

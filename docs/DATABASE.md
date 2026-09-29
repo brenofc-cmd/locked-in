@@ -693,8 +693,8 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | V1 (29 files)               | identical        | identical        |
 | `user_presence_last_seen`   | `20260929114849` | `20260929130221` |
 | `planner_events`            | `20260929114909` | `20260929130241` |
-| `goals_vision_mirror`       | `20260929132309` | (see PROGRESS)   |
-| `goal_milestones_owner_idx` | `20260929152035` | (see PROGRESS)   |
+| `goals_vision_mirror`       | `20260929132309` | `20260929160137` |
+| `goal_milestones_owner_idx` | `20260929152035` | `20260929160140` |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
