@@ -17,6 +17,44 @@ export type Database = {
   };
   public: {
     Tables: {
+      accountability_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          owner_id: string;
+          sort_order: number;
+          text: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          owner_id?: string;
+          sort_order?: number;
+          text: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          owner_id?: string;
+          sort_order?: number;
+          text?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "accountability_items_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       activity_events: {
         Row: {
           actor_id: string;
@@ -293,6 +331,114 @@ export type Database = {
           },
         ];
       };
+      goal_milestones: {
+        Row: {
+          created_at: string;
+          goal_id: string;
+          id: string;
+          is_completed: boolean;
+          owner_id: string;
+          sort_order: number;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          goal_id: string;
+          id?: string;
+          is_completed?: boolean;
+          owner_id?: string;
+          sort_order?: number;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          goal_id?: string;
+          id?: string;
+          is_completed?: boolean;
+          owner_id?: string;
+          sort_order?: number;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "goal_milestones_goal_same_owner_fkey";
+            columns: ["goal_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "goals";
+            referencedColumns: ["id", "owner_id"];
+          },
+          {
+            foreignKeyName: "goal_milestones_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      goals: {
+        Row: {
+          achieved_at: string | null;
+          created_at: string;
+          description: string | null;
+          goal_type: string;
+          id: string;
+          owner_id: string;
+          sort_order: number;
+          status: string;
+          target_date: string | null;
+          title: string;
+          updated_at: string;
+          vision_id: string | null;
+        };
+        Insert: {
+          achieved_at?: string | null;
+          created_at?: string;
+          description?: string | null;
+          goal_type: string;
+          id?: string;
+          owner_id?: string;
+          sort_order?: number;
+          status?: string;
+          target_date?: string | null;
+          title: string;
+          updated_at?: string;
+          vision_id?: string | null;
+        };
+        Update: {
+          achieved_at?: string | null;
+          created_at?: string;
+          description?: string | null;
+          goal_type?: string;
+          id?: string;
+          owner_id?: string;
+          sort_order?: number;
+          status?: string;
+          target_date?: string | null;
+          title?: string;
+          updated_at?: string;
+          vision_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "goals_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "goals_vision_same_owner_fkey";
+            columns: ["vision_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "vision_items";
+            referencedColumns: ["id", "owner_id"];
+          },
+        ];
+      };
       planner_events: {
         Row: {
           created_at: string;
@@ -445,6 +591,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "routine_items_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      vision_items: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_archived: boolean;
+          owner_id: string;
+          sort_order: number;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_archived?: boolean;
+          owner_id?: string;
+          sort_order?: number;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_archived?: boolean;
+          owner_id?: string;
+          sort_order?: number;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "vision_items_owner_id_fkey";
             columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
