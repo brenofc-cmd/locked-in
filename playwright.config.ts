@@ -154,6 +154,13 @@ export default defineConfig({
       dependencies: ["v2-1440"],
       use: phone(390, 844),
     },
+    // V2 Phase 3 — goals, vision and the mirror (private), after Phase 2.
+    {
+      name: "v2p3-390",
+      testMatch: /v2-phase3\.spec\.ts/,
+      dependencies: ["v2p2-390"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
