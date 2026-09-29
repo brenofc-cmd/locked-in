@@ -8,6 +8,7 @@ import { LockGlyph } from "@/components/icons";
 import { ActivityItem } from "@/components/today/ActivityItem";
 import { NoPartnerCard, PartnerCard } from "@/components/today/PartnerCard";
 import { TaskRow } from "@/components/today/TaskRow";
+import { UpcomingCard } from "@/components/today/UpcomingCard";
 import { ProgressBar, SectionHeader, cx } from "@/components/ui";
 import { accountDay, dateLabel, weekdayOf } from "@/lib/local-date";
 import { groupBySection, nextLine, routinesOn, todayStats } from "@/lib/today";
@@ -167,6 +168,7 @@ export function TodayScreen() {
 
         <aside className="flex min-w-0 flex-col gap-7 wide:sticky wide:top-0">
           {app.hasPartner ? <PartnerCard /> : <NoPartnerCard />}
+          <UpcomingCard />
           <button
             type="button"
             onClick={() => app.openSheet({ kind: "focus" })}
