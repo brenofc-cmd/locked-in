@@ -46,6 +46,13 @@ Verified (2026-09-29, DEV, clean `.next`):
 - `npm run test:e2e` — **93 passed**, 0 failed, 0 retries (67 V1 + 16 Phase 1 + 10 Phase 2)
 - Phase 2 spec also at 375, 430, 768, 1180 and 1440 (temporary config): all green (DEV Auth was
   briefly unavailable once — 502 / 20 s on `/auth/v1/health` — and the affected widths were re-run)
+- **PROD migrations (2026-09-29, after VERIFIED)**: applied with the Supabase MCP as versions
+  `20260929130221_user_presence_last_seen` and `20260929130241_planner_events` (same SQL as the repo
+  files, which carry the DEV versions `…114849` / `…114909`). Validated on PROD: RLS on both tables,
+  grants / column grants, the two indexes, DEFINER set = reviewed set + `sync_planner_event`, no
+  `dev_*` function, nothing for anon, trigger functions not callable, INVOKER heartbeat; pgTAP
+  `v2_phase2_presence_planner` **63/63** on PROD (rolled back; no leftover user, row or extension);
+  advisors unchanged (the accepted 0029 items + leaked-password protection, a manual gate)
 - Fixed during the run (tests only): stage6 read A's sessions with a 400-id `in()` list that
   exceeded the URL limit as DEV history grew → now by owner; the `/` restore assertions get 15 s
   under a full-suite load; the V2 `beforeAll` resets get 120 s
