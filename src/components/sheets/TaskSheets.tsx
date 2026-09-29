@@ -40,10 +40,13 @@ export function TaskFormSheet({
   editing,
   routine,
   repeatByDefault = false,
+  prefill,
 }: {
   editing?: Task;
   routine?: RoutineItem;
   repeatByDefault?: boolean;
+  /** V2 Phase 2: a suggested title (planner "Add to tasks"); not a draft. */
+  prefill?: string;
 }) {
   const app = useApp();
   const { me } = useSession();
@@ -52,8 +55,13 @@ export function TaskFormSheet({
   // saved comes back when the sheet is opened again (drafts expire after
   // 24 h). Edits are never drafted: they would overwrite newer data.
   const draftKind = repeatByDefault ? "routine" : "task";
-  const [draft] = useState(() => (source ? null : loadDraft(me.id, draftKind)));
-  const [name, setName] = useState(draft?.name ?? source?.name ?? "");
+  const drafting = !source && prefill === undefined;
+  const [draft] = useState(() =>
+    drafting ? loadDraft(me.id, draftKind) : null,
+  );
+  const [name, setName] = useState(
+    prefill ?? draft?.name ?? source?.name ?? "",
+  );
   const [repeat, setRepeat] = useState(
     draft?.repeat ??
       (routine ? true : editing ? !editing.once : repeatByDefault),
@@ -80,7 +88,7 @@ export function TaskFormSheet({
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (source || submitted) return;
+    if (!drafting || submitted) return;
     saveDraft(me.id, draftKind, {
       name,
       repeat,
@@ -93,7 +101,7 @@ export function TaskFormSheet({
       notes,
     });
   }, [
-    source,
+    drafting,
     submitted,
     me.id,
     draftKind,
@@ -166,6 +174,7 @@ export function TaskFormSheet({
       notes,
     };
     setSubmitted(true);
+    if (!drafting) return run(() => app.addTask(data));
     clearDraft(me.id, draftKind);
     run(async () => {
       const ok = await app.addTask(data);
