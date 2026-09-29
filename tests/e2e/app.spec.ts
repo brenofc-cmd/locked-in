@@ -231,6 +231,7 @@ test("partner page shows the duo comparison and live activity; reactions work", 
 test("focus: pick duration, start, pause, resume, end and record @focus", async ({
   page,
 }) => {
+  const writes = trackWrites(page);
   await page.goto("/focus");
   await expect(
     page.getByRole("heading", { name: "NO QUE VOCÊ VAI TRABALHAR?" }),
@@ -257,6 +258,9 @@ test("focus: pick duration, start, pause, resume, end and record @focus", async 
 
   await session.getByRole("button", { name: "PAUSAR" }).click();
   await expect(session.getByRole("button", { name: "RETOMAR" })).toBeVisible();
+  // The pause is optimistic; the database's paused_at can move the frozen
+  // clock by a second when it lands. Read it once the write is confirmed.
+  await writes.idle();
   const paused = (await clock.textContent()) ?? "";
   await page.waitForTimeout(1500);
   await expect(clock).toHaveText(paused);
