@@ -675,6 +675,18 @@ After each migration regenerate `src/types/database.ts` with the Supabase type g
 (`npx supabase gen types typescript --project-id oavhuxaanztrughyrckb`, or the Supabase MCP
 `generate_typescript_types`) and keep the header comment.
 
+## Migration version mapping (DEV ↔ PROD)
+
+Migrations are applied with the Supabase MCP (`apply_migration`), which stamps the version with the
+time of application. The repository files carry the DEV versions; PROD has the same SQL under its own
+versions. Never re-apply a migration to fix a version and never edit `supabase_migrations` by hand.
+
+| Migration (name)          | Repository / DEV | PROD             |
+| ------------------------- | ---------------- | ---------------- |
+| V1 (29 files)             | identical        | identical        |
+| `user_presence_last_seen` | `20260929114849` | `20260929130221` |
+| `planner_events`          | `20260929114909` | `20260929130241` |
+
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
 ### `public.user_presence` — partner last seen (ADR-056)

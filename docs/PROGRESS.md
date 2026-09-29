@@ -10,6 +10,16 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 # LOCKED IN V2
 
+## Known issues (open)
+
+- **ISSUE-001 — expired-session feed 401 on the first Today load** (seen 2026-09-29 in production):
+  after about an hour idle, the first server render of `/today` failed once ("This page couldn't
+  load"); Supabase logged a single `401` on `GET /rest/v1/activity_events` from the server (the V1
+  duo feed read in `loadDuoData`). A reload worked. Suspected: the render used an access token that
+  had just expired (refresh race between the proxy and the layout). Not reproduced in e2e; not
+  fixed in Phase 3 (does not block tests). Next step: reproduce with an expired token and check the
+  cookie refresh path in `src/lib/supabase/proxy.ts` → `loadAppData()`.
+
 ## Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0 — VERIFIED (2026-09-29)
 
 Scope: docs/PLANNER.md, docs/REALTIME.md → Last seen, ADR-056 / ADR-057. Branch
