@@ -32,6 +32,9 @@ let bId: string;
 
 const key = (id: string) => `locked-in:v2:${id}:resume`;
 
+/** "/" → the restored route loads the whole app layout (remote DEV). */
+const RESTORE = 15_000;
+
 type Opened = { context: BrowserContext; page: Page; errors: string[] };
 type State = Awaited<ReturnType<BrowserContext["storageState"]>>;
 
@@ -169,7 +172,7 @@ test("1: Progress 30D and its scroll come back when the app reopens at /", async
 
   app = await relaunch(browser, app);
   await app.page.goto("/");
-  await expect(app.page).toHaveURL(/\/progress$/);
+  await expect(app.page).toHaveURL(/\/progress$/, { timeout: RESTORE });
   await expect(rangeRadio(app.page, "30D")).toHaveAttribute(
     "aria-checked",
     "true",
@@ -197,7 +200,7 @@ test("2: History — an earlier calendar month stays open after reopening", asyn
 
   app = await relaunch(browser, app);
   await app.page.goto("/");
-  await expect(app.page).toHaveURL(/\/progress$/);
+  await expect(app.page).toHaveURL(/\/progress$/, { timeout: RESTORE });
   await expect(monthLabel(app.page)).toHaveText(previous);
   // Back to the current month: that is the default again (nothing kept).
   await app.page
@@ -236,7 +239,7 @@ test("3: Focus is restored from the database, never from Resume State", async ({
 
   app = await relaunch(browser, app);
   await app.page.goto("/");
-  await expect(app.page).toHaveURL(/\/focus$/);
+  await expect(app.page).toHaveURL(/\/focus$/, { timeout: RESTORE });
   await expect(overlay(app.page)).toBeVisible();
   const raw = (await stored(app.page, aId)) ?? "";
   for (const leak of [
@@ -306,7 +309,7 @@ test("5: sign-out clears the user's context; the next user on the device gets no
   // Bruno signs in on the same browser.
   await signInUI(app.page, users.b, "/today");
   await app.page.goto("/");
-  await expect(app.page).toHaveURL(/\/today$/);
+  await expect(app.page).toHaveURL(/\/today$/, { timeout: RESTORE });
   await addButton(app.page).click();
   await expect(nameField(app.page)).toHaveValue("");
   await app.page.keyboard.press("Escape");
@@ -329,7 +332,7 @@ test("5: sign-out clears the user's context; the next user on the device gets no
   await alice.context.clearCookies();
   await signInUI(alice.page, users.b, "/today");
   await alice.page.goto("/");
-  await expect(alice.page).toHaveURL(/\/today$/);
+  await expect(alice.page).toHaveURL(/\/today$/, { timeout: RESTORE });
   await alice.page.goto("/progress");
   await expect(rangeRadio(alice.page, "7D")).toHaveAttribute(
     "aria-checked",
@@ -359,7 +362,7 @@ test("6: corrupted or hostile local state cannot break the app", async ({
       [key(aId), junk],
     );
     await app.page.goto("/");
-    await expect(app.page).toHaveURL(/\/today$/);
+    await expect(app.page).toHaveURL(/\/today$/, { timeout: RESTORE });
     await expect(app.page.getByRole("main")).toBeVisible();
   }
   await app.page.goto("/progress");
@@ -420,7 +423,7 @@ test("8: a Quick Add draft survives closing the app and goes away on submit", as
   // Closed with the sheet open: it does not reopen by itself.
   app = await relaunch(browser, app);
   await app.page.goto("/");
-  await expect(app.page).toHaveURL(/\/today$/);
+  await expect(app.page).toHaveURL(/\/today$/, { timeout: RESTORE });
   await expect(addSheet(app.page)).toHaveCount(0);
   await addButton(app.page).click();
   await expect(nameField(app.page)).toHaveValue("Revisar Física cap. 3");

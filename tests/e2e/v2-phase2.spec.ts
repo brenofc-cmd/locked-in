@@ -33,6 +33,9 @@ let T: string;
 let aId: string;
 const LIVE = 15_000;
 
+/** "/" → the restored route loads the whole app layout (remote DEV). */
+const RESTORE = 15_000;
+
 type Opened = { context: BrowserContext; page: Page; errors: string[] };
 type State = Awaited<ReturnType<BrowserContext["storageState"]>>;
 
@@ -514,7 +517,7 @@ test("10 + 11: calendar view and month restore; a new-event draft comes back", a
   await a.context.close();
   a = await launch(browser, state);
   await a.page.goto("/");
-  await expect(a.page).toHaveURL(/\/planner$/);
+  await expect(a.page).toHaveURL(/\/planner$/, { timeout: RESTORE });
   await expect(
     a.page.getByRole("radio", { name: t.planner.views.calendar }),
   ).toHaveAttribute("aria-checked", "true");
