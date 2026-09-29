@@ -298,3 +298,29 @@ export async function reorderGoalsItems(
     return { ok: true as const };
   });
 }
+
+/**
+ * V2 Phase 4: feature (or un-feature) one vision / goal / mirror item for the
+ * North Star. The database keeps one per owner and table (featuring one
+ * un-features the previous) and refuses an archived / inactive / non-active
+ * item (23514).
+ */
+export async function setFeatured(
+  kind: Exclude<GoalsKind, "milestone">,
+  id: string,
+  featured: boolean,
+): Promise<{ ok: true } | Fail> {
+  if (!(kind in TABLES) || kind === ("milestone" as string) || !isUuid(id))
+    return fail({ code: "23514" });
+  return run(async () => {
+    const supabase = await createClient();
+    const res = await supabase
+      .from(TABLES[kind])
+      .update({ is_featured: featured === true })
+      .eq("id", id)
+      .select("id");
+    if (res.error) return fail(res.error);
+    if (!res.data.length) return fail({ code: "42501" });
+    return { ok: true as const };
+  });
+}

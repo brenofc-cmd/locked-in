@@ -9,6 +9,7 @@ import {
   saveGoal,
   saveMirror,
   saveVision,
+  setFeatured,
   setGoalStatus,
   setMilestoneDone,
   setMirrorActive,
@@ -115,6 +116,32 @@ export function GoalsScreen({ initial }: { initial: GoalsData }) {
       notify(res && !res.ok ? res.error : t.goals.errors.saveFailed);
   };
 
+  /** V2 Phase 4: one featured item per kind for the North Star on Today. */
+  const feature = async (
+    kind: "vision" | "goal" | "mirror",
+    id: string,
+    on: boolean,
+  ) => {
+    const before = data;
+    const flip = <T extends { id: string; featured: boolean }>(list: T[]) =>
+      list.map((x) => ({
+        ...x,
+        featured: x.id === id ? on : on ? false : x.featured,
+      }));
+    setData((d) => ({
+      visions: kind === "vision" ? flip(d.visions) : d.visions,
+      goals: kind === "goal" ? flip(d.goals) : d.goals,
+      mirror: kind === "mirror" ? flip(d.mirror) : d.mirror,
+    }));
+    const res = await setFeatured(kind, id, on).catch(() => null);
+    if (res?.ok) {
+      notify(on ? t.goals.featuredToast : t.goals.unfeaturedToast);
+      return;
+    }
+    setData(before);
+    notify(res && !res.ok ? res.error : t.goals.errors.saveFailed);
+  };
+
   return (
     <div className="flex flex-col gap-7 animate-[li-fade-up_.4s_ease] desk:gap-10">
       <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
@@ -148,6 +175,7 @@ export function GoalsScreen({ initial }: { initial: GoalsData }) {
           onAdd={() => setSheet({ kind: "vision" })}
           onOpen={(item) => setSheet({ kind: "vision", item })}
           onReorder={(ids) => void reorder("vision", ids)}
+          onFeature={(id, on) => void feature("vision", id, on)}
         />
       )}
       {section === "goals" && (
@@ -156,6 +184,7 @@ export function GoalsScreen({ initial }: { initial: GoalsData }) {
           onAdd={() => setSheet({ kind: "goal" })}
           onOpen={(item) => setSheet({ kind: "goal", item })}
           onReorder={(ids) => void reorder("goal", ids)}
+          onFeature={(id, on) => void feature("goal", id, on)}
         />
       )}
       {section === "mirror" && (
@@ -164,6 +193,7 @@ export function GoalsScreen({ initial }: { initial: GoalsData }) {
           onAdd={() => setSheet({ kind: "mirror" })}
           onOpen={(item) => setSheet({ kind: "mirror", item })}
           onReorder={(ids) => void reorder("mirror", ids)}
+          onFeature={(id, on) => void feature("mirror", id, on)}
         />
       )}
 
@@ -314,6 +344,41 @@ function Reorder({
   );
 }
 
+/** V2 Phase 4: feature this item in the North Star on Today (one per kind). */
+function FeatureToggle({
+  featured,
+  title,
+  onToggle,
+}: {
+  featured: boolean;
+  title: string;
+  onToggle: (on: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={featured}
+      aria-label={featured ? t.goals.unfeature(title) : t.goals.feature(title)}
+      title={featured ? t.goals.featured : t.goals.featureShort}
+      onClick={() => onToggle(!featured)}
+      className={cx(
+        "flex size-9 shrink-0 items-center justify-center rounded-lg text-[13px]",
+        featured ? "text-accent" : "text-faint hover:text-text",
+      )}
+    >
+      <span aria-hidden="true">{featured ? "◆" : "◇"}</span>
+    </button>
+  );
+}
+
+function FeaturedLabel() {
+  return (
+    <span className="font-mono text-[10px] tracking-[.16em] text-accent">
+      {t.goals.featured}
+    </span>
+  );
+}
+
 function Collapsed({
   summary,
   children,
@@ -344,11 +409,13 @@ function VisionSection({
   onAdd,
   onOpen,
   onReorder,
+  onFeature,
 }: {
   visions: Vision[];
   onAdd: () => void;
   onOpen: (v: Vision) => void;
   onReorder: (ids: string[]) => void;
+  onFeature: (id: string, on: boolean) => void;
 }) {
   const active = activeVisions(visions);
   const archived = archivedVisions(visions);
@@ -371,6 +438,7 @@ function VisionSection({
               onClick={() => onOpen(v)}
               className="flex min-w-0 flex-1 flex-col gap-1.5 text-left"
             >
+              {v.featured && <FeaturedLabel />}
               <span className="text-[17px] leading-[1.35] font-medium">
                 {v.title}
               </span>
@@ -380,6 +448,11 @@ function VisionSection({
                 </span>
               )}
             </button>
+            <FeatureToggle
+              featured={v.featured}
+              title={v.title}
+              onToggle={(on) => onFeature(v.id, on)}
+            />
             <Reorder
               ids={ids}
               id={v.id}
@@ -533,11 +606,13 @@ function GoalsSection({
   onAdd,
   onOpen,
   onReorder,
+  onFeature,
 }: {
   data: GoalsData;
   onAdd: () => void;
   onOpen: (g: Goal) => void;
   onReorder: (ids: string[]) => void;
+  onFeature: (id: string, on: boolean) => void;
 }) {
   const { active, achieved, archived } = groupGoals(data.goals);
   return (
@@ -563,6 +638,11 @@ function GoalsSection({
                   className="flex items-center gap-2 border-b border-white/6"
                 >
                   <GoalRow goal={g} visions={data.visions} onOpen={onOpen} />
+                  <FeatureToggle
+                    featured={g.featured}
+                    title={g.title}
+                    onToggle={(on) => onFeature(g.id, on)}
+                  />
                   <Reorder
                     ids={ids}
                     id={g.id}
@@ -629,6 +709,7 @@ function GoalRow({
       onClick={() => onOpen(goal)}
       className="flex min-h-[60px] min-w-0 flex-1 flex-col justify-center gap-1 py-2 text-left"
     >
+      {goal.featured && goal.status === "active" && <FeaturedLabel />}
       {vision && (
         <span className="truncate font-mono text-[10px] tracking-[.14em] text-dim">
           {vision.title.toUpperCase()}
@@ -988,11 +1069,13 @@ function MirrorSection({
   onAdd,
   onOpen,
   onReorder,
+  onFeature,
 }: {
   items: MirrorItem[];
   onAdd: () => void;
   onOpen: (m: MirrorItem) => void;
   onReorder: (ids: string[]) => void;
+  onFeature: (id: string, on: boolean) => void;
 }) {
   const active = activeMirror(items);
   const inactive = inactiveMirror(items);
@@ -1014,10 +1097,16 @@ function MirrorSection({
             <button
               type="button"
               onClick={() => onOpen(m)}
-              className="min-w-0 flex-1 text-left text-[19px] leading-[1.4] font-medium tracking-[-0.01em] text-pretty"
+              className="flex min-w-0 flex-1 flex-col gap-1.5 text-left text-[19px] leading-[1.4] font-medium tracking-[-0.01em] text-pretty"
             >
+              {m.featured && <FeaturedLabel />}
               {m.text}
             </button>
+            <FeatureToggle
+              featured={m.featured}
+              title={m.text}
+              onToggle={(on) => onFeature(m.id, on)}
+            />
             <Reorder ids={ids} id={m.id} title={m.text} onReorder={onReorder} />
           </li>
         ))}

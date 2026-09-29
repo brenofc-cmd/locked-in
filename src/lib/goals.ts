@@ -28,6 +28,8 @@ export type Vision = {
   description: string;
   sortOrder: number;
   archived: boolean;
+  /** V2 Phase 4: the vision shown in the North Star (one at most). */
+  featured: boolean;
 };
 
 export type Milestone = {
@@ -51,6 +53,8 @@ export type Goal = {
   sortOrder: number;
   createdAt: string;
   milestones: Milestone[];
+  /** V2 Phase 4: the goal shown in the North Star (one at most, active). */
+  featured: boolean;
 };
 
 export type MirrorItem = {
@@ -58,6 +62,8 @@ export type MirrorItem = {
   text: string;
   active: boolean;
   sortOrder: number;
+  /** V2 Phase 4: the mirror item shown in the North Star (one at most). */
+  featured: boolean;
 };
 
 export type GoalsData = {
@@ -80,6 +86,7 @@ export const visionFromRow = (r: VisionRow): Vision => ({
   description: r.description ?? "",
   sortOrder: r.sort_order,
   archived: r.is_archived,
+  featured: r.is_featured,
 });
 
 export const milestoneFromRow = (r: MilestoneRow): Milestone => ({
@@ -102,6 +109,7 @@ export function goalFromRow(r: GoalRow, milestones: Milestone[] = []): Goal {
     achievedAt: r.achieved_at,
     sortOrder: r.sort_order,
     createdAt: r.created_at,
+    featured: r.is_featured,
     milestones: milestones
       .filter((m) => m.goalId === r.id)
       .sort(
@@ -115,6 +123,7 @@ export const mirrorFromRow = (r: MirrorRow): MirrorItem => ({
   text: r.text,
   active: r.is_active,
   sortOrder: r.sort_order,
+  featured: r.is_featured,
 });
 
 // ------------------------------------------------------------ validation
