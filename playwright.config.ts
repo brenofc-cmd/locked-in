@@ -41,14 +41,14 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "mobile-390",
-      testIgnore: /stage\d/,
+      testIgnore: /stage\d|v2-/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "desktop-1440",
-      testIgnore: /stage\d/,
+      testIgnore: /stage\d|v2-/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: desk,
@@ -58,28 +58,28 @@ export default defineConfig({
     {
       name: "focus-390",
       grep: /@focus/,
-      testIgnore: /stage\d/,
+      testIgnore: /stage\d|v2-/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "focus-1440",
       grep: /@focus/,
-      testIgnore: /stage\d/,
+      testIgnore: /stage\d|v2-/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: desk,
     },
     {
       name: "mobile-375",
       grep: /@layout/,
-      testIgnore: /stage\d/,
+      testIgnore: /stage\d|v2-/,
       dependencies: ["setup"],
       use: { ...phone(375, 812), ...state("layout") },
     },
     {
       name: "mobile-430",
       grep: /@layout/,
-      testIgnore: /stage\d/,
+      testIgnore: /stage\d|v2-/,
       dependencies: ["setup"],
       use: { ...phone(430, 932), ...state("layout") },
     },
@@ -127,6 +127,24 @@ export default defineConfig({
       testMatch: /stage9\.spec\.ts/,
       dependencies: ["stage8"],
       use: phone(390, 844),
+    },
+    // V2 Phase 1 — Resume State (real storage, close / reopen, two users on
+    // one device); Alice / Bruno again, so after the stage chain. 390 first,
+    // then the same tests at 1440.
+    {
+      name: "v2-390",
+      testMatch: /v2-resume\.spec\.ts/,
+      dependencies: ["stage9"],
+      use: phone(390, 844),
+    },
+    {
+      name: "v2-1440",
+      testMatch: /v2-resume\.spec\.ts/,
+      dependencies: ["v2-390"],
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+      },
     },
   ],
   webServer: {
