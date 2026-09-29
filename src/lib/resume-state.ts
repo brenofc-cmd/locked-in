@@ -22,6 +22,7 @@ import {
   type EventType,
   type Reminder,
 } from "@/lib/planner";
+import { GOAL_TYPES, SECTIONS, type GoalType, type Section } from "@/lib/goals";
 import type { Range } from "@/lib/progress";
 import type { Category, Day } from "@/types";
 
@@ -51,6 +52,7 @@ export const RESTORABLE_ROUTES = [
   "/duo",
   "/settings",
   "/planner",
+  "/goals",
 ] as const;
 export type RestorableRoute = (typeof RESTORABLE_ROUTES)[number];
 
@@ -61,6 +63,7 @@ export const SCROLL_ROUTES: readonly string[] = [
   "/progress",
   "/routine",
   "/planner",
+  "/goals",
 ];
 
 export const FALLBACK_ROUTE = "/today";
@@ -110,7 +113,25 @@ export type ResumeState = {
   drafts?: Partial<Record<DraftKind, TaskDraft>>;
   planner?: { view?: PlannerView; month?: string };
   plannerDraft?: PlannerDraft;
+  /** V2 Phase 3: the open /goals section. */
+  goals?: { section?: Section };
+  /** V2 Phase 3: unsent NEW vision / goal / mirror item (24 h). */
+  goalDrafts?: GoalDrafts;
 };
+
+export type GoalDrafts = {
+  vision?: { title: string; description: string; updatedAt: number };
+  goal?: {
+    title: string;
+    type: GoalType;
+    visionId: string;
+    targetDate: string;
+    description: string;
+    updatedAt: number;
+  };
+  mirror?: { text: string; updatedAt: number };
+};
+export type GoalDraftKind = keyof GoalDrafts;
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -312,7 +333,62 @@ export function parseResume(raw: unknown, now = Date.now()): ResumeState {
   }
   const pd = parsePlannerDraft(raw.plannerDraft, now);
   if (pd) out.plannerDraft = pd;
+
+  if (
+    isRecord(raw.goals) &&
+    (SECTIONS as readonly unknown[]).includes(raw.goals.section)
+  )
+    out.goals = { section: raw.goals.section as Section };
+  const gd = parseGoalDrafts(raw.goalDrafts, now);
+  if (gd) out.goalDrafts = gd;
   return out;
+}
+
+const fresh = (x: Record<string, unknown>, now: number) =>
+  isTime(x.updatedAt, now) && now - x.updatedAt <= DRAFT_TTL_MS;
+const str = (x: unknown, max: number) =>
+  typeof x === "string" ? x.slice(0, max) : null;
+
+function parseGoalDrafts(x: unknown, now: number): GoalDrafts | undefined {
+  if (!isRecord(x)) return undefined;
+  const out: GoalDrafts = {};
+  const v = x.vision;
+  if (isRecord(v) && fresh(v, now)) {
+    const title = str(v.title, 120);
+    const description = str(v.description, 1000);
+    if (title !== null && description !== null)
+      out.vision = { title, description, updatedAt: v.updatedAt as number };
+  }
+  const g = x.goal;
+  if (isRecord(g) && fresh(g, now)) {
+    const title = str(g.title, 120);
+    const description = str(g.description, 1000);
+    const visionId = str(g.visionId, 36);
+    const targetDate = str(g.targetDate, 10);
+    if (
+      title !== null &&
+      description !== null &&
+      visionId !== null &&
+      (visionId === "" || USER_ID.test(visionId)) &&
+      targetDate !== null &&
+      (targetDate === "" || DATE_ISO.test(targetDate)) &&
+      (GOAL_TYPES as readonly unknown[]).includes(g.type)
+    )
+      out.goal = {
+        title,
+        type: g.type as GoalType,
+        visionId,
+        targetDate,
+        description,
+        updatedAt: g.updatedAt as number,
+      };
+  }
+  const m = x.mirror;
+  if (isRecord(m) && fresh(m, now)) {
+    const text = str(m.text, 300);
+    if (text !== null) out.mirror = { text, updatedAt: m.updatedAt as number };
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /** JSON for storage; the optional parts go first if it grows too big. */
@@ -324,6 +400,7 @@ export function serializeResume(state: ResumeState): string {
     lastRoute: state.lastRoute,
     progress: state.progress,
     planner: state.planner,
+    goals: state.goals,
   });
   return json.length <= MAX_BYTES ? json : JSON.stringify(EMPTY);
 }
@@ -599,4 +676,67 @@ export function markReminded(
   } catch {
     // Storage blocked: the reminder may show again next time, never an error.
   }
+}
+
+// -------------------------------------------------------------- goals (V2.3)
+
+export function rememberGoalsSection(
+  userId: string,
+  section: Section,
+  now = Date.now(),
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  updateResume(userId, (s) => ({ ...s, goals: { section } }), now, storage);
+}
+
+/** Saves a draft of a NEW item; an empty form removes it. */
+export function saveGoalDraft<K extends GoalDraftKind>(
+  userId: string,
+  kind: K,
+  draft: Omit<NonNullable<GoalDrafts[K]>, "updatedAt">,
+  now = Date.now(),
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  // Nothing typed (the type / vision / date alone are not worth keeping).
+  const d = draft as Record<string, unknown>;
+  const empty = ["title", "description", "text"].every(
+    (k) => typeof d[k] !== "string" || !(d[k] as string).trim(),
+  );
+  updateResume(
+    userId,
+    (s) => {
+      const drafts: GoalDrafts = { ...s.goalDrafts };
+      if (empty) delete drafts[kind];
+      else drafts[kind] = { ...draft, updatedAt: now } as GoalDrafts[K];
+      return { ...s, goalDrafts: drafts };
+    },
+    now,
+    storage,
+  );
+}
+
+export function loadGoalDraft<K extends GoalDraftKind>(
+  userId: string,
+  kind: K,
+  now = Date.now(),
+  storage: StorageLike | null = defaultStorage(),
+): GoalDrafts[K] | null {
+  return loadResume(userId, now, storage).goalDrafts?.[kind] ?? null;
+}
+
+export function clearGoalDraft(
+  userId: string,
+  kind: GoalDraftKind,
+  storage: StorageLike | null = defaultStorage(),
+): void {
+  updateResume(
+    userId,
+    (s) => {
+      const drafts: GoalDrafts = { ...s.goalDrafts };
+      delete drafts[kind];
+      return { ...s, goalDrafts: drafts };
+    },
+    Date.now(),
+    storage,
+  );
 }
