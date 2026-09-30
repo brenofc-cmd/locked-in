@@ -12,13 +12,45 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 ## Known issues (open)
 
-- **ISSUE-001 — expired-session feed 401 on the first Today load** (seen 2026-09-29 in production):
-  after about an hour idle, the first server render of `/today` failed once ("This page couldn't
-  load"); Supabase logged a single `401` on `GET /rest/v1/activity_events` from the server (the V1
-  duo feed read in `loadDuoData`). A reload worked. Suspected: the render used an access token that
-  had just expired (refresh race between the proxy and the layout). Not reproduced in e2e; not
-  fixed in Phase 3 (does not block tests). Next step: reproduce with an expired token and check the
-  cookie refresh path in `src/lib/supabase/proxy.ts` → `loadAppData()`.
+- None.
+
+## ISSUE-001 — first Today load after idle failed with a feed 401 — RESOLVED (2026-09-30)
+
+Branch `fix/issue-001-expired-session-feed-401` (from `main` at Phase 3), ADR-063.
+
+- Symptom (2026-09-29, production): after about an hour idle, the first server render of `/today`
+  showed "This page couldn't load"; Supabase logged one `401` on `GET /rest/v1/activity_events`.
+- Root cause (from the PROD logs, not the suspected refresh race): the access token was **not**
+  expired (browser refresh at 12:51:10, valid until 13:51:10; failure at 13:06:01) and no refresh
+  ran on the server. Seven parallel queries of that render carried the **same** JWT; six got 200,
+  the feed got `401 PGRST303` with a 79-byte body = "JWT issued at future". A second case
+  (17:11:34, browser, `partner_current_focus`, same pattern) confirmed it. Both were the first REST
+  traffic after PostgREST sat idle while a new token was issued: its cached clock was behind the
+  token's `iat`. `loadDuoData` turned the one error into a thrown render error.
+- Checked and ruled out: stale cookies in `loadAppData()` (the proxy forwards the refreshed session
+  to the render; the render never refreshes again), parallel queries with different tokens (one
+  bearer per request), refresh token reuse.
+- Fix: `src/lib/supabase/fetch.ts` (one immediate repeat for that exact PostgREST rejection, on
+  every client; nothing else repeated, never twice); `isSessionRejected()` + the layout send a
+  session the database refuses to `/login?reason=session` instead of the error page; the proxy
+  never bounces that URL (no loop); copy `t.auth.sessionEnded`.
+- Tests: `tests/unit/session-refresh.test.ts` (22: the real @supabase/ssr stack against a fake Auth /
+  JWKS / PostgREST with ES256 tokens — valid session, expired access + valid refresh, invalid
+  refresh, forged and unreadable sessions, parallel bootstrap on one token, the production event
+  replayed, persistent rejection = 2 tries, no feed duplication, A / B isolation, the layout
+  backstop); `tests/e2e/issue-001.spec.ts` (7, project `issue001-390`, DEV: idle simulated by
+  rewriting the session cookie's `expires_at`, never by shortening the JWT expiry). Without the
+  fix the replay tests fail (3) and the login loop test fails (1).
+- Verified (2026-09-30, DEV): `npm run lint`, `npm run typecheck`, `npm run build`,
+  `npm run format:check` — pass; `npm audit` — 0 vulnerabilities; `npm test` — 14 files, **220
+  passed**; `npm run test:e2e` — **107 passed** (0 failed, 0 flaky), `issue001-390` 7 / 7.
+- **Production (2026-09-30)**: `main` fast-forwarded to `eb6d249` (the fix alone, Phase 4 not
+  included), Vercel Production deployment success; signed out `/today` → 307 to sign-in;
+  `/login?reason=session` shows `sessionEnded`, `/login` does not. Smoke with the owner account in
+  the real browser: the first `/today` after the night idle loaded (server refresh 10:53:34 UTC, 200);
+  then the session cookie's `expires_at` was moved into the past (case A) → `/today` loaded, refresh
+  token rotated, same user, no error page (server refresh 10:53:59, 200). PROD edge logs since the
+  deploy: 0 × 401 / 403 / 500.
 
 ## Phase 4 — North Star + Morning Experience — VERIFIED (2026-09-29)
 

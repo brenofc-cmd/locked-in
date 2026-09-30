@@ -96,6 +96,7 @@ export const t = {
     createAccount: "Criar conta",
     creatingAccount: "Criando conta…",
     linkInvalid: "Esse link é inválido ou expirou. Peça um novo.",
+    sessionEnded: "Sua sessão expirou. Entre de novo para continuar.",
     forgotPassword: "Esqueceu a senha?",
     newHere: "Primeira vez?",
     createAnAccount: "Crie uma conta",

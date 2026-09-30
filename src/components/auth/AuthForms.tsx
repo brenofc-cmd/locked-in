@@ -99,9 +99,11 @@ const initial: AuthFormState = {};
 export function LoginForm({
   next,
   linkError,
+  sessionEnded,
 }: {
   next: string;
   linkError: boolean;
+  sessionEnded: boolean;
 }) {
   const [state, action, pending] = useActionState(signIn, initial);
   return (
@@ -127,7 +129,14 @@ export function LoginForm({
           autoComplete="current-password"
         />
         <FormError
-          message={state.error ?? (linkError ? t.auth.linkInvalid : undefined)}
+          message={
+            state.error ??
+            (linkError
+              ? t.auth.linkInvalid
+              : sessionEnded
+                ? t.auth.sessionEnded
+                : undefined)
+          }
         />
         <button type="submit" disabled={pending} className={PRIMARY}>
           {pending ? t.auth.signingIn : t.auth.signIn}

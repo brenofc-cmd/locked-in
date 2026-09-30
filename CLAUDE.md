@@ -77,7 +77,7 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
@@ -186,6 +186,10 @@ routing changed; run the pgTAP suite when a migration changed.
   `set_my_priorities` — never a second task list, never automatic. The morning card is inline, once
   per user and day via `setMark` — never a modal, a route or Resume State; device marks are always
   user-scoped (no `li:*` keys).
+- Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
+  (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
+  never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses
+  goes to `SESSION_REJECTED_LOGIN`, never to the error page.
 - Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button ("Resumo do dia de novo" clears
   today's briefing mark; partner and connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without
