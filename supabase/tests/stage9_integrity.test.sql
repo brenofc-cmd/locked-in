@@ -270,7 +270,7 @@ select is(
          from pg_proc p join pg_namespace n on n.oid = p.pronamespace
          where n.nspname in ('public', 'private') and p.prosecdef and p.proname not like 'dev\_%') s),
   array['private.current_duo_id', 'private.duo_is_complete', 'private.handle_new_profile_settings',
-        'private.handle_new_user', 'private.materialize_tasks', 'private.sync_challenge',
+        'private.handle_new_user', 'private.materialize_tasks', 'private.sync_accountability', 'private.sync_challenge',
         'private.sync_focus_activity', 'private.sync_planner_event', 'private.sync_reaction', 'private.sync_task_activity',
         'public.create_duo', 'public.duo_challenges', 'public.duo_weeks', 'public.join_duo',
         'public.leave_duo', 'public.partner_current_focus', 'public.partner_progress_summary',

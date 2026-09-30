@@ -87,6 +87,49 @@ begin
 end;
 $$;
 
+-- V2 Phase 6: the caller's local day closes now (the real Stage 9 boundary
+-- moves to today), so an open commitment of today becomes MISSED exactly as
+-- it will after midnight. dev_fixture_reset_history() reopens it.
+create or replace function public.dev_fixture_close_today()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  update public.profiles
+  set history_locked_through = private.local_today(auth.uid())
+  where id = auth.uid();
+end;
+$$;
+
+-- V2 Phase 6: commitments are history (owners cannot delete them); a run
+-- starts from none. Deletes the caller's commitments (sources, nudges and
+-- feed lines with them) and check-ins.
+create or replace function public.dev_fixture_reset_accountability()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  delete from public.activity_events e
+  where e.target_type = 'commitment'
+    and e.target_id in (select c.id from public.commitments c where c.owner_id = auth.uid());
+  delete from public.nudges where from_user = auth.uid() or to_user = auth.uid();
+  delete from public.commitments where owner_id = auth.uid();
+  delete from public.checkins where user_id = auth.uid();
+end;
+$$;
+
 revoke all on function private.dev_is_test_user() from public, anon;
 revoke all on function public.dev_fixture_reset_history() from public, anon;
 revoke all on function public.dev_fixture_add_tasks(jsonb) from public, anon;
@@ -95,3 +138,7 @@ grant execute on function private.dev_is_test_user() to authenticated;
 grant execute on function public.dev_fixture_reset_history() to authenticated;
 grant execute on function public.dev_fixture_add_tasks(jsonb) to authenticated;
 grant execute on function public.dev_fixture_backdate_routine(uuid, date, date) to authenticated;
+revoke all on function public.dev_fixture_close_today() from public, anon;
+grant execute on function public.dev_fixture_close_today() to authenticated;
+revoke all on function public.dev_fixture_reset_accountability() from public, anon;
+grant execute on function public.dev_fixture_reset_accountability() to authenticated;

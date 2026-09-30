@@ -888,6 +888,217 @@ export type Database = {
           },
         ];
       };
+      // V2 Phase 6 (duo_accountability): trigger-stamped columns are optional on insert.
+      checkins: {
+        Row: {
+          created_at: string;
+          duo_id: string | null;
+          id: string;
+          local_date: string;
+          state: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          duo_id?: string | null;
+          id?: string;
+          local_date?: string;
+          state: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          duo_id?: string | null;
+          id?: string;
+          local_date?: string;
+          state?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "checkins_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "checkins_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      commitment_sources: {
+        Row: {
+          commitment_id: string;
+          daily_task_id: string;
+          owner_id: string;
+        };
+        Insert: {
+          commitment_id: string;
+          daily_task_id: string;
+          owner_id?: string;
+        };
+        Update: {
+          commitment_id?: string;
+          daily_task_id?: string;
+          owner_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "commitment_sources_commitment_fkey";
+            columns: ["commitment_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "commitments";
+            referencedColumns: ["id", "owner_id"];
+          },
+          {
+            foreignKeyName: "commitment_sources_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "commitment_sources_task_same_owner_fkey";
+            columns: ["daily_task_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "daily_tasks";
+            referencedColumns: ["id", "owner_id"];
+          },
+        ];
+      };
+      commitments: {
+        Row: {
+          cancelled_at: string | null;
+          commit_date: string;
+          created_at: string;
+          duo_id: string | null;
+          focus_target_seconds: number | null;
+          id: string;
+          kind: string;
+          owner_id: string;
+          proof_kind: string | null;
+          proven_at: string | null;
+          resolution: string | null;
+          standard_percent: number | null;
+          status: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          cancelled_at?: string | null;
+          commit_date?: string;
+          created_at?: string;
+          duo_id?: string | null;
+          focus_target_seconds?: number | null;
+          id?: string;
+          kind: string;
+          owner_id?: string;
+          proof_kind?: string | null;
+          proven_at?: string | null;
+          resolution?: string | null;
+          standard_percent?: number | null;
+          status?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          cancelled_at?: string | null;
+          commit_date?: string;
+          created_at?: string;
+          duo_id?: string | null;
+          focus_target_seconds?: number | null;
+          id?: string;
+          kind?: string;
+          owner_id?: string;
+          proof_kind?: string | null;
+          proven_at?: string | null;
+          resolution?: string | null;
+          standard_percent?: number | null;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "commitments_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "commitments_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      nudges: {
+        Row: {
+          commitment_id: string;
+          created_at: string;
+          duo_id: string;
+          from_user: string;
+          id: string;
+          recipient_date: string;
+          to_user: string;
+        };
+        Insert: {
+          commitment_id: string;
+          created_at?: string;
+          duo_id?: string;
+          from_user?: string;
+          id?: string;
+          recipient_date?: string;
+          to_user?: string;
+        };
+        Update: {
+          commitment_id?: string;
+          created_at?: string;
+          duo_id?: string;
+          from_user?: string;
+          id?: string;
+          recipient_date?: string;
+          to_user?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nudges_commitment_id_fkey";
+            columns: ["commitment_id"];
+            isOneToOne: false;
+            referencedRelation: "commitments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nudges_duo_id_fkey";
+            columns: ["duo_id"];
+            isOneToOne: false;
+            referencedRelation: "duos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nudges_from_user_fkey";
+            columns: ["from_user"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nudges_to_user_fkey";
+            columns: ["to_user"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -897,6 +1108,15 @@ export type Database = {
       complete_focus_session: {
         Args: { p_id: string; p_reflection?: string };
         Returns: Database["public"]["Tables"]["focus_sessions"]["Row"][];
+      };
+      create_commitment: {
+        Args: {
+          p_daily_task_id?: string;
+          p_focus_minutes?: number;
+          p_kind: string;
+          p_title: string;
+        };
+        Returns: Database["public"]["Tables"]["commitments"]["Row"][];
       };
       create_duo: {
         Args: never;
@@ -929,6 +1149,25 @@ export type Database = {
       set_reaction: {
         Args: { p_event_id: string; p_type: string };
         Returns: string;
+      };
+      duo_commitments: {
+        Args: { p_from: string };
+        Returns: {
+          cancelled_at: string | null;
+          closed: boolean;
+          commit_date: string;
+          created_at: string;
+          focus_target_seconds: number | null;
+          id: string;
+          kind: string;
+          owner_id: string;
+          proof_kind: string | null;
+          proven_at: string | null;
+          resolution: string | null;
+          standard_percent: number | null;
+          status: string;
+          title: string;
+        }[];
       };
       duo_challenges: {
         Args: never;
