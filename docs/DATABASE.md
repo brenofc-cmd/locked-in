@@ -702,10 +702,10 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `planner_events`            | `20260929114909` | `20260929130241` |
 | `goals_vision_mirror`       | `20260929132309` | `20260929160137` |
 | `goal_milestones_owner_idx` | `20260929152035` | `20260929160140` |
-| `north_star_priorities`     | `20260929162654` | (see PROGRESS)   |
-| `goal_actions_proof`        | `20260930115728` | (see PROGRESS)   |
-| `goal_link_owner_check`     | `20260930120624` | (see PROGRESS)   |
-| `goal_link_task_not_found`  | `20260930120815` | (see PROGRESS)   |
+| `north_star_priorities`     | `20260929162654` | `20260930110808` |
+| `goal_actions_proof`        | `20260930115728` | `20260930124914` |
+| `goal_link_owner_check`     | `20260930120624` | `20260930124938` |
+| `goal_link_task_not_found`  | `20260930120815` | `20260930124940` |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 

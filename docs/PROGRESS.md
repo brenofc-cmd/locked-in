@@ -72,6 +72,29 @@ Verified (2026-09-30, DEV):
   `v2p5-390` 12 / 12 (the 13 requested scenarios + axe + no horizontal overflow at 375, 390, 430,
   768, 1180, 1440)
 - Screens checked at 390 and 1440 (goal page, /goals, Today, Focus, Progress)
+- **PROD migrations (2026-09-30, after VERIFIED)**: `goal_actions_proof`, `goal_link_owner_check`,
+  `goal_link_task_not_found` applied with the Supabase MCP as `20260930124914` / `…124938` /
+  `…124940` (same SQL as the repository files; mapping in docs/DATABASE.md). PROD had 0 goals, 0
+  milestones and no running focus. Validated on PROD: RLS on both link tables with one owner-only
+  policy each, the 6 FKs / constraints, the 4 indexes, 6 triggers enabled, no anon grant,
+  `completed_at` / `completed_on` not writable, the 10 functions INVOKER with `search_path = ''`
+  (trigger functions not callable, proof reads for `authenticated` only), the old 4-argument
+  `start_focus_session` gone, DEFINER count unchanged (18), no view, no `dev_*`,
+  `partner_current_focus` without any goal column; pgTAP `v2_phase5_goal_proof` **66/66** on PROD
+  (rolled back: 0 test users, no pgtap extension left); advisors: no new finding.
+- **Production (2026-09-30)**: `main` fast-forwarded to `14a659a`, Vercel Production deployment
+  success. Smoke on the owner account with disposable `[teste V5]` data: goal created on /goals (row
+  shows PROVAS ›); CRIAR TAREFA opened Quick Add with META pre-selected; a private task completed on
+  Today showed `META · <goal>` and became proof (✓ 1 ação, "Tarefa concluída · 09:54"); INICIAR FOCO
+  pre-selected TRABALHANDO EM, the running and completed screens showed the goal, the completed
+  session appeared as focus proof (`<1 min` — under a minute of effective time, so not summed in the
+  week); a milestone completed in the goal sheet appeared as ◆ proof; Progress → PROGRESSO DAS METAS
+  and the North Star (`Esta semana: 1 ação · 1 marco`) showed the goal. Privacy on PROD, read as the
+  real partner (rolled back): `partner_current_focus` returned EM FOCO with a null title and no goal
+  field; 0 goals, 0 links, 0 focus rows, 0 test tasks, 0 proofs; the feed event had no title and no
+  broadcast carried the goal id or title. Cleanup: the goal (links and milestone by cascade), both
+  tasks, the focus session and its 2 feed events deleted — PROD left with 0 goals / links / test rows.
+  The live two-person check (partner watching) was not done: nobody was on the partner's side.
 
 ## ISSUE-001 — first Today load after idle failed with a feed 401 — RESOLVED (2026-09-30)
 
