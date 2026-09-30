@@ -109,6 +109,49 @@ export type Database = {
           },
         ];
       };
+      daily_task_goals: {
+        Row: {
+          created_at: string;
+          daily_task_id: string;
+          goal_id: string;
+          owner_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          daily_task_id: string;
+          goal_id: string;
+          owner_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          daily_task_id?: string;
+          goal_id?: string;
+          owner_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "daily_task_goals_goal_same_owner_fkey";
+            columns: ["goal_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "goals";
+            referencedColumns: ["id", "owner_id"];
+          },
+          {
+            foreignKeyName: "daily_task_goals_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "daily_task_goals_task_same_owner_fkey";
+            columns: ["daily_task_id", "owner_id"];
+            isOneToOne: true;
+            referencedRelation: "daily_tasks";
+            referencedColumns: ["id", "owner_id"];
+          },
+        ];
+      };
       daily_tasks: {
         Row: {
           category: string;
@@ -263,6 +306,7 @@ export type Database = {
           daily_task_id: string | null;
           duo_id: string | null;
           ended_at: string | null;
+          goal_id: string | null;
           id: string;
           local_date: string;
           paused_at: string | null;
@@ -282,6 +326,7 @@ export type Database = {
           daily_task_id?: string | null;
           duo_id?: string | null;
           ended_at?: string | null;
+          goal_id?: string | null;
           id?: string;
           local_date?: string;
           paused_at?: string | null;
@@ -301,6 +346,7 @@ export type Database = {
           daily_task_id?: string | null;
           duo_id?: string | null;
           ended_at?: string | null;
+          goal_id?: string | null;
           id?: string;
           local_date?: string;
           paused_at?: string | null;
@@ -314,6 +360,13 @@ export type Database = {
           visible_to_partner?: boolean;
         };
         Relationships: [
+          {
+            foreignKeyName: "focus_sessions_goal_same_owner_fkey";
+            columns: ["goal_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "goals";
+            referencedColumns: ["id", "owner_id"];
+          },
           {
             foreignKeyName: "focus_sessions_duo_id_fkey";
             columns: ["duo_id"];
@@ -339,6 +392,8 @@ export type Database = {
       };
       goal_milestones: {
         Row: {
+          completed_at: string | null;
+          completed_on: string | null;
           created_at: string;
           goal_id: string;
           id: string;
@@ -349,6 +404,8 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          completed_at?: string | null;
+          completed_on?: string | null;
           created_at?: string;
           goal_id: string;
           id?: string;
@@ -359,6 +416,8 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          completed_at?: string | null;
+          completed_on?: string | null;
           created_at?: string;
           goal_id?: string;
           id?: string;
@@ -544,6 +603,49 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      routine_item_goals: {
+        Row: {
+          created_at: string;
+          goal_id: string;
+          owner_id: string;
+          routine_item_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          goal_id: string;
+          owner_id?: string;
+          routine_item_id: string;
+        };
+        Update: {
+          created_at?: string;
+          goal_id?: string;
+          owner_id?: string;
+          routine_item_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "routine_item_goals_goal_same_owner_fkey";
+            columns: ["goal_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "goals";
+            referencedColumns: ["id", "owner_id"];
+          },
+          {
+            foreignKeyName: "routine_item_goals_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "routine_item_goals_routine_same_owner_fkey";
+            columns: ["routine_item_id", "owner_id"];
+            isOneToOne: true;
+            referencedRelation: "routine_items";
+            referencedColumns: ["id", "owner_id"];
+          },
+        ];
       };
       routine_items: {
         Row: {
@@ -874,6 +976,26 @@ export type Database = {
           focus_sessions: number;
         }[];
       };
+      my_goal_proof_summaries: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          goal_id: string;
+          actions: number;
+          focus_seconds: number;
+          milestones: number;
+        }[];
+      };
+      my_goal_proofs: {
+        Args: { p_goal_id: string; p_limit?: number; p_offset?: number };
+        Returns: {
+          kind: string;
+          id: string;
+          title: string;
+          proof_date: string;
+          occurred_at: string;
+          focus_seconds: number | null;
+        }[];
+      };
       my_habits: {
         Args: { p_from: string; p_to: string };
         Returns: {
@@ -950,6 +1072,7 @@ export type Database = {
       start_focus_session: {
         Args: {
           p_daily_task_id?: string;
+          p_goal_id?: string;
           p_planned_seconds: number;
           p_title: string;
           p_visible?: boolean;
