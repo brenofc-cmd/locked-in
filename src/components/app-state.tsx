@@ -14,11 +14,14 @@
  *   (toast + optional browser Notification while open), task reminders while
  *   open, morning briefing / weekly review prompts, duo joined / ended.
  * Challenges load on their own screen (use-challenges.ts). No mocks remain.
+ * V2 Phase 6: duo accountability (commitments, nudges, check-ins) through
+ *   useAccountability(); a nudge to me is a toast on any screen.
  */
 import { t } from "@/i18n/pt-BR";
 import { usePathname, useRouter } from "next/navigation";
 import { clearReaction, setReaction } from "@/app/(app)/social-actions";
 import { updateDisplayName } from "@/app/(app)/actions";
+import { useAccountability } from "@/components/use-accountability";
 import { useHeartbeat } from "@/components/use-heartbeat";
 import { usePlanner } from "@/components/use-planner";
 import type { PlannerRow } from "@/lib/planner";
@@ -51,6 +54,7 @@ import {
   reactionToastText,
   type ReactionType,
 } from "@/lib/reactions";
+import { isProofKind } from "@/lib/realtime-model";
 import { notificationPrefs } from "@/lib/settings";
 import { setMark } from "@/lib/resume-state";
 import type { TasksData } from "@/lib/session";
@@ -335,7 +339,7 @@ function useAppStateValue(
       onPartnerActivity((event) => {
         if (pathnameRef.current === "/partner") return;
         const toastId = uid("toast");
-        const canReact = event.kind === "done" || event.kind === "focusdone";
+        const canReact = isProofKind(event.kind);
         notify("partner_activity", {
           id: toastId,
           text: `${partnerName} ${event.text}`,
@@ -379,6 +383,7 @@ function useAppStateValue(
   );
 
   // ---- focus: REAL (Stage 6, use-focus.ts) ---------------------------------
+  // (accountability below needs the focus minutes)
 
   const fx = useFocus({
     initial: initialFocus,
@@ -391,6 +396,42 @@ function useAppStateValue(
     onMyFocus: rt.onMyFocus,
   });
   const { startFocus: start, checkExpiry, clockNow } = fx;
+
+  // ---- duo accountability: REAL (V2 Phase 6, use-accountability.ts) -------
+
+  const accountability = useAccountability({
+    myId: userId,
+    partner: realPartner
+      ? {
+          id: realPartner.id,
+          name: partnerName,
+          timezone: realPartner.timezone,
+        }
+      : null,
+    today: real.today,
+    version: rt.accountabilityVersion,
+    doneToday: tasks.filter((x) => x.done).length,
+    focusMin: Math.floor(fx.focusSeconds / 60),
+    toast,
+  });
+  const commitmentsRef = useRef(accountability.commitments);
+  useEffect(() => {
+    commitmentsRef.current = accountability.commitments;
+  }, [accountability.commitments]);
+  const { onNudge } = rt;
+  useEffect(
+    () =>
+      onNudge((commitmentId) => {
+        const title = commitmentsRef.current.find(
+          (c) => c.id === commitmentId,
+        )?.title;
+        notify("partner_activity", {
+          text: t.accountability.nudgeToast(partnerName),
+          sub: title ? t.accountability.nudgeToastSub(title) : "",
+        });
+      }),
+    [onNudge, partnerName, notify],
+  );
 
   // ---- progress: REAL (Stage 7, use-progress.ts) ----------------------------
 
@@ -551,10 +592,12 @@ function useAppStateValue(
     routineGoals: real.routineGoals,
     linkRoutine: real.linkRoutine,
     setFocusGoal: fx.setFocusGoal,
+    accountability,
     feed,
     partner: { ...partner, streak: pg.partnerStreak } satisfies Partner,
     partnerTasks,
     partnerCounts,
+    partnerStandard: pg.partnerStandard,
     hasPartner,
     reactions,
     react,

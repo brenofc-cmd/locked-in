@@ -11,6 +11,7 @@ import {
   StreakSheet,
   TemplateSheet,
 } from "@/components/sheets/MiscSheets";
+import { CommitmentSheet } from "@/components/sheets/CommitmentSheet";
 import { PlannerSheet } from "@/components/sheets/PlannerSheet";
 import { PrioritiesSheet } from "@/components/sheets/PrioritiesSheet";
 import { Sheet } from "@/components/sheets/Sheet";
@@ -77,6 +78,9 @@ export function SheetHost() {
       break;
     case "priorities":
       body = <PrioritiesSheet />;
+      break;
+    case "commitment":
+      body = <CommitmentSheet />;
       break;
   }
 

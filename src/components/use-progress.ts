@@ -144,6 +144,8 @@ export function useProgress({
       partner: partnerWeek,
     },
     partnerStreak,
+    /** V2 Phase 6: the partner's Daily Standard (for their day on the hub). */
+    partnerStandard: data.partner?.standard ?? null,
     refreshProgress: refresh,
   };
 }

@@ -2,6 +2,7 @@ import { t } from "@/i18n/pt-BR";
 import { remainingSeconds } from "@/lib/focus";
 import { formatClock } from "@/lib/format";
 import { addDays, localDateISO, localTimeHM } from "@/lib/local-date";
+import { isProofKind } from "@/lib/realtime-model";
 import type { FeedEvent, Partner } from "@/types";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -94,10 +95,7 @@ export function partnerView(
   const pct = total ? Math.round((done / total) * 100) : 0;
   const last = [...feed]
     .reverse()
-    .find(
-      (f) =>
-        f.who === "partner" && (f.kind === "done" || f.kind === "focusdone"),
-    );
+    .find((f) => f.who === "partner" && isProofKind(f.kind));
   // Countdown derived locally from the partner's persistent session
   // (started_at, planned_seconds, pauses); nothing is streamed.
   const session = partner.focusSession;

@@ -86,7 +86,9 @@ export type PartnerTask = {
   at: string | null;
 };
 
-export type FeedKind = "start" | "done" | "focus" | "focusdone" | "react";
+/** "commit": a proven commitment (V2 Phase 6), verified or self-declared. */
+export type FeedKind =
+  "start" | "done" | "focus" | "focusdone" | "react" | "commit";
 
 export type FeedEvent = {
   id: string;
@@ -137,7 +139,9 @@ export type Sheet =
   | { kind: "challenge" }
   /** V2 Phase 2: new (optional date) or existing planner event. */
   | { kind: "planner"; event?: PlannerEvent; date?: string }
-  | { kind: "priorities" };
+  | { kind: "priorities" }
+  /** V2 Phase 6: a new shared commitment. */
+  | { kind: "commitment" };
 
 export type Overlay =
   { kind: "review" } | { kind: "weekly"; weekStart: string };

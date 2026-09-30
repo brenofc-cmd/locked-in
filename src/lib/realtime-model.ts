@@ -27,7 +27,8 @@ export function presenceOnline(
 export type ActivityRecord = {
   id: string;
   actor_id: string;
-  /** task_completed (default) | focus_started | focus_completed */
+  /** task_completed (default) | focus_started | focus_completed |
+   * commitment_proven | commitment_self_declared (V2 Phase 6) */
   event_type?: string | null;
   target_id: string | null;
   title: string | null;
@@ -74,6 +75,22 @@ export function eventFromActivity(
       target: t.feed.focusSessionTarget,
     };
   }
+  if (
+    r.event_type === "commitment_proven" ||
+    r.event_type === "commitment_self_declared"
+  ) {
+    // The commitment's public title; its private source never reaches the feed.
+    const title = r.title ?? t.feed.aCommitment;
+    return {
+      ...base,
+      kind: "commit",
+      text:
+        r.event_type === "commitment_proven"
+          ? t.feed.commitmentProven(title)
+          : t.feed.commitmentSelfDeclared(title),
+      target: title,
+    };
+  }
   const title = r.title ?? t.feed.aTask;
   return {
     ...base,
@@ -81,6 +98,11 @@ export function eventFromActivity(
     text: t.feed.completed(title),
     target: title,
   };
+}
+
+/** Feed lines that are proof of work: they can be reacted to. */
+export function isProofKind(kind: FeedEvent["kind"]): boolean {
+  return kind === "done" || kind === "focusdone" || kind === "commit";
 }
 
 export const FEED_LIMIT = 20;

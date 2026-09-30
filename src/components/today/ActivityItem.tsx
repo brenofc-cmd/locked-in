@@ -3,11 +3,13 @@
 import { useApp } from "@/components/app-state";
 import { ReactButton, ReceivedReaction } from "@/components/today/Reactions";
 import { cx } from "@/components/ui";
+import { isProofKind } from "@/lib/realtime-model";
 import type { FeedEvent } from "@/types";
 
 const DOT: Record<FeedEvent["kind"], string> = {
   done: "bg-accent",
   focusdone: "bg-accent",
+  commit: "bg-accent",
   focus: "bg-text",
   react: "bg-muted",
   start: "bg-faint",
@@ -19,7 +21,7 @@ const DOT: Record<FeedEvent["kind"], string> = {
  */
 export function ActivityItem({ event }: { event: FeedEvent }) {
   const { userName, partner } = useApp();
-  const done = event.kind === "done" || event.kind === "focusdone";
+  const done = isProofKind(event.kind);
   const real = !event.id.startsWith("local-");
   const name = event.who === "me" ? userName : partner.name;
 

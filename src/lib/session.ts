@@ -34,6 +34,8 @@ export type SessionData = {
       displayName: string;
       /** When the partner joined (ISO). */
       joinedAt: string;
+      /** V2 Phase 6: the partner's profile timezone (their local day). */
+      timezone: string;
     } | null;
   } | null;
 };
@@ -210,6 +212,7 @@ export async function loadAppData(): Promise<AppData | null> {
                     id: partner.id,
                     displayName: partner.display_name,
                     joinedAt: partnerMember.joined_at,
+                    timezone: partner.timezone,
                   }
                 : null,
           }

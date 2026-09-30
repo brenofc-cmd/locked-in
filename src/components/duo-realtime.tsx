@@ -8,7 +8,9 @@
  *   - Broadcast from the database: "activity", "activity_removed",
  *     "tasks_changed" (daily_tasks trigger), "focus" (one per focus
  *     session transition), and since Stage 8 "reaction", "challenges_changed",
- *     "duo_joined" and "duo_ended"; never sent by clients.
+ *     "duo_joined" and "duo_ended"; V2 Phase 6 "commitment_changed",
+ *     "nudge_received" and "checkin_changed" (ids / status only); never sent
+ *     by clients.
  * Postgres is the source of truth: initial data comes from the server, and
  * after every event, reconnect or return to the tab the feed and the
  * partner's day are refetched. Realtime only makes updates arrive sooner.
@@ -55,6 +57,8 @@ type MyFocusListener = (focus: PartnerFocus) => void;
 type ReactionListener = (r: { eventId: string; type: ReactionType }) => void;
 /** The duo was completed (partner joined) or ended by either member. */
 type DuoChangeListener = (change: "joined" | "ended", byMe: boolean) => void;
+/** V2 Phase 6: my partner nudged me about one of my commitments. */
+type NudgeListener = (commitmentId: string) => void;
 
 const reactionsOf = (feed: DuoData["feed"]) =>
   reactionMapFrom(
@@ -99,6 +103,8 @@ function useDuoRealtimeValue(initial: DuoData) {
   const [challengesVersion, setChallengesVersion] = useState(0);
   /** V2 Phase 2: bumped by planner_changed (a shared event changed). */
   const [plannerVersion, setPlannerVersion] = useState(0);
+  /** V2 Phase 6: bumped by commitment / nudge / check-in changes and refetches. */
+  const [accountabilityVersion, setAccountabilityVersion] = useState(0);
   const [partnerCounts, setPartnerCounts] = useState(() => ({
     done: initial.partnerDay?.done ?? 0,
     total: initial.partnerDay?.total ?? 0,
@@ -126,6 +132,7 @@ function useDuoRealtimeValue(initial: DuoData) {
   const myFocusListeners = useRef(new Set<MyFocusListener>());
   const reactionListeners = useRef(new Set<ReactionListener>());
   const duoListeners = useRef(new Set<DuoChangeListener>());
+  const nudgeListeners = useRef(new Set<NudgeListener>());
   /** The session's view of the duo, for refetches that find it changed. */
   const sessionPartner = useRef(partnerId);
   useEffect(() => {
@@ -162,6 +169,7 @@ function useDuoRealtimeValue(initial: DuoData) {
         setPartnerTasks(toTasks(data.partnerTasks));
         setPartnerVersion((v) => v + 1);
         setChallengesVersion((v) => v + 1);
+        setAccountabilityVersion((v) => v + 1);
         if (seq === focusSeq.current) setPartnerFocus(data.partnerFocus);
         setPartnerSeenDb(data.partnerLastSeen);
         // A duo_joined / duo_ended broadcast can be missed (sent before this
@@ -290,6 +298,21 @@ function useDuoRealtimeValue(initial: DuoData) {
         // Ids and the operation only; the planner re-reads through RLS.
         .on("broadcast", { event: "planner_changed" }, ({ payload }) => {
           if (payload.actor_id !== me.id) setPlannerVersion((v) => v + 1);
+        })
+        // V2 Phase 6: ids and the public status only; the hub re-reads
+        // through RLS (commitments, nudges, check-ins).
+        .on("broadcast", { event: "commitment_changed" }, () => {
+          setAccountabilityVersion((v) => v + 1);
+        })
+        .on("broadcast", { event: "checkin_changed" }, () => {
+          setAccountabilityVersion((v) => v + 1);
+        })
+        .on("broadcast", { event: "nudge_received" }, ({ payload }) => {
+          setAccountabilityVersion((v) => v + 1);
+          if (payload.to_user === me.id && payload.actor_id !== me.id)
+            nudgeListeners.current.forEach((l) =>
+              l(String(payload.commitment_id)),
+            );
         })
         .on("broadcast", { event: "duo_joined" }, ({ payload }) => {
           duoListeners.current.forEach((l) =>
@@ -424,6 +447,13 @@ function useDuoRealtimeValue(initial: DuoData) {
     };
   }, []);
 
+  const onNudge = useCallback((listener: NudgeListener) => {
+    nudgeListeners.current.add(listener);
+    return () => {
+      nudgeListeners.current.delete(listener);
+    };
+  }, []);
+
   const onPartnerActivity = useCallback((listener: ActivityListener) => {
     listeners.current.add(listener);
     return () => {
@@ -451,6 +481,8 @@ function useDuoRealtimeValue(initial: DuoData) {
     onDuoChange,
     challengesVersion,
     plannerVersion,
+    accountabilityVersion,
+    onNudge,
     flashAt,
     onMyFocus,
     addLocalCompletion,

@@ -3,6 +3,13 @@
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
+import {
+  CheckinPicker,
+  CommitmentHistory,
+  CommitmentsSection,
+  PartnerCheckinLine,
+  PartnerDayLine,
+} from "@/components/partner/Accountability";
 import { ActivityItem } from "@/components/today/ActivityItem";
 import { ReactButton } from "@/components/today/Reactions";
 import {
@@ -85,6 +92,7 @@ export function PartnerScreen() {
               {pv.statusLine}
             </span>
           </span>
+          <PartnerCheckinLine />
         </span>
       </header>
 
@@ -107,8 +115,86 @@ export function PartnerScreen() {
           tone="text"
           className="overflow-hidden"
         />
+        <PartnerDayLine />
       </div>
 
+      <CommitmentsSection />
+      <CheckinPicker />
+
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
+        <section
+          aria-label={t.partnerScreen.partnerTodayAria(partner.name)}
+          className="flex flex-col"
+        >
+          <SectionHeader
+            as="h2"
+            label={t.partnerScreen.partnerToday(partner.name.toUpperCase())}
+            right={`${pv.done} / ${pv.total}`}
+          />
+          {app.partnerTasks.map((x) => (
+            <div
+              key={x.id}
+              className="flex min-h-[52px] items-center gap-3.5 border-b border-white/5 py-1"
+            >
+              <MiniCheck done={x.done} light />
+              <span
+                className={cx(
+                  "flex-1 text-[14.5px]",
+                  x.done ? "text-muted" : "text-text",
+                )}
+              >
+                {x.name}
+                <span className="sr-only">
+                  {x.done ? t.partnerScreen.srDone : t.partnerScreen.srNotDone}
+                </span>
+              </span>
+              <span className="font-mono text-[11px] text-dim">
+                {x.at ?? ""}
+              </span>
+              {x.done &&
+                (() => {
+                  const eventId = app.eventForTask(x.id);
+                  return eventId ? (
+                    <ReactButton
+                      eventId={eventId}
+                      title={t.partnerScreen.reactTitle(partner.name, x.name)}
+                      name={x.name}
+                    />
+                  ) : null;
+                })()}
+            </div>
+          ))}
+          {app.partnerTasks.length === 0 && pv.total === 0 && (
+            <span className="py-3.5 text-[13.5px] text-dim">
+              {t.partnerScreen.nothingScheduled}
+            </span>
+          )}
+          {pv.total > app.partnerTasks.length && (
+            <span className="py-3.5 text-[13px] text-dim">
+              {t.partnerScreen.privateCount(pv.total - app.partnerTasks.length)}
+            </span>
+          )}
+        </section>
+        <section
+          aria-label={t.partnerScreen.activityAria}
+          className="flex flex-col"
+        >
+          <div className="flex items-center gap-[9px] border-b border-white/9 pb-2">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
+            />
+            <h2 className="font-mono text-[11px] font-normal tracking-[.2em]">
+              {t.partnerScreen.activity}
+            </h2>
+          </div>
+          <div className="flex flex-col-reverse">
+            {app.feed.map((e) => (
+              <ActivityItem key={e.id} event={e} />
+            ))}
+          </div>
+        </section>
+      </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <section
           aria-label={t.partnerScreen.thisWeekAria}
@@ -293,80 +379,7 @@ export function PartnerScreen() {
         </section>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
-        <section
-          aria-label={t.partnerScreen.partnerTodayAria(partner.name)}
-          className="flex flex-col"
-        >
-          <SectionHeader
-            as="h2"
-            label={t.partnerScreen.partnerToday(partner.name.toUpperCase())}
-            right={`${pv.done} / ${pv.total}`}
-          />
-          {app.partnerTasks.map((x) => (
-            <div
-              key={x.id}
-              className="flex min-h-[52px] items-center gap-3.5 border-b border-white/5 py-1"
-            >
-              <MiniCheck done={x.done} light />
-              <span
-                className={cx(
-                  "flex-1 text-[14.5px]",
-                  x.done ? "text-muted" : "text-text",
-                )}
-              >
-                {x.name}
-                <span className="sr-only">
-                  {x.done ? t.partnerScreen.srDone : t.partnerScreen.srNotDone}
-                </span>
-              </span>
-              <span className="font-mono text-[11px] text-dim">
-                {x.at ?? ""}
-              </span>
-              {x.done &&
-                (() => {
-                  const eventId = app.eventForTask(x.id);
-                  return eventId ? (
-                    <ReactButton
-                      eventId={eventId}
-                      title={t.partnerScreen.reactTitle(partner.name, x.name)}
-                      name={x.name}
-                    />
-                  ) : null;
-                })()}
-            </div>
-          ))}
-          {app.partnerTasks.length === 0 && pv.total === 0 && (
-            <span className="py-3.5 text-[13.5px] text-dim">
-              {t.partnerScreen.nothingScheduled}
-            </span>
-          )}
-          {pv.total > app.partnerTasks.length && (
-            <span className="py-3.5 text-[13px] text-dim">
-              {t.partnerScreen.privateCount(pv.total - app.partnerTasks.length)}
-            </span>
-          )}
-        </section>
-        <section
-          aria-label={t.partnerScreen.activityAria}
-          className="flex flex-col"
-        >
-          <div className="flex items-center gap-[9px] border-b border-white/9 pb-2">
-            <span
-              aria-hidden="true"
-              className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
-            />
-            <h2 className="font-mono text-[11px] font-normal tracking-[.2em]">
-              {t.partnerScreen.activity}
-            </h2>
-          </div>
-          <div className="flex flex-col-reverse">
-            {app.feed.map((e) => (
-              <ActivityItem key={e.id} event={e} />
-            ))}
-          </div>
-        </section>
-      </div>
+      <CommitmentHistory />
     </div>
   );
 }
