@@ -97,3 +97,10 @@ mirror item — what you wrote, the one you chose (◆ on Metas & Visão) or a p
 **TOP 3 DE HOJE**: pick up to three of today's tasks that matter most; done or skipped, they stay
 there. The first open of the day brings a short **morning card** (inline, never blocking) with your
 streak, standard, today's tasks, the Top 3 and the next school event. No quotes, no AI coach.
+
+### V2 Phase 5 — Goal → Action → Proof
+
+A goal is linked to real actions (a task, a routine, a focus session; milestones already belong to it)
+and shows what was actually done for it — "what did you do that proves you are moving?". Evidence,
+not points: actions, focus time and milestones, never a percentage or a manual "proof". Goals stay
+private: the partner sees EM FOCO and shared task titles, never a goal. Details: docs/GOAL_PROOF.md.

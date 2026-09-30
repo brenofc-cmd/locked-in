@@ -78,7 +78,8 @@ device (docs/RESUME_STATE.md).
 
 - Phase 4 — North Star + Morning Experience: **done** — see docs/NORTH_STAR.md (featured ◇ / ◆
   toggle on each active item, one per kind, shown on Today).
-- Phase 5 — Goal → Action → Proof (real progress from actions, no manual percentage).
+- Phase 5 — Goal → Action → Proof: **done** — see docs/GOAL_PROOF.md (PROVAS link on each goal row,
+  `/goals/[id]` with proof, linked actions, CRIAR TAREFA and INICIAR FOCO; still no percentage).
 
 ## Code and tests
 

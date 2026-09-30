@@ -703,6 +703,9 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `goals_vision_mirror`       | `20260929132309` | `20260929160137` |
 | `goal_milestones_owner_idx` | `20260929152035` | `20260929160140` |
 | `north_star_priorities`     | `20260929162654` | (see PROGRESS)   |
+| `goal_actions_proof`        | `20260930115728` | (see PROGRESS)   |
+| `goal_link_owner_check`     | `20260930120624` | (see PROGRESS)   |
+| `goal_link_task_not_found`  | `20260930120815` | (see PROGRESS)   |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -758,3 +761,23 @@ Trigger `*_keep_one_featured` (`private.keep_one_featured`, INVOKER): leaving th
 the flag; featuring one item un-features the owner's previous one. Function
 `public.set_my_priorities(p_ids uuid[]) returns setof daily_tasks` (INVOKER): replaces the caller's
 Top 3 of `my_today()`.
+
+## V2 Phase 5 tables and columns (migrations `20260930115728_goal_actions_proof`, `20260930120624_goal_link_owner_check`, `20260930120815_goal_link_task_not_found`)
+
+Goal → Action → Proof (docs/GOAL_PROOF.md, ADR-064…068). Backward compatible.
+
+| Object                         | Definition                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `daily_task_goals`             | `daily_task_id pk`, `owner_id` (default `auth.uid()`), `goal_id`; FKs `(daily_task_id, owner_id)` and `(goal_id, owner_id)` cascade |
+| `routine_item_goals`           | `routine_item_id pk`, `owner_id`, `goal_id`; FKs `(routine_item_id, owner_id)` and `(goal_id, owner_id)` cascade                    |
+| `focus_sessions.goal_id`       | nullable; FK `(goal_id, user_id) → goals (id, owner_id) on delete set null (goal_id)`; insert / update grant                        |
+| `goal_milestones.completed_at` | stamped when completed (database-owned), with `completed_on` = owner's local date; check both set iff `is_completed`                |
+
+Grants: link tables `select, delete`, `insert (action, owner_id, goal_id)`, `update (goal_id)` to
+`authenticated`; RLS one "owner only" policy each; nothing for anon. Triggers (INVOKER, not callable):
+`daily_task_goals_guard`, `routine_item_goals_guard`, `routine_item_goals_sync_today`,
+`daily_tasks_seed_goal`, `focus_sessions_guard_goal`, `goal_milestones_stamp_completion`. Functions:
+`public.my_goal_proof_summaries(date, date)`, `public.my_goal_proofs(uuid, int, int)` (INVOKER SQL),
+`public.start_focus_session(text, int, uuid, boolean, uuid)` (replaces the 4-argument version; the
+last argument defaults to null), `private.goal_is_active(uuid, uuid)`. Indexes: see GOAL_PROOF.md.
+pgTAP: `supabase/tests/v2_phase5_goal_proof.test.sql`.

@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 4 — North Star + Morning Experience — VERIFIED (2026-09-29); next: Phase 5 — Goals → Actions → Proof (not started)
+LOCKED IN V2 — Phase 5 — Goals → Actions → Proof — VERIFIED (2026-09-30); next: Phase 6 (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -13,6 +13,65 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ## Known issues (open)
 
 - None.
+
+## Phase 5 — Goals → Actions → Proof — VERIFIED (2026-09-30)
+
+Scope: docs/GOAL_PROOF.md, ADR-064…068. Branch `v2-phase-5-goals-actions-proof` (from `main` at
+`ffbd7b0`).
+
+Done:
+
+- **Task → goal**: META in Quick Add / edit (Mais opções; only active goals; the collapsed row shows
+  `META · <goal>`), a discreet `META · <goal>` line on Today (also in `aria-describedby`); owner-only
+  link table `daily_task_goals`; closed days fixed; drafts keep the goal only while it is active.
+- **Routine → goal**: META in the routine sheet and **VINCULAR AÇÃO** on the goal page
+  (`routine_item_goals`); every generated occurrence gets the goal at that moment (snapshot trigger,
+  catch-up included); a later change never rewrites past occurrences (missed days materialised with
+  the old goal first); today's occurrence follows the template like every template edit.
+- **Focus → goal**: TRABALHANDO EM on /focus and in the running session (changeable while running /
+  paused, fixed once completed — ADR-067); INICIAR FOCO on a goal opens `/focus?goal=<id>`; a task
+  that feeds a goal pre-selects it; `start_focus_session(…, p_goal_id default null)` (the old call
+  still works).
+- **Milestones**: `completed_at` / `completed_on` stamped by the database (existing completed ones took
+  `updated_at`).
+- **Proof** (derived, never stored): `my_goal_proof_summaries` (all goals, one call) and
+  `my_goal_proofs` (page of 20, newest first). Completed task = 1 action, completed focus = effective
+  seconds, completed milestone = 1; skipped / missed / active / paused never; routine never double
+  counted; archived / achieved goals keep their proof and take no new action.
+- **Screens**: /goals rows get a PROVAS link with this week's proof; `/goals/[id]` (owner-only, 404
+  otherwise) with PROVAS — ESTA SEMANA, CRIAR TAREFA, INICIAR FOCO, ÚLTIMAS PROVAS (HOJE / ONTEM /
+  date, CARREGAR MAIS), AÇÕES VINCULADAS; Progress → PROGRESSO DAS METAS (top 3 for the range, VER
+  METAS); North Star `Esta semana: …` and the morning card `N AÇÕES NESTA SEMANA` only when there is
+  proof. Focus reads as time (`1h35`, `45 min`, `<1 min`), never as points; no percentage.
+- **Privacy**: link tables owner-only (a `goal_id` on `daily_tasks` / `routine_items` would reach the
+  partner, who reads those rows); `partner_current_focus()` unchanged (no goal); no broadcast or feed
+  payload carries a goal.
+- Migrations `20260930115728_goal_actions_proof`, `20260930120624_goal_link_owner_check`,
+  `20260930120815_goal_link_task_not_found` (no new DEFINER, no view, no stats table).
+
+Found and fixed during the phase:
+
+- The first "active goal" check relied on RLS inside a trigger; a plpgsql plan cached while trusted
+  code (`materialize_tasks`) ran could evaluate it without RLS, so another user's goal read as
+  active and only the composite FK (`23503`) refused the link. Safe, but not deterministic: the helper
+  now compares the owner itself (`goal_is_active(goal, owner)`), and a foreign task answers
+  `LI_NOT_FOUND` instead of `LI_HISTORY_LOCKED`.
+- axe on the goal page flaked while the entry animation was running (partial opacity); the scan now
+  waits for the animations like the Phase 4 spec.
+
+Verified (2026-09-30, DEV):
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run format:check` — pass; `npm audit` —
+  0 vulnerabilities
+- `npm test` — 16 files, **264 passed** (goal-proof 18 new: grouping, ordering, focus format, week /
+  range boundaries, top goals, active-only pickers, draft goal validation, no duplicate on "load more")
+- pgTAP on DEV (all 37 migrations): stage 3 51, stage 4 72, stage 5 40, stage 6 63, stage 7 78,
+  stage 8 84, stage 9 69, v2 phase 2 63, v2 phase 3 61, v2 phase 4 57, v2 phase 5 66 — **704/704**,
+  FAILED=0
+- `npm run test:e2e` — **130 passed** (0 failed, 0 flaky; 1 skipped = the opt-in visual capture);
+  `v2p5-390` 12 / 12 (the 13 requested scenarios + axe + no horizontal overflow at 375, 390, 430,
+  768, 1180, 1440)
+- Screens checked at 390 and 1440 (goal page, /goals, Today, Focus, Progress)
 
 ## ISSUE-001 — first Today load after idle failed with a feed 401 — RESOLVED (2026-09-30)
 

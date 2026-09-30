@@ -122,6 +122,14 @@ change the weekly head-to-head.
 - Morning briefing: today's task count, yesterday's % (or "—" for a neutral day), the live streak.
 - Review day: today's %, the live streak once the standard is met, the partner's today.
 
+## Goal proof (V2 Phase 5)
+
+Derived like everything here (docs/GOAL_PROOF.md): completed linked tasks (1 action each, by
+`task_date`), completed linked focus (effective seconds, by `local_date`), completed milestones (by
+`completed_on`). Skipped / missed / active / paused are not proof; a routine counts only through its
+completed occurrences. Progress shows at most 3 goals with proof in the chosen range
+(`my_goal_proof_summaries`, one call). No stats table, no score, no percentage.
+
 ## Database functions
 
 | Function                          | Security | Returns                                                                                               |

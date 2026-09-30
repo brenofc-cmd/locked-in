@@ -223,3 +223,20 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - Verified: pgTAP `v2_phase4_north_star` (57) + the full suite on DEV (638/638); e2e `v2-phase4`
   (private priority invisible to the partner through the API and the UI, partner / outsider cannot
   set or clear A's Top 3).
+
+## V2 Phase 5 — goal links and proof (2026-09-30)
+
+- Goal links are in owner-only side tables (`daily_task_goals`, `routine_item_goals`): the partner can
+  read shared task / routine rows, and a `goal_id` column there would leak. `focus_sessions.goal_id`
+  is on an owner-only table; `partner_current_focus()` has no goal column (asserted by pgTAP).
+- Ownership is structural (composite FKs) and the active-goal check names the owner explicitly
+  (`private.goal_is_active(goal, owner)`): another user's goal is refused with `LI_GOAL_INACTIVE`,
+  exactly like a missing one (no existence oracle); another user's task with `LI_NOT_FOUND`;
+  `owner_id` cannot be spoofed. `/goals/[id]` of someone else is a plain 404.
+- Closed history: a closed day's link cannot be set, changed or removed (`LI_HISTORY_LOCKED`); a
+  completed focus session's goal is fixed; the routine snapshot never rewrites past occurrences.
+- No new SECURITY DEFINER function (the reviewed set of 18 is unchanged), no view, no broadcast; feed
+  events and payloads carry no goal id or title. Anon cannot execute the proof functions.
+- Found and fixed during the phase: a trigger's plpgsql plan cached while trusted code
+  (`materialize_tasks`) ran could evaluate an RLS-dependent helper without RLS; the helper now filters
+  by owner itself (the composite FK already refused the link — no data was exposed).

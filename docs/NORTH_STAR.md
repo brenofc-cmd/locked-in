@@ -118,8 +118,10 @@ of their Resume State.
 
 ## Future
 
-Phase 5 — Goal → Action → Proof will link goals to real tasks / focus. The Top 3 stays a daily choice
-of tasks; nothing in this phase links a goal to a task or computes goal progress.
+Phase 5 — Goal → Action → Proof: **done** (docs/GOAL_PROOF.md). META ATUAL shows
+`Esta semana: 4 ações · 2h15 de foco` (a link to the goal's page) only when the goal has proof this
+week, and the morning card adds `N AÇÕES NESTA SEMANA` under the goal — one batch call on the server,
+nothing when there is no proof. The Top 3 stays a daily choice of tasks.
 
 ## Code and tests
 

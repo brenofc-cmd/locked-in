@@ -236,6 +236,15 @@ four owner-only tables through RLS (`loadGoalsData()`, four queries in parallel)
 layout load — and renders `GoalsScreen`; writes go through `src/app/(app)/goals-actions.ts`. No
 realtime (private data), no DEFINER, no sharing.
 
+## V2 Phase 5 — Goal → Action → Proof
+
+Goal links are loaded with the app layout (`loadAppData`: my goals `id, title, status`, today's task
+links, routine links) and kept in `useTasks()` (`goals`, `taskGoals`, `routineGoals`, `syncGoals`,
+`linkRoutine`); Server Actions write the links only when they change. Focus keeps the goal in its
+pick / session (`setFocusGoal`). Proof is read on the server: `/goals` (this week, one call),
+`/goals/[id]` (week + first page), `/today` (North Star), and through `proof-actions.ts` for more pages
+and Progress ranges. Details: docs/GOAL_PROOF.md.
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to

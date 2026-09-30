@@ -386,3 +386,33 @@ Status: Accepted.
 Decision: Every Supabase client of the app (server, proxy, browser) uses one fetch, `src/lib/supabase/fetch.ts`, that repeats a request **exactly once, immediately, with the same URL, headers and body** when — and only when — PostgREST answers `401` with `code = PGRST303` and message "JWT issued at future". Every other response, including every other 401, is returned untouched, and a second rejection is returned as is. When the `(app)` layout still fails, `isSessionRejected()` asks once (same cookies, `server_now()`): no claims or a 401 means the database refuses the session and the user goes to `/login?reason=session` ("Sua sessão expirou…"); anything else stays a real error. The proxy never bounces that one login URL to `/today`, so the two cannot loop. (Numbered 063 so it does not collide with Phase 4's ADR-060…062.)
 Reason: Production logs of 2026-09-29 (13:06:01 server render, 17:11:34 browser) show one request of a parallel batch refused with PGRST303 while its siblings, sent the same millisecond with the **same** JWT (valid for another 45 min), got 200; the 79-byte body is exactly "JWT issued at future". Both happened on the first REST traffic after PostgREST had been idle while a new token was issued (browser refresh 12:51 → render 13:06; 16:38 → 17:11), never after idle gaps where the token pre-dated the gap: PostgREST's cached clock was behind the new token's `iat`. The proxy → render cookie path was verified correct (one refresh, the render gets the new session, all parallel queries carry one token), so the session was never stale. A general retry, a sleep, a reload or ignoring 401 would hide real expiries; this repeat is limited to one error that a valid token cannot deserve, is safe for POST (PostgREST rejects the JWT before running anything) and is bounded.
 Status: Accepted.
+
+# ADR-064 — Goal links live in owner-only side tables (tasks, routines); a column on focus
+
+Decision: A task's and a routine's goal live in `daily_task_goals` / `routine_item_goals` (one goal per action, composite FKs `(action, owner)` and `(goal, owner)`, owner-only RLS), not in `daily_tasks.goal_id` / `routine_items.goal_id`. The focus link is `focus_sessions.goal_id`. A routine's goal is copied to each occurrence when it is generated (snapshot); later changes never rewrite past occurrences.
+Reason: The partner reads shared `daily_tasks` / `routine_items` rows and RLS cannot hide a column, so a goal id there would leak a private goal. `focus_sessions` is already owner-only (the partner reads `partner_current_focus()` only). The composite FKs make a link to another user's action or goal structurally impossible; the snapshot keeps history true to what the user chose at the time.
+Status: Accepted.
+
+# ADR-065 — Proof is derived from the source tables; no manual proof, no cache
+
+Decision: Proof = completed linked `daily_tasks` (1 action each) + completed linked `focus_sessions` (their effective `actual_focus_seconds`) + completed `goal_milestones` (1 each), read by two INVOKER functions (`my_goal_proof_summaries`, `my_goal_proofs`). There is no proof table, no stats / cache table, no view, and no "add proof" with free text. A routine is never proof by itself — only its completed occurrences (no double count). Skipped, missed, active and paused are not proof.
+Reason: Same philosophy as Stage 7 (ADR-037): a derived number cannot disagree with its source, and "proof over hype" means only what LOCKED IN recorded counts.
+Status: Accepted.
+
+# ADR-066 — Only active goals take new actions; history stays with any status
+
+Decision: New or changed links (task, routine, focus) must point at one of the owner's ACTIVE goals (`LI_GOAL_INACTIVE` otherwise, the same answer for another user's or a missing goal). Achieved and archived goals keep all their proof; reactivating a goal lets it take actions again; deleting a goal removes its links (tasks, focus and history stay). Still no percentage (ADR-059): the screens show evidence, not completion.
+Reason: An achieved or archived goal is closed direction; its record must stay, but new work belongs to a current goal. A percentage without an explicit measurable target would be invented.
+Status: Accepted.
+
+# ADR-067 — A focus session's goal can change while it runs; fixed once completed
+
+Decision: TRABALHANDO EM is chosen at start (or pre-selected from a linked task / INICIAR FOCO) and may be changed while the session is active or paused; once completed, `goal_id` is fixed (`LI_FOCUS_FINISHED`) and that final goal is the proof. Never on a closed day. `start_focus_session` gained a trailing `p_goal_id default null` so the old call keeps working during the rollout.
+Reason: People realise mid-session what they are really working on; a completed session is history.
+Status: Accepted.
+
+# ADR-068 — Goal metadata never reaches the partner
+
+Decision: The partner may see EM FOCO and the titles of tasks I share, never a goal: no goal column in `partner_current_focus()`, no goal id or title in any broadcast, feed event or reaction, owner-only link tables. The "active goal" check compares the owner explicitly (`private.goal_is_active(goal, owner)`) instead of relying on RLS inside a trigger (a trigger plan cached while trusted code ran could skip RLS).
+Reason: Goals, vision and the mirror are private (ADR-058); linking actions to them must not become a side channel.
+Status: Accepted.
