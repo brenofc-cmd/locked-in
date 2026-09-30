@@ -12,11 +12,49 @@ V2 is built in ten phases, each on its own branch, merged to `main` only when VE
 | 3    | Goals, Vision & Accountability Mirror | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)                 |
 | 4    | North Star + Morning Experience       | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)              |
 | 5    | Goals → Actions → Proof               | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md) |
-| 6    | —                                     | NEXT         | Not started                                                                                                                          |
-| 7–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                                  |
+| 6    | Duo Accountability 2.0                | IN PROGRESS  | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                      |
+| 7    | Daily Duel + Transparent Gamification | PENDING      | Not started                                                                                                                          |
+| 8–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                                  |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
 new animations, Web Push, new gamification.
+
+## V2 Phase 6 — Duo Accountability 2.0 (official scope, 2026-09-30)
+
+Goal: turn the Partner area into a real accountability system between two people, connecting
+shared commitments to the real proof LOCKED IN already records.
+
+Core loop: **COMMITMENT → ACTION → PROOF → PARTNER ACCOUNTABILITY**.
+
+Deliverables: Partner Hub 2.0 · shared commitments · commitment → proof · nudges (DAR UM TOQUE) ·
+daily check-in · partner daily summary · existing reactions as acknowledgement · realtime for
+commitments / nudges / check-in on the existing `duo:<duo_id>` channel · privacy controls · short
+commitment history.
+
+Rules (approved):
+
+1. ACTIVE → MISSED at the close of the owner's local day, with the existing closed-day semantics
+   (`history_locked_through`). After that the result is immutable.
+2. Before the day closes, proof from still-mutable sources follows the real source (a task completed
+   and legally undone the same day is no longer proof).
+3. CANCELLED only while the commitment is open.
+4. The public commitment and its private proof source are separate. The partner may see the public
+   title, the status, the generic proof kind and the proof time — never a task id, goal id / title,
+   Vision, Mirror, private Top 3, a private task's title or focus goal metadata.
+5. Commitments without verifiable proof may use CUMPRI and are marked AUTODECLARADO
+   (`verified` vs `self_declared`); no separate score.
+6. Nudge: 1 per commitment every 2 h; at most 3 per day to the same partner (recipient's local day);
+   never to oneself; never on PROVEN / MISSED / CANCELLED; enforced in the database.
+7. Check-in: LOCKED_IN / NEED_ACCOUNTABILITY / HARD_DAY (UI: LOCKED IN · PRECISO DE COBRANÇA · DIA
+   DIFÍCIL); valid for the current local date, changeable during the day, history kept in the
+   database. No health inference, no automatic advice.
+8. Focus commitments count effective completed focus time only (pauses never count).
+9. Daily Standard commitments use exactly the existing standard rule (no second formula).
+10. Every commitment carries the current `duo_id`; when the duo ends the ex-partner loses access and a
+    future partner never receives the old duo's history.
+
+Not in Phase 6: Daily Duel, winner of the day, monthly champion, XP, coins, ranking, badges, Web
+Push, chat, free-text messages, automatic sharing of goals, Mirror exposure, private Top 3 exposure.
 
 ## V1
 
