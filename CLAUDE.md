@@ -77,7 +77,7 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
@@ -179,6 +179,10 @@ routing changed; run the pgTAP suite when a migration changed.
   an explicit product decision. Never send `owner_id`; keep the composite FKs (a goal only points at
   the owner's vision, a milestone only lives in the owner's goal). Goal status is only active /
   achieved / archived; never show or store a manual percentage (milestones are a count).
+- Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
+  (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
+  never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses
+  goes to `SESSION_REJECTED_LOGIN`, never to the error page.
 - Dev shortcuts: `npm run dev`, open `/today?dev=1`, DEV button (briefing only; partner and
   connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without

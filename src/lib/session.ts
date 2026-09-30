@@ -55,6 +55,21 @@ export type AppData = {
 };
 
 /**
+ * ISSUE-001, after loadAppData() failed: does the database refuse this
+ * session? Asked once, with the same cookies, through the same client (and
+ * the same single ADR-063 repeat): no claims, or a 401 on a trivial
+ * signed-in-only call, means the session is gone — case B, back to login.
+ * Anything else (network, a real query error) is not an auth problem.
+ */
+export async function isSessionRejected(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims?.sub) return true;
+  const probe = await supabase.rpc("server_now");
+  return probe.status === 401;
+}
+
+/**
  * Everything the (app) layout needs, in few round trips: the session queries
  * and the task loading run in parallel. Returns null when signed out.
  * RLS decides visibility; queries still filter by owner because the partner's

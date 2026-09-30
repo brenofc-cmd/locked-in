@@ -1,8 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
-import { isPublicPath, isGuestOnlyPath, safeNext } from "@/lib/auth-routes";
+import {
+  isGuestOnlyPath,
+  isPublicPath,
+  isSessionRejectedLogin,
+  safeNext,
+} from "@/lib/auth-routes";
 import { supabaseEnv } from "./env";
+import { supabaseFetch } from "./fetch";
 
 /**
  * Refreshes the Supabase session cookie on every request (official
@@ -15,6 +21,7 @@ export async function updateSession(request: NextRequest) {
   const { url, key } = supabaseEnv();
 
   const supabase = createServerClient<Database>(url, key, {
+    global: { fetch: supabaseFetch },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -48,7 +55,11 @@ export async function updateSession(request: NextRequest) {
     return redirectWithCookies(to, response);
   }
 
-  if (signedIn && isGuestOnlyPath(pathname)) {
+  if (
+    signedIn &&
+    isGuestOnlyPath(pathname) &&
+    !isSessionRejectedLogin(pathname, request.nextUrl.searchParams)
+  ) {
     const to = request.nextUrl.clone();
     to.pathname = "/today";
     to.search = "";

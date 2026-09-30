@@ -14,6 +14,21 @@ export function isGuestOnlyPath(pathname: string): boolean {
   return GUEST_ONLY.includes(pathname);
 }
 
+/**
+ * ISSUE-001: where the app sends a user whose cookies still hold a session the
+ * database refuses. The proxy lets a signed-in user see this one login URL
+ * (instead of bouncing it to /today), so the two can never redirect in a loop;
+ * signing in again replaces the session.
+ */
+export const SESSION_REJECTED_LOGIN = "/login?reason=session";
+
+export function isSessionRejectedLogin(
+  pathname: string,
+  search: URLSearchParams,
+): boolean {
+  return pathname === "/login" && search.get("reason") === "session";
+}
+
 const BASE = "http://locked-in.invalid";
 
 /**
