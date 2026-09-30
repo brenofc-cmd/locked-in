@@ -92,7 +92,9 @@ export async function fixture(
   fn:
     | "dev_fixture_reset_history"
     | "dev_fixture_add_tasks"
-    | "dev_fixture_backdate_routine",
+    | "dev_fixture_backdate_routine"
+    | "dev_fixture_close_today"
+    | "dev_fixture_reset_accountability",
   args?: Record<string, unknown>,
 ) {
   const call = api.rpc.bind(api) as unknown as FixtureCall;

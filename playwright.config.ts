@@ -175,12 +175,20 @@ export default defineConfig({
       dependencies: ["v2p4-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 6 — Duo Accountability 2.0 (Alice / Bruno / Carla, 2
+    // browsers, DEV fixtures close_today / reset_accountability), after Phase 5.
+    {
+      name: "v2p6-390",
+      testMatch: /v2-phase6\.spec\.ts/,
+      dependencies: ["v2p5-390"],
+      use: phone(390, 844),
+    },
     // ISSUE-001 — idle session on the first /today (controlled cookie
-    // expiry, fresh sign-ins of Alice / Bruno), after Phase 5.
+    // expiry, fresh sign-ins of Alice / Bruno), after Phase 6.
     {
       name: "issue001-390",
       testMatch: /issue-001\.spec\.ts/,
-      dependencies: ["v2p5-390"],
+      dependencies: ["v2p6-390"],
       use: phone(390, 844),
     },
   ],
