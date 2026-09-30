@@ -168,12 +168,19 @@ export default defineConfig({
       dependencies: ["v2p3-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 5 — Goal → Action → Proof (Alice / Bruno / Carla), after Phase 4.
+    {
+      name: "v2p5-390",
+      testMatch: /v2-phase5\.spec\.ts/,
+      dependencies: ["v2p4-390"],
+      use: phone(390, 844),
+    },
     // ISSUE-001 — idle session on the first /today (controlled cookie
-    // expiry, fresh sign-ins of Alice / Bruno), after Phase 4.
+    // expiry, fresh sign-ins of Alice / Bruno), after Phase 5.
     {
       name: "issue001-390",
       testMatch: /issue-001\.spec\.ts/,
-      dependencies: ["v2p4-390"],
+      dependencies: ["v2p5-390"],
       use: phone(390, 844),
     },
   ],
