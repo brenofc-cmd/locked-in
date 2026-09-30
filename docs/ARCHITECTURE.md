@@ -251,7 +251,7 @@ and Progress ranges. Details: docs/GOAL_PROOF.md.
 me is a toast on any screen. It reads through `loadAccountability()`
 (`src/app/(app)/accountability-actions.ts`: `duo_commitments`, recent nudges and check-ins, the
 partner's day and focus seconds) after each `accountabilityVersion` bump (commitment / nudge /
-check-in broadcasts and every realtime refetch) and after my own completions or focus change. Writes
+check-in broadcasts and every realtime refetch) and after my own completions — never on a clock (a running focus sends nothing). Writes
 (create, cancel, CUMPRI, nudge, check-in) are Server Actions that send only the user's choice; the
 database stamps the rest. Pure rules and the partner projection: `src/lib/accountability.ts`. UI:
 `src/components/partner/Accountability.tsx`, `src/components/sheets/CommitmentSheet.tsx`. Details:

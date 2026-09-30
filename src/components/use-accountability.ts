@@ -5,8 +5,9 @@
  * nudges and check-ins of the current duo. Postgres decides every status and
  * limit; this hook re-reads through RLS after a realtime change
  * (accountabilityVersion: commitment_changed / nudge_received /
- * checkin_changed / refetch) and after my own completions or focus change.
- * No polling. Nudges and check-ins are optimistic; commitments are re-read.
+ * checkin_changed / refetch) and after my own completions. Never on a clock:
+ * a running focus sends nothing (Stage 6) — a focus proof arrives through
+ * commitment_changed when the session completes. No polling. Nudges and check-ins are optimistic; commitments are re-read.
  */
 import { t } from "@/i18n/pt-BR";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -37,7 +38,6 @@ export function useAccountability({
   today,
   version,
   doneToday,
-  focusMin,
   toast,
 }: {
   myId: string;
@@ -45,7 +45,6 @@ export function useAccountability({
   today: string;
   version: number;
   doneToday: number;
-  focusMin: number;
   toast: (t: Omit<Toast, "id"> & { id?: string }) => void;
 }) {
   const [data, setData] = useState<AccountabilityData | null>(null);
@@ -81,7 +80,7 @@ export function useAccountability({
     if (!partnerId) return;
     const id = setTimeout(() => void reload(), 250);
     return () => clearTimeout(id);
-  }, [reload, partnerId, version, doneToday, focusMin]);
+  }, [reload, partnerId, version, doneToday]);
 
   const commitments = useMemo(
     () =>

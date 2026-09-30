@@ -411,7 +411,6 @@ function useAppStateValue(
     today: real.today,
     version: rt.accountabilityVersion,
     doneToday: tasks.filter((x) => x.done).length,
-    focusMin: Math.floor(fx.focusSeconds / 60),
     toast,
   });
   const commitmentsRef = useRef(accountability.commitments);
