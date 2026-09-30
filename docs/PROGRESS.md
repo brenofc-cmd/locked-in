@@ -14,7 +14,7 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 - None.
 
-## ISSUE-001 — first Today load after idle failed with a feed 401 — FIXED (2026-09-30)
+## ISSUE-001 — first Today load after idle failed with a feed 401 — RESOLVED (2026-09-30)
 
 Branch `fix/issue-001-expired-session-feed-401` (from `main` at Phase 3), ADR-063.
 
@@ -44,6 +44,13 @@ Branch `fix/issue-001-expired-session-feed-401` (from `main` at Phase 3), ADR-06
 - Verified (2026-09-30, DEV): `npm run lint`, `npm run typecheck`, `npm run build`,
   `npm run format:check` — pass; `npm audit` — 0 vulnerabilities; `npm test` — 14 files, **220
   passed**; `npm run test:e2e` — **107 passed** (0 failed, 0 flaky), `issue001-390` 7 / 7.
+- **Production (2026-09-30)**: `main` fast-forwarded to `eb6d249` (the fix alone, Phase 4 not
+  included), Vercel Production deployment success; signed out `/today` → 307 to sign-in;
+  `/login?reason=session` shows `sessionEnded`, `/login` does not. Smoke with the owner account in
+  the real browser: the first `/today` after the night idle loaded (server refresh 10:53:34 UTC, 200);
+  then the session cookie's `expires_at` was moved into the past (case A) → `/today` loaded, refresh
+  token rotated, same user, no error page (server refresh 10:53:59, 200). PROD edge logs since the
+  deploy: 0 × 401 / 403 / 500.
 
 ## Phase 3 — Goals, Vision & Accountability Mirror — VERIFIED (2026-09-29)
 
