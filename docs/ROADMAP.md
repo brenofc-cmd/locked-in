@@ -12,7 +12,7 @@ V2 is built in ten phases, each on its own branch, merged to `main` only when VE
 | 3    | Goals, Vision & Accountability Mirror | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)                 |
 | 4    | North Star + Morning Experience       | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)              |
 | 5    | Goals → Actions → Proof               | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md) |
-| 6    | Duo Accountability 2.0                | IN PROGRESS  | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                      |
+| 6    | Duo Accountability 2.0                | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                      |
 | 7    | Daily Duel + Transparent Gamification | PENDING      | Not started                                                                                                                          |
 | 8–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                                  |
 

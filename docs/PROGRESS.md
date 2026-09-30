@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 6 — Duo Accountability 2.0 — IN PROGRESS (2026-09-30; DEV gates, then PROD)
+LOCKED IN V2 — Phase 6 — Duo Accountability 2.0 — VERIFIED (2026-09-30); production deploy VERIFIED; next: Phase 7 (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -14,7 +14,7 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 - None.
 
-## Phase 6 — Duo Accountability 2.0 — IN PROGRESS (2026-09-30)
+## Phase 6 — Duo Accountability 2.0 — VERIFIED (2026-09-30)
 
 Scope: docs/ROADMAP.md → "V2 Phase 6" (10 approved rules), docs/ACCOUNTABILITY.md, ADR-069…073.
 Branch `v2-phase-6-duo-accountability` (from `main` at `247d30f`).
@@ -47,7 +47,64 @@ Done:
 - Not done (out of scope): Daily Duel, winner, XP, ranking, badges, push, chat, goal / Mirror / Top 3
   sharing.
 
-Verification (DEV): see "Gates" below (filled when the gates finish).
+Found and fixed during the gates:
+
+- **Regression caught by the full E2E**: the accountability hook reloaded on every focus minute
+  (`focusSeconds` includes the running session), so a running focus sent a Server Action per minute
+  (stage6 "a running focus sends nothing"). Fixed in `a62f6f5` (no clock-driven reload; focus
+  proofs arrive through `commitment_changed`); checked with a 70 s focus crossing a minute boundary
+  (0 requests) before the full run.
+- A pre-existing race in `v2-phase4` test 2 (the FEATURED label is optimistic; the test left
+  `/goals` before the write) — the test now waits for the write (`ed9cf81`).
+- 5 unindexed foreign keys of the new tables (advisor INFO) → `accountability_fk_indexes`.
+
+Gates (DEV, final):
+
+- lint ✓ · typecheck ✓ · format ✓ · `npm audit` 0 vulnerabilities · unit **284/284** · build ✓
+- pgTAP full suite **803/803** on DEV (stage3 51 · stage4 72 · stage5 40 · stage6 63 · stage7 78 ·
+  stage8 84 · stage9 69 (DEFINER set now 19) · v2_phase2 63 · v2_phase3 61 · v2_phase4 57 ·
+  v2_phase5 66 · **v2_phase6 99**)
+- E2E full suite in one clean run: **135 passed, 1 skipped, 0 failed** (136/136 executed, 11.8 min),
+  run with `--workers=1` (CLI override only; the machine ran out of memory with the default
+  workers — no config change). The skip is the opt-in Phase 5 screenshot capture (`LI_SHOTS`,
+  optional since `b802730`); Phase 6 has no skip. `v2-phase6`: 5/5.
+
+Production (2026-09-30):
+
+- Migrations applied with the Supabase MCP as `20260930164112` (`duo_accountability`) and
+  `20260930164122` (`accountability_fk_indexes`), same SQL as the repository files (mapping in
+  docs/DATABASE.md). PROD was at 37 migrations / 18 DEFINER / no `dev_*` before.
+- Validated on PROD: RLS on the 4 tables with 8 policies, 27 constraints (+ the two widened
+  `activity_events` checks), 16 indexes, grants `authenticated` only (SELECT + the column grants),
+  anon nothing, 9 triggers enabled, DEFINER set = the reviewed 19 (`sync_accountability` added, all
+  `search_path=''`, not callable), new functions INVOKER, anon executes nothing, no view, no `dev_*`.
+  pgTAP `v2_phase6_accountability` **99/99** on PROD (rolled back: 0 test users, no pgtap left).
+  Advisors: no new finding (only "unused index" on the new, empty tables).
+- `main` fast-forwarded to `a62f6f5`, pushed; GitHub deployment "Production" **success** for
+  `a62f6f5` (https://locked-in-rust.vercel.app).
+- Smoke on PROD with `[teste V6]` data on the owner's account (browser): Partner Hub 2.0 renders
+  (status, partner check-in, HOJE with focus / standard / summary, COMPROMISSOS, CHECK-IN, feed,
+  week, HISTÓRICO); a task commitment on a private task created through the sheet (title public,
+  task chosen privately); a simple one → CUMPRI → CUMPRIDO · AUTODECLARADO + feed line; check-in
+  PRECISO DE COBRANÇA; CANCELAR of an open one; completing the private task on Today → CUMPRIDO ·
+  COM PROVA "Tarefa concluída · 13:49" (`proven_at` = the completion). No broadcast or feed event
+  carried the private task's title or id.
+- Partner side on PROD, as the real partner (`auth.uid`), in one rolled-back transaction: sees the
+  3 commitments with public fields only (no task / goal column; 0 sources; the private task
+  invisible); sees the check-in; DAR UM TOQUE ok → again < 2 h `LI_NUDGE_COOLDOWN` → after 2 h ok
+  → 4th of the day `LI_NUDGE_LIMIT`; recipient day stamped; nudge on AUTODECLARADO / MISSED
+  `LI_NUDGE_CLOSED`; owner self-nudge `LI_NUDGE_SELF`; reaction on the self-declared event ok (owner
+  sees it); partner cannot cancel; a verified kind cannot be declared (`LI_PROOF_REQUIRED`). The
+  owner's day closed (Stage 9 boundary): open commitments MISSED, proven stays PROVEN, cancel / undo
+  `LI_HISTORY_LOCKED`. The duo ended: ex-partner reads 0; a new partner (the spare account) joins and
+  reads 0 of the old history; the owner keeps it. Rollback verified (real duo, boundary, 0 nudges /
+  reactions).
+- Cleanup: the 3 commitments (source, feed lines by cascade / explicit delete), the check-in and the
+  test task deleted — PROD left with 0 commitments / sources / nudges / check-ins / commitment feed
+  events / test tasks; the real duo untouched.
+- **Pending (human)**: the live two-person check (Brendon and Matheus on their own devices: a
+  commitment, DAR UM TOQUE toast, check-in and PROVEN arriving live). Realtime between two browsers
+  is covered by the e2e on DEV; nobody was on the partner's side in production.
 
 ## Phase 5 — Goals → Actions → Proof — VERIFIED (2026-09-30)
 
