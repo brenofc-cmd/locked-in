@@ -4,6 +4,7 @@ import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useState } from "react";
 import { cx } from "@/components/ui";
+import { summaryParts } from "@/lib/goal-proof";
 import { isEmptyNorthStar, type NorthStar } from "@/lib/north-star";
 
 /**
@@ -52,6 +53,10 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
       label: t.northStar.goal,
       text: star.goal.item.title,
       more: "",
+      proof: star.goal.item.week
+        ? t.proof.northWeek(summaryParts(star.goal.item.week).join(" · "))
+        : "",
+      href: `/goals/${star.goal.item.id}`,
     },
     star.mirror && {
       k: "mirror",
@@ -108,6 +113,15 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
             <p className="m-0 text-[13.5px] leading-[1.5] whitespace-pre-wrap text-muted">
               {r.more}
             </p>
+          )}
+          {"proof" in r && r.proof && (
+            <Link
+              href={r.href}
+              data-testid="north-star-proof"
+              className="self-start font-mono text-[10.5px] tracking-[.08em] text-dim tabular-nums hover:text-text"
+            >
+              {r.proof}
+            </Link>
           )}
         </div>
       ))}

@@ -4,6 +4,7 @@
  * from what the user wrote (vision, goals, mirror) or from real numbers —
  * never a generated phrase.
  */
+import type { ProofSummary } from "@/lib/goal-proof";
 import { localTimeHM } from "@/lib/local-date";
 import { groupUpcoming, type PlannerEvent } from "@/lib/planner";
 import {
@@ -25,6 +26,8 @@ export type NorthStar = {
     title: string;
     type: GoalType;
     targetDate: string;
+    /** V2 Phase 5: this week's proof of that goal (null = none / not loaded). */
+    week?: ProofSummary | null;
   }>;
   mirror: StarPick<{ id: string; text: string }>;
 };

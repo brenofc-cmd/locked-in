@@ -66,7 +66,14 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
   ].filter(Boolean);
   const lines = [
     star.vision && { k: t.northStar.vision, v: star.vision.item.title },
-    star.goal && { k: t.northStar.goal, v: star.goal.item.title },
+    star.goal && {
+      k: t.northStar.goal,
+      v: star.goal.item.title,
+      // V2 Phase 5: real actions this week, only when there are some.
+      extra: star.goal.item.week?.actions
+        ? t.morning.goalWeek(star.goal.item.week.actions)
+        : "",
+    },
     star.mirror && { k: t.northStar.mirror, v: star.mirror.item.text },
   ].filter((x) => !!x);
 
@@ -122,6 +129,14 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
               <span className="line-clamp-2 text-[15.5px] leading-[1.4] text-pretty">
                 {l.v}
               </span>
+              {"extra" in l && l.extra && (
+                <span
+                  data-testid="morning-goal-proof"
+                  className="font-mono text-[10px] tracking-[.14em] text-muted tabular-nums"
+                >
+                  {l.extra}
+                </span>
+              )}
             </p>
           ))}
         </div>

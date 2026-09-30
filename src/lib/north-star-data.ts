@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hasProof, weekRange } from "@/lib/goal-proof";
+import { loadProofSummaries } from "@/lib/goal-proof-data";
 import { goalFromRow, mirrorFromRow, visionFromRow } from "@/lib/goals";
 import {
   EMPTY_NORTH_STAR,
@@ -12,11 +14,13 @@ import type { Database } from "@/types/database";
  * mirror items of the signed-in user (owner-only RLS), three small queries in
  * parallel, picked on the server — the client receives at most three short
  * items, never the lists. A failure only hides the card (Today still works).
+ * V2 Phase 5: the picked goal carries this week's proof (one batch call; a
+ * failure only hides that line).
  */
 export async function loadNorthStar(
   supabase: SupabaseClient<Database>,
 ): Promise<NorthStar> {
-  const [visions, goals, mirror] = await Promise.all([
+  const [visions, goals, mirror, today] = await Promise.all([
     supabase
       .from("vision_items")
       .select("*")
@@ -35,11 +39,27 @@ export async function loadNorthStar(
       .eq("is_active", true)
       .order("sort_order")
       .limit(50),
+    supabase.rpc("my_today"),
   ]);
   if (visions.error || goals.error || mirror.error) return EMPTY_NORTH_STAR;
-  return pickNorthStar({
+  const star = pickNorthStar({
     visions: visions.data.map(visionFromRow),
     goals: goals.data.map((g) => goalFromRow(g)),
     mirror: mirror.data.map(mirrorFromRow),
   });
+  if (!star.goal || !today.data) return star;
+  const week = weekRange(today.data);
+  const summaries = await loadProofSummaries(
+    supabase,
+    week.from,
+    week.to,
+  ).catch(() => null);
+  const summary = summaries?.[star.goal.item.id];
+  return {
+    ...star,
+    goal: {
+      ...star.goal,
+      item: { ...star.goal.item, week: hasProof(summary) ? summary : null },
+    },
+  };
 }

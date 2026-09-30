@@ -4,6 +4,8 @@ import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadDays } from "@/app/(app)/progress-actions";
+import { loadGoalProgress } from "@/app/(app)/proof-actions";
+import { summaryParts, topGoals, type ProofSummary } from "@/lib/goal-proof";
 import { useSession } from "@/components/session";
 import { useApp } from "@/components/app-state";
 import { useResumeValue } from "@/components/resume/use-resume";
@@ -259,6 +261,8 @@ export function ProgressScreen() {
         </div>
       </section>
 
+      <GoalProgress range={range} />
+
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
         <section
@@ -380,6 +384,78 @@ export function ProgressScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * V2 Phase 5 — PROGRESSO DAS METAS: up to three goals with proof in the chosen
+ * range (actions and focus, never a score), read in one call per range.
+ */
+function GoalProgress({ range }: { range: Range }) {
+  const app = useApp();
+  const [loaded, setLoaded] = useState<{
+    range: Range;
+    summaries: Record<string, ProofSummary>;
+  } | null>(null);
+  const hasGoals = app.goals.length > 0;
+  useEffect(() => {
+    if (!hasGoals) return;
+    let live = true;
+    void loadGoalProgress(range)
+      .catch(() => null)
+      .then((res) => {
+        if (live && res?.ok) setLoaded({ range, summaries: res.summaries });
+      });
+    return () => {
+      live = false;
+    };
+  }, [range, hasGoals]);
+  if (!hasGoals) return null;
+  const current = loaded?.range === range ? loaded.summaries : null;
+  const top = current
+    ? topGoals(app.goals, new Map(Object.entries(current)))
+    : [];
+  return (
+    <section
+      aria-labelledby="goal-progress"
+      data-testid="goal-progress"
+      className="flex flex-col"
+    >
+      <div className="flex items-center justify-between border-b border-white/9 pb-2">
+        <h2
+          id="goal-progress"
+          className="m-0 font-mono text-[11px] font-normal tracking-[.16em] text-muted"
+        >
+          {t.proof.progressTitle} · {t.progressScreen.ranges[range].long}
+        </h2>
+        <Link
+          href="/goals"
+          className="flex h-9 items-center font-mono text-[10.5px] tracking-[.14em] text-dim hover:text-text"
+        >
+          {t.proof.seeGoals}
+        </Link>
+      </div>
+      {current && top.length === 0 && (
+        <p className="m-0 py-3.5 text-[13.5px] text-dim">
+          {t.proof.progressEmpty}
+        </p>
+      )}
+      <ul className="m-0 flex list-none flex-col p-0">
+        {top.map(({ goal, summary }) => (
+          <li key={goal.id} className="border-b border-white/5">
+            <Link
+              href={`/goals/${goal.id}`}
+              className="flex min-h-[56px] flex-col justify-center gap-0.5 py-2"
+            >
+              <span className="truncate text-[15px]">{goal.title}</span>
+              <span className="font-mono text-[10.5px] tracking-[.08em] text-dim tabular-nums">
+                {summaryParts(summary).join(" · ")}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
