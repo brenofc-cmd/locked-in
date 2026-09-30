@@ -93,6 +93,26 @@ Verified (2026-09-29, DEV):
 - Scope decisions: the North Star lives after the tasks on a phone (task list first); while the
   morning card is open it repeats the North Star lines (the card is the "start of the day", the side
   card the permanent reference)
+- **ISSUE-001 merged in (2026-09-30)**: `main` (fix `eb6d249` + smoke `6068fb1`) merged into this
+  branch as `20b28e4`; conflicts were text only (CLAUDE.md, DECISIONS.md, playwright.config.ts —
+  `issue001-390` now runs after `v2p4-390`). Re-verified: lint, typecheck, build, format:check —
+  pass; audit 0; `npm test` 15 files, **246 passed**; `npm run test:e2e` **118 passed** (0 failed,
+  0 flaky; `v2p4-390` 11 / 11, `issue001-390` 7 / 7).
+- **PROD migration (2026-09-30, after VERIFIED)**: `north_star_priorities` applied with the Supabase
+  MCP (same SQL as `20260929162654_north_star_priorities.sql`). Validated on PROD: the four columns
+  (`is_featured` not null default false ×3, `priority_rank` smallint null), the four checks, the four
+  partial unique indexes, three `keep_one_featured` triggers (enabled), RLS on the four tables,
+  column UPDATE grants to `authenticated` only (nothing for anon), `set_my_priorities` INVOKER with
+  `search_path = ''` executable by `authenticated` only, `keep_one_featured` not callable, DEFINER
+  count unchanged (18), no `dev_*`; pgTAP `v2_phase4_north_star` **57/57** on PROD (rolled back: 0
+  test users, 0 test duo, no pgtap extension left); advisors: no new finding.
+- **Production (2026-09-30)**: `main` fast-forwarded to `20b28e4`, Vercel Production deployment
+  success. Smoke with the owner account (read-only, real data): `/today` shows the inline morning
+  card (time · weekday, streak / PADRÃO / tasks / yesterday line, DEFINIR TOP 3, partner status,
+  COMEÇAR O DIA, "Mostrar toda manhã"), TOP 3 DE HOJE above the four real tasks and the empty North
+  Star (DEFINA SUA DIREÇÃO → Metas & Visão, since PROD has no goals); `/goals` loads. PROD REST
+  since the deploy: 35 requests, all 200. Writes (Top 3, featuring) were not exercised on the real
+  account; they are covered by the PROD pgTAP run above.
 
 ## Phase 3 — Goals, Vision & Accountability Mirror — VERIFIED (2026-09-29)
 
