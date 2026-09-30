@@ -47,6 +47,8 @@ import {
   type Vision,
 } from "@/lib/goals";
 import { localDateISO } from "@/lib/local-date";
+import { hasProof, summaryParts, type ProofSummary } from "@/lib/goal-proof";
+import Link from "next/link";
 import {
   clearGoalDraft,
   loadGoalDraft,
@@ -69,10 +71,24 @@ type SheetState =
  * METAS & VISÃO (V2 Phase 3, docs/GOALS.md): direction, not daily execution.
  * Private to the owner. No percentage anywhere; milestones are a count.
  */
-export function GoalsScreen({ initial }: { initial: GoalsData }) {
+export function GoalsScreen({
+  initial,
+  proofWeek = {},
+}: {
+  initial: GoalsData;
+  /** V2 Phase 5: this week's proof per goal id (absent = none). */
+  proofWeek?: Record<string, ProofSummary>;
+}) {
   const app = useApp();
   const { me } = useSession();
   const [data, setData] = useState(initial);
+  // V2 Phase 5: the task / focus goal pickers follow every change made here.
+  const { syncGoals } = app;
+  useEffect(() => {
+    syncGoals(
+      data.goals.map((g) => ({ id: g.id, title: g.title, status: g.status })),
+    );
+  }, [data.goals, syncGoals]);
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [picked, setPicked] = useState<Section | null>(null);
   const stored = useResumeValue(
@@ -181,6 +197,7 @@ export function GoalsScreen({ initial }: { initial: GoalsData }) {
       {section === "goals" && (
         <GoalsSection
           data={data}
+          proofWeek={proofWeek}
           onAdd={() => setSheet({ kind: "goal" })}
           onOpen={(item) => setSheet({ kind: "goal", item })}
           onReorder={(ids) => void reorder("goal", ids)}
@@ -603,12 +620,14 @@ function VisionForm({
 
 function GoalsSection({
   data,
+  proofWeek,
   onAdd,
   onOpen,
   onReorder,
   onFeature,
 }: {
   data: GoalsData;
+  proofWeek: Record<string, ProofSummary>;
   onAdd: () => void;
   onOpen: (g: Goal) => void;
   onReorder: (ids: string[]) => void;
@@ -637,7 +656,12 @@ function GoalsSection({
                   key={g.id}
                   className="flex items-center gap-2 border-b border-white/6"
                 >
-                  <GoalRow goal={g} visions={data.visions} onOpen={onOpen} />
+                  <GoalRow
+                    goal={g}
+                    visions={data.visions}
+                    onOpen={onOpen}
+                    week={proofWeek[g.id]}
+                  />
                   <FeatureToggle
                     featured={g.featured}
                     title={g.title}
@@ -659,7 +683,12 @@ function GoalsSection({
         <Collapsed summary={t.goals.achievedSection(achieved.length)}>
           {achieved.map((g) => (
             <div key={g.id} className="border-b border-white/5">
-              <GoalRow goal={g} visions={data.visions} onOpen={onOpen} />
+              <GoalRow
+                goal={g}
+                visions={data.visions}
+                onOpen={onOpen}
+                week={proofWeek[g.id]}
+              />
             </div>
           ))}
         </Collapsed>
@@ -668,7 +697,12 @@ function GoalsSection({
         <Collapsed summary={t.goals.archivedSection(archived.length)}>
           {archived.map((g) => (
             <div key={g.id} className="border-b border-white/5">
-              <GoalRow goal={g} visions={data.visions} onOpen={onOpen} />
+              <GoalRow
+                goal={g}
+                visions={data.visions}
+                onOpen={onOpen}
+                week={proofWeek[g.id]}
+              />
             </div>
           ))}
         </Collapsed>
@@ -681,10 +715,13 @@ function GoalRow({
   goal,
   visions,
   onOpen,
+  week,
 }: {
   goal: Goal;
   visions: Vision[];
   onOpen: (g: Goal) => void;
+  /** V2 Phase 5: this week's proof (absent = none). */
+  week?: ProofSummary;
 }) {
   const app = useApp();
   const { me } = useSession();
@@ -703,6 +740,39 @@ function GoalRow({
         ]
           .filter(Boolean)
           .join(" · ");
+  const proof = hasProof(week) ? summaryParts(week).join(" · ") : "";
+  return (
+    <div className="flex min-w-0 flex-1 flex-col">
+      <GoalRowButton goal={goal} vision={vision} meta={meta} onOpen={onOpen} />
+      {/* V2 Phase 5: the goal's proof lives on its own page. */}
+      <Link
+        href={`/goals/${goal.id}`}
+        aria-label={t.proof.rowLink(goal.title)}
+        className="-mt-1 flex min-h-10 items-center gap-2 pb-2 font-mono text-[10.5px] tracking-[.1em] text-dim hover:text-text"
+      >
+        <span className="text-muted">{t.proof.rowCta}</span>
+        {proof && (
+          <span className="min-w-0 truncate tabular-nums">
+            {t.proof.weekShort} · {proof}
+          </span>
+        )}
+        <span aria-hidden="true">›</span>
+      </Link>
+    </div>
+  );
+}
+
+function GoalRowButton({
+  goal,
+  vision,
+  meta,
+  onOpen,
+}: {
+  goal: Goal;
+  vision: Vision | undefined;
+  meta: string;
+  onOpen: (g: Goal) => void;
+}) {
   return (
     <button
       type="button"

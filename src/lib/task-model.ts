@@ -26,6 +26,8 @@ export const CATEGORIES: Category[] = [
 export const CATEGORY_LABEL: Record<Category, string> = t.categories;
 
 export const TITLE_MAX = 80;
+export const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const NOTES_MAX = 200;
 
 const isCategory = (c: string): c is Category =>
@@ -111,7 +113,15 @@ export type TaskInput = {
   visible: boolean;
   reminder: boolean;
   notes: string;
+  /**
+   * V2 Phase 5: the goal this action feeds (owner-only link, never shared).
+   * undefined = leave the link as it is; null = no goal.
+   */
+  goalId?: string | null;
 };
+
+/** Goal links of actions, by task / routine id (null = unlinked). */
+export type GoalLinks = Record<string, string | null>;
 
 /** Same rules as the database constraints, checked before any request. */
 export function validateTaskInput(input: TaskInput): string | null {
@@ -122,6 +132,8 @@ export function validateTaskInput(input: TaskInput): string | null {
     return t.tasks.notesTooLong(NOTES_MAX);
   if (!isCategory(input.category)) return t.tasks.sectionRequired;
   if (input.time && !timeToDb(input.time)) return t.tasks.timeInvalid;
+  if (input.goalId != null && !UUID.test(input.goalId))
+    return t.tasks.goalInactive;
   if (!input.once && normalizeDays(input.days).length === 0)
     return t.tasks.daysRequired;
   return null;
@@ -140,6 +152,7 @@ export function taskErrorMessage(
     message.includes("LI_ROUTINE_STALE")
   )
     return t.errors.refresh;
+  if (message.includes("LI_GOAL_INACTIVE")) return t.tasks.goalInactive;
   if (message.includes("LI_NOT_FOUND")) return t.tasks.itemGone;
   if (message.includes("LI_TOO_MANY_PRIORITIES")) return t.top3.max;
   if (message.includes("LI_INVALID_PRIORITIES")) return t.errors.refresh;

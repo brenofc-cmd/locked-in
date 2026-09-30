@@ -8,7 +8,9 @@ import { loadPlannerRows } from "@/lib/planner-data";
 import { loadProgress } from "@/lib/progress-data";
 import { settingsFromRow, type UserSettings } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
-import type { DailyTaskRow, RoutineRow } from "@/lib/task-model";
+import type { GoalOption } from "@/lib/goal-proof";
+import { GOAL_STATUSES, type GoalStatus } from "@/lib/goals";
+import type { DailyTaskRow, GoalLinks, RoutineRow } from "@/lib/task-model";
 
 /** Real identity for the signed-in user (Stage 3). */
 export type SessionData = {
@@ -42,6 +44,11 @@ export type TasksData = {
   today: string;
   tasks: DailyTaskRow[];
   routines: RoutineRow[];
+  /** V2 Phase 5: my goals (for the pickers and the META tag; owner-only). */
+  goals: GoalOption[];
+  /** V2 Phase 5: goal of each of today's tasks / active routines. */
+  taskGoals: GoalLinks;
+  routineGoals: GoalLinks;
 };
 
 export type AppData = {
@@ -87,7 +94,7 @@ export async function loadAppData(): Promise<AppData | null> {
     const ensured = await supabase.rpc("ensure_my_daily_tasks");
     if (ensured.error || !ensured.data) throw new Error(t.loadErrors.today);
     const today = ensured.data;
-    const [tasks, routines] = await Promise.all([
+    const [tasks, routines, goals, routineLinks] = await Promise.all([
       supabase
         .from("daily_tasks")
         .select("*")
@@ -102,9 +109,40 @@ export async function loadAppData(): Promise<AppData | null> {
         .or(`end_date.is.null,end_date.gte.${today}`)
         .order("sort_order")
         .order("created_at"),
+      // V2 Phase 5: owner-only (RLS); titles never leave this user's session.
+      supabase.from("goals").select("id, title, status").limit(200),
+      supabase.from("routine_item_goals").select("routine_item_id, goal_id"),
     ]);
-    if (tasks.error || routines.error) throw new Error(t.loadErrors.today);
-    return { today, tasks: tasks.data, routines: routines.data };
+    if (tasks.error || routines.error || goals.error || routineLinks.error)
+      throw new Error(t.loadErrors.today);
+    const taskLinks = tasks.data.length
+      ? await supabase
+          .from("daily_task_goals")
+          .select("daily_task_id, goal_id")
+          .in(
+            "daily_task_id",
+            tasks.data.map((x) => x.id),
+          )
+      : { data: [], error: null };
+    if (taskLinks.error) throw new Error(t.loadErrors.today);
+    return {
+      today,
+      tasks: tasks.data,
+      routines: routines.data,
+      goals: goals.data.map((g) => ({
+        id: g.id,
+        title: g.title,
+        status: (GOAL_STATUSES as readonly string[]).includes(g.status)
+          ? (g.status as GoalStatus)
+          : "archived",
+      })),
+      taskGoals: Object.fromEntries(
+        taskLinks.data.map((l) => [l.daily_task_id, l.goal_id]),
+      ),
+      routineGoals: Object.fromEntries(
+        routineLinks.data.map((l) => [l.routine_item_id, l.goal_id]),
+      ),
+    };
   }
 
   // Progress after the tasks: both materialise today's routine first.

@@ -82,6 +82,12 @@ export type TaskDraft = {
   category: Category;
   visible: boolean;
   notes: string;
+  /**
+   * V2 Phase 5 (optional, so older drafts stay valid): the chosen goal's id —
+   * a reference only; the form keeps it only while it is still one of the
+   * user's ACTIVE goals.
+   */
+  goalId?: string;
   updatedAt: number;
 };
 
@@ -221,6 +227,9 @@ function parseDraft(x: unknown, now: number): TaskDraft | undefined {
     category: category as Category,
     visible,
     notes: notes.slice(0, NOTES_MAX),
+    ...(typeof x.goalId === "string" && USER_ID.test(x.goalId)
+      ? { goalId: x.goalId.toLowerCase() }
+      : {}),
     updatedAt: x.updatedAt,
   };
 }

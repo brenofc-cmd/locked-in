@@ -19,6 +19,7 @@ import {
   pauseFocus,
   resumeFocus,
   saveReflection,
+  setFocusGoal as setFocusGoalAction,
   startFocus as startFocusAction,
 } from "@/app/(app)/focus-actions";
 import type { PartnerFocus } from "@/lib/duo-data";
@@ -54,6 +55,8 @@ type Pick = {
   taskId: string | null;
   dur: FocusDuration;
   custom: string;
+  /** V2 Phase 5: TRABALHANDO EM (my own active goal) or none. */
+  goalId: string | null;
 };
 
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -77,6 +80,7 @@ export function useFocus({
     taskId: null,
     dur: 50,
     custom: "",
+    goalId: null,
   });
   const [note, setNote] = useState("");
   /** Transitions run one after another, never dropped (a quick END right
@@ -143,11 +147,44 @@ export function useFocus({
 
   // ---- actions ------------------------------------------------------------
 
+  /** A task linked to a goal brings its goal along (still changeable). */
   const setFocusTask = useCallback(
-    (title: string, taskId: string | null = null) => {
-      setPick((p) => ({ ...p, title, taskId }));
+    (title: string, taskId: string | null = null, goalId?: string | null) => {
+      setPick((p) => ({
+        ...p,
+        title,
+        taskId,
+        goalId: goalId === undefined ? p.goalId : goalId,
+      }));
     },
     [],
+  );
+
+  /** Before start: the pick. While running / paused: the session (optimistic). */
+  const setFocusGoal = useCallback(
+    async (goalId: string | null) => {
+      const s = sessionRef.current;
+      if (!s) {
+        setPick((p) => ({ ...p, goalId }));
+        return;
+      }
+      if (s.goal_id === goalId) return;
+      put({ ...s, goal_id: goalId });
+      const res = await send(() => setFocusGoalAction(s.id, goalId)).catch(
+        () => null,
+      );
+      if (res?.ok && res.session) {
+        if (sessionRef.current?.id === res.session.id) put(res.session);
+        return;
+      }
+      if (sessionRef.current?.id === s.id)
+        put({ ...sessionRef.current, goal_id: s.goal_id });
+      toast({
+        text: res && !res.ok ? res.error : t.proof.errors.inactive,
+        sub: t.hookToasts.focus,
+      });
+    },
+    [put, send, toast],
   );
   const setFocusDur = useCallback(
     (dur: FocusDuration) => setPick((p) => ({ ...p, dur })),
@@ -171,6 +208,7 @@ export function useFocus({
         title: pick.title,
         minutes,
         dailyTaskId: pick.taskId,
+        goalId: pick.goalId,
       }),
     ).catch(() => null);
     starting.current = false;
@@ -337,10 +375,11 @@ export function useFocus({
   // ---- view ------------------------------------------------------------------
 
   const shown = session ?? finished;
-  const focus: FocusState & { taskId: string | null } = {
+  const focus: FocusState & { taskId: string | null; goalId: string | null } = {
     phase: finished ? "complete" : session ? "running" : "setup",
     task: shown?.title ?? pick.title,
     taskId: pick.taskId,
+    goalId: shown ? (shown.goal_id ?? null) : pick.goalId,
     dur: pick.dur,
     custom: pick.custom,
     total: shown?.planned_seconds ?? 0,
@@ -393,6 +432,7 @@ export function useFocus({
     focusRunning: Boolean(session) && session?.status === "active",
     clockNow,
     setFocusTask,
+    setFocusGoal,
     setFocusDur,
     setFocusCustom,
     setFocusNote: setNote,

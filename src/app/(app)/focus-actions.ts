@@ -35,22 +35,45 @@ async function one(
   }
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function startFocus(input: {
   title: string;
   minutes: number;
   dailyTaskId: string | null;
+  /** V2 Phase 5: my own ACTIVE goal (checked by the database), or null. */
+  goalId?: string | null;
 }): Promise<Result> {
   const title = input.title.trim().slice(0, 80);
   const minutes = Math.round(input.minutes);
   if (!title || !(minutes >= 1 && minutes <= MAX_MINUTES)) {
     return { ok: false, error: t.actionErrors.focusStart };
   }
+  if (input.goalId && !UUID.test(input.goalId))
+    return { ok: false, error: t.focusErrors.LI_GOAL_INACTIVE };
   return one(t.actionErrors.focusStart, (s) =>
     s.rpc("start_focus_session", {
       p_title: title,
       p_planned_seconds: minutes * 60,
       p_daily_task_id: input.dailyTaskId ?? undefined,
+      p_goal_id: input.goalId ?? undefined,
     }),
+  );
+}
+
+/**
+ * V2 Phase 5: change the goal of my running / paused session (ADR-067). The
+ * database refuses a completed session, a closed day and anything but my own
+ * active goal. Never shared: the partner projection has no goal.
+ */
+export async function setFocusGoal(
+  id: string,
+  goalId: string | null,
+): Promise<Result> {
+  if (!UUID.test(id) || (goalId !== null && !UUID.test(goalId)))
+    return { ok: false, error: t.focusErrors.LI_NOT_FOUND };
+  return one(t.actionErrors.focusStart, (s) =>
+    s.from("focus_sessions").update({ goal_id: goalId }).eq("id", id).select(),
   );
 }
 

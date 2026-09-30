@@ -119,7 +119,13 @@ export type FocusState = {
 export type ConnectionState = "connected" | "reconnecting" | "offline";
 
 export type Sheet =
-  | { kind: "add"; repeat?: boolean; prefill?: string }
+  | {
+      kind: "add";
+      repeat?: boolean;
+      prefill?: string;
+      /** V2 Phase 5: CRIAR TAREFA from a goal (still validated as active). */
+      goalId?: string;
+    }
   | { kind: "edit"; taskId: string }
   | { kind: "editRoutine"; routineId: string }
   | { kind: "options"; taskId: string }

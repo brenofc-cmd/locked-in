@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
+import { FocusGoalSelect } from "@/components/focus/FocusPicker";
 import { StatusDot, cx } from "@/components/ui";
 import { formatClock } from "@/lib/format";
 import { usePartnerView } from "@/components/use-partner-view";
@@ -37,6 +38,9 @@ export function FocusOverlay() {
           <span className="text-[17px] font-medium tracking-[.14em] desk:text-[22px]">
             {focus.task.toUpperCase()}
           </span>
+          <div className="w-full max-w-[280px] text-left">
+            <FocusGoalSelect compact />
+          </div>
           <div className="relative flex size-[296px] flex-col items-center justify-center gap-3 desk:size-[min(520px,58dvh)]">
             <svg
               viewBox="0 0 296 296"
@@ -117,6 +121,9 @@ export function FocusOverlay() {
   }
 
   const minutes = Math.max(1, Math.round((focus.total - focus.left) / 60));
+  const goalTitle = focus.goalId
+    ? (app.goals.find((g) => g.id === focus.goalId)?.title ?? "")
+    : "";
   return (
     <div
       role="dialog"
@@ -138,6 +145,14 @@ export function FocusOverlay() {
           <span className="text-sm text-dim">
             {focus.task} · {focus.from} – {focus.to}
           </span>
+          {goalTitle && (
+            <span
+              data-testid="focus-goal-proof"
+              className="font-mono text-[10.5px] tracking-[.14em] text-quiet"
+            >
+              {t.goalPicker.tag(goalTitle)}
+            </span>
+          )}
         </div>
         <label className="flex flex-col gap-2.5">
           <span className="text-sm text-muted">

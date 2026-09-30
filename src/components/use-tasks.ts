@@ -14,12 +14,14 @@ import {
   applyTemplate as applyTemplateAction,
   archiveRoutine,
   deleteOneOff,
+  linkRoutineToGoal,
   reorderRoutines,
   setDailyPriorities,
   setTaskStatus,
   updateRoutine as updateRoutineAction,
   updateTaskToday,
 } from "@/app/(app)/task-actions";
+import type { GoalOption } from "@/lib/goal-proof";
 import { localTimeHM, normalizeDays } from "@/lib/local-date";
 import type { TasksData } from "@/lib/session";
 import {
@@ -27,6 +29,7 @@ import {
   skipLabel,
   taskFromRow,
   type DailyTaskRow,
+  type GoalLinks,
   type RoutineRow,
   type TaskInput,
 } from "@/lib/task-model";
@@ -53,6 +56,27 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
   });
   const [pop, setPop] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  // V2 Phase 5: my goals and the goal of each action (owner-only links).
+  const [goals, setGoals] = useState<GoalOption[]>(initial.goals);
+  const [taskGoals, setTaskGoals] = useState<GoalLinks>(initial.taskGoals);
+  const [routineGoals, setRoutineGoals] = useState<GoalLinks>(
+    initial.routineGoals,
+  );
+  const mergeLinks = useCallback(
+    (
+      res: { taskGoals?: GoalLinks; routineGoals?: GoalLinks },
+      dropTaskIds: string[] = [],
+    ) => {
+      setTaskGoals((m) => {
+        const next = { ...m };
+        for (const id of dropTaskIds) delete next[id];
+        return { ...next, ...res.taskGoals };
+      });
+      if (res.routineGoals)
+        setRoutineGoals((m) => ({ ...m, ...res.routineGoals }));
+    },
+    [],
+  );
 
   const routineMap = useMemo(
     () => new Map(routines.map((r) => [r.id, r])),
@@ -62,10 +86,12 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
   // every event handler sees the state it is acting on.
   const routineMapRef = useRef(routineMap);
   const tasksRef = useRef(tasks);
+  const taskGoalsRef = useRef(taskGoals);
   useLayoutEffect(() => {
     routineMapRef.current = routineMap;
     tasksRef.current = tasks;
-  }, [routineMap, tasks]);
+    taskGoalsRef.current = taskGoals;
+  }, [routineMap, tasks, taskGoals]);
 
   /** Latest request per task: stale responses never overwrite newer taps. */
   const versions = useRef(new Map<string, number>());
@@ -210,13 +236,18 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
           unsynced: false,
         };
         setTasks((ts) => [...ts, temp]);
+        const tempGoal = input.goalId ?? null;
+        setTaskGoals((m) => ({ ...m, [tempId!]: tempGoal }));
       }
       const res = await addTaskAction({
         ...input,
         days: normalizeDays(input.days),
       }).catch(() => null);
       if (!res?.ok) {
-        if (tempId) setTasks((ts) => ts.filter((t) => t.id !== tempId));
+        if (tempId) {
+          setTasks((ts) => ts.filter((t) => t.id !== tempId));
+          mergeLinks({}, [tempId]);
+        }
         fx.toast({
           text: res?.error ?? t.errors.network,
           sub: t.taskToasts.notSaved,
@@ -224,13 +255,14 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         return false;
       }
       merge(res.routines, res.tasks, tempId ? [tempId] : []);
+      mergeLinks(res, tempId ? [tempId] : []);
       fx.toast({
         text: input.once ? t.taskToasts.addedToday : t.taskToasts.addedStandard,
         sub: input.name.trim().toUpperCase(),
       });
       return true;
     },
-    [fx, merge, today],
+    [fx, merge, mergeLinks, today],
   );
 
   // One template application at a time (the database also serialises and
@@ -256,6 +288,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         return false;
       }
       merge(res.routines, res.tasks);
+      mergeLinks(res);
       const n = res.routines.length;
       fx.toast({
         text: n ? t.taskToasts.itemsAdded(n) : t.taskToasts.nothingNew,
@@ -263,7 +296,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       });
       return true;
     },
-    [fx, merge, routines],
+    [fx, merge, mergeLinks, routines],
   );
 
   // ---- edit ------------------------------------------------------------------
@@ -273,6 +306,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     async (id: string, input: TaskInput) => {
       const before = tasksRef.current.find((t) => t.id === id);
       if (!before) return false;
+      const goalBefore = taskGoalsRef.current[id] ?? null;
       const v = bump(id);
       patch(id, {
         name: input.name.trim(),
@@ -283,10 +317,13 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         visible: input.visible,
         reminder: input.reminder,
       });
+      if (input.goalId !== undefined)
+        setTaskGoals((m) => ({ ...m, [id]: input.goalId ?? null }));
       const res = await updateTaskToday(id, input).catch(() => null);
       if (!isLatest(id, v)) return true;
       if (res?.ok) {
         patch(id, taskFromRow(res.task, routineMapRef.current, timeZone));
+        setTaskGoals((m) => ({ ...m, [id]: res.goalId }));
         fx.toast({
           text: t.taskToasts.taskUpdated,
           sub: t.taskToasts.todayOnly,
@@ -294,6 +331,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         return true;
       }
       patch(id, before);
+      setTaskGoals((m) => ({ ...m, [id]: goalBefore }));
       fx.toast({
         text: res?.error ?? t.taskToasts.networkTryAgain,
         sub: t.taskToasts.notSaved,
@@ -322,13 +360,35 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         .filter((t) => t.routineId === routineId)
         .map((t) => t.id);
       merge(res.routines, res.tasks, stale);
+      mergeLinks(res, stale);
       fx.toast({
         text: t.taskToasts.routineUpdated,
         sub: t.taskToasts.todayAndFuture,
       });
       return true;
     },
-    [fx, merge],
+    [fx, merge, mergeLinks],
+  );
+
+  /** V2 Phase 5 (goal page): a routine starts / stops feeding a goal. */
+  const linkRoutine = useCallback(
+    async (routineId: string, goalId: string | null) => {
+      const res = await linkRoutineToGoal(routineId, goalId).catch(() => null);
+      if (!res?.ok) {
+        fx.toast({
+          text: res?.error ?? t.proof.errors.link,
+          sub: t.proof.linked,
+        });
+        return false;
+      }
+      const stale = tasksRef.current
+        .filter((x) => x.routineId === routineId)
+        .map((x) => x.id);
+      merge(res.routines, res.tasks, stale);
+      mergeLinks(res, stale);
+      return true;
+    },
+    [fx, merge, mergeLinks],
   );
 
   // ---- remove ----------------------------------------------------------------
@@ -469,5 +529,11 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     deleteTask,
     moveRoutine,
     setPriorities,
+    goals,
+    /** /goals keeps this list current (new, renamed, archived goals). */
+    syncGoals: setGoals,
+    taskGoals,
+    routineGoals,
+    linkRoutine,
   };
 }

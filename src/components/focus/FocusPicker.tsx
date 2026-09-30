@@ -3,7 +3,48 @@
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
 import { chipTone, cx } from "@/components/ui";
+import { linkableGoals } from "@/lib/goal-proof";
 import type { FocusDuration } from "@/types";
+
+/**
+ * V2 Phase 5 — TRABALHANDO EM: my own active goals only. Before the start it
+ * sets the pick; while the session runs or is paused it changes the session
+ * (ADR-067). Private: the partner only ever sees EM FOCO.
+ */
+export function FocusGoalSelect({ compact = false }: { compact?: boolean }) {
+  const { goals, focus, setFocusGoal } = useApp();
+  const options = linkableGoals(goals);
+  const current = focus.goalId
+    ? goals.find((g) => g.id === focus.goalId)
+    : undefined;
+  if (!options.length && !current) return null;
+  const kept = current && !options.some((g) => g.id === current.id);
+  return (
+    <label className="flex min-w-0 flex-col gap-2">
+      <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+        {t.goalPicker.focusLabel}
+      </span>
+      <select
+        value={focus.goalId ?? ""}
+        onChange={(e) => void setFocusGoal(e.target.value || null)}
+        aria-label={t.goalPicker.focusAria}
+        disabled={focus.phase === "complete"}
+        className={cx(
+          "min-w-0 rounded-xl border border-white/10 bg-bg px-3 text-base text-text outline-none [color-scheme:dark] focus:border-white/30",
+          compact ? "h-11" : "h-12",
+        )}
+      >
+        <option value="">{t.goalPicker.focusNone}</option>
+        {kept && <option value={current.id}>{current.title}</option>}
+        {options.map((g) => (
+          <option key={g.id} value={g.id}>
+            {g.title}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 const DURATIONS: { value: FocusDuration; n: string; u: string }[] = [
   { value: 25, n: "25", u: t.focusUi.min },
@@ -17,8 +58,22 @@ const DURATIONS: { value: FocusDuration; n: string; u: string }[] = [
  * Today's open tasks come first (the session links to the task), then presets.
  */
 export function FocusPicker({ compact = false }: { compact?: boolean }) {
-  const { focus, focusOptions, setFocusTask, setFocusDur, setFocusCustom } =
-    useApp();
+  const {
+    focus,
+    focusOptions,
+    setFocusTask,
+    setFocusDur,
+    setFocusCustom,
+    taskGoals,
+    goals,
+  } = useApp();
+  /** A task that feeds an active goal brings the goal along. */
+  const goalOf = (taskId: string | null) => {
+    const id = taskId ? taskGoals[taskId] : null;
+    return id && goals.some((g) => g.id === id && g.status === "active")
+      ? id
+      : undefined;
+  };
 
   return (
     <>
@@ -35,7 +90,7 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => setFocusTask(label, taskId)}
+              onClick={() => setFocusTask(label, taskId, goalOf(taskId))}
               className={cx(
                 "flex items-center justify-between border-b border-white/5 px-0.5 text-left",
                 compact ? "h-[54px] text-base" : "h-14 text-[17px]",
@@ -117,6 +172,7 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
           </span>
         </div>
       )}
+      <FocusGoalSelect compact={compact} />
     </>
   );
 }

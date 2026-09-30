@@ -21,6 +21,7 @@ import {
   topThree,
 } from "@/lib/north-star";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/resume-state";
+import { linkableGoalId, linkableGoals } from "@/lib/goal-proof";
 import type { Category, Day, RoutineItem, Task } from "@/types";
 
 const WEEKDAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI"];
@@ -48,12 +49,15 @@ export function TaskFormSheet({
   routine,
   repeatByDefault = false,
   prefill,
+  goalId: goalPrefill,
 }: {
   editing?: Task;
   routine?: RoutineItem;
   repeatByDefault?: boolean;
   /** V2 Phase 2: a suggested title (planner "Add to tasks"); not a draft. */
   prefill?: string;
+  /** V2 Phase 5: CRIAR TAREFA from a goal page. */
+  goalId?: string;
 }) {
   const app = useApp();
   const { me } = useSession();
@@ -92,6 +96,26 @@ export function TaskFormSheet({
     draft?.visible ?? source?.visible ?? app.settings.shareNewTasks,
   );
   const [notes, setNotes] = useState(draft?.notes ?? source?.notes ?? "");
+  // V2 Phase 5: the goal this action feeds. The current link of an edited
+  // task / routine is kept as it is (even if that goal is no longer active);
+  // a new choice, a draft or a prefill must be one of my ACTIVE goals.
+  const currentGoal = editing
+    ? (app.taskGoals[editing.id] ?? null)
+    : routine
+      ? (app.routineGoals[routine.id] ?? null)
+      : null;
+  const [goalId, setGoalId] = useState<string | null>(
+    () =>
+      linkableGoalId(goalPrefill, app.goals) ??
+      linkableGoalId(draft?.goalId, app.goals) ??
+      currentGoal,
+  );
+  const goalOptions = linkableGoals(app.goals);
+  const keptGoal =
+    goalId && !goalOptions.some((g) => g.id === goalId)
+      ? app.goals.find((g) => g.id === goalId)
+      : undefined;
+  const goalTitle = app.goals.find((g) => g.id === goalId)?.title ?? "";
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -106,6 +130,7 @@ export function TaskFormSheet({
       category,
       visible,
       notes,
+      ...(goalId ? { goalId } : {}),
     });
   }, [
     drafting,
@@ -121,6 +146,7 @@ export function TaskFormSheet({
     category,
     visible,
     notes,
+    goalId,
   ]);
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +170,7 @@ export function TaskFormSheet({
       visible,
       reminder,
       notes,
+      goalId,
     };
   }
 
@@ -179,6 +206,7 @@ export function TaskFormSheet({
       category,
       visible,
       notes,
+      ...(goalId ? { goalId } : {}),
     };
     setSubmitted(true);
     if (!drafting) return run(() => app.addTask(data));
@@ -227,7 +255,11 @@ export function TaskFormSheet({
     );
   }
 
-  const moreSummary = [CATEGORY_LABEL[category], time]
+  const moreSummary = [
+    CATEGORY_LABEL[category],
+    time,
+    goalTitle && t.goalPicker.tag(goalTitle),
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -354,7 +386,7 @@ export function TaskFormSheet({
         className="flex h-12 items-center justify-between border-t border-white/6 text-sm text-muted"
       >
         <span>{t.taskSheet.moreOptions}</span>
-        <span className="text-xs text-dim">
+        <span className="min-w-0 truncate pl-3 text-xs text-dim">
           {moreSummary}{" "}
           <span
             aria-hidden="true"
@@ -441,6 +473,30 @@ export function TaskFormSheet({
             maxLength={200}
             className={cx(field, "h-[46px] px-3.5 text-base")}
           />
+          {(goalOptions.length > 0 || keptGoal) && (
+            <label className="flex min-w-0 flex-col gap-2">
+              <span className={monoLabel}>{t.goalPicker.label}</span>
+              <select
+                value={goalId ?? ""}
+                onChange={(e) => setGoalId(e.target.value || null)}
+                aria-label={t.goalPicker.aria}
+                className={cx(
+                  field,
+                  "h-[46px] min-w-0 px-3 text-base [color-scheme:dark]",
+                )}
+              >
+                <option value="">{t.goalPicker.none}</option>
+                {keptGoal && (
+                  <option value={keptGoal.id}>{keptGoal.title}</option>
+                )}
+                {goalOptions.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       )}
       {error && (

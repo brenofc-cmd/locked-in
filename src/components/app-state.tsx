@@ -544,6 +544,13 @@ function useAppStateValue(
     moveRoutine: real.moveRoutine,
     setPriorities: real.setPriorities,
     applyTemplate: real.applyTemplate,
+    // V2 Phase 5 — Goal → Action → Proof (owner-only; never sent to the partner).
+    goals: real.goals,
+    syncGoals: real.syncGoals,
+    taskGoals: real.taskGoals,
+    routineGoals: real.routineGoals,
+    linkRoutine: real.linkRoutine,
+    setFocusGoal: fx.setFocusGoal,
     feed,
     partner: { ...partner, streak: pg.partnerStreak } satisfies Partner,
     partnerTasks,

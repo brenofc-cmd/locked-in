@@ -29,7 +29,11 @@ export function SheetHost() {
   switch (sheet.kind) {
     case "add":
       body = (
-        <TaskFormSheet repeatByDefault={sheet.repeat} prefill={sheet.prefill} />
+        <TaskFormSheet
+          repeatByDefault={sheet.repeat}
+          prefill={sheet.prefill}
+          goalId={sheet.goalId}
+        />
       );
       break;
     case "edit":

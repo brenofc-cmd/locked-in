@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import { useRef, useState, type PointerEvent } from "react";
+import { useApp } from "@/components/app-state";
 import { CheckPath, cx } from "@/components/ui";
 import type { Task } from "@/types";
 
@@ -30,6 +31,7 @@ export function TaskRow({
   onToggle: () => void;
   onOptions: () => void;
 }) {
+  const app = useApp();
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const gesture = useRef<Gesture | null>(null);
@@ -135,7 +137,14 @@ export function TaskRow({
           role="checkbox"
           aria-checked={task.done}
           aria-label={task.name}
-          aria-describedby={skipped ? `${task.id}-skip` : undefined}
+          aria-describedby={
+            [
+              skipped && `${task.id}-skip`,
+              app.taskGoals[task.id] && `${task.id}-goal`,
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           onClick={() => {
             if (!suppressClick.current) onToggle();
           }}
@@ -234,13 +243,26 @@ export function TaskRow({
 }
 
 function TaskMeta({ task }: { task: Task }) {
+  const app = useApp();
   const mobile = [task.time, task.meta].filter(Boolean).join(" · ");
   const cls = "font-mono text-[10.5px] tracking-[.1em] text-dim";
+  // V2 Phase 5: my own goal link only (the map never holds a partner task).
+  const goalId = app.taskGoals[task.id];
+  const goal = goalId ? app.goals.find((g) => g.id === goalId) : undefined;
   return (
     <>
       {mobile && <span className={cx(cls, "desk:hidden")}>{mobile}</span>}
       {task.meta && (
         <span className={cx(cls, "hidden desk:inline")}>{task.meta}</span>
+      )}
+      {goal && (
+        <span
+          id={`${task.id}-goal`}
+          data-testid="task-goal"
+          className={cx(cls, "truncate text-quiet")}
+        >
+          {t.goalPicker.tag(goal.title)}
+        </span>
       )}
     </>
   );

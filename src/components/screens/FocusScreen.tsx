@@ -1,15 +1,26 @@
 "use client";
 
 import { t } from "@/i18n/pt-BR";
+import { useEffect, useRef } from "react";
 import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
 import { StatusDot } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
+import { linkableGoalId } from "@/lib/goal-proof";
 import { usePartnerView } from "@/components/use-partner-view";
 
-export function FocusScreen() {
+export function FocusScreen({ goalId = null }: { goalId?: string | null }) {
   const app = useApp();
   const pv = usePartnerView();
+  // V2 Phase 5: INICIAR FOCO from a goal pre-selects it once (setup only).
+  const { goals, focus, setFocusGoal } = app;
+  const applied = useRef(false);
+  useEffect(() => {
+    if (applied.current || focus.phase !== "setup") return;
+    applied.current = true;
+    const id = linkableGoalId(goalId, goals);
+    if (id) void setFocusGoal(id);
+  }, [goalId, goals, focus.phase, setFocusGoal]);
   const sessions = [...app.sessions].reverse();
 
   return (
