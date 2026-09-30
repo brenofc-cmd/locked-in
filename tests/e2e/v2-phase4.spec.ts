@@ -218,6 +218,16 @@ test("2: featuring another goal (and mirror) on /goals changes Today", async ({
     .getByRole("button", { name: t.goals.feature("Eu adio o que é difícil.") })
     .click();
   await expect(a.page.getByText(t.goals.featured).first()).toBeVisible();
+  // The label is optimistic: wait for the write before leaving the page.
+  await expect
+    .poll(async () =>
+      (
+        await A.from("accountability_items")
+          .select("text")
+          .eq("is_featured", true)
+      ).data?.map((m) => m.text),
+    )
+    .toEqual(["Eu adio o que é difícil."]);
 
   // Client navigation back to Today: the page re-reads the North Star.
   await a.page
