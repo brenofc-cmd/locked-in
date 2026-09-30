@@ -706,6 +706,8 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `goal_actions_proof`        | `20260930115728` | `20260930124914` |
 | `goal_link_owner_check`     | `20260930120624` | `20260930124938` |
 | `goal_link_task_not_found`  | `20260930120815` | `20260930124940` |
+| `duo_accountability`        | `20260930150923` | (see PROGRESS)   |
+| `accountability_fk_indexes` | `20260930153724` | (see PROGRESS)   |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -781,3 +783,32 @@ Grants: link tables `select, delete`, `insert (action, owner_id, goal_id)`, `upd
 `public.start_focus_session(text, int, uuid, boolean, uuid)` (replaces the 4-argument version; the
 last argument defaults to null), `private.goal_is_active(uuid, uuid)`. Indexes: see GOAL_PROOF.md.
 pgTAP: `supabase/tests/v2_phase5_goal_proof.test.sql`.
+
+## V2 Phase 6 tables (migrations `20260930150923_duo_accountability`, `20260930153724_accountability_fk_indexes`)
+
+Duo Accountability 2.0 (docs/ACCOUNTABILITY.md, ADR-069…073). Backward compatible (new tables, two
+constraints of `activity_events` widened).
+
+| Object               | Definition                                                                                                                                                                                                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `commitments`        | `owner_id` (default `auth.uid()`), `duo_id → duos on delete set null`, `commit_date`, `title` 1–80, `kind` task/focus/standard/simple, `focus_target_seconds` 300–43200, `standard_percent` (snapshot), `status` active/proven/cancelled, `resolution`, `proof_kind`, `proven_at`, `cancelled_at`; state checks |
+| `commitment_sources` | `commitment_id pk`, `owner_id`, `daily_task_id`; FKs `(commitment_id, owner_id)` and `(daily_task_id, owner_id)` cascade — owner-only                                                                                                                                                                           |
+| `nudges`             | `duo_id → duos cascade`, `from_user` (default `auth.uid()`), `to_user`, `commitment_id → commitments cascade`, `recipient_date`, `created_at`                                                                                                                                                                   |
+| `checkins`           | `user_id` (default `auth.uid()`), `duo_id → duos on delete set null`, `local_date`, `state` LOCKED_IN/NEED_ACCOUNTABILITY/HARD_DAY, `created_at` — append-only                                                                                                                                                  |
+| `activity_events`    | `event_type` + `commitment_proven`, `commitment_self_declared`; `target_type` + `commitment`                                                                                                                                                                                                                    |
+
+Grants (authenticated only, anon nothing): `commitments` select, insert (title, kind,
+focus_target_seconds), update (status, updated_at); `commitment_sources` select, insert; `nudges`
+select, insert (commitment_id); `checkins` select, insert (state). Policies: commitments / check-ins
+read by the owner or the current duo (`duo_id = private.current_duo_id()`), written by the owner;
+sources owner-only; nudges read by sender or recipient in the current duo. Triggers (INVOKER, not
+callable): `commitments_resolve` (`private.resolve_commitment`), `daily_tasks_touch_commitments`,
+`focus_sessions_touch_commitments`, `nudges_guard` (`private.guard_nudge`), `checkins_stamp`
+(`private.stamp_checkin`); DEFINER: `commitments_sync` / `nudges_sync` / `checkins_sync`
+(`private.sync_accountability`). Functions: `public.create_commitment(text, text, uuid, int)`,
+`public.duo_commitments(date)` (INVOKER), `private.commitment_proof(…)` (INVOKER helper). Indexes:
+`commitments (owner_id, commit_date)`, `(duo_id, commit_date desc)`, `commitment_sources
+(daily_task_id, owner_id)`, `(commitment_id, owner_id)`, `(owner_id)`, `nudges (duo_id)`, `checkins (duo_id)`, `nudges (commitment_id, from_user, created_at desc)`, `(from_user, to_user,
+recipient_date)`, `(to_user, recipient_date)`, `checkins (user_id, local_date, created_at desc)`.
+pgTAP: `supabase/tests/v2_phase6_accountability.test.sql`. DEV-only fixtures:
+`dev_fixture_close_today`, `dev_fixture_reset_accountability` (supabase/dev/test_fixtures.sql).

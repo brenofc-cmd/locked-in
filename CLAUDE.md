@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase5), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase6), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -193,6 +193,13 @@ routing changed; run the pgTAP suite when a migration changed.
   score or a percentage; a routine is proof only through its completed occurrences. Only ACTIVE goals
   take new links; closed days and completed focus are fixed. Never send a goal id / title to the
   partner (projections, broadcasts, feed). Pickers use `linkableGoals()` / `linkableGoalId()`.
+- V2 Phase 6 (docs/ACCOUNTABILITY.md, ADR-069…073): a commitment's public row never names its
+  source — the task lives in owner-only `commitment_sources`; never add a task / goal column,
+  payload or feed field for it. Status, day, duo, proof and MISSED are the database's (never send
+  them; MISSED is derived at the owner's day close, a closed commitment never changes). Nudge and
+  check-in limits are triggers, not UI rules; no free text. Commitments / check-ins belong to the
+  duo they were made to (`duo_id`, current-duo policies). The partner's rows render through
+  `partnerProjection()`. Broadcasts come only from `private.sync_accountability` (ids / status).
 - Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
   (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
   never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses

@@ -104,3 +104,13 @@ A goal is linked to real actions (a task, a routine, a focus session; milestones
 and shows what was actually done for it — "what did you do that proves you are moving?". Evidence,
 not points: actions, focus time and milestones, never a percentage or a manual "proof". Goals stay
 private: the partner sees EM FOCO and shared task titles, never a goal. Details: docs/GOAL_PROOF.md.
+
+### V2 Phase 6 — Duo Accountability 2.0
+
+Commitment → action → proof → partner accountability. Each day I can promise my partner up to five
+things; LOCKED IN proves them from what I actually do (a task, effective focus, my daily standard) or,
+when nothing can be observed, I mark CUMPRI and it says AUTODECLARADO. When my day closes, what was not
+done is NÃO CUMPRIDO — for good. My partner can DAR UM TOQUE (no text, limited), react to a kept
+promise and see my check-in (LOCKED IN / PRECISO DE COBRANÇA / DIA DIFÍCIL). They see my public title
+and the proof type and time — never the task, a goal or anything private. No duel, points or ranking
+yet. Details: docs/ACCOUNTABILITY.md.

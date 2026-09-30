@@ -245,6 +245,18 @@ pick / session (`setFocusGoal`). Proof is read on the server: `/goals` (this wee
 `/goals/[id]` (week + first page), `/today` (North Star), and through `proof-actions.ts` for more pages
 and Progress ranges. Details: docs/GOAL_PROOF.md.
 
+## V2 Phase 6 — Duo Accountability 2.0
+
+`useAccountability()` (`src/components/use-accountability.ts`) lives in the app state, so a nudge to
+me is a toast on any screen. It reads through `loadAccountability()`
+(`src/app/(app)/accountability-actions.ts`: `duo_commitments`, recent nudges and check-ins, the
+partner's day and focus seconds) after each `accountabilityVersion` bump (commitment / nudge /
+check-in broadcasts and every realtime refetch) and after my own completions or focus change. Writes
+(create, cancel, CUMPRI, nudge, check-in) are Server Actions that send only the user's choice; the
+database stamps the rest. Pure rules and the partner projection: `src/lib/accountability.ts`. UI:
+`src/components/partner/Accountability.tsx`, `src/components/sheets/CommitmentSheet.tsx`. Details:
+docs/ACCOUNTABILITY.md.
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to

@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 5 — Goals → Actions → Proof — VERIFIED (2026-09-30); next: Phase 6 (not started)
+LOCKED IN V2 — Phase 6 — Duo Accountability 2.0 — IN PROGRESS (2026-09-30; DEV gates, then PROD)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -13,6 +13,41 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ## Known issues (open)
 
 - None.
+
+## Phase 6 — Duo Accountability 2.0 — IN PROGRESS (2026-09-30)
+
+Scope: docs/ROADMAP.md → "V2 Phase 6" (10 approved rules), docs/ACCOUNTABILITY.md, ADR-069…073.
+Branch `v2-phase-6-duo-accountability` (from `main` at `247d30f`).
+
+Done:
+
+- **Shared commitments** (`commitments`): four kinds — task (a task of today, kept private in the
+  owner-only `commitment_sources`), focus (effective completed focus of the day ≥ target, pauses never
+  count), standard (the existing rule with the standard snapshotted at creation), simple (CUMPRI →
+  AUTODECLARADO). Up to 5 per day, public title 1–80. The database sets owner, duo, day and status.
+- **Commitment → proof**: triggers on `daily_tasks` / `focus_sessions` re-resolve the owner's open
+  commitments; the proof follows the source while the day is open (a task undone the same day
+  withdraws it) and is frozen once the owner's day closes; ACTIVE on a closed day = **MISSED**
+  (derived by `duo_commitments()`). CANCELLED only while open.
+- **Feed + reactions**: a proven commitment is a feed line (`commitment_proven` /
+  `commitment_self_declared`, public title only) that the partner can react to with the existing
+  reactions.
+- **Nudges (DAR UM TOQUE)**: no text; 1 per commitment every 2 h, 3 per recipient-local day, never
+  on my own or a closed commitment — enforced by a trigger; the recipient gets a toast on any screen.
+- **Check-in**: LOCKED IN / PRECISO DE COBRANÇA / DIA DIFÍCIL for today, changeable, history kept.
+- **Realtime**: `commitment_changed`, `nudge_received`, `checkin_changed` on `duo:<duo_id>` from one
+  new DEFINER trigger function (`private.sync_accountability`, reviewed set now 19); the hub re-reads
+  through RLS (`accountabilityVersion`), no polling.
+- **Partner Hub 2.0** (`/partner`): status + the partner's check-in; HOJE with completion, focus today
+  and standard; COMPROMISSOS (theirs with DAR UM TOQUE / reactions, mine with + NOVO COMPROMISSO,
+  CUMPRI, DESFAZER, CANCELAR); CHECK-IN DE HOJE; the partner's day + ATIVIDADE; this week /
+  head-to-head (unchanged); HISTÓRICO · 14 DIAS.
+- **Old duo isolation**: ending a duo detaches its commitments / check-ins and deletes its nudges; the
+  ex-partner and a future partner read nothing.
+- Not done (out of scope): Daily Duel, winner, XP, ranking, badges, push, chat, goal / Mirror / Top 3
+  sharing.
+
+Verification (DEV): see "Gates" below (filled when the gates finish).
 
 ## Phase 5 — Goals → Actions → Proof — VERIFIED (2026-09-30)
 

@@ -87,7 +87,8 @@ user_id)`.
   - helpers: `private.current_duo_id`, `private.duo_is_complete`, `private.materialize_tasks`
     (catch-up; only for the caller or the caller's partner);
   - triggers: `handle_new_user`, `handle_new_profile_settings`, `sync_*` (feed + broadcasts;
-    V2 Phase 2 adds `sync_planner_event`, same pattern: ids and the operation only).
+    V2 Phase 2 adds `sync_planner_event`, same pattern: ids and the operation only; V2 Phase 6 adds
+    `sync_accountability`: the feed line of a proven commitment + ids / status broadcasts).
 - Every DEFINER function: `set search_path = ''`, schema-qualified names, identity from
   `auth.uid()` only, `revoke all … from public, anon`, `grant execute` to `authenticated` only
   (triggers: to nobody). PostgreSQL's global default gives PUBLIC `EXECUTE` on new functions, so each
@@ -139,15 +140,15 @@ microphone, geolocation, payment, usb), no `X-Powered-By`. HSTS is added by Verc
 
 ## Supabase advisors (final Stage 9 run, DEV, 2026-09-28)
 
-| Advisor finding                                                                                                                                                                        | Level | Classification                                                                                                                                                             |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0029 DEFINER executable by `authenticated`: `create_duo`, `join_duo`, `leave_duo`, `partner_today`, `partner_current_focus`, `partner_progress_summary`, `duo_weeks`, `duo_challenges` | WARN  | **ACCEPTED WITH JUSTIFICATION** — the reviewed set above; no user-id parameter, identity from `auth.uid()`, projections only (ADR-015 / 034 / 040 / 044)                   |
-| 0029 DEFINER executable by `authenticated`: `dev_fixture_add_tasks`, `dev_fixture_backdate_routine`, `dev_fixture_reset_history`                                                       | WARN  | **NOT APPLICABLE** to production — DEV-only, limited to `li-…@example.com` test accounts, never a migration (ADR-052); checklist verifies absence                          |
-| `auth_leaked_password_protection` disabled                                                                                                                                             | WARN  | **STAGE 10 / MANUAL CONFIGURATION REQUIRED** — dashboard setting (checklist §2)                                                                                            |
-| 0001 unindexed FK `daily_tasks_routine_same_owner_fkey (routine_item_id, owner_id)`                                                                                                    | INFO  | **ACCEPTED WITH JUSTIFICATION** — leading column indexed by `daily_tasks_routine_date_key`; the FK is checked only when a routine is hard-deleted, which clients cannot do |
-| 0001 unindexed FK `focus_sessions_task_same_owner_fkey (daily_task_id, user_id)`                                                                                                       | INFO  | **ACCEPTED WITH JUSTIFICATION** — leading column indexed by `focus_sessions_task_idx`, which serves the set-null on task delete                                            |
-| 0005 unused index `duos_created_by_idx`, `activity_events_actor_idx`                                                                                                                   | INFO  | **ACCEPTED WITH JUSTIFICATION** — DEV traffic is tiny; both cover FK cascades from `profiles` (account deletion)                                                           |
-| Realtime "Allow public access" (not an advisor; dashboard)                                                                                                                             | —     | **STAGE 10 / MANUAL CONFIGURATION REQUIRED** (checklist §2)                                                                                                                |
+| Advisor finding                                                                                                                                                                                                | Level | Classification                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0029 DEFINER executable by `authenticated`: `create_duo`, `join_duo`, `leave_duo`, `partner_today`, `partner_current_focus`, `partner_progress_summary`, `duo_weeks`, `duo_challenges`                         | WARN  | **ACCEPTED WITH JUSTIFICATION** — the reviewed set above; no user-id parameter, identity from `auth.uid()`, projections only (ADR-015 / 034 / 040 / 044)                   |
+| 0029 DEFINER executable by `authenticated`: `dev_fixture_add_tasks`, `dev_fixture_backdate_routine`, `dev_fixture_reset_history` (+ V2 Phase 6: `dev_fixture_close_today`, `dev_fixture_reset_accountability`) | WARN  | **NOT APPLICABLE** to production — DEV-only, limited to `li-…@example.com` test accounts, never a migration (ADR-052); checklist verifies absence                          |
+| `auth_leaked_password_protection` disabled                                                                                                                                                                     | WARN  | **STAGE 10 / MANUAL CONFIGURATION REQUIRED** — dashboard setting (checklist §2)                                                                                            |
+| 0001 unindexed FK `daily_tasks_routine_same_owner_fkey (routine_item_id, owner_id)`                                                                                                                            | INFO  | **ACCEPTED WITH JUSTIFICATION** — leading column indexed by `daily_tasks_routine_date_key`; the FK is checked only when a routine is hard-deleted, which clients cannot do |
+| 0001 unindexed FK `focus_sessions_task_same_owner_fkey (daily_task_id, user_id)`                                                                                                                               | INFO  | **ACCEPTED WITH JUSTIFICATION** — leading column indexed by `focus_sessions_task_idx`, which serves the set-null on task delete                                            |
+| 0005 unused index `duos_created_by_idx`, `activity_events_actor_idx`                                                                                                                                           | INFO  | **ACCEPTED WITH JUSTIFICATION** — DEV traffic is tiny; both cover FK cascades from `profiles` (account deletion)                                                           |
+| Realtime "Allow public access" (not an advisor; dashboard)                                                                                                                                                     | —     | **STAGE 10 / MANUAL CONFIGURATION REQUIRED** (checklist §2)                                                                                                                |
 
 No finding is FIXED in this run because no code-fixable finding remained; the Stage 9 fixes are in
 the commits (history lock, duplicate challenges, headers, redirects, realtime leave, contrast).
@@ -240,3 +241,29 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - Found and fixed during the phase: a trigger's plpgsql plan cached while trusted code
   (`materialize_tasks`) ran could evaluate an RLS-dependent helper without RLS; the helper now filters
   by owner itself (the composite FK already refused the link — no data was exposed).
+
+## V2 Phase 6 — duo accountability (2026-09-30)
+
+| Table                | RLS | anon | Owner                                                        | Partner (current duo) / outsider               |
+| -------------------- | --- | ---- | ------------------------------------------------------------ | ---------------------------------------------- |
+| `commitments`        | on  | —    | S · I (title, kind, focus target) · U (status) · no D        | S rows of the current duo only · no writes / — |
+| `commitment_sources` | on  | —    | S · I · no U / D                                             | — / —                                          |
+| `nudges`             | on  | —    | S own sent / received (current duo) · I (commitment_id only) | recipient reads / —                            |
+| `checkins`           | on  | —    | S · I (state) · no U / D                                     | S rows of the current duo only / —             |
+
+- Everything else is stamped by the database: owner, duo, day, standard snapshot, status, proof,
+  sender, recipient, recipient day. `owner_id`, `duo_id`, `to_user` are never granted.
+- The private proof source is a separate owner-only table; no commitment column, function output,
+  feed event or broadcast names a task or a goal (pgTAP asserts the columns; the e2e checks the
+  partner's page and API).
+- Closed history: after the owner's day closes a commitment never changes — the lifecycle trigger
+  keeps the old values even for trusted code; a client status change gets `LI_HISTORY_LOCKED`.
+- Nudge limits are database rules (trigger + advisory lock per pair), not client rules.
+- Old duo isolation: ending a duo nulls `commitments.duo_id` / `checkins.duo_id` and deletes its
+  nudges; policies compare with the **current** duo, so an ex-partner and a future partner read
+  nothing (pgTAP + e2e).
+- New DEFINER function: `private.sync_accountability` (trigger, executable by nobody) — needed
+  because `realtime.send` and `activity_events` are not writable by users. The reviewed set in
+  `stage9_integrity` is now 19. `create_commitment`, `duo_commitments` and the helpers are INVOKER.
+- DEV-only fixtures added (never in production): `dev_fixture_close_today`,
+  `dev_fixture_reset_accountability`, limited to the `li-…@example.com` accounts.

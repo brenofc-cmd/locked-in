@@ -81,6 +81,9 @@ never notes, reflections, timezone, email or private titles.
 | `duo_joined`         | the second member joins (Stage 8)                                                                         | `actor_id`                                                                                                        |
 | `duo_ended`          | a member ends the duo, sent just before the atomic delete (Stage 8)                                       | `actor_id`                                                                                                        |
 | `planner_changed`    | a shared planner event is created / updated / deleted, or stops being shared (V2 Phase 2)                 | `actor_id, event_id, operation` (never a title, subject, date or time)                                            |
+| `commitment_changed` | a commitment is created, proven, un-proven or cancelled (V2 Phase 6; a no-op touch is not sent)           | `id, actor_id, status` (never a title or a source)                                                                |
+| `nudge_received`     | DAR UM TOQUE (V2 Phase 6)                                                                                 | `id, actor_id, to_user, commitment_id`                                                                            |
+| `checkin_changed`    | a check-in is set (V2 Phase 6)                                                                            | `actor_id, state`                                                                                                 |
 
 Private tasks (`visible_to_partner = false`) emit nothing at all — no title, no timing. Edits,
 reorders, archives, renames, settings and page views emit nothing ("magical, not noisy").

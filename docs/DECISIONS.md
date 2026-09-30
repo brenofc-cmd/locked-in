@@ -416,3 +416,33 @@ Status: Accepted.
 Decision: The partner may see EM FOCO and the titles of tasks I share, never a goal: no goal column in `partner_current_focus()`, no goal id or title in any broadcast, feed event or reaction, owner-only link tables. The "active goal" check compares the owner explicitly (`private.goal_is_active(goal, owner)`) instead of relying on RLS inside a trigger (a trigger plan cached while trusted code ran could skip RLS).
 Reason: Goals, vision and the mirror are private (ADR-058); linking actions to them must not become a side channel.
 Status: Accepted.
+
+# ADR-069 — Commitment status is materialised, MISSED is derived at the owner's day close
+
+Decision: A commitment stores `active` / `proven` / `cancelled` plus the proof fields; triggers on `daily_tasks` and `focus_sessions` re-resolve the owner's open commitments from the real sources while the owner's day is open. Once the day is closed (`private.history_locked_through(owner)`, the Stage 9 boundary) the row is frozen — the lifecycle trigger keeps the old values even for trusted code, and a client status change gets `LI_HISTORY_LOCKED`. MISSED is never stored: an ACTIVE commitment of a closed day is returned as `missed` by `duo_commitments()`.
+Reason: Deriving the status on every read would let a closed result move (a late completion of a paused focus session, a standard change); materialising it with the same boundary as the rest of the app makes "after the close the result is immutable" a database fact. Deriving MISSED needs no cron.
+Status: Accepted.
+
+# ADR-070 — The public commitment and its private proof source are separate
+
+Decision: `commitments` holds only public fields (title written for the partner, kind, status, proof kind and time); the task behind a `task` commitment lives in the owner-only `commitment_sources`. No commitment column, function output, feed event or broadcast carries a task id, a goal or a private title. The partner's interface rows go through `partnerProjection()`.
+Reason: The partner reads commitment rows through RLS and RLS cannot hide a column; a source column would leak a private task (and through Phase 5 links, a goal).
+Status: Accepted.
+
+# ADR-071 — Commitments belong to the duo they were made to; the standard is snapshotted
+
+Decision: The database sets `duo_id` (current complete duo, `LI_NO_PARTNER` otherwise); ending the duo sets it to null (the owner keeps the history, the ex-partner loses it, a new partner never gets it). The partner reads only commitments whose `duo_id` is their current duo. A `standard` commitment snapshots the Daily Standard in force when it is made and uses exactly the existing rule `completed·100 ≥ standard·planned`.
+Reason: Same isolation rule as planner events (ADR-057). The snapshot keeps a promise from changing after it was made, as challenges do (ADR-044); the rule itself is not duplicated or altered (pgTAP compares it with `private.standard_met`).
+Status: Accepted.
+
+# ADR-072 — Commitments without verifiable proof are self-declared, never a second score
+
+Decision: A `simple` commitment is proven only by its owner's CUMPRI and is stored and shown as `self_declared` / AUTODECLARADO (verified kinds are `verified` / COM PROVA). Nothing ranks, scores or weighs the two differently in this phase.
+Reason: "No hype. Just proof." — the product never presents a claim as proof, but people still promise things LOCKED IN cannot observe. Scoring belongs to a later phase.
+Status: Accepted.
+
+# ADR-073 — Nudges and check-ins are limited in the database; one DEFINER broadcasts
+
+Decision: DAR UM TOQUE has no text and is limited by a BEFORE INSERT trigger (never on my own, only ACTIVE on an open day, 1 per commitment every 2 h, at most 3 per recipient-local day to the same partner, advisory lock per pair). Check-ins are append-only rows (latest of the day wins, at most 30 changes per day). `private.sync_accountability` (SECURITY DEFINER, callable by nobody) writes the feed line of a proven commitment and sends `commitment_changed` / `nudge_received` / `checkin_changed` on `duo:<duo_id>` with ids and status only — the 19th function of the reviewed DEFINER set.
+Reason: Limits enforced only in the client are not limits; `realtime.send` and `activity_events` are not writable by users, so broadcasting needs one trusted trigger, following `sync_planner_event` (ADR-057).
+Status: Accepted.
