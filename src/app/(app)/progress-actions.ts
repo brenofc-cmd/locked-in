@@ -88,7 +88,7 @@ export async function loadDays(
   from: string,
   to: string,
 ): Promise<Result<{ days: DayStat[] }>> {
-  if (!/^d{4}-d{2}-d{2}$/.test(from) || !/^d{4}-d{2}-d{2}$/.test(to))
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to))
     return { ok: false, error: ERROR };
   try {
     const supabase = await createClient();
