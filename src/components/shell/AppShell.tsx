@@ -174,10 +174,13 @@ function MobileHeader({ pathname }: { pathname: string }) {
         {hasPartner && (
           <Link
             href="/partner"
-            aria-label={t.shell.partnerChipAria(
+            aria-label={t.partnerCard.aria(
               partner.name,
-              pv.focusWord.toLowerCase(),
+              pv.label.toLowerCase(),
               pv.pct,
+              pv.done,
+              pv.total,
+              pv.seen,
             )}
             className="flex h-9 items-center gap-2 rounded-full border border-white/8 px-3 text-[12.5px] text-muted"
           >

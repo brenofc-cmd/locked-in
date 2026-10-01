@@ -19,10 +19,12 @@ import { daypartAt, type NorthStar } from "@/lib/north-star";
 import { groupBySection, nextLine, routinesOn, todayStats } from "@/lib/today";
 
 /**
- * Today = execution. V2 Phase 4 order: header → morning card (first open of
- * the day) → TOP 3 → tasks; the North Star sits with the partner and the
- * planner (after the tasks on a phone, in the side column on desktop), so
- * the task list is never pushed far down (docs/NORTH_STAR.md).
+ * Today = execution (docs/NAVIGATION.md): header → morning card (first open
+ * of the day) → TOP 3 → tasks, then minimal context, one line each — the
+ * duel, the next event, the why — after the tasks on a phone and in the side
+ * column on a wide screen. The partner is the header chip on a phone and a
+ * card on desktop (no header there); the live feed is desktop-wide only (the
+ * full feed is on DUPLA).
  */
 export function TodayScreen({ northStar }: { northStar: NorthStar }) {
   const app = useApp();
@@ -188,10 +190,24 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
         </div>
 
         <aside className="flex min-w-0 flex-col gap-7 wide:sticky wide:top-0">
-          {app.hasPartner ? <PartnerCard /> : <NoPartnerCard />}
-          {app.hasPartner && <DuelCompact />}
-          <UpcomingCard />
-          <NorthStarCard star={northStar} />
+          <div className="hidden desk:contents">
+            {app.hasPartner ? <PartnerCard /> : <NoPartnerCard />}
+          </div>
+          <div data-testid="today-context" className="flex flex-col">
+            {app.hasPartner && <DuelCompact />}
+            <UpcomingCard />
+            <NorthStarCard star={northStar} />
+            <button
+              type="button"
+              onClick={() => app.openOverlay({ kind: "review" })}
+              className="flex min-h-[52px] items-center justify-between border-y border-white/6 text-[13.5px] text-muted hover:text-text"
+            >
+              <span>{t.todayScreen.reviewToday}</span>
+              <span aria-hidden="true" className="text-faint">
+                ›
+              </span>
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => app.openSheet({ kind: "focus" })}
@@ -201,7 +217,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
             LOCK IN
           </button>
           {feedShort.length > 0 && (
-            <div className="flex flex-col">
+            <div className="hidden flex-col wide:flex">
               <div className="flex items-center justify-between pb-1">
                 <span className="flex items-center gap-[9px]">
                   <span
@@ -226,16 +242,6 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
               </div>
             </div>
           )}
-          <button
-            type="button"
-            onClick={() => app.openOverlay({ kind: "review" })}
-            className="flex h-12 items-center justify-between border-t border-white/6 text-[13.5px] text-muted hover:text-text"
-          >
-            <span>{t.todayScreen.reviewToday}</span>
-            <span aria-hidden="true" className="text-faint">
-              ›
-            </span>
-          </button>
         </aside>
       </div>
 

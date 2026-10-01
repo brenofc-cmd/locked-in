@@ -254,8 +254,6 @@ export const t = {
     duo: "Dupla",
     install: "Instalar app",
     signOut: "Sair",
-    partnerChipAria: (name: string, status: string, pct: number) =>
-      `${name} está ${status}, ${pct}% feito hoje`,
   },
 
   todayScreen: {
@@ -913,8 +911,6 @@ export const t = {
     mirror: "ESPELHO",
     manage: "GERENCIAR",
     manageAria: "Gerenciar metas e visão",
-    more: "Ver tudo",
-    less: "Resumir",
     emptyTitle: "DEFINA SUA DIREÇÃO",
     emptyText:
       "Adicione uma visão ou meta para lembrar todos os dias por que está fazendo isso.",

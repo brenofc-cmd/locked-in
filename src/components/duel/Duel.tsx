@@ -97,42 +97,45 @@ function Headline({ duel, name }: { duel: Duel; name: string }) {
   );
 }
 
-/** Today: the duel at a glance — state, headline and the 3 categories. */
+/** Today: one line — state and score, the detail is on DUPLA. */
 export function DuelCompact() {
   const { todayDuel: duel, partner } = useApp();
   if (!duel) return null;
   const headline = duelHeadline(duel, partner.name);
+  const decided = duel.outcome !== "insufficient";
   return (
     <Link
       href="/partner#duel"
       data-testid="duel-today"
       aria-label={t.duel.dayAria(t.duel.title, duelPhase(duel), headline)}
-      className="flex flex-col gap-3 rounded-2xl border border-white/7 bg-card p-[18px] text-left transition-transform duration-100 active:scale-[.985]"
+      className="flex min-h-[56px] items-center justify-between gap-3 border-t border-white/6 py-2.5 text-left"
     >
-      <span className="flex items-center justify-between gap-3">
-        <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-          {t.duel.title}
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="flex items-center gap-2 font-mono text-[10.5px] tracking-[.18em] text-dim">
+          {t.todayScreen.duel}
+          <span aria-hidden="true">·</span>
+          <Phase duel={duel} />
         </span>
-        <Phase duel={duel} />
+        <span
+          data-testid="duel-today-score"
+          className={cx(
+            "truncate text-[14px]",
+            decided
+              ? "text-text"
+              : "font-mono text-[11px] tracking-[.14em] text-muted",
+          )}
+        >
+          {decided
+            ? t.todayScreen.duelScore(
+                duel.score.me,
+                duel.score.partner,
+                partner.name,
+              )
+            : headline}
+        </span>
       </span>
-      <Headline duel={duel} name={partner.name} />
-      <span className="grid grid-cols-3 gap-2">
-        {duel.categories.map((c) => (
-          <span
-            key={c.key}
-            data-testid={`duel-cat-${c.key}`}
-            className="flex min-w-0 flex-col gap-1"
-          >
-            <span className="font-mono text-[9.5px] tracking-[.14em] text-dim">
-              {t.duel.categories[c.key]}
-            </span>
-            <OutcomeText
-              outcome={c.outcome}
-              name={partner.name}
-              className="truncate font-mono text-[11px] tracking-[.08em]"
-            />
-          </span>
-        ))}
+      <span aria-hidden="true" className="text-faint">
+        ›
       </span>
     </Link>
   );

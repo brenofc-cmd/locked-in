@@ -182,14 +182,26 @@ export function TaskRow({
           </span>
 
           <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span
-              className={cx(
-                "text-[16.5px] decoration-[rgba(236,235,230,0.25)] transition-colors duration-300 desk:text-base",
-                muted ? "text-quiet" : "text-text",
-                task.done && "line-through",
+            <span className="flex min-w-0 items-baseline gap-2">
+              {task.priority !== null && (
+                // Top 3 rank, discreet: the task is listed once (V2 Phase 4).
+                <span
+                  aria-hidden="true"
+                  data-testid="task-rank"
+                  className="shrink-0 font-mono text-[11px] text-accent tabular-nums"
+                >
+                  {task.priority}
+                </span>
               )}
-            >
-              {task.name}
+              <span
+                className={cx(
+                  "text-[16.5px] decoration-[rgba(236,235,230,0.25)] transition-colors duration-300 desk:text-base",
+                  muted ? "text-quiet" : "text-text",
+                  task.done && "line-through",
+                )}
+              >
+                {task.name}
+              </span>
             </span>
             <TaskMeta task={task} />
           </span>
