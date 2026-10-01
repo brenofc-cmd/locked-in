@@ -202,7 +202,10 @@ routing changed; run the pgTAP suite when a migration changed.
   `partnerProjection()`. Broadcasts come only from `private.sync_accountability` (ids / status).
 - V2 Phase 7 (docs/DUEL.md, ADR-074…077): the daily duel is derived by `duo_duels()` — never add a
   duel / score / winner table or store a result. Categories reuse existing rules only (completion
-  ratio, effective focus minutes, `standardMet` for Consistency); decide them in `src/lib/duel.ts`.
+  ratio, effective focus seconds with 0 × 0 neutral, `standardMet` with the standard of that day);
+  decide them in `src/lib/duel.ts`. The Daily Standard is versioned only by the database
+  (`daily_standard_history`, `private.standard_on`; never add a client write path or backdate a
+  version); the first duel day is `duos.duel_since`.
   A live duel never says anyone won (ESTÁ NA FRENTE / EMPATE / SEM RESULTADO SUFICIENTE); VENCEU O
   DIA only when `is_final`. Running focus ticks from the clock on screen; the partner side re-reads
   with the duo numbers on events — no polling. No XP, coins, champion, records or badges (later

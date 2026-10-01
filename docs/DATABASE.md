@@ -441,6 +441,9 @@ checked when a routine is hard-deleted, which clients cannot do.
 | `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only         |
 | `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                        |
 | `public.duo_duels(p_days)`                           | DEFINER  | `authenticated`                      | daily duel inputs, me and partner, dates / integers / booleans   |
+| `private.record_daily_standard()`                    | DEFINER  | trigger only                         | versions of the Daily Standard (owner's local today)             |
+| `private.standard_on(user, day)`                     | invoker  | nobody (only inside `duo_duels`)     | the Daily Standard in force on a local day                       |
+| `private.stamp_duel_since()`                         | invoker  | trigger only                         | the duo's first duel day, when it becomes complete               |
 | `private.duel_side(user, from, to)`                  | invoker  | nobody (only inside `duo_duels`)     | one member's tasks and focus per day for the duel                |
 | `private.materialize_tasks(user)`                    | DEFINER  | `authenticated` (schema not exposed) | materialisation for the caller or the caller's partner only      |
 | `private.day_stats(user, from, to)`                  | invoker  | `authenticated` (schema not exposed) | one row per day; RLS applies to the caller                       |
@@ -711,6 +714,8 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `duo_accountability`        | `20260930150923` | `20260930164112` |
 | `accountability_fk_indexes` | `20260930153724` | `20260930164122` |
 | `daily_duel`                | `20261001102050` | not applied yet  |
+| `daily_standard_history`    | `20261001114008` | not applied yet  |
+| `duel_since`                | `20261001114507` | not applied yet  |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -816,7 +821,7 @@ recipient_date)`, `(to_user, recipient_date)`, `checkins (user_id, local_date, c
 pgTAP: `supabase/tests/v2_phase6_accountability.test.sql`. DEV-only fixtures:
 `dev_fixture_close_today`, `dev_fixture_reset_accountability` (supabase/dev/test_fixtures.sql).
 
-## V2 Phase 7 functions (migration `20261001102050_daily_duel`)
+## V2 Phase 7 (migrations `20261001102050_daily_duel`, `…114008_daily_standard_history`, `…114507_duel_since`)
 
 Daily Duel (docs/DUEL.md, ADR-074…077). No table: the duel is derived. `public.duo_duels(p_days
 integer default 8)` (SECURITY DEFINER, `search_path = ''`, `authenticated` only) returns per local
@@ -824,5 +829,20 @@ day since the duo became complete in both calendars (newest first, 1…31 days):
 `is_final`, and for me and the partner `planned`, `completed`, `standard`, `focus_seconds` (settled),
 `focus_running`. It materialises routines for both members first. `private.duel_side(uuid, date,
 date)` is the INVOKER helper (no API role may execute it). pgTAP:
-`supabase/tests/v2_phase7_duel.test.sql` (40). DEV-only fixture: `dev_fixture_backdate_duo(days)`
+`supabase/tests/v2_phase7_duel.test.sql` (65). DEV-only fixture: `dev_fixture_backdate_duo(days)`
 (supabase/dev/test_fixtures.sql) — the caller's current all-test-user duo "formed days ago".
+
+`public.daily_standard_history` (ADR-078): `user_id → profiles on delete cascade`, `effective_from
+date` (`-infinity` = baseline), `standard_percent smallint 1..100`, timestamps; PK `(user_id,
+effective_from)`. RLS on; `authenticated` SELECT own rows only; no insert / update / delete grant;
+anon nothing. Written only by the trigger `profiles_record_daily_standard`
+(`private.record_daily_standard`, SECURITY DEFINER, callable by nobody): baseline on profile insert,
+upsert of the owner's local-today version on every standard change. Backfill: one baseline per
+existing profile with its current standard. `private.standard_on(uuid, date)` (INVOKER, not
+callable through the API): current value for an open day, newest version `<= day` for a closed day.
+
+`public.duos.duel_since date` (ADR-079): the first duel day, stamped by `duo_members_stamp_duel_since`
+(`private.stamp_duel_since`, INVOKER, not callable) when the duo becomes complete or `joined_at`
+changes; backfilled for complete duos. Not writable by clients (no grant on `duos`). `duo_duels`
+starts there and reads `private.standard_on` for each side and day. `dev_fixture_reset_history` also
+drops versions dated after the reset local today (DEV time travel only).

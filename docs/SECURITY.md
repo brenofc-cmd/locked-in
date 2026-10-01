@@ -270,12 +270,17 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 
 ## V2 Phase 7 — daily duel (2026-10-01)
 
-- No new table, policy or broadcast: the duel is derived (ADR-074).
+- The duel is derived (ADR-074): no duel / score table, no broadcast. New setting table
+  `daily_standard_history` (ADR-078): RLS on, owner SELECT only, no client write grant, anon nothing;
+  versions are written only by the trigger and only for the owner's local today (never a closed day).
+  New column `duos.duel_since` (ADR-079): written only by a trigger, no client grant.
 - New DEFINER function: `public.duo_duels(p_days)` — the partner is derived from `auth.uid()` →
   current duo membership (no user-id parameter), routines are materialised only for the caller and
   the caller's partner, the output is dates / integers / booleans only (pgTAP asserts the types).
-  Same justification as `duo_weeks` under advisor 0029 (ADR-040). The reviewed set in
-  `stage9_integrity` is now 20. `private.duel_side` is INVOKER and executable by no API role.
+  Same justification as `duo_weeks` under advisor 0029 (ADR-040). New DEFINER trigger
+  `private.record_daily_standard` (callable by nobody; derives user and day from the profile row).
+  The reviewed set in `stage9_integrity` is now 21. `private.duel_side`, `private.standard_on` and
+  `private.stamp_duel_since` are INVOKER and executable by no API role.
 - Private tasks and sessions count in the numbers, never by title; pre-duo days and an old duo's
   days are never returned (pgTAP + e2e).
 - DEV-only fixture added (never in production): `dev_fixture_backdate_duo`, refused unless both

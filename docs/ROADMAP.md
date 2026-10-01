@@ -41,14 +41,15 @@ Rules:
    %). The Daily Standard plays no part in Execution.
 3. **Focus** = the day's effective focus — exactly the Progress "focus of a day"
    (`private.focus_seconds`, sessions belong to the local day they started, pauses never count).
-   Compared in **whole minutes** (what the interface shows). Decided when at least one side has
-   ≥ 1 minute; 0 vs 0 is insufficient.
+   Compared in **exact seconds**; more real focus wins. **0 × 0 is NEUTRAL / NÃO COMPARÁVEL**, never
+   a tie (official rule, 2026-10-01): the absence of focus never counts as a decided category.
 4. **Consistency** (official rule, 2026-10-01) = each member's **existing Daily Standard** for the
    day — no new formula: MET / NOT_MET / NEUTRAL exactly as Progress (`standardMet()` /
    `private.standard_met`: `planned > 0 and completed·100 ≥ standard·planned`; NEUTRAL =
-   `planned = 0`), each with their own `daily_standard_percent`. A MET vs B NOT_MET → A wins;
-   A NOT_MET vs B MET → B wins; both MET → TIE; both NOT_MET → TIE; either side NEUTRAL (or both)
-   → NOT COMPARABLE. The standard has no history (ADR-038): it is read as it is now.
+   `planned = 0`), each with their own Daily Standard **of that day**. A MET vs B NOT_MET → A
+   wins; A NOT_MET vs B MET → B wins; both MET → TIE; both NOT_MET → TIE; either side NEUTRAL (or
+   both) → NOT COMPARABLE. The standard is versioned per local day (ADR-076 / ADR-078): a FINAL duel
+   keeps the standard of its day.
 5. **Category result**: ME / PARTNER / TIE / INSUFFICIENT (not comparable). Nothing else.
 6. **Result of the day**: the side that won **more categories** wins (e.g. 2–1, 1–0). Equal category
    wins with at least one decided category = **TIE** (EMPATE). No decided category (all
@@ -67,9 +68,9 @@ Rules:
    be written (`LI_HISTORY_LOCKED`), routines cannot manufacture or suppress past occurrences, focus
    days are fixed at start, the boundary never moves back on a timezone change. Routines are
    materialised for both members before every read (as `duo_weeks`). pgTAP proves a final duel does
-   not move under every write path. Consistency reuses the Daily Standard as it is (no standard
-   history, ADR-038): a later change of a member's own standard re-reads their past days with it, as
-   the streak does — recorded as a known limitation (ADR-076).
+   not move under every write path. The Daily Standard of a closed day is its recorded version and the
+   first duel day is stamped on the duo (ADR-078 / ADR-079): neither a later standard change nor a
+   timezone move reinterprets a FINAL duel.
 10. **Privacy.** One partner-facing function, member-derived (no user-id parameter), returns
     **integers / booleans / dates only** — planned, completed, the Daily Standard, focus seconds
     and a running flag. No title, note, category, time, goal, commitment, check-in or Top 3. Private tasks and

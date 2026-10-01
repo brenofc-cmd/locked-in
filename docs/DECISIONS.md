@@ -455,18 +455,30 @@ Status: Accepted.
 
 # ADR-075 — Duel categories reuse existing definitions; more categories won decides the day
 
-Decision: Execution = completion ratio (exact `compareRatio`, both sides need tasks). Focus = effective focus of the day (`private.focus_seconds`) compared in whole minutes, 0–0 undecided. Consistency (official rule, 2026-10-01) = each member's Daily Standard with `standardMet()`: MET beats NOT_MET, equal states tie, a NEUTRAL side is not comparable. The day goes to the side with more categories won; equal counts tie; nothing decided is SEM RESULTADO SUFICIENTE. No weights or points.
-Reason: "No hype. Just proof." — every number in the duel is one the user already sees elsewhere, and the rule fits in five lines on the screen.
-Status: Accepted.
+Decision: Execution = completion ratio (exact `compareRatio`, both sides need tasks). Focus = effective focus seconds of the day (`private.focus_seconds`, pauses never count), compared exactly; **both at 0 seconds is NEUTRAL / not comparable**, never a tie (official rule, 2026-10-01). Consistency (official rule, 2026-10-01) = each member's Daily Standard of that day with `standardMet()`: MET beats NOT_MET, equal states tie, a NEUTRAL side is not comparable. The day goes to the side with more categories won; equal counts tie; nothing decided is SEM RESULTADO SUFICIENTE. No weights or points.
+Reason: "No hype. Just proof." — every number in the duel is one the user already sees elsewhere. The absence of focus is not evidence: counting 0 × 0 as a tie would let an empty category make up the minimum needed to declare a result. Exact seconds avoid any rounding rule; the detailed view shows the seconds so a narrow win stays visible.
+Status: Accepted (revised 2026-10-01: exact seconds, 0 × 0 neutral).
 
-# ADR-076 — Final only when the day is closed for both; live never says "won"
+# ADR-076 — Final only when the day is closed for both; the Standard of the day is versioned
 
-Decision: A duel is FINAL when its date is `<= private.history_locked_through()` for both members and no focus session of that date is still running; otherwise it is LIVE and shows only ESTÁ NA FRENTE / EMPATE / SEM RESULTADO SUFICIENTE. VENCEU O DIA exists only on a final duel. Consistency reads the Daily Standard as it is now: the standard has no history (ADR-038), so a later change of a member's own standard re-reads their past days with it — a documented limitation; Execution and Focus of a final duel never change.
-Reason: Members can live in different time zones and a session can cross midnight; a result shown before both days are closed could flip. Snapshotting the standard would need a new history table, which the approved rule ("reuse exactly the Daily Standard and the existing history") excludes.
-Status: Accepted.
+Decision: A duel is FINAL when its date is `<= private.history_locked_through()` for both members and no focus session of that date is still running; otherwise it is LIVE and shows only ESTÁ NA FRENTE / EMPATE / SEM RESULTADO SUFICIENTE. VENCEU O DIA exists only on a final duel. Consistency uses the Daily Standard **in force on that day**: an open day the current value (a change while the day is open moves only that open day), a closed day its recorded version (ADR-078). Changing the standard later — mine or my partner's, before or after a timezone move — never changes the Consistency, score or winner of a FINAL duel.
+Reason: Members can live in different time zones and a session can cross midnight; a result shown before both days are closed could flip. A final result must be historically stable; reading a single current value (ADR-038) would let a later settings change rewrite it.
+Status: Accepted (revised 2026-10-01: replaces the earlier "the standard is read as it is now" limitation).
 
 # ADR-077 — The live duel ticks locally; the partner side is re-read on events
 
 Decision: `duo_duels` returns settled focus plus a running flag; the client adds the running session's elapsed time from the clock already on screen (my session, `partner_current_focus()`). My side of today comes from the screen (tasks, focus, standard). The partner's side is re-read with the duo numbers on `partnerVersion` and on the partner's focus transitions (the existing `focus` broadcast). No new channel, broadcast or timer that fetches.
 Reason: Same contract as Progress (my numbers live, the partner's re-read after realtime) and Focus (never send a timer value).
+Status: Accepted.
+
+# ADR-078 — The Daily Standard keeps effective versions per local day
+
+Decision: `public.daily_standard_history (user_id, effective_from, standard_percent)` holds a baseline (`-infinity`, the value known at the Phase 7 migration or at signup) and one version per local day on which the standard changed. `private.record_daily_standard` (SECURITY DEFINER trigger on `profiles`, callable by nobody) upserts the owner's local-today version on every change; clients have no write grant (owner SELECT only). `private.standard_on(user, day)` returns the current value for an open day and the newest version `<= day` for a closed day. The duel reads it; the formula stays `standardMet` / `private.standard_met`. The streak is analysed and left on the current standard (ADR-038) so no existing streak changes silently.
+Reason: The only place where a past standard must be stable is a final duel. Versions dated only on the local today can never land on a closed day, because the Stage 9 boundary never moves back (also on a timezone change). Days before the migration read the baseline — a documented pre-Phase-7 limitation.
+Status: Accepted. The 21st function of the reviewed DEFINER set.
+
+# ADR-079 — The first duel day is stamped on the duo when it becomes complete
+
+Decision: `duos.duel_since` is set by `private.stamp_duel_since` (INVOKER trigger on `duo_members`, which only `join_duo` and fixtures write) to the later of both members' local dates at the moment the second member joined; it is recomputed only if `joined_at` changes, never on a timezone change. `duo_duels` starts there. Clients cannot write it (no grant on `duos`).
+Reason: Computing the start from each member's current timezone (`private.duo_together_since`) let a timezone move hide a FINAL duel or expose a pre-duo day (found by pgTAP). Partner reads of shared tasks still use `duo_together_since` (unchanged, out of scope).
 Status: Accepted.

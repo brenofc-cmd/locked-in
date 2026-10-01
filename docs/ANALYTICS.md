@@ -133,8 +133,10 @@ completed occurrences. Progress shows at most 3 goals with proof in the chosen r
 ## Daily duel (V2 Phase 7)
 
 Derived from the same sources (docs/DUEL.md): Execution = completion ratio (exact, both need tasks),
-Focus = effective focus of the day in whole minutes, Consistency = each member's Daily Standard
-(`standardMet`: MET / NOT_MET / NEUTRAL). More categories won wins the day. `duo_duels()` is re-read
+Focus = effective focus seconds of the day (0 × 0 neutral), Consistency = each member's Daily
+Standard of that day (`standardMet`: MET / NOT_MET / NEUTRAL). More categories won wins the day. The
+Daily Standard now keeps versions per local day (`daily_standard_history`, ADR-078) for the duel; the
+streak still uses the current standard (ADR-038, analysed and unchanged). `duo_duels()` is re-read
 with the duo numbers (`loadDuoProgress`). It never changes the weekly competition or head-to-head.
 
 ## Database functions
