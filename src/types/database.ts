@@ -1244,6 +1244,23 @@ export type Database = {
           completed: number;
         }[];
       };
+      duo_duels: {
+        Args: { p_days?: number };
+        Returns: {
+          duel_date: string;
+          is_final: boolean;
+          me_completed: number;
+          me_focus_running: boolean;
+          me_focus_seconds: number;
+          me_planned: number;
+          me_standard: number;
+          partner_completed: number;
+          partner_focus_running: boolean;
+          partner_focus_seconds: number;
+          partner_planned: number;
+          partner_standard: number;
+        }[];
+      };
       duo_weeks: {
         Args: { p_weeks?: number };
         Returns: {
