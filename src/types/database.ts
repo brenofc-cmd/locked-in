@@ -109,6 +109,38 @@ export type Database = {
           },
         ];
       };
+      daily_standard_history: {
+        Row: {
+          created_at: string;
+          effective_from: string;
+          standard_percent: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          effective_from: string;
+          standard_percent: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          effective_from?: string;
+          standard_percent?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "daily_standard_history_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       daily_task_goals: {
         Row: {
           created_at: string;
@@ -270,6 +302,7 @@ export type Database = {
         Row: {
           created_at: string;
           created_by: string;
+          duel_since: string | null;
           id: string;
           invite_code: string;
           name: string | null;
@@ -277,6 +310,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           created_by: string;
+          duel_since?: string | null;
           id?: string;
           invite_code: string;
           name?: string | null;
@@ -284,6 +318,7 @@ export type Database = {
         Update: {
           created_at?: string;
           created_by?: string;
+          duel_since?: string | null;
           id?: string;
           invite_code?: string;
           name?: string | null;

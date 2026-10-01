@@ -10,7 +10,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
 
-select plan(40);
+select plan(65);
 
 grant all on table __tcache__ to anon, authenticated;
 grant all on sequence __tcache___id_seq, __tresults___numb_seq to anon, authenticated;
@@ -96,10 +96,10 @@ select results_eq(
            partner_planned, partner_completed, partner_standard, partner_focus_seconds, partner_focus_running
     from public.duo_duels()$$,
   $$values (pg_temp.t(),     false, 2, 1, 80, 600, true,  0, 0, 50, 0,    false),
-           (pg_temp.t() - 1, true,  3, 2, 80, 0,   false, 2, 2, 50, 0,    false),
-           (pg_temp.t() - 2, true,  0, 0, 80, 0,   false, 0, 0, 50, 0,    false),
-           (pg_temp.t() - 3, true,  2, 2, 80, 0,   false, 2, 1, 50, 1500, false)$$,
-  'A: today and the closed days since the duo, newest first (skipped and private count; running focus apart)');
+           (pg_temp.t() - 1, true,  3, 2, 80, 0,   false, 2, 2, 80, 0,    false),
+           (pg_temp.t() - 2, true,  0, 0, 80, 0,   false, 0, 0, 80, 0,    false),
+           (pg_temp.t() - 3, true,  2, 2, 80, 0,   false, 2, 1, 80, 1500, false)$$,
+  'A: today and the closed days since the duo, newest first (skipped and private count; running focus apart; B''s 50 % only from today)');
 select is((select count(*)::int from public.duo_duels() where duel_date < pg_temp.t() - 3), 0,
   'no duel before the day the duo became complete (in both calendars)');
 select pg_temp.as_user('b');
@@ -108,9 +108,9 @@ select results_eq(
            partner_planned, partner_completed, partner_standard, partner_focus_seconds, partner_focus_running
     from public.duo_duels()$$,
   $$values (pg_temp.t(),     false, 0, 0, 50, 0,    false, 2, 1, 80, 600, true),
-           (pg_temp.t() - 1, true,  2, 2, 50, 0,    false, 3, 2, 80, 0,   false),
-           (pg_temp.t() - 2, true,  0, 0, 50, 0,    false, 0, 0, 80, 0,   false),
-           (pg_temp.t() - 3, true,  2, 1, 50, 1500, false, 2, 2, 80, 0,   false)$$,
+           (pg_temp.t() - 1, true,  2, 2, 80, 0,    false, 3, 2, 80, 0,   false),
+           (pg_temp.t() - 2, true,  0, 0, 80, 0,    false, 0, 0, 80, 0,   false),
+           (pg_temp.t() - 3, true,  2, 1, 80, 1500, false, 2, 2, 80, 0,   false)$$,
   'B sees the same duels from the other side');
 select is((select count(*)::int from public.daily_tasks where owner_id = '00000000-0000-4000-a700-00000000000a'
            and not visible_to_partner), 0, 'B still cannot read A''s private task (only its count)');
@@ -211,21 +211,93 @@ update public.profiles set timezone = 'Pacific/Pago_Pago' where id = '00000000-0
 select set_config('role', 'authenticated', true);
 select pg_temp.as_user('a');
 select set_eq(
-  $$select duel_date, is_final, me_planned, me_completed, me_focus_seconds, partner_planned, partner_completed, partner_focus_seconds
-    from public.duo_duels() where duel_date <= pg_temp.t()$$,
-  $$select duel_date, is_final, me_planned, me_completed, me_focus_seconds, partner_planned, partner_completed, partner_focus_seconds
-    from snap$$,
-  'a timezone change does not reopen or move a final duel');
+  $$select * from public.duo_duels() where duel_date <= pg_temp.t()$$,
+  $$select * from snap$$,
+  'a timezone change does not reopen or move a final duel (standards included)');
 select set_eq(
   $$select duel_date from public.duo_duels() where is_final and duel_date <= pg_temp.t()$$,
   $$select duel_date from snap$$,
   'every final duel stays final');
--- Known limitation (ADR-076): Consistency reads the standard as it is now.
+-- ------------------------------------ Daily Standard history (ADR-076) ----
+reset role;
+select is((select count(*)::int from public.daily_standard_history
+           where user_id::text like '00000000-0000-4000-a700-%' and effective_from = '-infinity'), 4,
+  'every profile starts with a baseline version');
+select set_config('role', 'authenticated', true);
+select pg_temp.as_user('a');
+select is((select me_standard from public.duo_duels() where duel_date = pg_temp.t()), 80,
+  'the FINAL day T was decided with A''s 80 %');
+update public.profiles set daily_standard_percent = 90 where id = '00000000-0000-4000-a700-00000000000a';
+select results_eq($$select effective_from, standard_percent::int from public.daily_standard_history order by effective_from$$,
+  $$values ('-infinity'::date, 80), (pg_temp.t() + 1, 90)$$,
+  'the change to 90 % is recorded on A''s open day (T+1), never on a closed one');
+select set_eq($$select * from public.duo_duels() where duel_date <= pg_temp.t()$$, $$select * from snap$$,
+  'after the change every FINAL duel is identical (inputs of Consistency, score and winner)');
+select is((select me_standard from public.duo_duels() where duel_date = pg_temp.t() + 1), 90, 'the new (open) day uses 90 %');
+update public.profiles set daily_standard_percent = 70 where id = '00000000-0000-4000-a700-00000000000a';
+select results_eq($$select effective_from, standard_percent::int from public.daily_standard_history order by effective_from$$,
+  $$values ('-infinity'::date, 80), (pg_temp.t() + 1, 70)$$,
+  'a second change while the day is open replaces only that open day''s version');
+select is((select me_standard from public.duo_duels() where duel_date = pg_temp.t() + 1), 70, 'the open day follows it live');
+select set_eq($$select * from public.duo_duels() where duel_date <= pg_temp.t()$$, $$select * from snap$$,
+  'and the FINAL duels still do not move');
+select throws_ok($$insert into public.daily_standard_history (user_id, effective_from, standard_percent)
+                   values ('00000000-0000-4000-a700-00000000000a', pg_temp.t() - 1, 10)$$,
+  '42501', null, 'the owner cannot backdate a version (no write grant)');
+select throws_ok($$update public.daily_standard_history set standard_percent = 10$$, '42501', null, 'versions are not updatable by clients');
+select throws_ok($$delete from public.daily_standard_history$$, '42501', null, 'nor deletable');
+select throws_ok($$insert into public.daily_standard_history (user_id, effective_from, standard_percent)
+                   values ('00000000-0000-4000-a700-00000000000b', pg_temp.t() + 1, 10)$$,
+  '42501', null, 'A cannot write B''s history');
+select is((select count(*)::int from public.daily_standard_history where user_id <> '00000000-0000-4000-a700-00000000000a'), 0,
+  'A reads only their own versions');
+-- The partner cannot manipulate A's standard.
+select pg_temp.as_user('b');
+update public.profiles set daily_standard_percent = 10 where id = '00000000-0000-4000-a700-00000000000a';
+select is((select count(*)::int from public.daily_standard_history where user_id = '00000000-0000-4000-a700-00000000000a'), 0,
+  'the partner reads none of A''s versions');
+reset role;
+select results_eq($$select (select daily_standard_percent::int from public.profiles where id = '00000000-0000-4000-a700-00000000000a'),
+                           (select count(*)::int from public.daily_standard_history where user_id = '00000000-0000-4000-a700-00000000000a')$$,
+  $$values (70, 2)$$, 'the partner could not change A''s standard nor add a version');
+-- B changes their own standard (B's open day is T+1).
+select set_config('role', 'authenticated', true);
 select pg_temp.as_user('b');
 update public.profiles set daily_standard_percent = 90 where id = '00000000-0000-4000-a700-00000000000b';
 select pg_temp.as_user('a');
-select is((select distinct partner_standard from public.duo_duels()), 90,
-  'the Daily Standard has no history: duels read the current one (ADR-038 / ADR-076)');
+select set_eq($$select * from public.duo_duels() where duel_date <= pg_temp.t()$$, $$select * from snap$$,
+  'a partner''s later change never moves a FINAL duel either');
+select is((select partner_standard from public.duo_duels() where duel_date = pg_temp.t() + 1), 90,
+  'the partner''s open day uses the new standard');
+-- A timezone move east, then another change: closed days still read their version.
+reset role;
+update public.profiles set timezone = 'Pacific/Kiritimati' where id = '00000000-0000-4000-a700-00000000000a';
+select set_config('role', 'authenticated', true);
+select pg_temp.as_user('a');
+update public.profiles set daily_standard_percent = 60 where id = '00000000-0000-4000-a700-00000000000a';
+select ok((select min(effective_from) from public.daily_standard_history where effective_from > '-infinity') > pg_temp.t(),
+  'after a timezone change a version is still never dated on a closed day');
+select set_eq($$select * from public.duo_duels() where duel_date <= pg_temp.t()$$, $$select * from snap$$,
+  'a timezone change plus a new standard does not reinterpret a FINAL duel');
+select is((select duel_since from public.duos where id = '00000000-0000-4000-a700-0000000000ab'), pg_temp.t() - 3,
+  'the first duel day is stamped on the duo and a timezone move does not shift it');
+select throws_ok($$update public.duos set duel_since = pg_temp.t() - 30$$, '42501', null,
+  'clients cannot move the first duel day');
+select pg_temp.as_user('c');
+select is((select count(*)::int from public.daily_standard_history where user_id <> '00000000-0000-4000-a700-00000000000c'), 0,
+  'an outsider reads no one else''s versions');
+select set_config('role', 'anon', true);
+select throws_ok($$select count(*) from public.daily_standard_history$$, '42501', null, 'anon reads nothing');
+reset role;
+select ok((select prosecdef from pg_proc where oid = 'private.record_daily_standard()'::regprocedure)
+          and not has_function_privilege('authenticated', 'private.record_daily_standard()', 'execute'),
+  'only the database records versions (DEFINER trigger, callable by nobody)');
+select ok(not has_function_privilege('authenticated', 'private.standard_on(uuid, date)', 'execute')
+          and not (select prosecdef from pg_proc where oid = 'private.standard_on(uuid, date)'::regprocedure),
+  'the version lookup is INVOKER and not callable through the API');
+select is(private.standard_on('00000000-0000-4000-a700-00000000000a', pg_temp.t() - 1), 80,
+  'a closed day reads the version in force that day (baseline 80 %), whatever the current standard (60 %)');
+select set_config('role', 'authenticated', true);
 
 -- ------------------------------------------------------- duo lifecycle ----
 select pg_temp.as_user('b');

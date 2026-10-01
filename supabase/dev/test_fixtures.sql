@@ -40,6 +40,10 @@ begin
   end if;
   delete from public.daily_tasks where owner_id = auth.uid();
   update public.profiles set history_locked_through = null where id = auth.uid();
+  -- V2 Phase 7: versions of the Daily Standard recorded on a day that is
+  -- "in the future" again once the boundary is back (DEV time travel only).
+  delete from public.daily_standard_history
+  where user_id = auth.uid() and effective_from > private.local_today(auth.uid());
 end;
 $$;
 
