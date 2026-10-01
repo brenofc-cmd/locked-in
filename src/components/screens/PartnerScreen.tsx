@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
+import { DuelDetailed } from "@/components/duel/Duel";
 import { useApp } from "@/components/app-state";
 import {
   CheckinPicker,
@@ -118,6 +119,7 @@ export function PartnerScreen() {
         <PartnerDayLine />
       </div>
 
+      <DuelDetailed />
       <CommitmentsSection />
       <CheckinPicker />
 

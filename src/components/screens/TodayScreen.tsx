@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
+import { DuelCompact } from "@/components/duel/Duel";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { LockGlyph } from "@/components/icons";
@@ -188,6 +189,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
 
         <aside className="flex min-w-0 flex-col gap-7 wide:sticky wide:top-0">
           {app.hasPartner ? <PartnerCard /> : <NoPartnerCard />}
+          {app.hasPartner && <DuelCompact />}
           <UpcomingCard />
           <NorthStarCard star={northStar} />
           <button

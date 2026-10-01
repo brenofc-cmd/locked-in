@@ -315,10 +315,10 @@ describe("category values", () => {
     expect(categoryValue("focus", side({ focusSeconds: 1500 }))).toBe("25 min");
     expect(
       categoryValue("consistency", side({ planned: 5, completed: 4 })),
-    ).toBe("padrão batido");
+    ).toBe("bateu");
     expect(
       categoryValue("consistency", side({ planned: 5, completed: 3 })),
-    ).toBe("padrão não batido");
+    ).toBe("não bateu");
     expect(categoryValue("consistency", side())).toBe("sem tarefas");
   });
 });

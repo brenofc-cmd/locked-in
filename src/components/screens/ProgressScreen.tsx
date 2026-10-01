@@ -7,6 +7,7 @@ import { loadDays } from "@/app/(app)/progress-actions";
 import { loadGoalProgress } from "@/app/(app)/proof-actions";
 import { summaryParts, topGoals, type ProofSummary } from "@/lib/goal-proof";
 import { useSession } from "@/components/session";
+import { DuelHistory } from "@/components/duel/Duel";
 import { useApp } from "@/components/app-state";
 import { useResumeValue } from "@/components/resume/use-resume";
 import { cx } from "@/components/ui";
@@ -262,6 +263,7 @@ export function ProgressScreen() {
       </section>
 
       <GoalProgress range={range} />
+      <DuelHistory />
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
