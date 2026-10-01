@@ -713,9 +713,9 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `goal_link_task_not_found`  | `20260930120815` | `20260930124940` |
 | `duo_accountability`        | `20260930150923` | `20260930164112` |
 | `accountability_fk_indexes` | `20260930153724` | `20260930164122` |
-| `daily_duel`                | `20261001102050` | not applied yet  |
-| `daily_standard_history`    | `20261001114008` | not applied yet  |
-| `duel_since`                | `20261001114507` | not applied yet  |
+| `daily_duel`                | `20261001102050` | `20261001135854` |
+| `daily_standard_history`    | `20261001114008` | `20261001135917` |
+| `duel_since`                | `20261001114507` | `20261001135936` |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 

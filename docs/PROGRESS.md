@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01); production deploy in progress; Phase 6 in production
+LOCKED IN V2 — Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01); production deployed, database / API smoke VERIFIED; visual smoke on PROD pending (human); next: Phase 8 (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -18,8 +18,7 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 Scope: docs/ROADMAP.md → "V2 Phase 7" (official consistency rule, live / final wording, Daily
 Standard history and Focus 0 × 0 neutral approved 2026-10-01), docs/DUEL.md, ADR-074…079. Branch
-`v2-phase-7-daily-duel` (from `main` at `336d73b`). **Production: not applied yet** (migrations
-`daily_duel`, `daily_standard_history`, `duel_since` exist only on DEV).
+`v2-phase-7-daily-duel` (from `main` at `336d73b`). Production: see "Production (2026-10-01)" below.
 
 Done:
 
@@ -89,6 +88,31 @@ Gates (DEV, final):
 - DEV-only fixtures (`supabase/dev/test_fixtures.sql`): `dev_fixture_backdate_duo` added,
   `dev_fixture_reset_history` drops future-dated standard versions after a reset. No migration
   mentions `dev_` (checked).
+
+Production (2026-10-01):
+
+- Before: PROD at 39 migrations, 19 DEFINER, **0 `dev_*`**, no Phase 7 object.
+- Migrations applied with the Supabase MCP, same SQL as the repository files: `20261001135854`
+  (`daily_duel`), `20261001135917` (`daily_standard_history`), `20261001135936` (`duel_since`)
+  (mapping in docs/DATABASE.md).
+- Validated on PROD: 42 migrations; `daily_standard_history` RLS on, `authenticated` SELECT only
+  with the owner policy, anon nothing; no client write on `duos.duel_since`; DEFINER set = the
+  reviewed 21, all `search_path=''`; nothing executable by anon / PUBLIC; **0 `dev_*` functions**;
+  `duel_side` / `standard_on` / both trigger functions not callable; 2 triggers enabled; 4 baselines
+  for 4 profiles; the duo's `duel_since` stamped; no duel table; md5 of the 5 function bodies
+  identical to DEV.
+- pgTAP `v2_phase7_duel` **65/65** on PROD (rolled back: 0 test users, no pgtap left).
+- `main` fast-forwarded to `2b5ce41`, pushed; GitHub deployment "Production" **success** for
+  `2b5ce41` (https://locked-in-rust.vercel.app).
+- Smoke on PROD through the API, as the real duo members, in one rolled-back transaction: 4 duels
+  since `duel_since` 2026-09-28, the 3 past days FINAL and today live; the real numbers give
+  28/09 partner 0–2 (Execution and Consistency, Focus 0 × 0 neutral), 29/09 partner 0–1, 30/09
+  EMPATE (Focus 0 × 0 not counted); changing the owner's standard 80 → 70 left the 3 FINAL duels
+  identical and today used 70; the partner read 0 versions of the owner's standard; the output is
+  dates / integers / booleans only. Rollback verified (standards 80, 4 baselines, no version, no task).
+- **Pending (human)**: the visual smoke on PROD (Today card, Partner detail, Progress last 7, AO
+  VIVO / RESULTADO FINAL on screen) — the browser extension could not interact with the site in this
+  session; the same build passed the full e2e on DEV. Also the live two-person check.
 
 ## Phase 6 — Duo Accountability 2.0 — VERIFIED (2026-09-30)
 
