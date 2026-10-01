@@ -1,0 +1,85 @@
+# Navigation and information architecture
+
+UI polish after V2 Phase 7 (2026-10-01). No feature was added or removed; nothing in the database,
+analytics, duel, goal proof, focus, commitments, streak, Daily Standard, Planner or realtime changed.
+Only where things live and how dense each screen is.
+
+## Principle
+
+Each primary tab answers one question:
+
+| Tab           | Route       | Question                      |
+| ------------- | ----------- | ----------------------------- |
+| **HOJE**      | `/today`    | What do I do now?             |
+| **DUPLA**     | `/partner`  | How is my partner / our duel? |
+| **FOCO**      | `/focus`    | Lock in.                      |
+| **PLANEJAR**  | `/plan`     | What is coming, and why?      |
+| **PROGRESSO** | `/progress` | What did I achieve?           |
+
+Account things (settings, duo management, install, sign-out) live in the **profile menu** (avatar in
+the mobile header and at the bottom of the desktop sidebar), not in a tab.
+
+Per mobile viewport: at most one dominant element and two secondary ones. Prefer rows, dividers and
+spacing to bordered cards; collapse only what is history or detail.
+
+## Bottom navigation (mobile)
+
+`HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO` — FOCO keeps the accent pill.
+
+Active tab (`aria-current="page"`):
+
+- HOJE: `/today`
+- DUPLA: `/partner`
+- FOCO: `/focus`
+- PLANEJAR: `/plan`, `/planner`, `/goals`, `/routine`, `/challenges`
+- PROGRESSO: `/progress`
+- `/duo`, `/settings`: no tab; the avatar shows the active state.
+
+The route `/partner` keeps its name; only the label is DUPLA.
+
+## Desktop sidebar
+
+Main: Hoje, Dupla, Foco, Planejar, Progresso. Under Planejar, the four planning screens (Planner,
+Metas & Visão, Rotina, Desafios). The footer is the profile menu button.
+
+## Profile menu
+
+Conta (→ `/settings#conta`), Configurações (`/settings`), Dupla (`/duo`), Instalar app (only when the
+browser offers it — the same `beforeinstallprompt` rule as Settings), Sair (the same
+`/auth/signout` form, which still calls `clearResume()`).
+
+A disclosure button (`aria-expanded`, `aria-controls`); Escape and a click outside close it and
+return focus to the button; Tab moves through the items; it closes on navigation.
+
+## Screens
+
+**HOJE** — header (date, day, greeting, %, streak, bar, next action) → morning card (once a day) →
+TOP 3 (compact rows) → tasks (dominant; a Top 3 task shows a small rank marker) → context rows:
+`DUELO · AO VIVO  Você 2 — 1 Ana ›` (→ `/partner#duel`), `PRÓXIMO  event ›` (only the next event),
+`◇ LEMBRE-SE DO PORQUÊ  text ›` (→ `/goals`) → Revisar o dia. The partner card left Today (the header
+chip and DUPLA cover it). Wide desktop: the context rows and the live feed sit in the aside.
+
+**DUPLA** — person (avatar, name, status, check-in, today's % inline) → DUELO DE HOJE →
+COMPROMISSOS (active first) → CHECK-IN / DAR UM TOQUE as rows → the partner's tasks + ATIVIDADE →
+ESTA SEMANA / head-to-head → commitment history (collapsed).
+
+**PLANEJAR** (`/plan`, new hub, no new query) — rows: PRÓXIMO (next event → `/planner`), METAS
+(featured goal → `/goals`), ROTINA (N active items → `/routine`), DESAFIOS (→ `/challenges`; the
+count would need a new query, so it keeps the "with your duo / needs a duo" line).
+
+**PROGRESSO** — VISÃO GERAL (%, streak, focus, perfect days: first viewport) → METAS (goal proof) →
+DUELOS (last 7) → HISTÓRICO (chart, calendar, weekly reviews, insights / habits).
+
+**FOCO** — unchanged.
+
+## What happened to MAIS
+
+The tab is gone. `/more` still exists and redirects to `/plan` (old bookmarks / installed PWAs keep
+working). A Resume State saved on `/more` restores `/plan` (same v1 shape; no version bump). Its six
+rows moved to PLANEJAR (4) and the profile menu (2).
+
+## Deep links
+
+Every route still works directly: `/today`, `/partner`, `/partner#duel`, `/focus`, `/plan`,
+`/progress`, `/planner`, `/goals`, `/goals/<id>`, `/routine`, `/challenges`, `/duo`, `/settings`,
+`/more` (→ `/plan`).
