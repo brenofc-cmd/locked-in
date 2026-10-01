@@ -142,3 +142,31 @@ revoke all on function public.dev_fixture_close_today() from public, anon;
 grant execute on function public.dev_fixture_close_today() to authenticated;
 revoke all on function public.dev_fixture_reset_accountability() from public, anon;
 grant execute on function public.dev_fixture_reset_accountability() to authenticated;
+
+-- V2 Phase 7: the caller's CURRENT duo "became complete p_days ago", so the
+-- daily duel has closed days to show (duels start on the day the duo
+-- formed). Only for a duo whose two members are both test users.
+create or replace function public.dev_fixture_backdate_duo(p_days integer)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_duo uuid := private.current_duo_id();
+begin
+  if not private.dev_is_test_user() or v_duo is null or exists (
+    select 1 from public.duo_members m join auth.users u on u.id = m.user_id
+    where m.duo_id = v_duo and u.email not like 'li-%@example.com'
+  ) then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  update public.duo_members
+  set joined_at = now() - make_interval(days => least(greatest(p_days, 0), 60))
+  where duo_id = v_duo;
+end;
+$$;
+
+revoke all on function public.dev_fixture_backdate_duo(integer) from public, anon;
+grant execute on function public.dev_fixture_backdate_duo(integer) to authenticated;

@@ -183,12 +183,19 @@ export default defineConfig({
       dependencies: ["v2p5-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 7 — Daily Duel (Alice / Bruno / Carla), after Phase 6.
+    {
+      name: "v2p7-390",
+      testMatch: /v2-phase7\.spec\.ts/,
+      dependencies: ["v2p6-390"],
+      use: phone(390, 844),
+    },
     // ISSUE-001 — idle session on the first /today (controlled cookie
-    // expiry, fresh sign-ins of Alice / Bruno), after Phase 6.
+    // expiry, fresh sign-ins of Alice / Bruno), after Phase 7.
     {
       name: "issue001-390",
       testMatch: /issue-001\.spec\.ts/,
-      dependencies: ["v2p6-390"],
+      dependencies: ["v2p7-390"],
       use: phone(390, 844),
     },
   ],
