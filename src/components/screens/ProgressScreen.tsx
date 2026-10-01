@@ -35,6 +35,9 @@ const RANGES: { k: Range; short: string; long: string }[] = (
   ["7", "30", "90", "Y"] as const
 ).map((k) => ({ k, ...t.progressScreen.ranges[k] }));
 
+const sectionLabel =
+  "m-0 font-mono text-[11px] font-normal tracking-[.2em] text-dim";
+
 function barColor(b: Bar, standard: number, range: Range) {
   if (b.pct === null) return "bg-white/6";
   if (b.pct < standard) return "bg-[color-mix(in_oklab,#E0715F_55%,#17171A)]";
@@ -126,7 +129,15 @@ export function ProgressScreen() {
         </div>
       </header>
 
-      <div className="flex flex-col gap-[22px]">
+      {/* Results first (docs/NAVIGATION.md): VISÃO GERAL → METAS → DUELOS →
+          HISTÓRICO. The overview fits the first viewport. */}
+      <section
+        aria-labelledby="progress-overview"
+        className="flex flex-col gap-[22px]"
+      >
+        <h2 id="progress-overview" className={sectionLabel}>
+          {t.progressScreen.overview}
+        </h2>
         <div className="flex flex-col gap-2.5">
           <span
             data-testid="progress-pct"
@@ -174,17 +185,24 @@ export function ProgressScreen() {
             testId="progress-perfect"
           />
         </div>
-      </div>
+      </section>
+
+      <GoalProgress range={range} />
+      <DuelHistory />
+
+      <h2 className={cx(sectionLabel, "-mb-2 border-t border-white/8 pt-6")}>
+        {t.progressScreen.history}
+      </h2>
 
       <section
         aria-label={t.progressScreen.chartAria}
         className="flex flex-col gap-3"
       >
-        <h2 className="font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+        <h3 className="m-0 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
           {range === "7"
             ? t.progressScreen.last7
             : t.progressScreen.completion(rangeLong)}
-        </h2>
+        </h3>
         <div
           role="list"
           className={cx(
@@ -262,18 +280,15 @@ export function ProgressScreen() {
         </div>
       </section>
 
-      <GoalProgress range={range} />
-      <DuelHistory />
-
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
         <section
           aria-label={t.progressScreen.weeklyAria}
           className="flex flex-col"
         >
-          <h2 className="border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+          <h3 className="m-0 border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
             {t.progressScreen.weekly}
-          </h2>
+          </h3>
           {weeks.map((w) => (
             <button
               key={w.weekStart}
@@ -541,9 +556,9 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
   return (
     <section aria-label={title} className="flex flex-col gap-3.5">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+        <h3 className="m-0 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
           {label}
-        </h2>
+        </h3>
         <div className="flex items-center gap-1">
           <span className="hidden text-xs text-dim min-[400px]:inline">
             {t.progressScreen.tapDay}

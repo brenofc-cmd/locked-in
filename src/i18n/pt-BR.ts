@@ -483,6 +483,8 @@ export const t = {
   },
 
   progressScreen: {
+    overview: "VISÃO GERAL",
+    history: "HISTÓRICO",
     ranges: {
       "7": { short: "7D", long: "7 DIAS" },
       "30": { short: "30D", long: "30 DIAS" },
