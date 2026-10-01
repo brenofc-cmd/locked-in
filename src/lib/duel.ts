@@ -6,8 +6,9 @@
  *
  * - Execution: completion ratio (Progress), exact comparison (`compareRatio`);
  *   both sides need planned > 0.
- * - Focus: effective focus of the day, compared in whole minutes; 0 vs 0 does
- *   not decide.
+ * - Focus: effective focus seconds of the day, compared exactly (pauses never
+ *   count). 0 vs 0 is NEUTRAL / not comparable — the absence of focus never
+ *   counts as a decided category (ADR-075).
  * - Consistency: each side's Daily Standard (`standardMet`, the Progress
  *   rule). MET beats NOT_MET; equal states tie; a NEUTRAL side (no task) makes
  *   the category not comparable.
@@ -26,7 +27,10 @@ export const DUEL_DAYS = 8;
 export type DuelSide = {
   planned: number;
   completed: number;
-  /** The member's Daily Standard (1–100), as it is now (ADR-038). */
+  /**
+   * The member's Daily Standard (1–100) in force on that day: the version of
+   * the day for a closed day, the current one for an open day (ADR-076).
+   */
   standard: number;
   /** Effective focus seconds of the day (settled + the running session). */
   focusSeconds: number;
@@ -70,12 +74,9 @@ export function executionOutcome(me: DuelSide, partner: DuelSide): Outcome {
   return sign(compareRatio(me, partner));
 }
 
-export const focusMinutes = (seconds: number) =>
-  Math.floor(Math.max(0, seconds) / 60);
-
 export function focusOutcome(me: DuelSide, partner: DuelSide): Outcome {
-  const a = focusMinutes(me.focusSeconds);
-  const b = focusMinutes(partner.focusSeconds);
+  const a = Math.max(0, Math.floor(me.focusSeconds));
+  const b = Math.max(0, Math.floor(partner.focusSeconds));
   if (a === 0 && b === 0) return "insufficient";
   return sign(a - b);
 }
@@ -205,6 +206,6 @@ export function categoryValue(key: DuelCategory, side: DuelSide): string {
     return side.planned === 0
       ? t.duel.noTasks
       : t.duel.execution(side.completed, side.planned);
-  if (key === "focus") return t.duel.minutes(focusMinutes(side.focusSeconds));
+  if (key === "focus") return t.duel.focus(side.focusSeconds);
   return t.duel.standard[standardState(side)];
 }

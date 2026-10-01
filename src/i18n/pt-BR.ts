@@ -1458,7 +1458,15 @@ export const t = {
     noTasks: "sem tarefas",
     execution: (done: number, planned: number) =>
       `${done}/${planned} · ${Math.round((100 * done) / planned)}%`,
-    minutes: (n: number) => `${n} min`,
+    /** Effective focus, exact to the second ("25 min 12 s", "40 s", "0 min"). */
+    focus: (seconds: number) => {
+      const s = Math.max(0, Math.floor(seconds));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      if (s === 0) return "0 min";
+      if (m === 0) return `${r} s`;
+      return r ? `${m} min ${r} s` : `${m} min`;
+    },
     standard: {
       met: "bateu",
       not_met: "não bateu",
@@ -1468,8 +1476,8 @@ export const t = {
     rulesTitle: "COMO É DECIDIDO",
     rules: [
       "Execução: tarefas concluídas ÷ planejadas do dia (puladas contam no total). Só vale se os dois tiverem tarefas.",
-      "Foco: minutos de foco efetivo do dia (pausas não contam). 0 a 0 não decide.",
-      "Consistência: cada um contra o próprio Padrão Diário. Bateu vence quem não bateu; os dois iguais é empate; dia sem tarefas não é comparável.",
+      "Foco: segundos de foco efetivo do dia (pausas não contam); vence quem tiver mais. Os dois sem foco não é comparável.",
+      "Consistência: cada um contra o próprio Padrão Diário que valia naquele dia. Bateu vence quem não bateu; os dois iguais é empate; dia sem tarefas não é comparável. Mudar o padrão depois não muda um dia já fechado.",
       "Vence o dia quem ganhar mais categorias. Mesmo número de categorias é empate; nenhuma decidida é sem resultado suficiente.",
       "Ao vivo mostra só quem está na frente. O resultado final sai quando o dia fecha para os dois.",
     ],

@@ -80,25 +80,46 @@ describe("execution — completion ratio, exact", () => {
   });
 });
 
-describe("focus — effective minutes", () => {
-  it("compares whole minutes (what the screen shows)", () => {
-    expect(
-      focusOutcome(side({ focusSeconds: 119 }), side({ focusSeconds: 60 })),
-    ).toBe("tie");
+describe("focus — effective seconds, exact", () => {
+  it("more real focus wins, to the second", () => {
     expect(
       focusOutcome(side({ focusSeconds: 120 }), side({ focusSeconds: 119 })),
     ).toBe("me");
-  });
-  it("one minute against nothing decides", () => {
-    expect(
-      focusOutcome(side({ focusSeconds: 0 }), side({ focusSeconds: 60 })),
-    ).toBe("partner");
-  });
-  it("0 vs 0 (or under a minute each) is insufficient", () => {
-    expect(focusOutcome(side(), side())).toBe("insufficient");
     expect(
       focusOutcome(side({ focusSeconds: 59 }), side({ focusSeconds: 30 })),
-    ).toBe("insufficient");
+    ).toBe("me");
+    expect(
+      focusOutcome(side({ focusSeconds: 1500 }), side({ focusSeconds: 1500 })),
+    ).toBe("tie");
+  });
+  it("any focus against none decides", () => {
+    expect(
+      focusOutcome(side({ focusSeconds: 0 }), side({ focusSeconds: 1 })),
+    ).toBe("partner");
+  });
+  it("0 vs 0 is neutral (not comparable), never a tie", () => {
+    expect(focusOutcome(side(), side())).toBe("insufficient");
+  });
+  it("0 vs 0 focus never counts as a decided category", () => {
+    // Execution tied, Consistency tied, no focus at all: the day is a tie
+    // decided by two categories only — the empty Focus adds nothing.
+    const d = decideDuel(
+      row({ planned: 2, completed: 2 }, { planned: 4, completed: 4 }),
+    );
+    expect(d.categories.map((c) => c.outcome)).toEqual([
+      "tie",
+      "insufficient",
+      "tie",
+    ]);
+    // Execution decided, Consistency tied (both met), focus 0×0 adds nothing:
+    const one = decideDuel(
+      row(
+        { planned: 2, completed: 2 },
+        { planned: 2, completed: 1, standard: 50 },
+      ),
+    );
+    expect(one.categories[1].outcome).toBe("insufficient");
+    expect(one.score).toEqual({ me: 1, partner: 0 });
   });
 });
 
@@ -180,7 +201,7 @@ describe("result of the day", () => {
   it("all categories tied is a tie", () => {
     const d = decideDuel(
       row(
-        { planned: 2, completed: 1, focusSeconds: 60 },
+        { planned: 2, completed: 1, focusSeconds: 90 },
         { planned: 4, completed: 2, focusSeconds: 90 },
       ),
     );
@@ -306,6 +327,112 @@ describe("live numbers", () => {
   });
 });
 
+describe("the Daily Standard of each day (ADR-076)", () => {
+  // The database returns, per row, the standard in force that day (a closed
+  // day keeps its version, an open day uses the current one). The client only
+  // replaces MY side of TODAY with the screen (current standard, live tasks).
+  const T0 = Date.parse("2026-10-01T12:00:00Z");
+  const closed = (date: string, standard: number) =>
+    row(
+      { planned: 5, completed: 4, standard },
+      { planned: 5, completed: 4, standard: 80 },
+      true,
+      date,
+    );
+  const mine = (standard: number) => ({
+    planned: 5,
+    completed: 4,
+    standard,
+    focusSeconds: 0,
+  });
+
+  it("a closed day keeps the version it was decided with", () => {
+    // 4 / 5 = 80 %: met with 80 %, it would not be with 90 %.
+    const [past] = liveDuels(
+      [closed("2026-09-30", 80)],
+      "2026-10-01",
+      mine(90),
+      { me: null, partner: null },
+      T0,
+    );
+    expect(past.me.standard).toBe(80);
+    expect(past.categories[2].outcome).toBe("tie");
+    expect(past.final).toBe(true);
+  });
+  it("a change today applies to today's open duel only", () => {
+    const rows = [
+      row(
+        { planned: 5, completed: 4, standard: 80 },
+        { planned: 5, completed: 4 },
+        false,
+        "2026-10-01",
+      ),
+      closed("2026-09-30", 80),
+    ];
+    const before = liveDuels(
+      rows,
+      "2026-10-01",
+      mine(80),
+      { me: null, partner: null },
+      T0,
+    );
+    const after = liveDuels(
+      rows,
+      "2026-10-01",
+      mine(90),
+      { me: null, partner: null },
+      T0,
+    );
+    expect(before[0].categories[2].outcome).toBe("tie");
+    expect(after[0].me.standard).toBe(90);
+    expect(after[0].categories[2].outcome).toBe("partner");
+    expect(after[1]).toEqual(before[1]);
+  });
+  it("several changes the same day: the latest is live", () => {
+    const rows = [row({}, {}, false, "2026-10-01")];
+    for (const v of [90, 70, 100])
+      expect(
+        liveDuels(
+          rows,
+          "2026-10-01",
+          mine(v),
+          { me: null, partner: null },
+          T0,
+        )[0].me.standard,
+      ).toBe(v);
+  });
+  it("boundaries: only the row equal to today is live (month / year edges)", () => {
+    const rows = [
+      row({}, {}, false, "2027-01-01"),
+      closed("2026-12-31", 80),
+      closed("2026-11-30", 70),
+    ];
+    const out = liveDuels(
+      rows,
+      "2027-01-01",
+      mine(95),
+      { me: null, partner: null },
+      T0,
+    );
+    expect(out.map((d) => d.me.standard)).toEqual([95, 80, 70]);
+    expect(out.map((d) => d.final)).toEqual([false, true, true]);
+  });
+  it("timezone: 'today' is the database's local date, never the device's UTC date", () => {
+    // 2026-10-01T02:00Z is still 2026-09-30 in São Paulo: the database says
+    // today = 2026-09-30, so that row is live and 2026-10-01 does not exist yet.
+    const rows = [row({}, {}, false, "2026-09-30"), closed("2026-09-29", 80)];
+    const out = liveDuels(
+      rows,
+      "2026-09-30",
+      mine(60),
+      { me: null, partner: null },
+      Date.parse("2026-10-01T02:00:00Z"),
+    );
+    expect(out[0].me.standard).toBe(60);
+    expect(out[1].me.standard).toBe(80);
+  });
+});
+
 describe("category values", () => {
   it("shows the numbers that decided it", () => {
     expect(categoryValue("execution", side({ planned: 4, completed: 3 }))).toBe(
@@ -313,6 +440,11 @@ describe("category values", () => {
     );
     expect(categoryValue("execution", side())).toBe("sem tarefas");
     expect(categoryValue("focus", side({ focusSeconds: 1500 }))).toBe("25 min");
+    expect(categoryValue("focus", side({ focusSeconds: 1512 }))).toBe(
+      "25 min 12 s",
+    );
+    expect(categoryValue("focus", side({ focusSeconds: 40 }))).toBe("40 s");
+    expect(categoryValue("focus", side())).toBe("0 min");
     expect(
       categoryValue("consistency", side({ planned: 5, completed: 4 })),
     ).toBe("bateu");
