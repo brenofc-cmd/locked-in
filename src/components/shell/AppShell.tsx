@@ -7,8 +7,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useApp } from "@/components/app-state";
 import {
   FocusIcon,
-  MoreIcon,
   PartnerIcon,
+  PlanIcon,
   ProgressIcon,
   TodayIcon,
 } from "@/components/icons";
@@ -19,41 +19,42 @@ import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
 import { useSession } from "@/components/session";
 import { DevPanel } from "@/components/shell/DevPanel";
 import { Feedback } from "@/components/shell/Feedback";
+import { ProfileMenu } from "@/components/shell/ProfileMenu";
 import { SheetHost } from "@/components/sheets/SheetHost";
-import { Avatar, LogoMark, StatusDot, cx } from "@/components/ui";
+import { LogoMark, StatusDot, cx } from "@/components/ui";
 import { usePartnerView } from "@/components/use-partner-view";
 
-const MAIN_NAV = [
-  { href: "/today", label: t.pageTitles.today },
-  { href: "/partner", label: t.pageTitles.partner },
-  { href: "/focus", label: t.pageTitles.focus },
-  { href: "/progress", label: t.pageTitles.progress },
-];
-
-const SUB_NAV = [
-  { href: "/goals", label: t.pageTitles.goals },
-  { href: "/planner", label: t.pageTitles.planner },
-  { href: "/routine", label: t.pageTitles.routine },
-  { href: "/challenges", label: t.pageTitles.challenges },
-  { href: "/duo", label: t.pageTitles.duo },
-  { href: "/settings", label: t.pageTitles.settings },
-];
+/**
+ * Primary navigation (docs/NAVIGATION.md): five places, the same on the tab
+ * bar and the sidebar. PLANEJAR owns the four planning screens; account
+ * things live in the profile menu, not in a tab.
+ */
+const PLAN_ROUTES = ["/plan", "/planner", "/goals", "/routine", "/challenges"];
 
 const TABS = [
-  { href: "/today", label: t.pageTitles.today.toUpperCase(), Icon: TodayIcon },
-  {
-    href: "/partner",
-    label: t.pageTitles.partner.toUpperCase(),
-    Icon: PartnerIcon,
-  },
-  { href: "/focus", label: t.pageTitles.focus.toUpperCase(), Icon: FocusIcon },
-  {
-    href: "/progress",
-    label: t.pageTitles.progress.toUpperCase(),
-    Icon: ProgressIcon,
-  },
-  { href: "/more", label: t.pageTitles.more.toUpperCase(), Icon: MoreIcon },
+  { href: "/today", label: t.pageTitles.today, Icon: TodayIcon },
+  { href: "/partner", label: t.pageTitles.partner, Icon: PartnerIcon },
+  { href: "/focus", label: t.pageTitles.focus, Icon: FocusIcon },
+  { href: "/plan", label: t.pageTitles.plan, Icon: PlanIcon },
+  { href: "/progress", label: t.pageTitles.progress, Icon: ProgressIcon },
 ];
+
+const PLAN_NAV = [
+  { href: "/planner", label: t.pageTitles.planner },
+  { href: "/goals", label: t.pageTitles.goals },
+  { href: "/routine", label: t.pageTitles.routine },
+  { href: "/challenges", label: t.pageTitles.challenges },
+];
+
+/** "/planner" is not "/plan": match the segment, not the prefix. */
+const under = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
+
+function isActive(pathname: string, href: string) {
+  return href === "/plan"
+    ? PLAN_ROUTES.some((r) => under(pathname, r))
+    : under(pathname, href);
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -70,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden bg-bg desk:flex-row">
       <DesktopSidebar pathname={pathname} />
-      <MobileHeader />
+      <MobileHeader pathname={pathname} />
       <main
         ref={mainRef}
         className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
@@ -91,7 +92,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function DesktopSidebar({ pathname }: { pathname: string }) {
-  const { userName } = useApp();
   return (
     <aside className="hidden w-[228px] shrink-0 flex-col gap-[26px] overflow-y-auto border-r border-white/6 px-3 pt-6 pb-4 desk:flex">
       <Link href="/today" className="flex items-center gap-2.5 px-2.5">
@@ -101,63 +101,61 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
         </span>
       </Link>
       <nav aria-label={t.shell.mainNav} className="flex flex-col gap-0.5">
-        {MAIN_NAV.map((n) => {
-          const on = pathname.startsWith(n.href);
+        {TABS.map((n) => {
+          const on = isActive(pathname, n.href);
+          const here = under(pathname, n.href);
           return (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={on ? "page" : undefined}
-              className={cx(
-                "flex h-[38px] items-center gap-3 rounded-[9px] px-2.5 text-sm hover:text-text",
-                on ? "bg-chip text-text" : "text-muted",
+            <div key={n.href} className="flex flex-col gap-0.5">
+              <Link
+                href={n.href}
+                aria-current={here ? "page" : on ? "true" : undefined}
+                className={cx(
+                  "flex h-[38px] items-center gap-3 rounded-[9px] px-2.5 text-sm hover:text-text",
+                  on ? "bg-chip text-text" : "text-muted",
+                )}
+              >
+                <span className="flex-1">{n.label}</span>
+                <span
+                  aria-hidden="true"
+                  className={cx("size-[5px] rounded-full", on && "bg-accent")}
+                />
+              </Link>
+              {n.href === "/plan" && (
+                <ul
+                  aria-label={t.shell.planNav}
+                  className="m-0 flex list-none flex-col gap-0.5 p-0 pl-3"
+                >
+                  {PLAN_NAV.map((p) => {
+                    const sub = under(pathname, p.href);
+                    return (
+                      <li key={p.href}>
+                        <Link
+                          href={p.href}
+                          aria-current={sub ? "page" : undefined}
+                          className={cx(
+                            "flex h-[32px] items-center rounded-lg px-2.5 text-[13px] hover:text-text",
+                            sub ? "text-text" : "text-dim",
+                          )}
+                        >
+                          {p.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
-            >
-              <span className="flex-1">{n.label}</span>
-              <span
-                aria-hidden="true"
-                className={cx("size-[5px] rounded-full", on && "bg-accent")}
-              />
-            </Link>
+            </div>
           );
         })}
       </nav>
-      <nav aria-label={t.shell.secondaryNav} className="flex flex-col gap-0.5">
-        {SUB_NAV.map((n) => {
-          const on = pathname.startsWith(n.href);
-          return (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={on ? "page" : undefined}
-              className={cx(
-                "flex h-[34px] items-center rounded-lg px-2.5 text-[13px] hover:text-text",
-                on ? "bg-chip text-text" : "text-muted",
-              )}
-            >
-              {n.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="mt-auto flex items-center gap-2.5 border-t border-white/6 px-2.5 pt-3.5">
-        <Avatar
-          initial={userName.charAt(0).toUpperCase()}
-          me
-          className="size-7 text-xs"
-        />
-        <span className="flex flex-col gap-0.5">
-          <span className="text-[13px]">{userName}</span>
-          <span className="font-mono text-[10px] tracking-[.1em] text-dim">
-            {t.shell.duoFooter}
-          </span>
-        </span>
+      <div className="mt-auto border-t border-white/6 pt-3">
+        <ProfileMenu key={pathname} pathname={pathname} variant="sidebar" />
       </div>
     </aside>
   );
 }
 
-function MobileHeader() {
+function MobileHeader({ pathname }: { pathname: string }) {
   const { hasPartner, partner } = useApp();
   const pv = usePartnerView();
   return (
@@ -172,43 +170,44 @@ function MobileHeader() {
           LOCKED IN
         </span>
       </Link>
-      {hasPartner && (
-        <Link
-          href="/partner"
-          aria-label={t.shell.partnerChipAria(
-            partner.name,
-            pv.focusWord.toLowerCase(),
-            pv.pct,
-          )}
-          className="flex h-9 items-center gap-2 rounded-full border border-white/8 px-3 text-[12.5px] text-muted"
-        >
-          <StatusDot live={pv.live} pulse={pv.pulse} />
-          {partner.name}
-          <span className="text-text tabular-nums">{pv.pct}%</span>
-        </Link>
-      )}
+      <div className="flex items-center gap-2.5">
+        {hasPartner && (
+          <Link
+            href="/partner"
+            aria-label={t.shell.partnerChipAria(
+              partner.name,
+              pv.focusWord.toLowerCase(),
+              pv.pct,
+            )}
+            className="flex h-9 items-center gap-2 rounded-full border border-white/8 px-3 text-[12.5px] text-muted"
+          >
+            <StatusDot live={pv.live} pulse={pv.pulse} />
+            {partner.name}
+            <span className="text-text tabular-nums">{pv.pct}%</span>
+          </Link>
+        )}
+        <ProfileMenu key={pathname} pathname={pathname} variant="header" />
+      </div>
     </div>
   );
 }
 
 function BottomNav({ pathname }: { pathname: string }) {
-  const mainTabs = ["/today", "/partner", "/focus", "/progress"];
   return (
     <nav
       aria-label={t.shell.tabsNav}
       className="flex shrink-0 border-t border-white/6 bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] desk:hidden"
     >
       {TABS.map(({ href, label, Icon }) => {
-        const on =
-          href === "/more"
-            ? !mainTabs.some((tab) => pathname.startsWith(tab))
-            : pathname.startsWith(href);
+        const on = isActive(pathname, href);
         const isFocus = href === "/focus";
         return (
           <Link
             key={href}
             href={href}
-            aria-current={on ? "page" : undefined}
+            aria-current={
+              under(pathname, href) ? "page" : on ? "true" : undefined
+            }
             className={cx(
               "flex h-[58px] flex-1 flex-col items-center justify-center gap-[5px] transition-[color,transform] duration-200 active:scale-[.92]",
               on ? "text-text" : "text-quiet",
@@ -234,7 +233,7 @@ function BottomNav({ pathname }: { pathname: string }) {
                 on ? "font-semibold" : "font-medium",
               )}
             >
-              {label}
+              {label.toUpperCase()}
             </span>
           </Link>
         );

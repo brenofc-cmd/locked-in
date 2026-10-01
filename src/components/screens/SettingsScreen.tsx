@@ -2,18 +2,13 @@
 
 import { LOCALE, t } from "@/i18n/pt-BR";
 import Link from "next/link";
-import {
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  useTransition,
-} from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 const noSubscribe = () => () => {};
 import { updateSetting, updateTimezone } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
+import { useInstallPrompt } from "@/components/use-install-prompt";
 import { clearResume } from "@/lib/resume-state";
 import { SwitchTrack, cx } from "@/components/ui";
 import { STANDARD_OPTIONS } from "@/lib/constants";
@@ -297,7 +292,11 @@ function Profile() {
   const dirtyName = name.trim() !== app.userName && name.trim().length > 0;
 
   return (
-    <section aria-labelledby="profile-h" className="flex flex-col gap-4">
+    <section
+      id="conta"
+      aria-labelledby="profile-h"
+      className="flex scroll-mt-6 flex-col gap-4"
+    >
       <h2 id="profile-h" className={heading}>
         {t.settings.profile}
       </h2>
@@ -419,27 +418,14 @@ function BrowserNotifications() {
   );
 }
 
-type InstallEvent = Event & { prompt: () => Promise<void> };
-
 /** Offered only when the browser says the app can be installed. */
 function InstallApp() {
-  const [evt, setEvt] = useState<InstallEvent | null>(null);
-  useEffect(() => {
-    const on = (e: Event) => {
-      e.preventDefault();
-      setEvt(e as InstallEvent);
-    };
-    window.addEventListener("beforeinstallprompt", on);
-    return () => window.removeEventListener("beforeinstallprompt", on);
-  }, []);
-  if (!evt) return null;
+  const install = useInstallPrompt();
+  if (!install) return null;
   return (
     <button
       type="button"
-      onClick={async () => {
-        await evt.prompt();
-        setEvt(null);
-      }}
+      onClick={() => void install()}
       className="flex min-h-[56px] items-center justify-between gap-3 border-y border-white/7 text-left text-[14.5px]"
     >
       <span className="flex flex-col gap-1">

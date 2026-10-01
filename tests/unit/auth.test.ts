@@ -73,6 +73,7 @@ describe("auth routes", () => {
       "/partner",
       "/focus",
       "/progress",
+      "/plan",
       "/more",
       "/routine",
       "/challenges",

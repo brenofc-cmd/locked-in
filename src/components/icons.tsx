@@ -76,18 +76,18 @@ export function ProgressIcon() {
   );
 }
 
-export function MoreIcon() {
+export function PlanIcon() {
   return (
     <svg
       width="22"
       height="22"
       viewBox="0 0 22 22"
       fill="none"
+      style={stroke}
       aria-hidden="true"
     >
-      <circle cx="5" cy="11" r="1.6" fill="currentColor" />
-      <circle cx="11" cy="11" r="1.6" fill="currentColor" />
-      <circle cx="17" cy="11" r="1.6" fill="currentColor" />
+      <rect x="3.5" y="4.5" width="15" height="14" rx="3.5" />
+      <path d="M3.5 9h15M7.5 2.8v3.4M14.5 2.8v3.4" strokeLinecap="round" />
     </svg>
   );
 }

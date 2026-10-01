@@ -71,7 +71,7 @@ historical day opens a sheet, and sheets are never restored.
 - **Route**: only at `/` — typing the bare origin, a bookmark of it, or launching the installed app
   (`manifest.start_url = "/"`). An explicit URL (`/focus`, `/today`, a shared link, a refresh) is
   always honoured. `/` replaces itself in history, so Back never returns to it.
-- **Allowed routes**: `/today`, `/partner`, `/focus`, `/progress`, `/more`, `/routine`,
+- **Allowed routes**: `/today`, `/partner`, `/focus`, `/progress`, `/plan`, `/routine`,
   `/challenges`, `/duo`, `/settings`, exactly (no query string, no hash). Never `/login`,
   `/signup`, `/forgot-password`, `/reset-password`, `/auth/*`, `/onboarding`, `/`, a 404 or any
   other path. Every allowed route is reachable by any signed-in user (screens handle "no duo").
@@ -149,3 +149,10 @@ are replaced by the per-user `locked-in:v2:<userId>:daily` (below) and removed o
   validated (dates only), per user, cleared on sign-out with the rest.
 - The unscoped `li:briefing-shown` / `li:weekly-shown` are removed on first read and never trusted.
 - The morning card is **not** Resume State: it is not a route, never restored once closed.
+
+## Navigation polish (2026-10-01) — `/more` became `/plan`
+
+- `/plan` (PLANEJAR) replaced `/more` in `RESTORABLE_ROUTES` (docs/NAVIGATION.md). A value saved
+  with `lastRoute.path = "/more"` keeps its v1 shape: `parseResume()` maps it to `/plan`
+  (`MOVED_ROUTES`), so reopening the app lands on PLANEJAR; drafts, scroll and choices are kept.
+  `/more` itself still opens (it redirects to `/plan`) but is never remembered again. `v` stays 1.

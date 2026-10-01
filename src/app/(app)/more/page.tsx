@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
-import { t } from "@/i18n/pt-BR";
-import { MoreScreen } from "@/components/screens/MoreScreen";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: t.pageTitles.more };
-
+/**
+ * MAIS left the tab bar (docs/NAVIGATION.md): its planning rows live on
+ * /plan, settings and the duo in the profile menu. Old bookmarks and
+ * installed apps that open /more land on PLANEJAR.
+ */
 export default function Page() {
-  return <MoreScreen />;
+  redirect("/plan");
 }

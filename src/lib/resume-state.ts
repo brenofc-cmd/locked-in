@@ -46,7 +46,7 @@ export const RESTORABLE_ROUTES = [
   "/partner",
   "/focus",
   "/progress",
-  "/more",
+  "/plan",
   "/routine",
   "/challenges",
   "/duo",
@@ -67,6 +67,12 @@ export const SCROLL_ROUTES: readonly string[] = [
 ];
 
 export const FALLBACK_ROUTE = "/today";
+
+/** Routes that moved (docs/NAVIGATION.md): MAIS became PLANEJAR. A value
+ *  saved before keeps its v1 shape and restores the new place. */
+const MOVED_ROUTES: Readonly<Record<string, RestorableRoute>> = {
+  "/more": "/plan",
+};
 
 export type DraftKind = "task" | "routine";
 export type RepeatMode = "daily" | "weekdays" | "custom";
@@ -289,13 +295,17 @@ export function parseResume(raw: unknown, now = Date.now()): ResumeState {
   const out: ResumeState = { v: RESUME_VERSION };
 
   const lr = raw.lastRoute;
+  const path =
+    isRecord(lr) && typeof lr.path === "string"
+      ? (MOVED_ROUTES[lr.path] ?? lr.path)
+      : null;
   if (
     isRecord(lr) &&
-    isRestorableRoute(lr.path) &&
+    isRestorableRoute(path) &&
     isTime(lr.at, now) &&
     now - lr.at <= ROUTE_TTL_MS
   )
-    out.lastRoute = { path: lr.path, at: lr.at };
+    out.lastRoute = { path, at: lr.at };
 
   if (isRecord(raw.progress)) {
     const p: NonNullable<ResumeState["progress"]> = {};

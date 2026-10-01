@@ -122,6 +122,31 @@ describe("resume state: routes", () => {
     expect(restoreTarget(BRENDON, NOW + ROUTE_TTL_MS + 1, s)).toBe("/today");
   });
 
+  it("restores PLANEJAR for a value saved on the old MAIS tab", () => {
+    expect(isRestorableRoute("/plan")).toBe(true);
+    expect(isRestorableRoute("/more")).toBe(false);
+    const old = { v: 1, lastRoute: { path: "/more", at: NOW } };
+    expect(parseResume(old, NOW).lastRoute).toEqual({ path: "/plan", at: NOW });
+    const s = memory();
+    rememberRoute(BRENDON, "/more", NOW, s);
+    expect(restoreTarget(BRENDON, NOW, s)).toBe("/today");
+    rememberRoute(BRENDON, "/plan", NOW, s);
+    expect(restoreTarget(BRENDON, NOW, s)).toBe("/plan");
+  });
+
+  it("keeps the drafts of a value saved on /more", () => {
+    const s = memory();
+    saveDraft(BRENDON, "task", draft(), NOW, s);
+    const key = resumeKey(BRENDON)!;
+    const saved = JSON.parse(s.getItem(key)!);
+    s.setItem(
+      key,
+      JSON.stringify({ ...saved, lastRoute: { path: "/more", at: NOW } }),
+    );
+    expect(restoreTarget(BRENDON, NOW, s)).toBe("/plan");
+    expect(loadDraft(BRENDON, "task", NOW, s)?.name).toBe("Revisar Física");
+  });
+
   it("works without storage (server, blocked storage)", () => {
     expect(restoreTarget(BRENDON, NOW, null)).toBe("/today");
     expect(() => rememberRoute(BRENDON, "/today", NOW, null)).not.toThrow();

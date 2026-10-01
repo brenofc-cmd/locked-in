@@ -71,10 +71,10 @@ export const t = {
     forgotPassword: "Recuperar senha",
     newPassword: "Nova senha",
     today: "Hoje",
-    partner: "Parceiro",
+    partner: "Dupla",
     focus: "Foco",
+    plan: "Planejar",
     progress: "Progresso",
-    more: "Mais",
     routine: "Rotina",
     challenges: "Desafios",
     duo: "Dupla",
@@ -245,6 +245,15 @@ export const t = {
     tabsNav: "Abas",
     duoFooter: "DUPLA LOCKED IN",
     homeAria: "LOCKED IN, Hoje",
+    /** Planner, Metas, Rotina and Desafios under PLANEJAR in the sidebar. */
+    planNav: "Planejamento",
+    profile: "Perfil",
+    profileAria: (name: string) => `Perfil de ${name}`,
+    account: "Conta",
+    settings: "Configurações",
+    duo: "Dupla",
+    install: "Instalar app",
+    signOut: "Sair",
     partnerChipAria: (name: string, status: string, pct: number) =>
       `${name} está ${status}, ${pct}% feito hoje`,
   },
@@ -269,6 +278,11 @@ export const t = {
     live: "AO VIVO",
     seeAll: "Ver tudo",
     reviewToday: "Revisar o dia",
+    /** One line each under the tasks (UI polish 2026-10-01). */
+    duel: "DUELO",
+    duelScore: (me: number, partner: number, name: string) =>
+      `Você ${me} — ${partner} ${name}`,
+    next: "PRÓXIMO",
   },
 
   partnerScreen: {
@@ -724,18 +738,19 @@ export const t = {
     footnote: "Duplas são de duas pessoas. Grupos pequenos virão depois.",
   },
 
-  more: {
-    items: (n: number) => `${n} ${plural(n, "item", "itens")}`,
+  plan: {
+    title: "PLANEJAR",
+    navAria: "Planejamento",
+    next: "PRÓXIMO",
+    noNext: "Nada marcado",
+    goals: "METAS",
+    noGoal: "Defina sua direção",
+    routine: "ROTINA",
+    routineItems: (n: number) =>
+      `${n} ${plural(n, "item ativo", "itens ativos")}`,
+    challenges: "DESAFIOS",
     withPartner: "Com sua dupla",
     needsPartner: "Precisa de uma dupla",
-    invitePartner: "Convidar dupla",
-    duoWith: (name: string) => `Dupla com ${name}`,
-    noPartner: "Sem dupla por enquanto",
-    settingsSub: "Padrão, notificações",
-    plannerSub: "Provas, trabalhos, entregas",
-    goalsSub: "Visão, metas, espelho",
-    title: "MAIS",
-    navAria: "Mais",
   },
 
   challengesScreen: {
