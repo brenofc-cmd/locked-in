@@ -13,11 +13,75 @@ V2 is built in ten phases, each on its own branch, merged to `main` only when VE
 | 4    | North Star + Morning Experience       | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)              |
 | 5    | Goals → Actions → Proof               | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md) |
 | 6    | Duo Accountability 2.0                | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                      |
-| 7    | Daily Duel + Transparent Gamification | PENDING      | Not started                                                                                                                          |
+| 7    | Daily Duel + Transparent Gamification | IN PROGRESS  | Daily duel derived from real actions: Execution / Focus / Consistency, transparent winner, Live vs Final (see below)                 |
 | 8–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                                  |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
 new animations, Web Push, new gamification.
+
+## V2 Phase 7 — Daily Duel + Transparent Gamification (official scope, 2026-10-01)
+
+Goal: one honest daily duel between the two members of a duo, decided only by what LOCKED IN already
+records, with every number and every rule visible. No hype: the duel shows who did more today and
+why — nothing is earned, stored or inflated.
+
+Core loop: **ACTION → DERIVED NUMBERS → CATEGORY → RESULT OF THE DAY**.
+
+Deliverables: daily duel (3 categories) · transparent winner · tie · insufficient state · Live vs
+Final · Today compact card · Partner detailed view (numbers + the rules) · last 7 duels in Progress ·
+realtime without polling · privacy · historical integrity · timezone rules · duo lifecycle.
+
+Rules:
+
+1. **Derived, never stored.** The duel of a day is computed from `daily_tasks` and `focus_sessions`
+   (the same sources as Progress). No duel / score / stats table, no stored winner (ADR-037).
+2. **Execution** = the day's completion ratio `completed / planned` — exactly the Progress
+   definition: skipped stays in the denominator, private tasks count (integers only). Decided only
+   when **both** planned > 0; compared by the exact ratio (cross-multiplication, never the rounded
+   %). The Daily Standard plays no part.
+3. **Focus** = the day's effective focus — exactly the Progress "focus of a day"
+   (`private.focus_seconds`, sessions belong to the local day they started, pauses never count).
+   Compared in **whole minutes** (what the interface shows). Decided when at least one side has
+   ≥ 1 minute; 0 vs 0 is insufficient.
+4. **Consistency** = the day's routine adherence: completed / scheduled **routine occurrences**
+   (`routine_item_id` not null — the recurring tasks Progress already calls habits), skipped stays
+   in the denominator. Decided only when **both** have ≥ 1 routine occurrence; exact ratio.
+5. **Category result**: ME / PARTNER / TIE (equal) / INSUFFICIENT (rule not met). Nothing else.
+6. **Result of the day**: the side that won **more categories** wins (e.g. 2–1, 1–0). Equal category
+   wins with at least one decided category = **TIE** (EMPATE). No decided category =
+   **INSUFFICIENT** (SEM DUELO). No weights, no points, no tiebreaker beyond this.
+7. **Live vs Final.** A duel is **FINAL** only when the day is closed for **both** members
+   (`private.history_locked_through`, Stage 9) and no focus session of that day is still running.
+   Until then it is **LIVE**: it shows the current leader (LIDERANDO / EMPATADO), **never a winner**.
+   A final duel never changes (its sources are frozen — rule 9).
+8. **Timezone.** A duel is a calendar date D. Each member's side is **their own local day D**
+   (`task_date` / `local_date` in their own `profiles.timezone`), like the weekly competition. The
+   list is framed by the viewer's local today; future dates never exist.
+9. **Historical integrity.** A final duel is immutable because its inputs are: closed days cannot
+   be written (`LI_HISTORY_LOCKED`), routines cannot manufacture or suppress past occurrences, focus
+   days are fixed at start, the boundary never moves back on a timezone change. Routines are
+   materialised for both members before every read (as `duo_weeks`). pgTAP proves a final duel does
+   not move under every write path.
+10. **Privacy.** One partner-facing function, member-derived (no user-id parameter), returns
+    **integers / booleans / dates only** — planned, completed, routine planned / completed, focus
+    seconds. No title, note, category, time, goal, commitment, check-in or Top 3. Private tasks and
+    sessions count in the numbers only.
+11. **Duo lifecycle.** A duel exists only for an active, complete duo and only for days on or after
+    the day the duo became complete (in each member's own calendar). Ending the duo removes every
+    duel for both (nothing is stored); a future partner never sees a duel of the old duo; forming
+    again starts from the new date. No duo / waiting for a partner = no duel card.
+12. **Realtime without polling.** My side is live from local state (tasks on screen, my focus
+    clock); the partner's side is re-read through the existing `partnerVersion` (feed / tasks /
+    focus broadcasts, reconnect, tab visible) and the partner's running session is ticked locally
+    from `partner_current_focus()`. No new channel, no client broadcast, no timer that fetches.
+    Private completions reach the partner on the next re-read (same limitation as the competition).
+13. **Interface.** Today: one compact card (DUELO DE HOJE: the 3 categories and the live state).
+    Partner: the detailed duel (each category's numbers for both, the result line and a "como é
+    decidido" block with these rules). Progress: the last 7 duels (D−1 … D−7, since the duo formed),
+    each FINAL / AO VIVO / SEM DUELO. Copy in `src/i18n/pt-BR.ts`; no big animations.
+
+Not in Phase 7: XP, coins, monthly champion, records, milestones, badges, ranking, streak of wins,
+large animations, Web Push, a stored score. Phase 8 is not started.
 
 ## V2 Phase 6 — Duo Accountability 2.0 (official scope, 2026-09-30)
 
