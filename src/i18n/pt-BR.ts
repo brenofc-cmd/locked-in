@@ -1429,6 +1429,57 @@ export const t = {
       `Seu melhor dia ${period} é ${day} (${pct}%).`,
   },
 
+  // V2 Phase 7 — Daily Duel (docs/DUEL.md). Live never says anyone won.
+  duel: {
+    title: "DUELO DE HOJE",
+    aria: "Duelo de hoje",
+    live: "AO VIVO",
+    final: "RESULTADO FINAL",
+    you: "VOCÊ",
+    youAhead: "VOCÊ ESTÁ NA FRENTE",
+    ahead: (name: string) => `${name.toUpperCase()} ESTÁ NA FRENTE`,
+    tie: "EMPATE",
+    insufficient: "SEM RESULTADO SUFICIENTE",
+    youWon: "VOCÊ VENCEU O DIA",
+    won: (name: string) => `${name.toUpperCase()} VENCEU O DIA`,
+    score: (me: number, partner: number) => `${me}–${partner}`,
+    categories: {
+      execution: "EXECUÇÃO",
+      focus: "FOCO",
+      consistency: "CONSISTÊNCIA",
+    },
+    outcome: {
+      me: "VOCÊ",
+      partner: (name: string) => name.toUpperCase(),
+      tie: "EMPATE",
+      insufficient: "NÃO COMPARÁVEL",
+    },
+    noTasks: "sem tarefas",
+    execution: (done: number, planned: number) =>
+      `${done}/${planned} · ${Math.round((100 * done) / planned)}%`,
+    minutes: (n: number) => `${n} min`,
+    standard: {
+      met: "padrão batido",
+      not_met: "padrão não batido",
+      neutral: "sem tarefas",
+    },
+    details: "VER DUELO",
+    rulesTitle: "COMO É DECIDIDO",
+    rules: [
+      "Execução: tarefas concluídas ÷ planejadas do dia (puladas contam no total). Só vale se os dois tiverem tarefas.",
+      "Foco: minutos de foco efetivo do dia (pausas não contam). 0 a 0 não decide.",
+      "Consistência: cada um contra o próprio Padrão Diário. Bateu vence quem não bateu; os dois iguais é empate; dia sem tarefas não é comparável.",
+      "Vence o dia quem ganhar mais categorias. Mesmo número de categorias é empate; nenhuma decidida é sem resultado suficiente.",
+      "Ao vivo mostra só quem está na frente. O resultado final sai quando o dia fecha para os dois.",
+    ],
+    last7: "ÚLTIMOS 7 DUELOS",
+    last7Aria: "Últimos 7 duelos",
+    noHistory:
+      "Os duelos aparecem aqui depois do primeiro dia completo da dupla.",
+    dayAria: (date: string, phase: string, headline: string) =>
+      `${date}: ${phase}, ${headline}`,
+  },
+
   duoErrors: {
     LI_INVALID_CODE:
       "Esse código não corresponde a nenhuma dupla. Confira e tente de novo.",

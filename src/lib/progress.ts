@@ -16,6 +16,7 @@ import {
   weekdayName,
 } from "@/lib/local-date";
 import { t } from "@/i18n/pt-BR";
+import type { DuelRow } from "@/lib/duel";
 
 export type DayStat = {
   day: string;
@@ -67,6 +68,8 @@ export type ProgressData = {
   habits: Habit[];
   weeks: WeekRow[];
   partner: PartnerSummary | null;
+  /** V2 Phase 7: today's duel and the last 7 (docs/DUEL.md). */
+  duels: DuelRow[];
 };
 
 // ---- day ------------------------------------------------------------------

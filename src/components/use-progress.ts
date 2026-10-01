@@ -34,6 +34,12 @@ type Deps = {
   partnerCounts: { done: number; total: number };
   /** Bumped by the realtime provider after each partner refetch. */
   partnerVersion: number;
+  /**
+   * V2 Phase 7: the partner's focus session (id + status, from the existing
+   * `focus` broadcast). A change re-reads the duo part so a finished session
+   * lands in the duel's settled focus — an event, never a timer.
+   */
+  partnerFocusKey: string;
   toast: (t: Omit<Toast, "id">) => void;
 };
 
@@ -43,6 +49,7 @@ export function useProgress({
   focusTodaySeconds,
   partnerCounts,
   partnerVersion,
+  partnerFocusKey,
   toast,
 }: Deps) {
   const [data, setData] = useState(initial);
@@ -54,11 +61,13 @@ export function useProgress({
     if (res?.ok) setData(res.data);
   }, []);
 
-  // Partner changed (event / reconnect): re-read the duo numbers only.
-  const seen = useRef(partnerVersion);
+  // Partner changed (event / reconnect / focus transition): re-read the duo
+  // numbers only.
+  const duoKey = `${partnerVersion}|${partnerFocusKey}`;
+  const seen = useRef(duoKey);
   useEffect(() => {
-    if (seen.current === partnerVersion) return;
-    seen.current = partnerVersion;
+    if (seen.current === duoKey) return;
+    seen.current = duoKey;
     let alive = true;
     void refreshDuoProgress()
       .catch(() => null)
@@ -68,7 +77,7 @@ export function useProgress({
     return () => {
       alive = false;
     };
-  }, [partnerVersion]);
+  }, [duoKey]);
 
   const setStandard = useCallback(
     async (value: number) => {
@@ -146,6 +155,8 @@ export function useProgress({
     partnerStreak,
     /** V2 Phase 6: the partner's Daily Standard (for their day on the hub). */
     partnerStandard: data.partner?.standard ?? null,
+    /** V2 Phase 7: duel rows as last read (made live in app-state). */
+    duelRows: data.duels,
     refreshProgress: refresh,
   };
 }

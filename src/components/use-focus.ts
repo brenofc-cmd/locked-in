@@ -430,6 +430,8 @@ export function useFocus({
     sessions,
     options,
     focusRunning: Boolean(session) && session?.status === "active",
+    /** My unfinished session (its clock is derived, never stored). */
+    activeSession: session,
     clockNow,
     setFocusTask,
     setFocusGoal,

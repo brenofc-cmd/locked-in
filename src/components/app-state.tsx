@@ -30,6 +30,7 @@ import { useSession } from "@/components/session";
 import { useFocus } from "@/components/use-focus";
 import { useProgress } from "@/components/use-progress";
 import { useTasks } from "@/components/use-tasks";
+import { liveDuels } from "@/lib/duel";
 import { partnerStatus } from "@/lib/focus";
 import type { FocusData } from "@/lib/focus-data";
 import {
@@ -440,8 +441,44 @@ function useAppStateValue(
     focusTodaySeconds: fx.focusSeconds,
     partnerCounts,
     partnerVersion: rt.partnerVersion,
+    partnerFocusKey: rt.partnerFocus
+      ? `${rt.partnerFocus.id}:${rt.partnerFocus.status}`
+      : "none",
     toast,
   });
+
+  // ---- daily duel: REAL (V2 Phase 7, src/lib/duel.ts) ----------------------
+  // Rows from duo_duels (re-read with the duo numbers); my today is live from
+  // the screen and running sessions tick from the clock already on screen.
+  const doneToday = tasks.filter((x) => x.done).length;
+  const duels = useMemo(
+    () =>
+      liveDuels(
+        pg.duelRows,
+        real.today,
+        {
+          planned: tasks.length,
+          completed: doneToday,
+          standard: pg.standard,
+          focusSeconds: fx.focusSeconds,
+        },
+        { me: fx.activeSession, partner: rt.partnerFocus },
+        now,
+      ),
+    [
+      pg.duelRows,
+      real.today,
+      tasks.length,
+      doneToday,
+      pg.standard,
+      fx.focusSeconds,
+      fx.activeSession,
+      rt.partnerFocus,
+      now,
+    ],
+  );
+  const todayDuel = duels.find((d) => d.date === real.today) ?? null;
+  const pastDuels = duels.filter((d) => d.date < real.today).slice(0, 7);
 
   // The local day changed (midnight, or back from sleep on a new day): reload
   // so Today, Focus and Progress all start the new day from the database.
@@ -597,6 +634,8 @@ function useAppStateValue(
     partnerTasks,
     partnerCounts,
     partnerStandard: pg.partnerStandard,
+    todayDuel,
+    pastDuels,
     hasPartner,
     reactions,
     react,

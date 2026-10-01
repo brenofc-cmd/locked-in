@@ -1,5 +1,6 @@
 import { t } from "@/i18n/pt-BR";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { loadDuels } from "@/lib/duel-data";
 import { addDays } from "@/lib/local-date";
 import {
   seriesFrom,
@@ -38,13 +39,17 @@ export async function loadHabits(
   }));
 }
 
-/** The duo part (refetched on partner events): weeks + partner's streak. */
+/**
+ * The duo part (refetched on partner events): weeks, the partner's streak
+ * and the daily duels (V2 Phase 7).
+ */
 export async function loadDuoProgress(
   supabase: Client,
-): Promise<Pick<ProgressData, "weeks" | "partner">> {
-  const [weeks, partner] = await Promise.all([
+): Promise<Pick<ProgressData, "weeks" | "partner" | "duels">> {
+  const [weeks, partner, duels] = await Promise.all([
     supabase.rpc("duo_weeks", { p_weeks: HISTORY_WEEKS }),
     supabase.rpc("partner_progress_summary"),
+    loadDuels(supabase),
   ]);
   if (weeks.error || partner.error) throw fail();
   const p = partner.data[0];
@@ -75,6 +80,7 @@ export async function loadDuoProgress(
           standard: p.standard,
         } satisfies PartnerSummary)
       : null,
+    duels,
   };
 }
 

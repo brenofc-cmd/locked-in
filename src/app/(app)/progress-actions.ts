@@ -25,9 +25,9 @@ export async function refreshProgress(): Promise<
   }
 }
 
-/** After a partner event: this week, history and the partner's streak. */
+/** After a partner event: this week, history, the partner's streak, duels. */
 export async function refreshDuoProgress(): Promise<
-  Result<{ data: Pick<ProgressData, "weeks" | "partner"> }>
+  Result<{ data: Pick<ProgressData, "weeks" | "partner" | "duels"> }>
 > {
   try {
     return { ok: true, data: await loadDuoProgress(await createClient()) };
