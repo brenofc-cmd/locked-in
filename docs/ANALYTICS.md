@@ -130,6 +130,13 @@ Derived like everything here (docs/GOAL_PROOF.md): completed linked tasks (1 act
 completed occurrences. Progress shows at most 3 goals with proof in the chosen range
 (`my_goal_proof_summaries`, one call). No stats table, no score, no percentage.
 
+## Daily duel (V2 Phase 7)
+
+Derived from the same sources (docs/DUEL.md): Execution = completion ratio (exact, both need tasks),
+Focus = effective focus of the day in whole minutes, Consistency = each member's Daily Standard
+(`standardMet`: MET / NOT_MET / NEUTRAL). More categories won wins the day. `duo_duels()` is re-read
+with the duo numbers (`loadDuoProgress`). It never changes the weekly competition or head-to-head.
+
 ## Database functions
 
 | Function                          | Security | Returns                                                                                               |

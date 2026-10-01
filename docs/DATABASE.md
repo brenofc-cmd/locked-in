@@ -440,6 +440,8 @@ checked when a routine is hard-deleted, which clients cannot do.
 | `public.my_habits(from, to)`                         | invoker  | `authenticated`                      | recurring tasks' consistency over closed days                    |
 | `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only         |
 | `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                        |
+| `public.duo_duels(p_days)`                           | DEFINER  | `authenticated`                      | daily duel inputs, me and partner, dates / integers / booleans   |
+| `private.duel_side(user, from, to)`                  | invoker  | nobody (only inside `duo_duels`)     | one member's tasks and focus per day for the duel                |
 | `private.materialize_tasks(user)`                    | DEFINER  | `authenticated` (schema not exposed) | materialisation for the caller or the caller's partner only      |
 | `private.day_stats(user, from, to)`                  | invoker  | `authenticated` (schema not exposed) | one row per day; RLS applies to the caller                       |
 | `private.streaks(user)`                              | invoker  | `authenticated` (schema not exposed) | closed-day streak inputs                                         |
@@ -708,6 +710,7 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `goal_link_task_not_found`  | `20260930120815` | `20260930124940` |
 | `duo_accountability`        | `20260930150923` | `20260930164112` |
 | `accountability_fk_indexes` | `20260930153724` | `20260930164122` |
+| `daily_duel`                | `20261001102050` | not applied yet  |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -812,3 +815,14 @@ callable): `commitments_resolve` (`private.resolve_commitment`), `daily_tasks_to
 recipient_date)`, `(to_user, recipient_date)`, `checkins (user_id, local_date, created_at desc)`.
 pgTAP: `supabase/tests/v2_phase6_accountability.test.sql`. DEV-only fixtures:
 `dev_fixture_close_today`, `dev_fixture_reset_accountability` (supabase/dev/test_fixtures.sql).
+
+## V2 Phase 7 functions (migration `20261001102050_daily_duel`)
+
+Daily Duel (docs/DUEL.md, ADR-074…077). No table: the duel is derived. `public.duo_duels(p_days
+integer default 8)` (SECURITY DEFINER, `search_path = ''`, `authenticated` only) returns per local
+day since the duo became complete in both calendars (newest first, 1…31 days): `duel_date`,
+`is_final`, and for me and the partner `planned`, `completed`, `standard`, `focus_seconds` (settled),
+`focus_running`. It materialises routines for both members first. `private.duel_side(uuid, date,
+date)` is the INVOKER helper (no API role may execute it). pgTAP:
+`supabase/tests/v2_phase7_duel.test.sql` (40). DEV-only fixture: `dev_fixture_backdate_duo(days)`
+(supabase/dev/test_fixtures.sql) — the caller's current all-test-user duo "formed days ago".

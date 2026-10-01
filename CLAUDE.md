@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase6), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase7), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -200,6 +200,13 @@ routing changed; run the pgTAP suite when a migration changed.
   check-in limits are triggers, not UI rules; no free text. Commitments / check-ins belong to the
   duo they were made to (`duo_id`, current-duo policies). The partner's rows render through
   `partnerProjection()`. Broadcasts come only from `private.sync_accountability` (ids / status).
+- V2 Phase 7 (docs/DUEL.md, ADR-074…077): the daily duel is derived by `duo_duels()` — never add a
+  duel / score / winner table or store a result. Categories reuse existing rules only (completion
+  ratio, effective focus minutes, `standardMet` for Consistency); decide them in `src/lib/duel.ts`.
+  A live duel never says anyone won (ESTÁ NA FRENTE / EMPATE / SEM RESULTADO SUFICIENTE); VENCEU O
+  DIA only when `is_final`. Running focus ticks from the clock on screen; the partner side re-reads
+  with the duo numbers on events — no polling. No XP, coins, champion, records or badges (later
+  phases).
 - Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
   (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
   never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses

@@ -446,3 +446,27 @@ Status: Accepted.
 Decision: DAR UM TOQUE has no text and is limited by a BEFORE INSERT trigger (never on my own, only ACTIVE on an open day, 1 per commitment every 2 h, at most 3 per recipient-local day to the same partner, advisory lock per pair). Check-ins are append-only rows (latest of the day wins, at most 30 changes per day). `private.sync_accountability` (SECURITY DEFINER, callable by nobody) writes the feed line of a proven commitment and sends `commitment_changed` / `nudge_received` / `checkin_changed` on `duo:<duo_id>` with ids and status only — the 19th function of the reviewed DEFINER set.
 Reason: Limits enforced only in the client are not limits; `realtime.send` and `activity_events` are not writable by users, so broadcasting needs one trusted trigger, following `sync_planner_event` (ADR-057).
 Status: Accepted.
+
+# ADR-074 — The daily duel is derived, never stored; one DEFINER reads both sides
+
+Decision: `public.duo_duels(p_days)` derives each day's duel inputs from `daily_tasks` and `focus_sessions` for both members of the current duo (the partner's private tasks and sessions count, like `duo_weeks`), returning dates, integers and booleans only. There is no duel, score or winner table; categories and the result are decided by `src/lib/duel.ts`. `private.duel_side` is an INVOKER helper no API role can execute. `duo_duels` is the 20th function of the reviewed DEFINER set.
+Reason: The closed-day guards of Stage 9 already freeze every input of a past day, so a derived duel cannot drift from its sources and needs no materialisation (ADR-037). Reading the partner's private rows needs a trusted function, exactly as the weekly competition.
+Status: Accepted.
+
+# ADR-075 — Duel categories reuse existing definitions; more categories won decides the day
+
+Decision: Execution = completion ratio (exact `compareRatio`, both sides need tasks). Focus = effective focus of the day (`private.focus_seconds`) compared in whole minutes, 0–0 undecided. Consistency (official rule, 2026-10-01) = each member's Daily Standard with `standardMet()`: MET beats NOT_MET, equal states tie, a NEUTRAL side is not comparable. The day goes to the side with more categories won; equal counts tie; nothing decided is SEM RESULTADO SUFICIENTE. No weights or points.
+Reason: "No hype. Just proof." — every number in the duel is one the user already sees elsewhere, and the rule fits in five lines on the screen.
+Status: Accepted.
+
+# ADR-076 — Final only when the day is closed for both; live never says "won"
+
+Decision: A duel is FINAL when its date is `<= private.history_locked_through()` for both members and no focus session of that date is still running; otherwise it is LIVE and shows only ESTÁ NA FRENTE / EMPATE / SEM RESULTADO SUFICIENTE. VENCEU O DIA exists only on a final duel. Consistency reads the Daily Standard as it is now: the standard has no history (ADR-038), so a later change of a member's own standard re-reads their past days with it — a documented limitation; Execution and Focus of a final duel never change.
+Reason: Members can live in different time zones and a session can cross midnight; a result shown before both days are closed could flip. Snapshotting the standard would need a new history table, which the approved rule ("reuse exactly the Daily Standard and the existing history") excludes.
+Status: Accepted.
+
+# ADR-077 — The live duel ticks locally; the partner side is re-read on events
+
+Decision: `duo_duels` returns settled focus plus a running flag; the client adds the running session's elapsed time from the clock already on screen (my session, `partner_current_focus()`). My side of today comes from the screen (tasks, focus, standard). The partner's side is re-read with the duo numbers on `partnerVersion` and on the partner's focus transitions (the existing `focus` broadcast). No new channel, broadcast or timer that fetches.
+Reason: Same contract as Progress (my numbers live, the partner's re-read after realtime) and Focus (never send a timer value).
+Status: Accepted.
