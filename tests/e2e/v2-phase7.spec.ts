@@ -292,11 +292,32 @@ test("3: the partner's running focus ticks locally — no request while it runs"
   await expect(a.page.getByTestId("partner-status")).toContainText(/foco/i, {
     timeout: LIVE,
   });
-  await a.page.waitForTimeout(2_000);
+  // The start produces two events (the `focus` broadcast and the feed line),
+  // each answered by one re-read. Wait until that burst has settled: 3 s in
+  // a row without any request (under load the second event can be late).
+  const requests: string[] = [];
+  a.page.on("request", (r) =>
+    requests.push(
+      `${r.method()} ${r.url()} ${r.headers()["next-action"] ?? ""}`.trim(),
+    ),
+  );
+  let quietFrom = Date.now();
+  let seen = requests.length;
+  await expect
+    .poll(
+      () => {
+        if (requests.length !== seen) {
+          seen = requests.length;
+          quietFrom = Date.now();
+        }
+        return Date.now() - quietFrom;
+      },
+      { timeout: 30_000, intervals: [250] },
+    )
+    .toBeGreaterThanOrEqual(3_000);
+  requests.length = 0;
   const before = await seconds();
 
-  const requests: string[] = [];
-  a.page.on("request", (r) => requests.push(`${r.method()} ${r.url()}`));
   // Bruno's seconds advance on screen, from the clock already there.
   await a.page.waitForTimeout(10_000);
   expect(await seconds()).toBeGreaterThanOrEqual(before + 8);
