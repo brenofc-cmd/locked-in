@@ -38,22 +38,28 @@ Rules:
 2. **Execution** = the day's completion ratio `completed / planned` — exactly the Progress
    definition: skipped stays in the denominator, private tasks count (integers only). Decided only
    when **both** planned > 0; compared by the exact ratio (cross-multiplication, never the rounded
-   %). The Daily Standard plays no part.
+   %). The Daily Standard plays no part in Execution.
 3. **Focus** = the day's effective focus — exactly the Progress "focus of a day"
    (`private.focus_seconds`, sessions belong to the local day they started, pauses never count).
    Compared in **whole minutes** (what the interface shows). Decided when at least one side has
    ≥ 1 minute; 0 vs 0 is insufficient.
-4. **Consistency** = the day's routine adherence: completed / scheduled **routine occurrences**
-   (`routine_item_id` not null — the recurring tasks Progress already calls habits), skipped stays
-   in the denominator. Decided only when **both** have ≥ 1 routine occurrence; exact ratio.
-5. **Category result**: ME / PARTNER / TIE (equal) / INSUFFICIENT (rule not met). Nothing else.
+4. **Consistency** (official rule, 2026-10-01) = each member's **existing Daily Standard** for the
+   day — no new formula: MET / NOT_MET / NEUTRAL exactly as Progress (`standardMet()` /
+   `private.standard_met`: `planned > 0 and completed·100 ≥ standard·planned`; NEUTRAL =
+   `planned = 0`), each with their own `daily_standard_percent`. A MET vs B NOT_MET → A wins;
+   A NOT_MET vs B MET → B wins; both MET → TIE; both NOT_MET → TIE; either side NEUTRAL (or both)
+   → NOT COMPARABLE. The standard has no history (ADR-038): it is read as it is now.
+5. **Category result**: ME / PARTNER / TIE / INSUFFICIENT (not comparable). Nothing else.
 6. **Result of the day**: the side that won **more categories** wins (e.g. 2–1, 1–0). Equal category
-   wins with at least one decided category = **TIE** (EMPATE). No decided category =
-   **INSUFFICIENT** (SEM DUELO). No weights, no points, no tiebreaker beyond this.
+   wins with at least one decided category = **TIE** (EMPATE). No decided category (all
+   insufficient) = **INSUFFICIENT** (SEM RESULTADO SUFICIENTE). No weights, no points, no
+   tiebreaker beyond this.
 7. **Live vs Final.** A duel is **FINAL** only when the day is closed for **both** members
    (`private.history_locked_through`, Stage 9) and no focus session of that day is still running.
-   Until then it is **LIVE**: it shows the current leader (LIDERANDO / EMPATADO), **never a winner**.
-   A final duel never changes (its sources are frozen — rule 9).
+   Until then it is **LIVE** and never says anyone won: **ESTÁ NA FRENTE** / **EMPATE** / **SEM
+   RESULTADO SUFICIENTE**. Only a final duel shows **RESULTADO FINAL** with **VENCEU O DIA** /
+   **EMPATE** (or SEM RESULTADO SUFICIENTE). Execution and Focus of a final duel never change (their
+   sources are frozen — rule 9).
 8. **Timezone.** A duel is a calendar date D. Each member's side is **their own local day D**
    (`task_date` / `local_date` in their own `profiles.timezone`), like the weekly competition. The
    list is framed by the viewer's local today; future dates never exist.
@@ -61,10 +67,12 @@ Rules:
    be written (`LI_HISTORY_LOCKED`), routines cannot manufacture or suppress past occurrences, focus
    days are fixed at start, the boundary never moves back on a timezone change. Routines are
    materialised for both members before every read (as `duo_weeks`). pgTAP proves a final duel does
-   not move under every write path.
+   not move under every write path. Consistency reuses the Daily Standard as it is (no standard
+   history, ADR-038): a later change of a member's own standard re-reads their past days with it, as
+   the streak does — recorded as a known limitation (ADR-076).
 10. **Privacy.** One partner-facing function, member-derived (no user-id parameter), returns
-    **integers / booleans / dates only** — planned, completed, routine planned / completed, focus
-    seconds. No title, note, category, time, goal, commitment, check-in or Top 3. Private tasks and
+    **integers / booleans / dates only** — planned, completed, the Daily Standard, focus seconds
+    and a running flag. No title, note, category, time, goal, commitment, check-in or Top 3. Private tasks and
     sessions count in the numbers only.
 11. **Duo lifecycle.** A duel exists only for an active, complete duo and only for days on or after
     the day the duo became complete (in each member's own calendar). Ending the duo removes every
@@ -78,7 +86,7 @@ Rules:
 13. **Interface.** Today: one compact card (DUELO DE HOJE: the 3 categories and the live state).
     Partner: the detailed duel (each category's numbers for both, the result line and a "como é
     decidido" block with these rules). Progress: the last 7 duels (D−1 … D−7, since the duo formed),
-    each FINAL / AO VIVO / SEM DUELO. Copy in `src/i18n/pt-BR.ts`; no big animations.
+    each RESULTADO FINAL / AO VIVO / SEM RESULTADO SUFICIENTE. Copy in `src/i18n/pt-BR.ts`; no big animations.
 
 Not in Phase 7: XP, coins, monthly champion, records, milestones, badges, ranking, streak of wins,
 large animations, Web Push, a stored score. Phase 8 is not started.
