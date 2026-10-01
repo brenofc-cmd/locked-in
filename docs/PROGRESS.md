@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 6 — Duo Accountability 2.0 — VERIFIED (2026-09-30); production deploy VERIFIED; next: Phase 7 (not started)
+LOCKED IN V2 — Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01); production NOT applied (awaiting authorization); Phase 6 in production
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -13,6 +13,70 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ## Known issues (open)
 
 - None.
+
+## Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01)
+
+Scope: docs/ROADMAP.md → "V2 Phase 7" (official consistency rule and live / final wording approved
+2026-10-01), docs/DUEL.md, ADR-074…077. Branch `v2-phase-7-daily-duel` (from `main` at `336d73b`).
+**Production: not applied** (the migration `daily_duel` exists only on DEV).
+
+Done:
+
+- **Derived duel** (`public.duo_duels(p_days)`, the 20th reviewed DEFINER; `private.duel_side`
+  INVOKER, callable by no API role): per local day since the duo became complete in both calendars,
+  both members' planned / completed, Daily Standard, settled effective focus + running flag, and
+  `is_final`. Dates / integers / booleans only. No table, no stored score.
+- **Categories** (`src/lib/duel.ts`, pure): Execution (exact completion ratio, both need tasks),
+  Focus (effective whole minutes, 0–0 undecided), Consistency (official rule: each side's existing
+  Daily Standard via `standardMet` — MET beats NOT_MET, equal states tie, NEUTRAL not comparable).
+  More categories won wins; equal = EMPATE; nothing decided = SEM RESULTADO SUFICIENTE.
+- **Live vs Final**: final only when the day is closed for both (`history_locked_through`) and no
+  session of that day runs. Live never says anyone won (ESTÁ NA FRENTE / EMPATE / SEM RESULTADO
+  SUFICIENTE); RESULTADO FINAL + VENCEU O DIA / EMPATE only on a final duel.
+- **Timezone**: each side is its member's own local day; the list is framed by the viewer's today;
+  a day the partner has not reached is an empty side.
+- **Screens**: Today DUELO DE HOJE (compact, → `/partner#duel`); Partner detailed duel (each
+  category's value for both, its outcome, COMO É DECIDIDO); Progress ÚLTIMOS 7 DUELOS. A
+  not-comparable category shows "—" (read as "não comparável").
+- **Realtime without polling**: my today live from the screen; the duel re-reads with the duo
+  numbers on `partnerVersion` and on the partner's focus transitions; running sessions tick from
+  the clock already on screen (e2e: 0 requests while the partner's minute advanced).
+- **Duo lifecycle**: no duo / waiting = no duel; ending the duo removes every duel; a new partner
+  starts from the new duo's first day.
+- Separate commit `a23d2d3`: `loadDays()` validated dates with `/^d{4}-d{2}-d{2}$/` (no
+  backslashes), so a calendar month before the loaded series never loaded — fixed, with a regression
+  test (a past month outside the series is read; malformed dates never reach the database).
+- Not done (out of scope): XP, coins, monthly champion, records, milestones, badges, ranking, large
+  animations, Web Push, stored score. Phase 8 not started.
+
+Found and fixed during the gates:
+
+- E2E premises that assumed no focus on the shared users' days (earlier suites record real focus
+  the same day): the spec now derives every expected headline / score from `duo_duels` with the
+  same rules (`decideDuel`) and asserts focus-independent categories directly.
+- Progress shows its "no data yet" state for a user without any task (pre-existing); the lifecycle
+  test gives Alice a task before opening Progress.
+- "padrão não batido" / "NÃO COMPARÁVEL" wrapped / truncated at 390 px → "bateu / não bateu" and "—".
+
+Known limitation (ADR-076): Consistency reads each member's Daily Standard as it is now (V1 keeps no
+standard history, ADR-038); a later change of one's own standard re-reads past days, like the
+streak. Execution and Focus of a final duel never change (pgTAP).
+
+Gates (DEV, final):
+
+- lint ✓ · typecheck ✓ · format ✓ · `npm audit` 0 vulnerabilities · unit **311/311** (284 + 6
+  `progress-history` + 21 `duel`) · build ✓
+- pgTAP full suite **843/843** on DEV (stage3 51 · stage4 72 · stage5 40 · stage6 63 · stage7 78 ·
+  stage8 84 · stage9 69 (DEFINER set now 20) · v2_phase2 63 · v2_phase3 61 · v2_phase4 57 ·
+  v2_phase5 66 · v2_phase6 99 · **v2_phase7 40**); DEV left with no test user, no pgtap.
+- E2E full suite in one clean run: **141 passed, 1 skipped, 0 failed** (142, 14.3 min,
+  `--workers=1`). The skip is the opt-in Phase 5 screenshot capture (`LI_SHOTS`); `v2-phase7`: 6/6.
+- Advisors (DEV): new 0029 entries only `duo_duels` (accepted, ADR-074) and the DEV-only
+  `dev_fixture_backdate_duo`; performance findings unchanged (no new table).
+- DEV-only fixture `dev_fixture_backdate_duo` applied to DEV (supabase/dev/test_fixtures.sql).
+
+Pending (needs explicit authorization): apply `daily_duel` to PROD (`xhjczzhmbulaiebpsktl`), PROD
+validation / pgTAP, merge to `main`, deploy, smoke; the live two-person check.
 
 ## Phase 6 — Duo Accountability 2.0 — VERIFIED (2026-09-30)
 
