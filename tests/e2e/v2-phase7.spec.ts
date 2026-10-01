@@ -155,10 +155,15 @@ test.beforeAll(async () => {
   await fixture(A, "dev_fixture_backdate_duo", { p_days: 3 });
   T = (await A.rpc("my_today")).data as string;
   // T-1: Alice 2 / 2, Bruno 1 / 2 → Alice 2–0 (execution + consistency).
+  // T-2: Alice 3 / 4 (75 %: met or not depending on the standard of that day).
   // T-3: only Bruno has a task → nothing comparable.
   await addTasksOn(A, [
     { task_date: addDays(T, -1), title: "Ontem 1", status: "completed" },
     { task_date: addDays(T, -1), title: "Ontem 2", status: "completed" },
+    { task_date: addDays(T, -2), title: "Anteontem 1", status: "completed" },
+    { task_date: addDays(T, -2), title: "Anteontem 2", status: "completed" },
+    { task_date: addDays(T, -2), title: "Anteontem 3", status: "completed" },
+    { task_date: addDays(T, -2), title: "Anteontem 4" },
   ]);
   await addTasksOn(B, [
     { task_date: addDays(T, -1), title: "Ontem B1", status: "completed" },
@@ -269,10 +274,15 @@ test("3: the partner's running focus ticks locally — no request while it runs"
   const a = await open(browser, users.a, "/partner#duel");
   const focusRow = detail(a.page).getByTestId("duel-row-focus");
   await expect(focusRow).toBeVisible();
-  // Bruno's minutes are the second cell (earlier runs may have focus today).
+  // Bruno's focus is the second cell ("25 min 12 s"; earlier runs may have
+  // focus today), exact to the second.
   const partnerCell = focusRow.getByRole("cell").nth(1);
-  const minutes = async () =>
-    Number((await partnerCell.textContent())!.replace(/\D/g, ""));
+  const seconds = async () => {
+    const text = (await partnerCell.textContent()) ?? "";
+    const m = Number(/(\d+) min/.exec(text)?.[1] ?? 0);
+    const s = Number(/(\d+) s/.exec(text)?.[1] ?? 0);
+    return m * 60 + s;
+  };
 
   const started = await B.rpc("start_focus_session", {
     p_title: "Bloco",
@@ -283,22 +293,21 @@ test("3: the partner's running focus ticks locally — no request while it runs"
     timeout: LIVE,
   });
   await a.page.waitForTimeout(2_000);
-  const before = await minutes();
+  const before = await seconds();
 
   const requests: string[] = [];
   a.page.on("request", (r) => requests.push(`${r.method()} ${r.url()}`));
-  // Past the next whole minute of Bruno's session, locally.
-  await expect
-    .poll(minutes, { timeout: 75_000, intervals: [1_000] })
-    .toBeGreaterThan(before);
+  // Bruno's seconds advance on screen, from the clock already there.
+  await a.page.waitForTimeout(10_000);
+  expect(await seconds()).toBeGreaterThanOrEqual(before + 8);
   expect(requests).toEqual([]);
   await expectToday(a.page, detail(a.page));
 
-  // The session ends: the duel re-reads once (event) and keeps the minute.
-  const running = await minutes();
+  // The session ends: the duel re-reads once (event) and keeps the time.
+  const running = await seconds();
   await finishFocus(B);
   await a.page.waitForTimeout(3_000);
-  expect(await minutes()).toBeGreaterThanOrEqual(running);
+  expect(await seconds()).toBeGreaterThanOrEqual(running);
   await expectToday(a.page, detail(a.page));
   expect(a.errors).toEqual([]);
   await a.context.close();
@@ -335,6 +344,55 @@ test("4: Progress lists the last duels — final results, the same from both sid
   );
   expect(b.errors).toEqual([]);
   await b.context.close();
+});
+
+test("4b: changing the Daily Standard never moves a FINAL duel; today uses the new one", async ({
+  browser,
+}) => {
+  const aId = (await A.auth.getUser()).data.user!.id;
+  const setStandard = async (v: number) => {
+    const { error } = await A.from("profiles")
+      .update({ daily_standard_percent: v })
+      .eq("id", aId);
+    expect(error).toBeNull();
+  };
+  const { data: profile } = await A.from("profiles")
+    .select("daily_standard_percent")
+    .eq("id", aId)
+    .single();
+  const original = profile!.daily_standard_percent;
+
+  // 1. FINAL duels decided with the standard X of their day.
+  const before = (await rowsOf(A)).filter((r) => r.date < T);
+  const t2 = before.find((r) => r.date === addDays(T, -2))!;
+  expect(t2.isFinal).toBe(true);
+  const x = t2.me.standard;
+  // 3 / 4 = 75 %: choose Y so that the same day would flip if re-read.
+  const y = 3 * 100 >= x * 4 ? 90 : 70;
+  const a = await open(browser, users.a, "/progress");
+  const rows = a.page.getByTestId("duel-history-row");
+  await expect(rows).toHaveCount(3);
+  const texts = await rows.allTextContents();
+
+  // 2. Alice changes her standard to Y.
+  await setStandard(y);
+
+  // 3–4. The historical duels: same numbers, same Consistency, score, winner.
+  const after = (await rowsOf(A)).filter((r) => r.date < T);
+  expect(after).toEqual(before);
+  for (const [i, r] of before.entries()) {
+    expect(decideDuel(after[i])).toEqual(decideDuel(r));
+  }
+  await a.page.reload();
+  await expect(rows).toHaveCount(3);
+  expect(await rows.allTextContents()).toEqual(texts);
+
+  // 5. Today (open) uses Y.
+  const today = (await rowsOf(A)).find((r) => r.date === T)!;
+  expect(today.me.standard).toBe(y);
+  expect(a.errors).toEqual([]);
+  await a.context.close();
+  await setStandard(original);
 });
 
 test("5: the day is final only once it closes for both members", async () => {
