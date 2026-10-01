@@ -7,6 +7,7 @@
  * public title, status, generic proof kind and proof time.
  */
 import { t } from "@/i18n/pt-BR";
+import { useId, useState } from "react";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { ReactButton, ReceivedReaction } from "@/components/today/Reactions";
@@ -147,7 +148,7 @@ export function CheckinPicker() {
             disabled={accountability.busy.includes("checkin")}
             onClick={() => current !== s && void accountability.checkin(s)}
             className={cx(
-              "min-h-[46px] rounded-xl border px-1.5 font-mono text-[10.5px] leading-tight tracking-[.12em]",
+              "min-h-11 rounded-xl border px-1.5 font-mono text-[10.5px] leading-tight tracking-[.12em]",
               chipTone(current === s),
             )}
           >
@@ -296,6 +297,14 @@ function CommitmentItem({ c, mine }: { c: Commitment; mine: boolean }) {
   );
 }
 
+/** Open commitments first; the database order otherwise (stable sort). */
+const activeFirst = (list: Commitment[]) =>
+  [...list].sort(
+    (a, b) =>
+      Number(partnerProjection(b).status === "active") -
+      Number(partnerProjection(a).status === "active"),
+  );
+
 /** COMPROMISSOS: the partner's commitments of their day and mine of mine. */
 export function CommitmentsSection() {
   const app = useApp();
@@ -333,7 +342,7 @@ export function CommitmentsSection() {
           </span>
         )}
         {acc.loaded &&
-          acc.theirs.map((c) => (
+          activeFirst(acc.theirs).map((c) => (
             <CommitmentItem key={c.id} c={c} mine={false} />
           ))}
         {acc.loaded && acc.theirs.length === 0 && (
@@ -353,7 +362,9 @@ export function CommitmentsSection() {
           }
         />
         {acc.loaded &&
-          acc.mine.map((c) => <CommitmentItem key={c.id} c={c} mine />)}
+          activeFirst(acc.mine).map((c) => (
+            <CommitmentItem key={c.id} c={c} mine />
+          ))}
         {acc.loaded && mineCount === 0 && (
           <span className="py-3.5 text-[13.5px] text-dim">{A.noneMine}</span>
         )}
@@ -371,49 +382,77 @@ export function CommitmentsSection() {
   );
 }
 
-/** HISTÓRICO · 14 DIAS: final results of closed days (both of us). */
+/**
+ * HISTÓRICO · 14 DIAS: final results of closed days (both of us). Closed by
+ * default (docs/NAVIGATION.md): today's commitments come first on DUPLA.
+ */
 export function CommitmentHistory() {
   const app = useApp();
   const { me } = useSession();
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
   const days = app.accountability.history;
   return (
     <section aria-label={A.historyAria} className="flex flex-col">
-      <SectionHeader as="h2" label={A.history} />
-      {days.map((d) => (
-        <div
-          key={d.date}
-          className="flex flex-col border-b border-white/5 py-2.5"
+      <h2 className="m-0">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((o) => !o)}
+          className="flex min-h-11 w-full items-center justify-between border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.2em]"
         >
-          <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
-            {dateLabel(d.date)}
+          {A.history}
+          <span
+            aria-hidden="true"
+            className={cx(
+              "text-faint transition-transform duration-200",
+              open && "rotate-90",
+            )}
+          >
+            ›
           </span>
-          {d.items.map((c) => {
-            const view = partnerProjection(c);
-            return (
-              <div
-                key={c.id}
-                data-testid="history-commitment"
-                data-status={view.status}
-                className="flex min-h-10 items-center gap-3"
-              >
-                <StatusMark status={view.status} />
-                <span className="w-14 shrink-0 text-[12.5px] text-dim">
-                  {c.ownerId === me.id
-                    ? A.who.me
-                    : A.who.partner(app.partner.name)}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[13.5px]">
-                  {view.title}
-                </span>
-                <StatusWord c={view} />
-              </div>
-            );
-          })}
-        </div>
-      ))}
-      {days.length === 0 && (
-        <span className="py-3.5 text-[13.5px] text-dim">{A.historyEmpty}</span>
-      )}
+        </button>
+      </h2>
+      <div id={panelId} hidden={!open} className="flex flex-col">
+        {days.map((d) => (
+          <div
+            key={d.date}
+            className="flex flex-col border-b border-white/5 py-2.5"
+          >
+            <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+              {dateLabel(d.date)}
+            </span>
+            {d.items.map((c) => {
+              const view = partnerProjection(c);
+              return (
+                <div
+                  key={c.id}
+                  data-testid="history-commitment"
+                  data-status={view.status}
+                  className="flex min-h-10 items-center gap-3"
+                >
+                  <StatusMark status={view.status} />
+                  <span className="w-14 shrink-0 text-[12.5px] text-dim">
+                    {c.ownerId === me.id
+                      ? A.who.me
+                      : A.who.partner(app.partner.name)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[13.5px]">
+                    {view.title}
+                  </span>
+                  <StatusWord c={view} />
+                </div>
+              );
+            })}
+          </div>
+        ))}
+        {days.length === 0 && (
+          <span className="py-3.5 text-[13.5px] text-dim">
+            {A.historyEmpty}
+          </span>
+        )}
+      </div>
     </section>
   );
 }

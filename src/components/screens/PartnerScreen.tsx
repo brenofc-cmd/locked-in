@@ -73,41 +73,42 @@ export function PartnerScreen() {
 
   return (
     <div className="flex flex-col gap-8 animate-[li-fade-up_.4s_ease] desk:gap-12">
-      <header className="flex items-center gap-4">
-        <Avatar
-          initial={partner.initial}
-          className="relative size-[52px] text-[19px] transition-shadow duration-700"
-          style={{
-            boxShadow: pv.flashing
-              ? "0 0 0 1px color-mix(in oklab,var(--color-accent) 50%,transparent),0 0 40px color-mix(in oklab,var(--color-accent) 8%,transparent)"
-              : undefined,
-          }}
-        />
-        <span className="flex min-w-0 flex-col gap-1.5">
-          <h1 className="m-0 text-[25px] leading-none font-semibold tracking-[.02em] max-[384px]:text-[23px] desk:text-[38px]">
-            {partner.name.toUpperCase()}
-          </h1>
-          <span className="flex items-center gap-2 text-[13.5px] text-muted">
-            <StatusDot live={pv.live} pulse={pv.pulse} />
-            <span className="truncate" data-testid="partner-status">
-              {pv.statusLine}
+      {/* DUPLA (docs/NAVIGATION.md): the person and their day in one block,
+          then the duel, commitments, check-in, activity, week, history. */}
+      <header className="flex flex-col gap-3.5">
+        <div className="flex items-center gap-4">
+          <Avatar
+            initial={partner.initial}
+            className="relative size-[48px] text-[18px] transition-shadow duration-700"
+            style={{
+              boxShadow: pv.flashing
+                ? "0 0 0 1px color-mix(in oklab,var(--color-accent) 50%,transparent),0 0 40px color-mix(in oklab,var(--color-accent) 8%,transparent)"
+                : undefined,
+            }}
+          />
+          <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <h1 className="m-0 truncate text-[25px] leading-none font-semibold tracking-[.02em] max-[384px]:text-[23px] desk:text-[38px]">
+              {partner.name.toUpperCase()}
+            </h1>
+            <span className="flex items-center gap-2 text-[13.5px] text-muted">
+              <StatusDot live={pv.live} pulse={pv.pulse} />
+              <span className="truncate" data-testid="partner-status">
+                {pv.statusLine}
+              </span>
             </span>
           </span>
-          <PartnerCheckinLine />
-        </span>
-      </header>
-
-      <div className="flex flex-col gap-3">
-        <span className="font-mono text-[11px] tracking-[.16em] text-dim">
-          {t.partnerScreen.today}
-        </span>
-        <div className="flex items-end justify-between gap-4">
-          <span className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] tabular-nums desk:text-[84px] wide:text-[112px]">
-            {pv.pct}
-            <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
-          </span>
-          <span className="pb-0.5 text-[15px] text-muted tabular-nums">
-            {t.partnerScreen.doneCount(pv.done, pv.total)}
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <span
+              data-testid="partner-pct"
+              className="text-[34px] leading-none font-medium tracking-[-0.04em] tabular-nums desk:text-[44px]"
+            >
+              <span className="sr-only">{t.partnerScreen.today} </span>
+              {pv.pct}
+              <span className="text-[16px] text-quiet desk:text-[20px]">%</span>
+            </span>
+            <span className="text-[12.5px] text-muted tabular-nums">
+              {t.partnerScreen.doneCount(pv.done, pv.total)}
+            </span>
           </span>
         </div>
         <ProgressBar
@@ -116,8 +117,11 @@ export function PartnerScreen() {
           tone="text"
           className="overflow-hidden"
         />
-        <PartnerDayLine />
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <PartnerCheckinLine />
+          <PartnerDayLine />
+        </div>
+      </header>
 
       <DuelDetailed />
       <CommitmentsSection />
