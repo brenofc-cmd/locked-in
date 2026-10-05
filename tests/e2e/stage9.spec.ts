@@ -750,7 +750,9 @@ test("HTTP hardening: headers, private routes and redirects", async ({
     await page.getByPlaceholder("E-mail").fill(users.c.email());
     await page.getByPlaceholder("Senha").fill(process.env.E2E_PASSWORD!);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/today$/);
+    // Same wait as signInUI(): remote DEV Auth can take several seconds under
+    // a full run (seen stuck on "Entrando…" past 5 s, still on /login).
+    await expect(page).toHaveURL(/\/today$/, { timeout: 20_000 });
     expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
     await context.close();
   }
