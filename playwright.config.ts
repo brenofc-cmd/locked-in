@@ -214,6 +214,14 @@ export default defineConfig({
       dependencies: ["ia-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 9 — celebrations, non-negotiables, weekly planning, reviews
+    // (Alice / Bruno / Carla), after the Phase 8 suite.
+    {
+      name: "v2p9-390",
+      testMatch: /v2-phase9\.spec\.ts/,
+      dependencies: ["v2p8-390"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
