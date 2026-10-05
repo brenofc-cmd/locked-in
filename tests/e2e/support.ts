@@ -134,15 +134,17 @@ export async function resetTasks(api: Api) {
   await fixture(api, "dev_fixture_reset_history");
   const { data: me } = await api.auth.getUser();
   const id = me.user!.id;
+  const today = (await api.rpc("my_today")).data!;
+  // Filter in the database: archived rows accumulate (docs/DATABASE.md) and a
+  // response is capped at 1000 rows, so an unfiltered read missed active ones.
   const active = await api
     .from("routine_items")
-    .select("id, end_date")
-    .eq("owner_id", id);
-  const today = (await api.rpc("my_today")).data!;
-  for (const r of active.data ?? []) {
-    if (r.end_date === null || r.end_date >= today) {
-      await api.rpc("archive_routine_item", { p_id: r.id });
-    }
+    .select("id")
+    .eq("owner_id", id)
+    .or(`end_date.is.null,end_date.gte.${today}`);
+  if (active.error) throw new Error(active.error.message);
+  for (const r of active.data) {
+    await api.rpc("archive_routine_item", { p_id: r.id });
   }
   await fixture(api, "dev_fixture_reset_history");
 }
