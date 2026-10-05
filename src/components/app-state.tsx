@@ -31,6 +31,8 @@ import { useFocus } from "@/components/use-focus";
 import { useProgress } from "@/components/use-progress";
 import { useTasks } from "@/components/use-tasks";
 import { liveDuels } from "@/lib/duel";
+import { buildMonths } from "@/lib/monthly";
+import { milestones } from "@/lib/records";
 import { partnerStatus } from "@/lib/focus";
 import type { FocusData } from "@/lib/focus-data";
 import {
@@ -444,6 +446,7 @@ function useAppStateValue(
     partnerFocusKey: rt.partnerFocus
       ? `${rt.partnerFocus.id}:${rt.partnerFocus.status}`
       : "none",
+    ownFocusKey: String(fx.sessions.length),
     toast,
   });
 
@@ -479,6 +482,20 @@ function useAppStateValue(
   );
   const todayDuel = duels.find((d) => d.date === real.today) ?? null;
   const pastDuels = duels.filter((d) => d.date < real.today).slice(0, 7);
+
+  // ---- monthly champion, records, milestones (V2 Phase 8) ------------------
+  // Months are decided from FINAL days only (src/lib/monthly.ts), so nothing
+  // here ticks; they move when the duo numbers are re-read.
+  const months = useMemo(() => buildMonths(pg.monthRows), [pg.monthRows]);
+  const allMilestones = useMemo(
+    () =>
+      milestones({
+        longestStreak: pg.longestStreak,
+        totalFocusSeconds: pg.records.totalFocusSeconds,
+        totalPerfectDays: pg.records.totalPerfectDays,
+      }),
+    [pg.longestStreak, pg.records],
+  );
 
   // The local day changed (midnight, or back from sleep on a new day): reload
   // so Today, Focus and Progress all start the new day from the database.
@@ -636,6 +653,9 @@ function useAppStateValue(
     partnerStandard: pg.partnerStandard,
     todayDuel,
     pastDuels,
+    months,
+    records: pg.records,
+    milestones: allMilestones,
     hasPartner,
     reactions,
     react,

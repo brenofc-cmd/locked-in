@@ -8,6 +8,11 @@ import { loadGoalProgress } from "@/app/(app)/proof-actions";
 import { summaryParts, topGoals, type ProofSummary } from "@/lib/goal-proof";
 import { useSession } from "@/components/session";
 import { DuelHistory } from "@/components/duel/Duel";
+import { MonthSummary } from "@/components/monthly/Monthly";
+import {
+  MilestonesSection,
+  RecordsSection,
+} from "@/components/monthly/Records";
 import { useApp } from "@/components/app-state";
 import { useResumeValue } from "@/components/resume/use-resume";
 import { cx } from "@/components/ui";
@@ -129,8 +134,9 @@ export function ProgressScreen() {
         </div>
       </header>
 
-      {/* Results first (docs/NAVIGATION.md): VISÃO GERAL → METAS → DUELOS →
-          HISTÓRICO. The overview fits the first viewport. */}
+      {/* Results first (docs/NAVIGATION.md): VISÃO GERAL → METAS → DUELOS
+          (month, last 7) → RECORDES / MARCOS → HISTÓRICO. The overview fits
+          the first viewport. */}
       <section
         aria-labelledby="progress-overview"
         className="flex flex-col gap-[22px]"
@@ -188,7 +194,10 @@ export function ProgressScreen() {
       </section>
 
       <GoalProgress range={range} />
+      <MonthSummary />
       <DuelHistory />
+      <RecordsSection />
+      <MilestonesSection />
 
       <h2 className={cx(sectionLabel, "-mb-2 border-t border-white/8 pt-6")}>
         {t.progressScreen.history}

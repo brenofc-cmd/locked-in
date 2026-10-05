@@ -1502,6 +1502,96 @@ export const t = {
       `${date}: ${phase}, ${headline}`,
   },
 
+  /** V2 Phase 8 · Monthly Champion (docs/MONTHLY_COMPETITION.md). */
+  monthly: {
+    title: "MÊS",
+    aria: "Campeonato do mês",
+    live: "AO VIVO",
+    final: "MÊS ENCERRADO",
+    you: "VOCÊ",
+    youAhead: "VOCÊ ESTÁ NA FRENTE",
+    ahead: (name: string) => `${name.toUpperCase()} ESTÁ NA FRENTE`,
+    liveTied: "EMPATADOS",
+    liveInsufficient: "SEM RESULTADO SUFICIENTE AINDA",
+    champion: (month: string) => `CAMPEÃO DE ${month}`,
+    finalDraw: "EMPATE DO MÊS",
+    finalInsufficient: "SEM RESULTADO SUFICIENTE NO MÊS",
+    score: (me: number, partner: number) => `${me} — ${partner}`,
+    draws: (n: number) => (n === 1 ? "1 empate" : `${n} empates`),
+    wins: "VITÓRIAS",
+    drawsLabel: "EMPATES",
+    insufficientDays: "DIAS SEM RESULTADO",
+    executionLabel: "EXECUÇÃO MENSAL",
+    focusLabel: "FOCO MENSAL",
+    tiebreakLabel: "DESEMPATE",
+    tiebreak: {
+      execution: "Desempate: execução mensal",
+      focus: "Desempate: foco mensal",
+      none: "Vitórias, execução e foco iguais",
+    },
+    notNeeded: "não necessário",
+    minimum: (n: number) =>
+      `Mínimo de 3 duelos oficiais no mês (${n} até agora).`,
+    execution: (done: number, planned: number, pct: number) =>
+      `${pct}% · ${done}/${planned}`,
+    details: "VER DETALHES",
+    previous: "MESES ANTERIORES",
+    noPrevious: "Nenhum mês anterior da dupla.",
+    none: "O mês aparece aqui depois do primeiro dia completo da dupla.",
+    duoRow: (me: number, partner: number, name: string) =>
+      `Você ${me} — ${partner} ${name}`,
+    rulesTitle: "COMO É DECIDIDO",
+    rules: [
+      "Cada duelo diário com resultado final vale uma vitória para quem venceu o dia. Empates contam à parte; dia sem resultado suficiente não vale para ninguém.",
+      "O mês precisa de pelo menos 3 duelos oficiais (vitória ou empate).",
+      "Vence o mês quem tiver mais vitórias diárias.",
+      "Empate em vitórias: desempata a execução mensal (concluídas ÷ planejadas nos dias em que os dois tinham tarefas).",
+      "Execução igual: desempata o foco efetivo do mês (pausas não contam). Tudo igual é empate do mês.",
+      "Ao vivo mostra só quem está na frente. O campeão sai quando o último dia do mês fecha para os dois.",
+    ],
+    ariaLeads: (lead: string, other: string, a: number, b: number) =>
+      `${lead} lidera ${other} por ${a} ${a === 1 ? "vitória" : "vitórias"} a ${b}.`,
+    ariaChampion: (lead: string, other: string, a: number, b: number) =>
+      `${lead} foi campeão contra ${other} por ${a} ${a === 1 ? "vitória" : "vitórias"} a ${b}.`,
+    ariaScore: (a: string, x: number, b: string, y: number) =>
+      `${a} ${x}, ${b} ${y}.`,
+  },
+
+  /** V2 Phase 8 · Personal Records + Milestones. */
+  records: {
+    title: "RECORDES",
+    aria: "Recordes pessoais",
+    longestStreak: "MAIOR SEQUÊNCIA",
+    focusDay: "MAIOR FOCO · DIA",
+    focusWeek: "MAIOR FOCO · SEMANA",
+    perfectMonth: "DIAS PERFEITOS · MÊS",
+    days: (n: number) => (n === 1 ? "1 dia" : `${n} dias`),
+    none: "—",
+    noneYet: "ainda não",
+    milestonesTitle: "MARCOS",
+    milestonesAria: "Marcos",
+    next: "PRÓXIMO MARCO",
+    seeAll: "VER TODOS OS MARCOS",
+    reached: "CONQUISTADO",
+    reachedCount: (n: number, total: number) => `${n} de ${total} conquistados`,
+    allReached: "Todos os marcos conquistados.",
+    milestone: {
+      streak: (n: number) => `${n} DIAS DE SEQUÊNCIA`,
+      focus: (n: number) => `${n}H DE FOCO`,
+      perfect: (n: number) => `${n} DIAS PERFEITOS`,
+    },
+    progress: {
+      streak: (c: number, n: number) => `${c} / ${n}`,
+      focus: (c: number, n: number) => `${c}h / ${n}h`,
+      perfect: (c: number, n: number) => `${c} / ${n}`,
+    },
+    progressAria: {
+      streak: (c: number, n: number) => `${c} de ${n} dias`,
+      focus: (c: number, n: number) => `${c} de ${n} horas`,
+      perfect: (c: number, n: number) => `${c} de ${n} dias perfeitos`,
+    },
+  },
+
   duoErrors: {
     LI_INVALID_CODE:
       "Esse código não corresponde a nenhuma dupla. Confira e tente de novo.",

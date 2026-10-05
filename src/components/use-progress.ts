@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   refreshDuoProgress,
   refreshProgress,
+  refreshRecords,
   setDailyStandard,
 } from "@/app/(app)/progress-actions";
 import {
@@ -40,6 +41,11 @@ type Deps = {
    * lands in the duel's settled focus — an event, never a timer.
    */
   partnerFocusKey: string;
+  /**
+   * V2 Phase 8: my finished focus sessions today (count). A new one re-reads
+   * my records / milestone totals once — an event, never a timer.
+   */
+  ownFocusKey: string;
   toast: (t: Omit<Toast, "id">) => void;
 };
 
@@ -50,6 +56,7 @@ export function useProgress({
   partnerCounts,
   partnerVersion,
   partnerFocusKey,
+  ownFocusKey,
   toast,
 }: Deps) {
   const [data, setData] = useState(initial);
@@ -78,6 +85,22 @@ export function useProgress({
       alive = false;
     };
   }, [duoKey]);
+
+  // One of my focus sessions ended: my records and milestone totals move.
+  const seenOwn = useRef(ownFocusKey);
+  useEffect(() => {
+    if (seenOwn.current === ownFocusKey) return;
+    seenOwn.current = ownFocusKey;
+    let alive = true;
+    void refreshRecords()
+      .catch(() => null)
+      .then((res) => {
+        if (alive && res?.ok) setData((d) => ({ ...d, records: res.records }));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [ownFocusKey]);
 
   const setStandard = useCallback(
     async (value: number) => {
@@ -157,6 +180,10 @@ export function useProgress({
     partnerStandard: data.partner?.standard ?? null,
     /** V2 Phase 7: duel rows as last read (made live in app-state). */
     duelRows: data.duels,
+    /** V2 Phase 8: per-day duel numbers of the last months. */
+    monthRows: data.months,
+    /** V2 Phase 8: my records and milestone totals. */
+    records: data.records,
     refreshProgress: refresh,
   };
 }

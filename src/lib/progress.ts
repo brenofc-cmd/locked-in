@@ -17,6 +17,7 @@ import {
 } from "@/lib/local-date";
 import { t } from "@/i18n/pt-BR";
 import type { DuelRow } from "@/lib/duel";
+import type { RecordsData } from "@/lib/records";
 
 export type DayStat = {
   day: string;
@@ -70,6 +71,10 @@ export type ProgressData = {
   partner: PartnerSummary | null;
   /** V2 Phase 7: today's duel and the last 7 (docs/DUEL.md). */
   duels: DuelRow[];
+  /** V2 Phase 8: per-day duel numbers of the last months (monthly champion). */
+  months: DuelRow[];
+  /** V2 Phase 8: personal records and milestone totals (owner-only). */
+  records: RecordsData;
 };
 
 // ---- day ------------------------------------------------------------------

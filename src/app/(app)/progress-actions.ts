@@ -3,7 +3,13 @@
 import { t } from "@/i18n/pt-BR";
 import { addDays } from "@/lib/local-date";
 import type { DayStat, Habit, ProgressData } from "@/lib/progress";
-import { loadDuoProgress, loadHabits, loadProgress } from "@/lib/progress-data";
+import {
+  loadDuoProgress,
+  loadHabits,
+  loadProgress,
+  loadRecords,
+} from "@/lib/progress-data";
+import type { RecordsData } from "@/lib/records";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -25,12 +31,28 @@ export async function refreshProgress(): Promise<
   }
 }
 
-/** After a partner event: this week, history, the partner's streak, duels. */
+/**
+ * After a partner event: this week, history, the partner's streak, duels and
+ * the months of duels.
+ */
 export async function refreshDuoProgress(): Promise<
-  Result<{ data: Pick<ProgressData, "weeks" | "partner" | "duels"> }>
+  Result<{
+    data: Pick<ProgressData, "weeks" | "partner" | "duels" | "months">;
+  }>
 > {
   try {
     return { ok: true, data: await loadDuoProgress(await createClient()) };
+  } catch {
+    return { ok: false, error: ERROR };
+  }
+}
+
+/** V2 Phase 8: my records / milestone totals, after one of my focus sessions ends. */
+export async function refreshRecords(): Promise<
+  Result<{ records: RecordsData }>
+> {
+  try {
+    return { ok: true, records: await loadRecords(await createClient()) };
   } catch {
     return { ok: false, error: ERROR };
   }
