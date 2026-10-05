@@ -285,3 +285,19 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
   days are never returned (pgTAP + e2e).
 - DEV-only fixture added (never in production): `dev_fixture_backdate_duo`, refused unless both
   members of the caller's duo are `li-…@example.com` accounts.
+
+## V2 Phase 8 — monthly champion, records, milestones (2026-10-05)
+
+- No table, column or grant on a table: months, records and milestones are derived (ADR-083).
+- New DEFINER function `public.duo_duel_months(p_months)` — the Phase 7 projection over whole months:
+  the partner is derived from `auth.uid()` → current duo (no user-id parameter), routines are
+  materialised only for the caller and the caller's partner, from `duos.duel_since` only (no pre-duo
+  day, no old duo), dates / integers / booleans only (pgTAP asserts the types; e2e checks the JSON
+  holds no title or id). Same justification as `duo_duels` (advisor 0029, ADR-040). The reviewed set in
+  `stage9_integrity` is now 22.
+- `public.my_records()` is SECURITY INVOKER: RLS plus an owner filter, so a caller only ever reads
+  their own rows; the partner, outsiders and anon get nothing of anyone else (pgTAP).
+- `anon` and `PUBLIC` have no EXECUTE on either function.
+- DEV-only fixtures (never in production): `dev_fixture_add_focus` (bypasses the focus lifecycle
+  trigger for the caller's own past sessions) and `dev_fixture_reset_focus`, both refused unless the
+  caller is a `li-…@example.com` test account.

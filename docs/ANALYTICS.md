@@ -139,6 +139,16 @@ Daily Standard now keeps versions per local day (`daily_standard_history`, ADR-0
 streak still uses the current standard (ADR-038, analysed and unchanged). `duo_duels()` is re-read
 with the duo numbers (`loadDuoProgress`). It never changes the weekly competition or head-to-head.
 
+## Monthly champion, records, milestones (V2 Phase 8)
+
+Derived from the same sources (docs/MONTHLY_COMPETITION.md): a month counts the FINAL daily duels each
+member won (draws apart, insufficient days for nobody), needs 3 official days, and ties break on
+monthly Execution (exact, days where both had tasks) then effective focus seconds. Records: the
+existing longest streak, the best focus day (settled), the best closed Monday–Sunday focus week, the
+most Perfect Days in a calendar month (closed days); ties keep the first period. Milestones: streak
+7 / 30 / 100 (longest), focus 10 / 50 / 100 h, Perfect Days 5 / 10 / 30. `duo_duel_months` is read
+with the duo numbers; `my_records` with the series. The streak rules (ADR-038) are unchanged.
+
 ## Database functions
 
 | Function                          | Security | Returns                                                                                               |
@@ -148,6 +158,8 @@ with the duo numbers (`loadDuoProgress`). It never changes the weekly competitio
 | `my_habits(p_from, p_to)`         | INVOKER  | routine id, title, planned, completed (closed days)                                                   |
 | `duo_weeks(p_weeks = 8)`          | DEFINER  | current week + up to 26 completed weeks: counts, focus, perfect days for me and the partner           |
 | `partner_progress_summary()`      | DEFINER  | the partner's streak_before_today, current_streak, standard                                           |
+| `duo_duel_months(p_months = 6)`   | DEFINER  | Phase 8: per-day duel numbers for the current month + up to 11 before it (from `duel_since`)          |
+| `my_records()`                    | INVOKER  | Phase 8: best focus day / week, best Perfect-Days month, totals (own rows only)                       |
 
 Helpers in `private` (not exposed by the API): `local_today`, `materialize_tasks`, `focus_seconds`,
 `day_stats`, `standard_met`, `streaks`. The INVOKER helpers run as the caller, so RLS still applies

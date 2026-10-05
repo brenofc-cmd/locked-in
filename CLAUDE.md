@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase7), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase8), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -216,6 +216,15 @@ routing changed; run the pgTAP suite when a migration changed.
   things (Conta, Configurações, Dupla, Instalar app, Sair) live in the profile menu, never in a tab;
   planning screens are reached from PLANEJAR (`/plan`); `/more` only redirects to `/plan`. Keep every
   deep link working. On a phone Today has no partner card (header chip) and no live feed (DUPLA).
+- V2 Phase 8 (docs/MONTHLY_COMPETITION.md, ADR-080…085): the month is built on the Daily Duel —
+  `duo_duel_months()` returns the same per-day numbers as `duo_duels`, the client decides each day
+  with `decideDuel` and the month with `decideMonth` (`src/lib/monthly.ts`); never port the duel
+  rules to SQL, never add a monthly result / record / milestone table or store a score. Only FINAL
+  days count; 3 official days minimum; tiebreaks execution (days both had tasks, exact) → focus
+  seconds → draw; a live month never has a champion. Records (`my_records()`, INVOKER) are
+  owner-only; milestones are fixed thresholds (`MILESTONES`) from the longest streak, settled focus
+  and closed Perfect Days. No XP, coins, levels or celebrations (Phase 9). Progress hosts it; DUPLA
+  has one row; Today, Focus and Plan stay unchanged.
 - Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
   (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
   never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses

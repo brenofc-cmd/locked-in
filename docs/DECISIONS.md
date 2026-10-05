@@ -482,3 +482,39 @@ Status: Accepted. The 21st function of the reviewed DEFINER set.
 Decision: `duos.duel_since` is set by `private.stamp_duel_since` (INVOKER trigger on `duo_members`, which only `join_duo` and fixtures write) to the later of both members' local dates at the moment the second member joined; it is recomputed only if `joined_at` changes, never on a timezone change. `duo_duels` starts there. Clients cannot write it (no grant on `duos`).
 Reason: Computing the start from each member's current timezone (`private.duo_together_since`) let a timezone move hide a FINAL duel or expose a pre-duo day (found by pgTAP). Partner reads of shared tasks still use `duo_together_since` (unchanged, out of scope).
 Status: Accepted.
+
+# ADR-080 — The Monthly Champion counts Daily Duel wins; the client decides with the duel rules
+
+Decision: A month's score is literally the number of FINAL daily duels each member won; draws are counted apart and SEM RESULTADO SUFICIENTE days count for nobody. No points, weights or XP. `public.duo_duel_months(p_months default 6)` (SECURITY DEFINER, the 22nd function of the reviewed set) returns, for the current month of the caller's local today and up to `p_months − 1` (≤ 11) months before it, **the same per-day numbers as `duo_duels`** — built on `private.duel_side` / `private.standard_on`, from `duos.duel_since`, dates / integers / booleans only. Each day is decided by the existing `decideDuel` and the month by `decideMonth` in `src/lib/monthly.ts`.
+Reason: The Daily Duel stays the unit: porting its rules to SQL would create a second competition to keep in sync. The database owns which days exist, which are FINAL and every number (pgTAP); the decisions are pure and unit-tested; e2e compares the screen with both.
+Status: Accepted.
+
+# ADR-081 — A month needs 3 official duels; live months have no champion
+
+Decision: An official day is a FINAL win or draw. Fewer than 3 in a month → SEM RESULTADO SUFICIENTE (also no live leader). A month is FINAL only when its last calendar day is a FINAL duel (closed for both members, nothing running — the Phase 7 closing, no new concept); before that it is MÊS · AO VIVO (ESTÁ NA FRENTE / EMPATADOS / SEM RESULTADO SUFICIENTE AINDA). CAMPEÃO DE <MÊS> / EMPATE DO MÊS only on a final month.
+Reason: One day is not a month. A live month can still change; a champion shown early could flip. The same minimum live and final keeps one rule.
+Status: Accepted.
+
+# ADR-082 — Monthly tiebreaks: execution, then effective focus, then draw
+
+Decision: Equal daily wins → monthly Execution `Σ completed / Σ planned` over the FINAL days of the month where **both** had tasks (Execution comparable), compared exactly (cross-multiplication) → equal or not comparable → total effective focus seconds of the FINAL days (pauses never count) → equal → EMPATE DO MÊS. No fourth tiebreak. The deciding rule is always written next to the result ("Desempate: execução mensal").
+Reason: Execution and focus are the duel's own measures; restricting execution to comparable days keeps a day where only one member planned tasks from creating an artificial advantage.
+Status: Accepted.
+
+# ADR-083 — No monthly result, record or milestone table
+
+Decision: Months, records and milestones are derived on every read. A FINAL month cannot change because every input of a FINAL day is frozen (closed history, Daily Standard versions, focus fixed at start, `duel_since`).
+Reason: ADR-037. A cache could disagree with its source; two users' history is small.
+Status: Accepted.
+
+# ADR-084 — Personal records are owner-only and derived
+
+Decision: `public.my_records()` (SECURITY INVOKER, own rows only) returns the best focus day (settled effective focus by `local_date` — a running session is not settled), the best closed Monday–Sunday focus week, the most Perfect Days in a calendar month (closed days, `planned > 0 and completed = planned`), and the totals milestones need. Ties keep the first date / period. The longest streak is the existing one (`my_progress_summary` + today live; ADR-038 unchanged). No count of tasks created / completed is a record. The partner never receives records.
+Reason: Records answer "my best so far" — personal, explainable and not gamable by splitting tasks.
+Status: Accepted.
+
+# ADR-085 — Milestones are fixed, derived thresholds — no XP, no currency
+
+Decision: MARCOS: streak 7 / 30 / 100 (from the longest streak, so losing the current run takes nothing back), effective focus 10 / 50 / 100 h (settled total, whole hours), Perfect Days 5 / 10 / 30 (closed days). Locked shows progress ("23 de 30 dias"), reached shows CONQUISTADO. No unlock date, no unlock table, no XP, coins, levels, power-ups or duo milestones; celebrations belong to Phase 9.
+Reason: A milestone is a fact about the history, verifiable at any time from the same numbers.
+Status: Accepted.

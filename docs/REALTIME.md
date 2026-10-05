@@ -203,3 +203,12 @@ A recent last seen never makes the partner ONLINE.
 - **Format** (`lastSeen()` / `lastSeenText()`, viewer's profile timezone like every time in the
   app): agora (< 1 min) · há X min (1–59) · hoje às HH:mm · ontem às HH:mm · em DD/MM às HH:mm.
   Only the components showing it redraw once a minute.
+
+## Daily duel and monthly champion (V2 Phases 7–8)
+
+No new channel, broadcast or timer. The duel (docs/DUEL.md) and the months of duels
+(docs/MONTHLY_COMPETITION.md) are re-read with the duo numbers on the existing `partnerVersion` and on
+the partner's focus transitions; my side of today is live from the screen and running sessions tick
+from the clock already on screen. Only FINAL days count in a month, so the month never ticks. My
+records / milestone totals are re-read once when one of my focus sessions ends. e2e: 72 s of a running
+partner session across a minute boundary — zero requests from DUPLA or Progress.

@@ -60,8 +60,8 @@ TOP 3 (compact rows) → tasks (dominant; a Top 3 task shows a small rank marker
 header chip and DUPLA cover it, including the partner's running focus clock); it stays on desktop.
 Without a partner the invite card shows on every width. Wide desktop: the context rows and the live feed sit in the aside.
 
-**DUPLA** — person (avatar, name, status, check-in, today's % inline) → DUELO DE HOJE →
-COMPROMISSOS (active first) → CHECK-IN / DAR UM TOQUE as rows → the partner's tasks + ATIVIDADE →
+**DUPLA** — person (avatar, name, status, check-in, today's % inline) → DUELO DE HOJE → one month row
+(V2 Phase 8: MÊS · AO VIVO · Você 8 — 5 Matheus › → `/progress#month`) → COMPROMISSOS (active first) → CHECK-IN / DAR UM TOQUE as rows → the partner's tasks + ATIVIDADE →
 ESTA SEMANA / head-to-head → commitment history (collapsed).
 
 **PLANEJAR** (`/plan`, new hub, no new query) — rows: PRÓXIMO (next event → `/planner`), METAS
@@ -69,7 +69,9 @@ ESTA SEMANA / head-to-head → commitment history (collapsed).
 count would need a new query, so it keeps the "with your duo / needs a duo" line).
 
 **PROGRESSO** — VISÃO GERAL (%, streak, focus, perfect days: first viewport) → METAS (goal proof) →
-DUELOS (last 7) → HISTÓRICO (chart, calendar, weekly reviews, insights / habits).
+DUELOS (V2 Phase 8: the current month — details and previous months collapsed —, then the last 7) →
+RECORDES and MARCOS (compact rows; all milestones collapsed) → HISTÓRICO (chart, calendar, weekly
+reviews, insights / habits). Today, Focus and Plan gained nothing in Phase 8.
 
 **FOCO** — unchanged.
 

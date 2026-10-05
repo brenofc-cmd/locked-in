@@ -441,6 +441,8 @@ checked when a routine is hard-deleted, which clients cannot do.
 | `public.duo_weeks(p_weeks)`                          | DEFINER  | `authenticated`                      | current + completed weeks, me and partner, integers only         |
 | `public.partner_progress_summary()`                  | DEFINER  | `authenticated`                      | partner's streak and standard (aggregate)                        |
 | `public.duo_duels(p_days)`                           | DEFINER  | `authenticated`                      | daily duel inputs, me and partner, dates / integers / booleans   |
+| `public.duo_duel_months(p_months)`                   | DEFINER  | `authenticated`                      | the same per-day duel inputs for whole months (Phase 8)          |
+| `public.my_records()`                                | invoker  | `authenticated`                      | my personal records and milestone totals (Phase 8)               |
 | `private.record_daily_standard()`                    | DEFINER  | trigger only                         | versions of the Daily Standard (owner's local today)             |
 | `private.standard_on(user, day)`                     | invoker  | nobody (only inside `duo_duels`)     | the Daily Standard in force on a local day                       |
 | `private.stamp_duel_since()`                         | invoker  | trigger only                         | the duo's first duel day, when it becomes complete               |
@@ -716,6 +718,7 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `daily_duel`                | `20261001102050` | `20261001135854` |
 | `daily_standard_history`    | `20261001114008` | `20261001135917` |
 | `duel_since`                | `20261001114507` | `20261001135936` |
+| `monthly_progression`       | `20261005122148` | (pending)        |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -846,3 +849,23 @@ callable through the API): current value for an open day, newest version `<= day
 changes; backfilled for complete duos. Not writable by clients (no grant on `duos`). `duo_duels`
 starts there and reads `private.standard_on` for each side and day. `dev_fixture_reset_history` also
 drops versions dated after the reset local today (DEV time travel only).
+
+## V2 Phase 8 (migration `20261005122148_monthly_progression`)
+
+Monthly Champion, Personal Records, Milestones (docs/MONTHLY_COMPETITION.md, ADR-080…085). **No
+table, no column, no index**: everything is derived (ADR-083).
+
+- `public.duo_duel_months(p_months integer default 6)` — SECURITY DEFINER, `search_path = ''`,
+  `authenticated` only. The same columns and per-day numbers as `duo_duels`, for the current month of
+  the caller's local today and up to `p_months − 1` months before it (clamped 1…12), from
+  `duos.duel_since`, newest first. Materialises routines for both members; built on
+  `private.duel_side` and `private.standard_on`; FINAL with the Phase 7 rule. Dates / integers /
+  booleans only. The 22nd function of the reviewed DEFINER set.
+- `public.my_records()` — SECURITY INVOKER, `search_path = ''`, `authenticated` only; one row of the
+  caller's own numbers: best focus day (settled effective focus by `local_date`), best closed
+  Monday–Sunday focus week, most Perfect Days in a calendar month (closed days), total settled focus
+  seconds and total Perfect Days. Ties keep the first date / period. Dates and integers only.
+
+pgTAP: `supabase/tests/v2_phase8_monthly.test.sql` (51). DEV-only fixtures (supabase/dev/
+test_fixtures.sql): `dev_fixture_add_focus(p_rows)`, `dev_fixture_reset_focus()`;
+`dev_fixture_backdate_duo` now accepts up to 120 days.

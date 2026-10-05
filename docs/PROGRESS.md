@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 8 — Monthly Champion + Personal Records + Milestones — IN PROGRESS (scope: docs/ROADMAP.md → V2 Phase 8). Phase 7 VERIFIED; UI Information Architecture Polish VERIFIED.
+LOCKED IN V2 — Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED ON DEV (2026-10-05); production: see the Phase 8 section. Phase 7 VERIFIED; UI Information Architecture Polish VERIFIED. Next: Phase 9 (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -13,6 +13,64 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ## Known issues (open)
 
 - None.
+
+## Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED ON DEV (2026-10-05)
+
+Scope: docs/ROADMAP.md → "V2 Phase 8", docs/MONTHLY_COMPETITION.md, ADR-080…085. Branch
+`v2-phase-8-monthly-champion-records` (from `main` at `477c35a`).
+
+Done:
+
+- **Monthly Champion on the Daily Duel** (ADR-080): `public.duo_duel_months(p_months)` (DEFINER, the
+  22nd reviewed function) returns the Phase 7 per-day numbers for the current month + up to 5
+  before it, from `duel_since`; the client decides each FINAL day with `decideDuel` and the month
+  with `decideMonth` (`src/lib/monthly.ts`). Days won, draws apart, insufficient days for nobody, at
+  least 3 official days (ADR-081), tiebreaks monthly execution (days both had tasks, exact) →
+  effective focus seconds → EMPATE DO MÊS (ADR-082), the deciding rule always shown. A live month is
+  MÊS · AO VIVO, never a champion; FINAL when its last day is a FINAL duel.
+- **Personal records** (ADR-084): `public.my_records()` (INVOKER, own rows): best focus day, best
+  closed focus week, best Perfect-Days month, totals; ties keep the first period; the longest streak
+  is the existing one (ADR-038 unchanged).
+- **Milestones** (ADR-085): streak 7 / 30 / 100 (longest streak), focus 10 / 50 / 100 h, Perfect Days
+  5 / 10 / 30 — derived (`src/lib/records.ts`), progress when locked, CONQUISTADO when reached.
+- **UI**: Progress DUELOS leads with the current month (details and MESES ANTERIORES collapsed), then
+  ÚLTIMOS 7 DUELOS, RECORDES and MARCOS (next milestones, all on demand). DUPLA: one month row →
+  `/progress#month`. Today, Focus, Plan unchanged; no new tab; no celebration.
+- **Realtime**: months re-read with the duo numbers (existing events); records re-read when my focus
+  session ends. No timer.
+- No table (ADR-083), no index; migration `20261005122148_monthly_progression` (2 functions).
+
+Found and fixed during the gates:
+
+- axe (stage9) flagged the milestone progress bars without an accessible name → `aria-label`
+  (separate commit `ea6aea5`, a real defect of this phase).
+- stage5 raced B's navigation to Today before the toast check (a toast never shows on `/partner` by
+  design) → wait for `/today` first, assertion unchanged (separate commit).
+- pgTAP: the "no milestone table" check matched the Phase 3 `goal_milestones` → excluded by name.
+- e2e helper mistakes while writing the spec (hidden previous months matched the current month's
+  test ids; Alice also reads Bruno's shared tasks) → scoped selectors / owner filter.
+
+Gates (DEV, final):
+
+- lint ✓ · typecheck ✓ · format ✓ · unit **348/348** (+19 `monthly`, +10 `records`) · build ✓
+- `npm audit`: production dependencies 0; dev-only 5 high (`braces` via `eslint-config-next`,
+  unchanged since the IA polish).
+- pgTAP full suite **919/919** on DEV (stage3 51 · stage4 72 · stage5 40 · stage6 63 · stage7 78 ·
+  stage8 84 · stage9 69 (DEFINER set 22) · v2_phase2 63 · v2_phase3 61 · v2_phase4 57 · v2_phase5 66 ·
+  v2_phase6 99 · v2_phase7 65 · **v2_phase8 51**), every file rolled back.
+- E2E full suite in one clean run: **161 passed, 1 skipped (`LI_SHOTS`), 0 failed** (162, 16.0 min,
+  `--workers=1`); `v2-phase8` 12/12 incl. **72 s of running partner focus across a minute boundary
+  with zero requests** from DUPLA and Progress.
+- Visual review (local build, 375 / 390 / 430 / 768 / 1180 / 1440, Alice with a closed September and a
+  live October): no horizontal scroll, no page error; Progress stays rows and disclosures; DUPLA one
+  row; Today / Focus / Plan unchanged.
+- Advisors (DEV): new 0029 entry only `duo_duel_months` (accepted pattern, ADR-040) and the DEV-only
+  fixtures `dev_fixture_add_focus` / `dev_fixture_reset_focus`.
+- DEV-only fixtures (supabase/dev/test_fixtures.sql): `dev_fixture_add_focus`,
+  `dev_fixture_reset_focus`, `dev_fixture_backdate_duo` up to 120 days. No migration mentions `dev_`.
+
+Not done (out of scope): celebrations, confetti, non-negotiables, weekly planning, new reviews, Web
+Push, XP, coins, levels, shop, global leaderboard, groups, AI coach, duo milestones.
 
 ## UI Information Architecture Polish — VERIFIED (DEV + PROD, 2026-10-05)
 

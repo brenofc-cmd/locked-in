@@ -183,6 +183,16 @@ Details in [ANALYTICS.md](ANALYTICS.md).
 - The partner side is re-read after each realtime refetch (`partnerVersion`); no new realtime
   traffic. The app reloads when the local date changes.
 
+## Daily duel and monthly champion (V2 Phases 7–8)
+
+- `src/lib/duel.ts` decides a day (pure); `src/lib/monthly.ts` groups the FINAL days of each month
+  and decides it with the same `decideDuel`; `src/lib/records.ts` derives milestones. Loading:
+  `src/lib/duel-data.ts` (`duo_duels`, `duo_duel_months`) inside `loadDuoProgress`, `loadRecords`
+  (`my_records`) inside `loadProgress`. UI: `src/components/duel/Duel.tsx`,
+  `src/components/monthly/Monthly.tsx` (month summary on Progress, one row on DUPLA),
+  `src/components/monthly/Records.tsx` (RECORDES, MARCOS). Details: [DUEL.md](DUEL.md),
+  [MONTHLY_COMPETITION.md](MONTHLY_COMPETITION.md).
+
 ## Complete product (Stage 8)
 
 - Server Actions: `settings-actions.ts` (preferences, timezone, onboarding), `social-actions.ts`

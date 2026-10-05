@@ -152,8 +152,9 @@ must never reach production (docs/PRODUCTION_CHECKLIST.md: 0 `dev_*` functions i
 
 ## Not in this phase
 
-XP, coins, monthly champion, records, milestones, badges, ranking, streak of wins, large animations,
-Web Push, a stored score.
+XP, coins, badges, ranking, streak of wins, large animations, Web Push, a stored score. The monthly
+champion, records and milestones came in Phase 8 on top of these duels (docs/MONTHLY_COMPETITION.md):
+the FINAL days of a month are decided by this same `decideDuel`.
 
 ## Tests
 

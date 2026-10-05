@@ -114,3 +114,17 @@ done is NÃO CUMPRIDO — for good. My partner can DAR UM TOQUE (no text, limite
 promise and see my check-in (LOCKED IN / PRECISO DE COBRANÇA / DIA DIFÍCIL). They see my public title
 and the proof type and time — never the task, a goal or anything private. No duel, points or ranking
 yet. Details: docs/ACCOUNTABILITY.md.
+
+### V2 Phase 7 — Daily Duel
+
+One honest duel a day, decided by Execution, Focus and Consistency — each number visible, a live duel
+never says anyone won. Details: docs/DUEL.md.
+
+### V2 Phase 8 — Monthly Champion, Records, Milestones
+
+"Who was more consistent over the month?" — the days each of us won in the Daily Duel, draws apart,
+with transparent tiebreaks (monthly execution, then focus) and at least 3 official duels; the current
+month is only ever AO VIVO. "What is my best so far?" — my longest streak, most focus in a day and in a
+week, most Perfect Days in a month, and fixed milestones (streak 7 / 30 / 100, focus 10 / 50 / 100 h,
+Perfect Days 5 / 10 / 30). All derived, personal records stay mine; no XP, coins, levels or ranking.
+Details: docs/MONTHLY_COMPETITION.md.
