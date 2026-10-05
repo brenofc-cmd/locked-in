@@ -149,7 +149,8 @@ grant execute on function public.dev_fixture_reset_accountability() to authentic
 
 -- V2 Phase 7: the caller's CURRENT duo "became complete p_days ago", so the
 -- daily duel has closed days to show (duels start on the day the duo
--- formed). Only for a duo whose two members are both test users.
+-- formed). Only for a duo whose two members are both test users. V2 Phase 8:
+-- up to 120 days, so a whole previous month exists (monthly champion).
 create or replace function public.dev_fixture_backdate_duo(p_days integer)
 returns void
 language plpgsql
@@ -167,10 +168,60 @@ begin
     raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
   end if;
   update public.duo_members
-  set joined_at = now() - make_interval(days => least(greatest(p_days, 0), 60))
+  set joined_at = now() - make_interval(days => least(greatest(p_days, 0), 120))
   where duo_id = v_duo;
 end;
 $$;
 
 revoke all on function public.dev_fixture_backdate_duo(integer) from public, anon;
 grant execute on function public.dev_fixture_backdate_duo(integer) to authenticated;
+
+-- V2 Phase 8: completed focus sessions of the caller on past days (records,
+-- the monthly focus tiebreak). Sessions are fixed at start in the real flow,
+-- so the lifecycle / feed triggers are bypassed for these rows only:
+-- [{ "local_date": "2026-09-20", "seconds": 3600, "pause_seconds": 0 }]
+create or replace function public.dev_fixture_add_focus(p_rows jsonb)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  alter table public.focus_sessions disable trigger user;
+  insert into public.focus_sessions (user_id, title, planned_seconds, status, started_at, ended_at,
+    accumulated_pause_seconds, actual_focus_seconds, local_date, visible_to_partner)
+  select auth.uid(), 'Fixture', greatest((r->>'seconds')::integer, 60), 'completed', st,
+         st + make_interval(secs => (r->>'seconds')::integer + coalesce((r->>'pause_seconds')::integer, 0)),
+         coalesce((r->>'pause_seconds')::integer, 0), (r->>'seconds')::integer, (r->>'local_date')::date, false
+  from jsonb_array_elements(p_rows) as r,
+       lateral (select (((r->>'local_date')::date + time '09:00')
+                        at time zone (select p.timezone from public.profiles p where p.id = auth.uid())) as st) x;
+  alter table public.focus_sessions enable trigger user;
+end;
+$$;
+
+-- V2 Phase 8: a records run starts from no focus history (completed sessions
+-- cannot be deleted by their owner). Deletes the caller's focus sessions.
+create or replace function public.dev_fixture_reset_focus()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  delete from public.focus_sessions where user_id = auth.uid();
+end;
+$$;
+
+revoke all on function public.dev_fixture_add_focus(jsonb) from public, anon;
+grant execute on function public.dev_fixture_add_focus(jsonb) to authenticated;
+revoke all on function public.dev_fixture_reset_focus() from public, anon;
+grant execute on function public.dev_fixture_reset_focus() to authenticated;

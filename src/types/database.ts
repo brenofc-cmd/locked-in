@@ -1240,6 +1240,19 @@ export type Database = {
           first_task_date: string | null;
         }[];
       };
+      my_records: {
+        Args: never;
+        Returns: {
+          best_focus_day_seconds: number | null;
+          best_focus_day: string | null;
+          best_focus_week_seconds: number | null;
+          best_focus_week: string | null;
+          best_perfect_month_days: number | null;
+          best_perfect_month: string | null;
+          total_focus_seconds: number;
+          total_perfect_days: number;
+        }[];
+      };
       my_daily_progress: {
         Args: { p_from: string; p_to: string };
         Returns: {
@@ -1281,6 +1294,23 @@ export type Database = {
       };
       duo_duels: {
         Args: { p_days?: number };
+        Returns: {
+          duel_date: string;
+          is_final: boolean;
+          me_completed: number;
+          me_focus_running: boolean;
+          me_focus_seconds: number;
+          me_planned: number;
+          me_standard: number;
+          partner_completed: number;
+          partner_focus_running: boolean;
+          partner_focus_seconds: number;
+          partner_planned: number;
+          partner_standard: number;
+        }[];
+      };
+      duo_duel_months: {
+        Args: { p_months?: number };
         Returns: {
           duel_date: string;
           is_final: boolean;

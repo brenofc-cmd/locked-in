@@ -272,7 +272,7 @@ select is(
   array['private.current_duo_id', 'private.duo_is_complete', 'private.handle_new_profile_settings',
         'private.handle_new_user', 'private.materialize_tasks', 'private.record_daily_standard', 'private.sync_accountability', 'private.sync_challenge',
         'private.sync_focus_activity', 'private.sync_planner_event', 'private.sync_reaction', 'private.sync_task_activity',
-        'public.create_duo', 'public.duo_challenges', 'public.duo_duels', 'public.duo_weeks', 'public.join_duo',
+        'public.create_duo', 'public.duo_challenges', 'public.duo_duel_months', 'public.duo_duels', 'public.duo_weeks', 'public.join_duo',
         'public.leave_duo', 'public.partner_current_focus', 'public.partner_progress_summary',
         'public.partner_today']::text[],
   'the SECURITY DEFINER set is exactly the reviewed one');
