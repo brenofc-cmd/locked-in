@@ -95,7 +95,9 @@ export async function fixture(
     | "dev_fixture_backdate_routine"
     | "dev_fixture_close_today"
     | "dev_fixture_reset_accountability"
-    | "dev_fixture_backdate_duo",
+    | "dev_fixture_backdate_duo"
+    | "dev_fixture_add_focus"
+    | "dev_fixture_reset_focus",
   args?: Record<string, unknown>,
 ) {
   const call = api.rpc.bind(api) as unknown as FixtureCall;

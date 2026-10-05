@@ -206,6 +206,14 @@ export default defineConfig({
       dependencies: ["issue001-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 8 — Monthly Champion, records, milestones (Alice / Bruno /
+    // Carla), after the IA suite.
+    {
+      name: "v2p8-390",
+      testMatch: /v2-phase8\.spec\.ts/,
+      dependencies: ["ia-390"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
