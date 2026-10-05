@@ -443,6 +443,7 @@ checked when a routine is hard-deleted, which clients cannot do.
 | `public.duo_duels(p_days)`                           | DEFINER  | `authenticated`                      | daily duel inputs, me and partner, dates / integers / booleans   |
 | `public.duo_duel_months(p_months)`                   | DEFINER  | `authenticated`                      | the same per-day duel inputs for whole months (Phase 8)          |
 | `public.my_records()`                                | invoker  | `authenticated`                      | my personal records and milestone totals (Phase 8)               |
+| `public.my_review_facts(p_from, p_to)`               | invoker  | `authenticated`                      | objective facts of a review period, own rows (Phase 9)           |
 | `private.record_daily_standard()`                    | DEFINER  | trigger only                         | versions of the Daily Standard (owner's local today)             |
 | `private.standard_on(user, day)`                     | invoker  | nobody (only inside `duo_duels`)     | the Daily Standard in force on a local day                       |
 | `private.stamp_duel_since()`                         | invoker  | trigger only                         | the duo's first duel day, when it becomes complete               |
@@ -702,23 +703,25 @@ Migrations are applied with the Supabase MCP (`apply_migration`), which stamps t
 time of application. The repository files carry the DEV versions; PROD has the same SQL under its own
 versions. Never re-apply a migration to fix a version and never edit `supabase_migrations` by hand.
 
-| Migration (name)            | Repository / DEV | PROD             |
-| --------------------------- | ---------------- | ---------------- |
-| V1 (29 files)               | identical        | identical        |
-| `user_presence_last_seen`   | `20260929114849` | `20260929130221` |
-| `planner_events`            | `20260929114909` | `20260929130241` |
-| `goals_vision_mirror`       | `20260929132309` | `20260929160137` |
-| `goal_milestones_owner_idx` | `20260929152035` | `20260929160140` |
-| `north_star_priorities`     | `20260929162654` | `20260930110808` |
-| `goal_actions_proof`        | `20260930115728` | `20260930124914` |
-| `goal_link_owner_check`     | `20260930120624` | `20260930124938` |
-| `goal_link_task_not_found`  | `20260930120815` | `20260930124940` |
-| `duo_accountability`        | `20260930150923` | `20260930164112` |
-| `accountability_fk_indexes` | `20260930153724` | `20260930164122` |
-| `daily_duel`                | `20261001102050` | `20261001135854` |
-| `daily_standard_history`    | `20261001114008` | `20261001135917` |
-| `duel_since`                | `20261001114507` | `20261001135936` |
-| `monthly_progression`       | `20261005122148` | `20261005134423` |
+| Migration (name)                  | Repository / DEV | PROD             |
+| --------------------------------- | ---------------- | ---------------- |
+| V1 (29 files)                     | identical        | identical        |
+| `user_presence_last_seen`         | `20260929114849` | `20260929130221` |
+| `planner_events`                  | `20260929114909` | `20260929130241` |
+| `goals_vision_mirror`             | `20260929132309` | `20260929160137` |
+| `goal_milestones_owner_idx`       | `20260929152035` | `20260929160140` |
+| `north_star_priorities`           | `20260929162654` | `20260930110808` |
+| `goal_actions_proof`              | `20260930115728` | `20260930124914` |
+| `goal_link_owner_check`           | `20260930120624` | `20260930124938` |
+| `goal_link_task_not_found`        | `20260930120815` | `20260930124940` |
+| `duo_accountability`              | `20260930150923` | `20260930164112` |
+| `accountability_fk_indexes`       | `20260930153724` | `20260930164122` |
+| `daily_duel`                      | `20261001102050` | `20261001135854` |
+| `daily_standard_history`          | `20261001114008` | `20261001135917` |
+| `duel_since`                      | `20261001114507` | `20261001135936` |
+| `monthly_progression`             | `20261005122148` | `20261005134423` |
+| `reflection_celebration_planning` | `20261005150455` | _pending_        |
+| `celebration_key_dates`           | `20261005163123` | _pending_        |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -869,3 +872,50 @@ table, no column, no index**: everything is derived (ADR-083).
 pgTAP: `supabase/tests/v2_phase8_monthly.test.sql` (51). DEV-only fixtures (supabase/dev/
 test_fixtures.sql): `dev_fixture_add_focus(p_rows)`, `dev_fixture_reset_focus()`;
 `dev_fixture_backdate_duo` now accepts up to 120 days.
+
+## V2 Phase 9 (migrations `20261005150455_reflection_celebration_planning`, `20261005163123_celebration_key_dates`)
+
+Celebrations, Non-Negotiables, Weekly Planning, Reviews 2.0 (docs/CELEBRATIONS.md,
+docs/WEEKLY_PLANNING.md, ADR-086…091). Five owner-only tables, two INVOKER functions, **no new
+SECURITY DEFINER** (the reviewed set stays at 22).
+
+- `public.celebrations (owner_id, kind, key, achieved_at, source_value, baseline, seen_at)`, PK
+  `(owner_id, kind, key)`; `kind` ∈ milestone / perfect_day / monthly, `key` 1..20 chars. Trigger
+  `private.guard_celebration` (INVOKER): on the API path stamps owner / time / `baseline = false` /
+  `seen_at = null` and validates the claim — milestone against `private.milestone_value` and
+  `private.milestone_threshold` (`LI_NOT_FOUND`, `LI_MILESTONE_NOT_REACHED`, value kept in
+  `source_value`), Perfect Day only for today while perfect (`LI_NOT_PERFECT`), month only once ended
+  (`LI_MONTH_OPEN`; since `…163123` a date-shaped key that is not a real date gets the same errors
+  instead of 22008). On update only `seen_at` may change, once (`coalesce(old, now())`). Grants:
+  select; insert (kind, key); update (seen_at). No delete.
+- `private.baseline_milestones(user)` — inserts the milestones already reached as `baseline = true`,
+  seen; run by the migration for every profile; callable by no API role.
+- `private.records(user)` — the former body of `my_records()` (INVOKER, RLS applies);
+  `public.my_records()` now materialises and returns `private.records(auth.uid())` (same results;
+  the function text differs from Phase 8).
+- `public.daily_task_non_negotiables (daily_task_id pk, owner_id, created_at)` and
+  `public.routine_non_negotiables (routine_item_id pk, owner_id, created_at)`, composite FKs to the
+  owner's task / routine (cascade). Triggers: `guard_task_non_negotiable` (a closed day:
+  `LI_HISTORY_LOCKED`; someone else's task: `LI_NOT_FOUND`), `guard_routine_non_negotiable`
+  (materialises first), `sync_routine_non_negotiable_today` (today's occurrence follows the
+  routine), `seed_task_non_negotiable` (after insert on `daily_tasks`: an occurrence of a flagged
+  routine is flagged — the snapshot). Grants: select, delete, insert (id, owner_id).
+- `public.weekly_priorities (id, owner_id, week_start, position, title, status, done_at, …)`:
+  Monday only, positions 1..3 unique per week, title 1..120 trimmed, status open / done with
+  `done_at` by the database. `guard_weekly_priority`: week / position fixed; a week before the
+  current one `LI_HISTORY_LOCKED`; more than one week ahead `LI_WEEK_TOO_FAR`. Grants: select,
+  delete; insert (week_start, position, title, status); update (title, status).
+- `public.reviews (owner_id, kind, period_start, worked, hindered, change_next, …)`, PK
+  `(owner_id, kind, period_start)`; week starts on Monday; ≤ 500 chars each, empty → null;
+  `guard_review`: never a future period (`LI_FUTURE_TASK`), key fixed. Grants: select; insert;
+  update (the three texts).
+- `public.my_review_facts(p_from, p_to)` — SECURITY INVOKER, ≤ 31 days (`LI_INVALID_RANGE`), capped
+  at today: days with tasks, planned, completed, effective focus, Perfect Days, Daily Standard days
+  (the standard in force each day — the `private.standard_on` rule inlined), non-negotiables
+  planned / completed. Own rows only.
+
+pgTAP: `supabase/tests/v2_phase9_reflection.test.sql` (79). DEV-only fixtures (supabase/dev/
+test_fixtures.sql, refused for non-test users, part of the automated suite):
+`dev_fixture_reset_celebrations()` (deletes the caller's celebrations),
+`dev_fixture_baseline_milestones()` (runs the baseline for the caller),
+`dev_fixture_reset_reflection()` (deletes the caller's priorities, reviews and routine flags).

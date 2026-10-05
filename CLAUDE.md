@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase8), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase9), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -225,6 +225,17 @@ routing changed; run the pgTAP suite when a migration changed.
   owner-only; milestones are fixed thresholds (`MILESTONES`) from the longest streak, settled focus
   and closed Perfect Days. No XP, coins, levels or celebrations (Phase 9). Progress hosts it; DUPLA
   has one row; Today, Focus and Plan stay unchanged.
+- V2 Phase 9 (docs/CELEBRATIONS.md, docs/WEEKLY_PLANNING.md, ADR-086…091): one owner-only
+  `celebrations` table holds milestone unlocks (validated by the database against the real numbers,
+  immutable) and Perfect Day / month receipts; only `seen_at` is client-updatable. Never add another
+  celebration / unlock store, never celebrate a live month, a partner's result or anything not
+  claimed and verified; the baseline is never replayed. Celebrations are factual, ≈2 s, non-modal,
+  motion only under `motion-safe`, never in Resume State. Non-negotiables live in owner-only side
+  tables (never a column on `daily_tasks` / `routine_items`), are snapshotted per occurrence and have
+  no weight in any number. Weekly priorities: ≤ 3 per Monday week, this / next week only,
+  self-declared (never proof), saved at once, not on Today. Reviews: optional owner-only
+  reflections + facts from `my_review_facts` (INVOKER) — no AI or generated text. No new DEFINER,
+  channel, broadcast or polling for any of it.
 - Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
   (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
   never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses

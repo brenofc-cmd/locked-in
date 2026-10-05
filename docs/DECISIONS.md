@@ -518,3 +518,39 @@ Status: Accepted.
 Decision: MARCOS: streak 7 / 30 / 100 (from the longest streak, so losing the current run takes nothing back), effective focus 10 / 50 / 100 h (settled total, whole hours), Perfect Days 5 / 10 / 30 (closed days). Locked shows progress ("23 de 30 dias"), reached shows CONQUISTADO. No unlock date, no unlock table, no XP, coins, levels, power-ups or duo milestones; celebrations belong to Phase 9.
 Reason: A milestone is a fact about the history, verifiable at any time from the same numbers.
 Status: Accepted.
+
+# ADR-086 — One owner-only `celebrations` table holds milestone unlocks and celebration receipts
+
+Decision: V2 Phase 9 adds `public.celebrations (owner_id, kind, key, achieved_at, source_value, baseline, seen_at)`, primary key `(owner_id, kind, key)`. `milestone` rows are unlocks: the INVOKER guard validates them against the real numbers (`private.milestone_value`) and stores the value at unlock; `perfect_day` rows (today only, while perfect) and `monthly` rows (a month that has ended) are receipts. Clients insert `(kind, key)` and update `seen_at` only; the database stamps the rest; nothing is deleted. Progress shows a milestone CONQUISTADO when `value ≥ target` **or** it is unlocked. This revises ADR-083 / ADR-085 only for unlocks: months, records and milestone progress are still derived.
+Reason: Reaching a milestone is a historical event — a later history reset or Daily Standard change must not take it back, and "shown once" must hold across devices. One table for unlocks and receipts keeps one model, one guard and one `seen_at`.
+Status: Accepted.
+
+# ADR-087 — Baseline: milestones reached before Phase 9 are recorded as seen
+
+Decision: The migration calls `private.baseline_milestones(user)` for every profile: every milestone already reached is inserted with `baseline = true` and `seen_at = now()`. The function is callable by no API role (DEV: `dev_fixture_baseline_milestones`).
+Reason: Shipping celebrations must not replay months of old achievements as a burst.
+Status: Accepted.
+
+# ADR-088 — Celebrations are claimed by the client and validated by the database; no polling, ≈2 s on screen
+
+Decision: The client derives claims from numbers already on screen (`claimsToMake`), sends them 1.5 s after the set changes, retries a refused claim once after 4 s, and shows unseen rows one at a time (Perfect Day → milestones → month) in a non-modal card that closes after ≈2 s (held while pointed at / focused), with motion only under `motion-safe`. Monthly: only the most recent FINAL month I won or drew, ended within 7 days. No trigger-side celebration, no channel, no timer that fetches.
+Reason: The database cannot know when the user looks at the app; the client cannot be trusted with the facts. Claim-then-validate keeps both honest without background work.
+Status: Accepted.
+
+# ADR-089 — Non-negotiables live in owner-only side tables, snapshotted per occurrence, with no weight
+
+Decision: `daily_task_non_negotiables` and `routine_non_negotiables` (Phase 5 pattern, composite FKs, owner-only). A routine's flag is copied onto each generated occurrence (trigger after insert on `daily_tasks`) and follows today's occurrence; a closed day's flag is frozen. No column on `daily_tasks` / `routine_items`; no effect on completion, Daily Standard, streak, duel, month, records or milestones; shown as "◇ NÃO NEGOCIÁVEL" and "NÃO NEGOCIÁVEIS x / y" in reviews.
+Reason: The partner reads task rows; a flag there would leak. A weight would change every competitive number.
+Status: Accepted.
+
+# ADR-090 — Weekly priorities: 3 per week, this and next week, self-declared, saved at once
+
+Decision: `public.weekly_priorities` (owner-only): positions 1..3 per Monday week, open / done (`done_at` by the database), current and next week editable, closed weeks frozen (`LI_HISTORY_LOCKED`), further ahead `LI_WEEK_TOO_FAR`. `/plan/week` under PLANEJAR (one row on the hub), no draft (each change saves at once), nothing on Today. Never proof, never competitive.
+Reason: A plan for the week the user already reasons in, with the same history rule as everything else.
+Status: Accepted.
+
+# ADR-091 — Reviews 2.0: optional owner-only reflections + facts from `my_review_facts`
+
+Decision: `public.reviews (owner_id, kind day|week, period_start, worked, hindered, change_next)`, ≤ 500 characters, empty = null, never for a future period. `public.my_review_facts(from, to)` (SECURITY INVOKER, ≤ 31 days, capped at today) derives the facts from `private.day_stats`, the Perfect Day definition, the standard in force on each day (the `private.standard_on` rule inlined, because `standard_on` is not executable by `authenticated`) and the non-negotiables. The existing Day / Weekly Reviews show them; `my_records()` now delegates to `private.records(user)` (same results; the function body changed). No AI, no generated text.
+Reason: Reflection closes the loop; facts must be the same numbers as everywhere else, and an INVOKER function keeps the reviewed DEFINER set at 22.
+Status: Accepted.

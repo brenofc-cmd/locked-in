@@ -301,3 +301,23 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - DEV-only fixtures (never in production): `dev_fixture_add_focus` (bypasses the focus lifecycle
   trigger for the caller's own past sessions) and `dev_fixture_reset_focus`, both refused unless the
   caller is a `li-…@example.com` test account.
+
+## V2 Phase 9 — celebrations, non-negotiables, weekly planning, reviews (2026-10-05)
+
+- Five new tables, all owner-only (RLS `owner_id = auth.uid()`, column grants, anon / PUBLIC
+  nothing): `celebrations`, `daily_task_non_negotiables`, `routine_non_negotiables`,
+  `weekly_priorities`, `reviews`. No partner policy, no broadcast, no channel.
+- **No new SECURITY DEFINER function** (the reviewed set stays at 22, `stage9_integrity`). Guards
+  and snapshots are INVOKER triggers that tell the API path (`current_user` in authenticated / anon)
+  from the trusted one (materialisation, migrations, DEV fixtures).
+- A celebration is a claim the database verifies against the real numbers; a client cannot write
+  `baseline`, `seen_at`, `source_value` or the owner, cannot delete, and can update only `seen_at`
+  (stamped once by the database).
+- The non-negotiable flag never sits on `daily_tasks` / `routine_items` (the partner reads those
+  rows); a closed day's flag, a closed week's priority and a review's period are frozen.
+- `private.records`, `private.milestone_value`, `private.milestone_threshold` are executable by
+  `authenticated` only because INVOKER code calls them; the private schema is not exposed by the API
+  and they read through RLS.
+- DEV-only fixtures (never in production): `dev_fixture_reset_celebrations`,
+  `dev_fixture_baseline_milestones`, `dev_fixture_reset_reflection`, refused unless the caller is a
+  `li-…@example.com` test account.

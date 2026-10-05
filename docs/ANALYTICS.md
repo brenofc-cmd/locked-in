@@ -149,17 +149,27 @@ most Perfect Days in a calendar month (closed days); ties keep the first period.
 7 / 30 / 100 (longest), focus 10 / 50 / 100 h, Perfect Days 5 / 10 / 30. `duo_duel_months` is read
 with the duo numbers; `my_records` with the series. The streak rules (ADR-038) are unchanged.
 
+## Review facts, unlocks (V2 Phase 9)
+
+`my_review_facts(from, to)` states the facts of a Day / Weekly Review from the same sources
+(`private.day_stats`, the Perfect Day definition, `private.standard_met` with the standard in force on
+each day, the non-negotiable side table). Non-negotiables and weekly priorities have **no weight** in
+any number above. A milestone reached once is kept as a durable unlock (`celebrations`, ADR-086):
+Progress shows it CONQUISTADO even if the derived value later drops — the only stored fact here, and
+it is an event, not a cache (docs/CELEBRATIONS.md).
+
 ## Database functions
 
-| Function                          | Security | Returns                                                                                               |
-| --------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
-| `my_progress_summary()`           | INVOKER  | today, standard, streak_before_today, current, longest_closed, longest, today counts, first task date |
-| `my_daily_progress(p_from, p_to)` | INVOKER  | one row per day: planned, completed, focus_seconds, focus_sessions (≤ 400 days, capped at today)      |
-| `my_habits(p_from, p_to)`         | INVOKER  | routine id, title, planned, completed (closed days)                                                   |
-| `duo_weeks(p_weeks = 8)`          | DEFINER  | current week + up to 26 completed weeks: counts, focus, perfect days for me and the partner           |
-| `partner_progress_summary()`      | DEFINER  | the partner's streak_before_today, current_streak, standard                                           |
-| `duo_duel_months(p_months = 6)`   | DEFINER  | Phase 8: per-day duel numbers for the current month + up to 11 before it (from `duel_since`)          |
-| `my_records()`                    | INVOKER  | Phase 8: best focus day / week, best Perfect-Days month, totals (own rows only)                       |
+| Function                          | Security | Returns                                                                                                |
+| --------------------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `my_progress_summary()`           | INVOKER  | today, standard, streak_before_today, current, longest_closed, longest, today counts, first task date  |
+| `my_daily_progress(p_from, p_to)` | INVOKER  | one row per day: planned, completed, focus_seconds, focus_sessions (≤ 400 days, capped at today)       |
+| `my_habits(p_from, p_to)`         | INVOKER  | routine id, title, planned, completed (closed days)                                                    |
+| `duo_weeks(p_weeks = 8)`          | DEFINER  | current week + up to 26 completed weeks: counts, focus, perfect days for me and the partner            |
+| `partner_progress_summary()`      | DEFINER  | the partner's streak_before_today, current_streak, standard                                            |
+| `duo_duel_months(p_months = 6)`   | DEFINER  | Phase 8: per-day duel numbers for the current month + up to 11 before it (from `duel_since`)           |
+| `my_records()`                    | INVOKER  | Phase 8: best focus day / week, best Perfect-Days month, totals (own rows only)                        |
+| `my_review_facts(p_from, p_to)`   | INVOKER  | Phase 9: review facts — days, completion, focus, Perfect Days, standard days, non-negotiables (≤ 31 d) |
 
 Helpers in `private` (not exposed by the API): `local_today`, `materialize_tasks`, `focus_seconds`,
 `day_stats`, `standard_met`, `streaks`. The INVOKER helpers run as the caller, so RLS still applies

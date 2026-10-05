@@ -101,7 +101,10 @@ Fixed thresholds derived from the same numbers — nothing is earned or stored:
 Locked: progress ("72h / 100h", read "72 de 100 horas"); reached: **CONQUISTADO**. Progress shows the
 next milestone of each kind (closest first) and the rest under "VER TODOS OS MARCOS". The streak
 milestones follow the existing streak rules (a standard change recalculates it, ADR-038). No unlock
-date, no XP, no duo milestones.
+date, no XP, no duo milestones. **V2 Phase 9** (ADR-086): reaching a milestone is now also recorded as a
+durable unlock (`public.celebrations`), so a milestone stays CONQUISTADO even if the derived value
+later drops, and its first crossing is celebrated once (docs/CELEBRATIONS.md). Milestones reached
+before Phase 9 are a seen baseline.
 
 ## Interface
 

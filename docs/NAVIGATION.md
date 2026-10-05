@@ -66,12 +66,18 @@ ESTA SEMANA / head-to-head → commitment history (collapsed).
 
 **PLANEJAR** (`/plan`, new hub, no new query) — rows: PRÓXIMO (next event → `/planner`), METAS
 (featured goal → `/goals`), ROTINA (N active items → `/routine`), DESAFIOS (→ `/challenges`; the
-count would need a new query, so it keeps the "with your duo / needs a duo" line).
+count would need a new query, so it keeps the "with your duo / needs a duo" line). V2 Phase 9 adds
+ESTA SEMANA ("2 prioridades · 1 / 2 feitas" or "Planeje sua semana") → `/plan/week` (this / next
+week's priorities, docs/WEEKLY_PLANNING.md); `/plan/week` is under the PLANEJAR tab (`/plan/…`) and is
+not a restorable route.
 
 **PROGRESSO** — VISÃO GERAL (%, streak, focus, perfect days: first viewport) → METAS (goal proof) →
 DUELOS (V2 Phase 8: the current month — details and previous months collapsed —, then the last 7) →
 RECORDES and MARCOS (compact rows; all milestones collapsed) → HISTÓRICO (chart, calendar, weekly
-reviews, insights / habits). Today, Focus and Plan gained nothing in Phase 8.
+reviews, insights / habits). Today, Focus and Plan gained nothing in Phase 8. V2 Phase 9: Today
+gains only the "◇ NÃO NEGOCIÁVEL" line of a flagged task and the ≈2 s celebration card (no route);
+the Day / Weekly Reviews gain facts and reflections (a past day in the calendar shows its
+reflection); DUPLA and FOCO gain nothing; still five tabs.
 
 **FOCO** — unchanged.
 
