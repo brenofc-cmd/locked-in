@@ -720,8 +720,8 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `daily_standard_history`          | `20261001114008` | `20261001135917` |
 | `duel_since`                      | `20261001114507` | `20261001135936` |
 | `monthly_progression`             | `20261005122148` | `20261005134423` |
-| `reflection_celebration_planning` | `20261005150455` | _pending_        |
-| `celebration_key_dates`           | `20261005163123` | _pending_        |
+| `reflection_celebration_planning` | `20261005150455` | `20261005183305` |
+| `celebration_key_dates`           | `20261005163123` | `20261005183307` |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
