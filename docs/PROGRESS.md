@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01); production deployed, database / API smoke VERIFIED; visual smoke on PROD pending (human); next: Phase 8 (not started)
+LOCKED IN V2 — UI INFORMATION ARCHITECTURE POLISH — VERIFIED (DEV, 2026-10-05); production deploy and visual smoke: see the section below. V2 Phase 7 — VERIFIED (production visual smoke: see below). V2 Phase 8 — NOT STARTED
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -13,6 +13,72 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ## Known issues (open)
 
 - None.
+
+## UI Information Architecture Polish — VERIFIED (DEV, 2026-10-05)
+
+Scope: docs/NAVIGATION.md (no feature added or removed; nothing in the database, analytics, duel,
+goal proof, focus, commitments, streak, Daily Standard, Planner or realtime changed). Branch
+`v2-ui-information-architecture-polish` (from `main` at `25b2c76`). **No SQL, no migration** —
+`supabase/` is identical to `main`; nothing to deploy to the database, PROD Supabase not touched.
+
+Done:
+
+- Five tabs **HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO** (MAIS removed; `/more` → `/plan`, also
+  from a saved Resume State). PLANEJAR hub (`/plan`): PRÓXIMO, METAS, ROTINA, DESAFIOS. Desktop
+  sidebar: the four planning screens under Planejar.
+- Profile menu (avatar): Conta, Configurações, Dupla, Instalar app (only when the browser offers
+  it), Sair (`clearResume()` kept). Disclosure button; Escape / outside click close and return focus.
+- HOJE: tasks first; TOP 3 compact; context as one line each (duel → `/partner#duel`, next event,
+  North Star as a disclosure); the partner card is desktop-only (phone: header chip), the invite card
+  shows on every width without a partner; the live feed is wide-screen only.
+- DUPLA: person + status → DUELO DE HOJE (detailed, COMO É DECIDIDO) → commitments → check-in /
+  nudge rows → partner's tasks + ATIVIDADE → week / head-to-head → commitment history (collapsed).
+- PROGRESSO: VISÃO GERAL → METAS → DUELOS → HISTÓRICO (chart, calendar, reviews, insights).
+- FOCO unchanged.
+
+Commits: `1239df0` docs(ux) · `6d3972d` nav · `12b87c9` today · `5724635` duo · `ed8a250` progress ·
+`ba1da93` today invite card · `4a24f5b` test(ux) e2e for the new IA · `b6e2452` fix(test) reset
+query · `235007c` test(security) sign-in wait · docs.
+
+Found and fixed during the gates (tests only — no product behaviour changed for a test):
+
+- **Tests on the old UX** (B): tab names, Settings via the profile menu, the header chip label, the
+  partner's running clock / feed now checked on DUPLA (stage5, stage6 — stage6 keeps B on Today for
+  the toasts, which never show on `/partner`, and opens DUPLA in a second tab), the month heading is
+  an `h3` under HISTÓRICO (v2-resume), `getByTestId("profile-button")` matched the hidden sidebar
+  copy too (stage7 → role + hydration retry).
+- **ia.spec bugs**: `/partner#duel` right after `/partner` is a same-document hash change (no
+  response) → reached from `/today`; `launch(..., undefined)` took the signed-in default → `null`.
+- **Fixture (C), pre-existing**: `resetTasks()` read all routine items and filtered in the client;
+  PostgREST caps a response at 1000 rows and archived rows accumulate, so active routines survived
+  the reset once a test user passed 1000 items → filtered in the query (separate commit).
+- **Fixture (C)**: `dev_fixture_reset_history` hit the statement timeout with ~5 300 accumulated
+  routine items; `supabase/dev/reset_test_users.sql` was run on **DEV** (`oavhuxaanztrughyrckb`,
+  test users only), accepted by the owner. Rule from now on: no destructive cleanup, DEV included,
+  without explicit confirmation unless it is an official, documented part of the suite.
+- **Flaky (D)**: stage9's external-`next` sign-in waited the default 5 s while DEV Auth was still
+  answering ("Entrando…") → the same 20 s as `signInUI()`, assertion unchanged (separate commit).
+  One more sign-in never reached Supabase (no `/token` request in the Auth logs) on a local
+  `next start` reused across 8 runs; a fresh server (Playwright `webServer`) passed everything.
+
+Gates (DEV, final):
+
+- lint ✓ · typecheck ✓ · format ✓ · unit **319/319** · build ✓
+- `npm audit`: **5 high, dev-only** (`braces` via `micromatch` / `fast-glob` /
+  `@next/eslint-plugin-next` / `eslint-config-next`, new advisory GHSA-vfj7-8cjw-p6xm); production
+  dependencies (`--omit=dev`) **0**. The suggested fix is a breaking downgrade of
+  `eslint-config-next` → not applied; follow up when `eslint-config-next` ships a fixed range.
+- IA suite (`ia-390`) **7/7**.
+- E2E full suite in one clean run: **149 passed, 1 skipped, 0 failed** (150, 13.2 min,
+  `--workers=1`, fresh server). The skip is the opt-in `LI_SHOTS` capture.
+- Visual review (local build, 375 / 390 / 430 / 768 / 1180 / 1440; Alice with a duo and duels, the
+  layout user with the design day): no horizontal scroll, no page error at any width. HOJE: tasks
+  from the first viewport, TOP 3 one line when empty, duel / next / North Star one line each, the
+  morning card once a day; DUPLA: status, duel with COMO É DECIDIDO, commitments, check-in, feed below,
+  history collapsed; FOCO minimal; PLANEJAR four rows; PROGRESSO overview first, then the sections
+  that have data (METAS / DUELOS hide without goals / a duo; a user without tasks keeps the
+  pre-existing "no data yet" state); profile menu Conta / Configurações / Dupla / Sair (Instalar app
+  only when the browser offers it — not in headless Chromium). No code change came out of it.
 
 ## Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01)
 

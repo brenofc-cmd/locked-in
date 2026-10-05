@@ -34,7 +34,7 @@ Not used, by decision: Prisma, Drizzle, Express, NestJS, Redis, Firebase, Redux,
 ```
 locked-in/
 ├── src/
-│   ├── app/            # (app)/ private screens: today, partner, focus, progress, more, routine,
+│   ├── app/            # (app)/ private screens: today, partner, focus, plan, progress, more (→ plan), routine,
 │   │                   #   challenges, duo, settings, onboarding; (app)/actions.ts (duo, profile),
 │   │                   #   (app)/task-actions.ts (tasks, routine)
 │   │                   # (auth)/ login, signup, forgot-password, reset-password; (auth)/actions.ts

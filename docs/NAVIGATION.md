@@ -56,8 +56,9 @@ return focus to the button; Tab moves through the items; it closes on navigation
 **HOJE** — header (date, day, greeting, %, streak, bar, next action) → morning card (once a day) →
 TOP 3 (compact rows) → tasks (dominant; a Top 3 task shows a small rank marker) → context rows:
 `DUELO · AO VIVO  Você 2 — 1 Ana ›` (→ `/partner#duel`), `PRÓXIMO  event ›` (only the next event),
-`◇ LEMBRE-SE DO PORQUÊ  text ›` (→ `/goals`) → Revisar o dia. The partner card left Today (the header
-chip and DUPLA cover it). Wide desktop: the context rows and the live feed sit in the aside.
+`◇ LEMBRE-SE DO PORQUÊ  text ›` (→ `/goals`) → Revisar o dia. On a phone the partner card left Today (the
+header chip and DUPLA cover it, including the partner's running focus clock); it stays on desktop.
+Without a partner the invite card shows on every width. Wide desktop: the context rows and the live feed sit in the aside.
 
 **DUPLA** — person (avatar, name, status, check-in, today's % inline) → DUELO DE HOJE →
 COMPROMISSOS (active first) → CHECK-IN / DAR UM TOQUE as rows → the partner's tasks + ATIVIDADE →
@@ -83,3 +84,12 @@ rows moved to PLANEJAR (4) and the profile menu (2).
 Every route still works directly: `/today`, `/partner`, `/partner#duel`, `/focus`, `/plan`,
 `/progress`, `/planner`, `/goals`, `/goals/<id>`, `/routine`, `/challenges`, `/duo`, `/settings`,
 `/more` (→ `/plan`).
+
+## Verification (2026-10-05)
+
+- `tests/e2e/ia.spec.ts` (project `ia-390`, Alice): five tabs in order with `aria-current`; PLANEJAR
+  rows and Back; profile menu by keyboard, Escape and outside click; every deep link above; Resume
+  State at `/` (PLANEJAR restored, an old `/more` value restores `/plan`, drafts kept) and the PWA
+  `start_url`; Sair clears the resume; 375 / 390 / 430 / 768 / 1180 / 1440 without horizontal scroll.
+- The rest of the suite follows this navigation (docs/PROGRESS.md → UI Information Architecture
+  Polish): full E2E 149 passed, 1 skipped (`LI_SHOTS`), 0 failed.

@@ -77,7 +77,7 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
@@ -101,6 +101,8 @@ routing changed; run the pgTAP suite when a migration changed.
 - Errors shown to users go through `authErrorMessage()` / `duoErrorMessage()` / `taskErrorMessage()` /
   `focusErrorMessage()` (progress actions return fixed copy); never render raw
   Supabase or Postgres messages.
+- Never run a destructive data cleanup (e.g. `supabase/dev/reset_test_users.sql`, bulk deletes), DEV
+  included, without the owner's explicit confirmation; only the suite's own documented resets run freely.
 - Test users and credentials: `docs/DATABASE.md` → "Test users". `.env*` and `tests/e2e/.auth/` are
   git-ignored and must stay that way.
 
@@ -210,6 +212,10 @@ routing changed; run the pgTAP suite when a migration changed.
   DIA only when `is_final`. Running focus ticks from the clock on screen; the partner side re-reads
   with the duo numbers on events — no polling. No XP, coins, champion, records or badges (later
   phases).
+- Navigation (docs/NAVIGATION.md): five tabs HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO; account
+  things (Conta, Configurações, Dupla, Instalar app, Sair) live in the profile menu, never in a tab;
+  planning screens are reached from PLANEJAR (`/plan`); `/more` only redirects to `/plan`. Keep every
+  deep link working. On a phone Today has no partner card (header chip) and no live feed (DUPLA).
 - Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
   (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
   never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses
