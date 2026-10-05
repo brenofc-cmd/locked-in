@@ -31,6 +31,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           initialFocus={data.focus}
           initialProgress={data.progress}
           initialPlanner={data.planner}
+          initialReflection={data.reflection}
         >
           <AppShell>{children}</AppShell>
         </AppStateProvider>

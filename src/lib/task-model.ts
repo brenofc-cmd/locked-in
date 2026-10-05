@@ -118,10 +118,18 @@ export type TaskInput = {
    * undefined = leave the link as it is; null = no goal.
    */
   goalId?: string | null;
+  /**
+   * V2 Phase 9: NÃO NEGOCIÁVEL (owner-only side table, never shared, no
+   * weight anywhere). undefined = leave it as it is.
+   */
+  nonNegotiable?: boolean;
 };
 
 /** Goal links of actions, by task / routine id (null = unlinked). */
 export type GoalLinks = Record<string, string | null>;
+
+/** V2 Phase 9: non-negotiable flags, by task / routine id. */
+export type Flags = Record<string, boolean>;
 
 /** Same rules as the database constraints, checked before any request. */
 export function validateTaskInput(input: TaskInput): string | null {

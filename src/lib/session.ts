@@ -6,11 +6,18 @@ import { addDays } from "@/lib/local-date";
 import { UPCOMING_DAYS, type PlannerRow } from "@/lib/planner";
 import { loadPlannerRows } from "@/lib/planner-data";
 import { loadProgress } from "@/lib/progress-data";
+import { loadCelebrations, loadPriorities } from "@/lib/reflection-data";
+import type { ReflectionData } from "@/components/use-reflection";
 import { settingsFromRow, type UserSettings } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { GoalOption } from "@/lib/goal-proof";
 import { GOAL_STATUSES, type GoalStatus } from "@/lib/goals";
-import type { DailyTaskRow, GoalLinks, RoutineRow } from "@/lib/task-model";
+import type {
+  DailyTaskRow,
+  Flags,
+  GoalLinks,
+  RoutineRow,
+} from "@/lib/task-model";
 
 /** Real identity for the signed-in user (Stage 3). */
 export type SessionData = {
@@ -51,6 +58,9 @@ export type TasksData = {
   /** V2 Phase 5: goal of each of today's tasks / active routines. */
   taskGoals: GoalLinks;
   routineGoals: GoalLinks;
+  /** V2 Phase 9: NÃO NEGOCIÁVEL flags (owner-only side tables). */
+  taskFlags: Flags;
+  routineFlags: Flags;
 };
 
 export type AppData = {
@@ -61,6 +71,8 @@ export type AppData = {
   progress: ProgressData;
   /** V2 Phase 2: planner events from today to today + UPCOMING_DAYS. */
   planner: PlannerRow[];
+  /** V2 Phase 9: my celebrations and this / next week's priorities. */
+  reflection: ReflectionData;
 };
 
 /**
@@ -96,37 +108,53 @@ export async function loadAppData(): Promise<AppData | null> {
     const ensured = await supabase.rpc("ensure_my_daily_tasks");
     if (ensured.error || !ensured.data) throw new Error(t.loadErrors.today);
     const today = ensured.data;
-    const [tasks, routines, goals, routineLinks] = await Promise.all([
-      supabase
-        .from("daily_tasks")
-        .select("*")
-        .eq("owner_id", userId)
-        .eq("task_date", today)
-        .order("sort_order")
-        .order("created_at"),
-      supabase
-        .from("routine_items")
-        .select("*")
-        .eq("owner_id", userId)
-        .or(`end_date.is.null,end_date.gte.${today}`)
-        .order("sort_order")
-        .order("created_at"),
-      // V2 Phase 5: owner-only (RLS); titles never leave this user's session.
-      supabase.from("goals").select("id, title, status").limit(200),
-      supabase.from("routine_item_goals").select("routine_item_id, goal_id"),
-    ]);
-    if (tasks.error || routines.error || goals.error || routineLinks.error)
+    const [tasks, routines, goals, routineLinks, routineFlags] =
+      await Promise.all([
+        supabase
+          .from("daily_tasks")
+          .select("*")
+          .eq("owner_id", userId)
+          .eq("task_date", today)
+          .order("sort_order")
+          .order("created_at"),
+        supabase
+          .from("routine_items")
+          .select("*")
+          .eq("owner_id", userId)
+          .or(`end_date.is.null,end_date.gte.${today}`)
+          .order("sort_order")
+          .order("created_at"),
+        // V2 Phase 5: owner-only (RLS); titles never leave this user's session.
+        supabase.from("goals").select("id, title, status").limit(200),
+        supabase.from("routine_item_goals").select("routine_item_id, goal_id"),
+        // V2 Phase 9: owner-only (RLS), never shared.
+        supabase.from("routine_non_negotiables").select("routine_item_id"),
+      ]);
+    if (
+      tasks.error ||
+      routines.error ||
+      goals.error ||
+      routineLinks.error ||
+      routineFlags.error
+    )
       throw new Error(t.loadErrors.today);
-    const taskLinks = tasks.data.length
-      ? await supabase
-          .from("daily_task_goals")
-          .select("daily_task_id, goal_id")
-          .in(
-            "daily_task_id",
-            tasks.data.map((x) => x.id),
-          )
-      : { data: [], error: null };
-    if (taskLinks.error) throw new Error(t.loadErrors.today);
+    const taskIds = tasks.data.map((x) => x.id);
+    const [taskLinks, taskFlags] = taskIds.length
+      ? await Promise.all([
+          supabase
+            .from("daily_task_goals")
+            .select("daily_task_id, goal_id")
+            .in("daily_task_id", taskIds),
+          supabase
+            .from("daily_task_non_negotiables")
+            .select("daily_task_id")
+            .in("daily_task_id", taskIds),
+        ])
+      : [
+          { data: [], error: null },
+          { data: [], error: null },
+        ];
+    if (taskLinks.error || taskFlags.error) throw new Error(t.loadErrors.today);
     return {
       today,
       tasks: tasks.data,
@@ -144,12 +172,18 @@ export async function loadAppData(): Promise<AppData | null> {
       routineGoals: Object.fromEntries(
         routineLinks.data.map((l) => [l.routine_item_id, l.goal_id]),
       ),
+      taskFlags: Object.fromEntries(
+        taskFlags.data.map((f) => [f.daily_task_id, true]),
+      ),
+      routineFlags: Object.fromEntries(
+        routineFlags.data.map((f) => [f.routine_item_id, true]),
+      ),
     };
   }
 
   // Progress after the tasks: both materialise today's routine first.
   const tasksAndProgress = loadTasks().then(async (tasks) => {
-    const [progress, planner] = await Promise.all([
+    const [progress, planner, celebrations, priorities] = await Promise.all([
       loadProgress(supabase),
       // V2 Phase 2: the upcoming window (Today card, reminders, Planner).
       loadPlannerRows(
@@ -157,8 +191,15 @@ export async function loadAppData(): Promise<AppData | null> {
         tasks.today,
         addDays(tasks.today, UPCOMING_DAYS),
       ),
+      loadCelebrations(supabase),
+      loadPriorities(supabase, tasks.today),
     ]);
-    return { tasks, progress, planner };
+    return {
+      tasks,
+      progress,
+      planner,
+      reflection: { celebrations, priorities },
+    };
   });
 
   const [
@@ -166,7 +207,7 @@ export async function loadAppData(): Promise<AppData | null> {
     duos,
     members,
     settings,
-    { tasks, progress, planner },
+    { tasks, progress, planner, reflection },
     duo,
     focus,
   ] = await Promise.all([
@@ -224,5 +265,6 @@ export async function loadAppData(): Promise<AppData | null> {
     focus: { ...focus, serverNow: Date.now() + focus.dbOffset },
     progress,
     planner,
+    reflection,
   };
 }

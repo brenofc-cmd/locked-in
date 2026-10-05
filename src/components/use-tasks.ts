@@ -29,6 +29,7 @@ import {
   skipLabel,
   taskFromRow,
   type DailyTaskRow,
+  type Flags,
   type GoalLinks,
   type RoutineRow,
   type TaskInput,
@@ -62,9 +63,17 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
   const [routineGoals, setRoutineGoals] = useState<GoalLinks>(
     initial.routineGoals,
   );
+  // V2 Phase 9: NÃO NEGOCIÁVEL flags (owner-only), merged like the links.
+  const [taskFlags, setTaskFlags] = useState<Flags>(initial.taskFlags);
+  const [routineFlags, setRoutineFlags] = useState<Flags>(initial.routineFlags);
   const mergeLinks = useCallback(
     (
-      res: { taskGoals?: GoalLinks; routineGoals?: GoalLinks },
+      res: {
+        taskGoals?: GoalLinks;
+        routineGoals?: GoalLinks;
+        taskFlags?: Flags;
+        routineFlags?: Flags;
+      },
       dropTaskIds: string[] = [],
     ) => {
       setTaskGoals((m) => {
@@ -72,8 +81,15 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         for (const id of dropTaskIds) delete next[id];
         return { ...next, ...res.taskGoals };
       });
+      setTaskFlags((m) => {
+        const next = { ...m };
+        for (const id of dropTaskIds) delete next[id];
+        return { ...next, ...res.taskFlags };
+      });
       if (res.routineGoals)
         setRoutineGoals((m) => ({ ...m, ...res.routineGoals }));
+      if (res.routineFlags)
+        setRoutineFlags((m) => ({ ...m, ...res.routineFlags }));
     },
     [],
   );
@@ -87,11 +103,13 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
   const routineMapRef = useRef(routineMap);
   const tasksRef = useRef(tasks);
   const taskGoalsRef = useRef(taskGoals);
+  const taskFlagsRef = useRef(taskFlags);
   useLayoutEffect(() => {
     routineMapRef.current = routineMap;
     tasksRef.current = tasks;
     taskGoalsRef.current = taskGoals;
-  }, [routineMap, tasks, taskGoals]);
+    taskFlagsRef.current = taskFlags;
+  }, [routineMap, tasks, taskGoals, taskFlags]);
 
   /** Latest request per task: stale responses never overwrite newer taps. */
   const versions = useRef(new Map<string, number>());
@@ -238,6 +256,8 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
         setTasks((ts) => [...ts, temp]);
         const tempGoal = input.goalId ?? null;
         setTaskGoals((m) => ({ ...m, [tempId!]: tempGoal }));
+        const tempFlag = Boolean(input.nonNegotiable);
+        setTaskFlags((m) => ({ ...m, [tempId!]: tempFlag }));
       }
       const res = await addTaskAction({
         ...input,
@@ -307,6 +327,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       const before = tasksRef.current.find((t) => t.id === id);
       if (!before) return false;
       const goalBefore = taskGoalsRef.current[id] ?? null;
+      const flagBefore = taskFlagsRef.current[id] ?? false;
       const v = bump(id);
       patch(id, {
         name: input.name.trim(),
@@ -319,11 +340,16 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       });
       if (input.goalId !== undefined)
         setTaskGoals((m) => ({ ...m, [id]: input.goalId ?? null }));
+      if (input.nonNegotiable !== undefined) {
+        const flag = input.nonNegotiable;
+        setTaskFlags((m) => ({ ...m, [id]: flag }));
+      }
       const res = await updateTaskToday(id, input).catch(() => null);
       if (!isLatest(id, v)) return true;
       if (res?.ok) {
         patch(id, taskFromRow(res.task, routineMapRef.current, timeZone));
         setTaskGoals((m) => ({ ...m, [id]: res.goalId }));
+        setTaskFlags((m) => ({ ...m, [id]: res.nonNegotiable }));
         fx.toast({
           text: t.taskToasts.taskUpdated,
           sub: t.taskToasts.todayOnly,
@@ -332,6 +358,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       }
       patch(id, before);
       setTaskGoals((m) => ({ ...m, [id]: goalBefore }));
+      setTaskFlags((m) => ({ ...m, [id]: flagBefore }));
       fx.toast({
         text: res?.error ?? t.taskToasts.networkTryAgain,
         sub: t.taskToasts.notSaved,
@@ -534,6 +561,8 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
     syncGoals: setGoals,
     taskGoals,
     routineGoals,
+    taskFlags,
+    routineFlags,
     linkRoutine,
   };
 }

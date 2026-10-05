@@ -81,6 +81,7 @@ export const t = {
     settings: "Ajustes",
     planner: "Planner",
     goals: "Metas & Visão",
+    week: "Semana",
     onboarding: "Boas-vindas",
   },
 
@@ -748,6 +749,7 @@ export const t = {
     routine: "ROTINA",
     routineItems: (n: number) =>
       `${n} ${plural(n, "item ativo", "itens ativos")}`,
+    week: "ESTA SEMANA",
     challenges: "DESAFIOS",
     withPartner: "Com sua dupla",
     needsPartner: "Precisa de uma dupla",
@@ -1012,6 +1014,80 @@ export const t = {
       link: "Não foi possível vincular. Tente de novo.",
       inactive: "Essa meta não está mais ativa. Escolha outra.",
     },
+  },
+  // V2 Phase 9 — celebrations (docs/CELEBRATIONS.md): factual, once.
+  celebrations: {
+    aria: "Conquista",
+    close: "Fechar",
+    ok: "OK",
+    perfectDay: "DIA PERFEITO",
+    perfectDayLine: (n: number) =>
+      n === 1
+        ? "A tarefa de hoje está feita."
+        : `As ${n} tarefas de hoje estão feitas.`,
+    milestoneLine: "MARCO CONQUISTADO",
+    monthDraw: "MÊS ENCERRADO · EMPATE",
+    monthLine: (month: string, score: string) => `${month} · ${score}`,
+  },
+
+  // V2 Phase 9 — weekly planning (docs/WEEKLY_PLANNING.md).
+  weeklyPlan: {
+    title: "SEMANA",
+    aria: "Prioridades da semana",
+    subtitle: "Até 3 prioridades. Só você vê.",
+    tabsAria: "Semana",
+    current: "ESTA SEMANA",
+    next: "PRÓXIMA SEMANA",
+    add: "Adicionar prioridade",
+    placeholder: "Uma prioridade desta semana",
+    save: "SALVAR",
+    cancel: "Cancelar",
+    edit: "Editar",
+    remove: "Remover",
+    full: "Três prioridades. O suficiente.",
+    empty: "Nenhuma prioridade para esta semana.",
+    doneAria: (title: string) => `${title}: feita`,
+    toggleAria: (title: string) => title,
+    doneRatio: (r: string) => `${r} feitas`,
+    count: (n: number) => `${n} ${plural(n, "prioridade", "prioridades")}`,
+    none: "Planeje sua semana",
+    selfDeclared: "Autodeclarado: um plano, não uma prova.",
+    back: "PLANEJAR",
+    errors: {
+      empty: "Escreva a prioridade.",
+      tooLong: "No máximo 120 caracteres.",
+      save: "Não foi possível salvar. Tente de novo.",
+      locked: "Essa semana já fechou.",
+      tooFar: "Só dá para planejar esta semana e a próxima.",
+      full: "Já são 3 prioridades nesta semana.",
+    },
+  },
+
+  // V2 Phase 9 — Reviews 2.0: optional reflections + objective facts.
+  reviews: {
+    reflection: "REFLEXÃO",
+    optional: "Opcional. Só você vê.",
+    worked: "O que funcionou?",
+    hindered: "O que me atrapalhou?",
+    changeDay: "O que vou mudar amanhã?",
+    changeWeek: "O que vou mudar na próxima semana?",
+    save: "SALVAR REFLEXÃO",
+    saved: "SALVO",
+    saving: "SALVANDO…",
+    saveError: "Não foi possível salvar. Tente de novo.",
+    standardDays: "DIAS COM PADRÃO",
+    nonNegotiables: "NÃO NEGOCIÁVEIS",
+    priorities: "PRIORIDADES",
+    focus: "FOCO",
+    planNext: "PLANEJAR PRÓXIMA SEMANA",
+    loadError: "Não foi possível carregar os fatos.",
+  },
+
+  // V2 Phase 9 — non-negotiables (docs/WEEKLY_PLANNING.md).
+  nonNegotiable: {
+    label: "◇ NÃO NEGOCIÁVEL",
+    switch: "Não negociável",
+    note: "Só você vê. Não muda nenhum placar.",
   },
   goalPicker: {
     label: "META",

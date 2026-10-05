@@ -8,6 +8,7 @@ import {
   timeToDb,
   validateTaskInput,
   type DailyTaskRow,
+  type Flags,
   type GoalLinks,
   type RoutineRow,
   type TaskInput,
@@ -114,6 +115,60 @@ async function setRoutineGoal(
   return error;
 }
 
+// ---- non-negotiables (V2 Phase 9, owner-only side tables) -------------------
+// The database checks ownership and the open day; a routine's flag also
+// follows today's occurrence (trigger) and is snapshotted on new ones.
+
+async function setTaskFlag(supabase: Client, taskId: string, on: boolean) {
+  const current = await supabase
+    .from("daily_task_non_negotiables")
+    .select("daily_task_id")
+    .eq("daily_task_id", taskId)
+    .maybeSingle();
+  if (current.error) return current.error;
+  if (Boolean(current.data) === on) return null;
+  const flags = supabase.from("daily_task_non_negotiables");
+  const { error } = on
+    ? await flags.insert({ daily_task_id: taskId })
+    : await flags.delete().eq("daily_task_id", taskId);
+  return error;
+}
+
+async function setRoutineFlag(
+  supabase: Client,
+  routineId: string,
+  on: boolean,
+) {
+  const current = await supabase
+    .from("routine_non_negotiables")
+    .select("routine_item_id")
+    .eq("routine_item_id", routineId)
+    .maybeSingle();
+  if (current.error) return current.error;
+  if (Boolean(current.data) === on) return null;
+  const flags = supabase.from("routine_non_negotiables");
+  const { error } = on
+    ? await flags.insert({ routine_item_id: routineId })
+    : await flags.delete().eq("routine_item_id", routineId);
+  return error;
+}
+
+/** Non-negotiable flags of these tasks. */
+async function taskFlagsOf(
+  supabase: Client,
+  taskIds: string[],
+): Promise<Flags> {
+  const flags: Flags = Object.fromEntries(taskIds.map((id) => [id, false]));
+  if (!taskIds.length) return flags;
+  const { data, error } = await supabase
+    .from("daily_task_non_negotiables")
+    .select("daily_task_id")
+    .in("daily_task_id", taskIds);
+  if (error) throw error;
+  for (const f of data) flags[f.daily_task_id] = true;
+  return flags;
+}
+
 /** Current goal links of these tasks (absent = no goal). */
 async function taskGoalsOf(
   supabase: Client,
@@ -131,7 +186,7 @@ async function taskGoalsOf(
 }
 
 async function routineWithToday(supabase: Client, routineIds: string[]) {
-  const [routines, today, routineLinks] = await Promise.all([
+  const [routines, today, routineLinks, routineFlagRows] = await Promise.all([
     supabase
       .from("routine_items")
       .select("*")
@@ -142,9 +197,14 @@ async function routineWithToday(supabase: Client, routineIds: string[]) {
       .from("routine_item_goals")
       .select("routine_item_id, goal_id")
       .in("routine_item_id", routineIds),
+    supabase
+      .from("routine_non_negotiables")
+      .select("routine_item_id")
+      .in("routine_item_id", routineIds),
   ]);
   if (routines.error) throw routines.error;
   if (routineLinks.error) throw routineLinks.error;
+  if (routineFlagRows.error) throw routineFlagRows.error;
   if (today.error || !today.data) throw today.error ?? new Error("today");
   const tasks = await supabase
     .from("daily_tasks")
@@ -157,14 +217,18 @@ async function routineWithToday(supabase: Client, routineIds: string[]) {
   );
   for (const l of routineLinks.data)
     routineGoals[l.routine_item_id] = l.goal_id;
+  const routineFlags: Flags = Object.fromEntries(
+    routineIds.map((id) => [id, false]),
+  );
+  for (const f of routineFlagRows.data) routineFlags[f.routine_item_id] = true;
+  const taskIds = tasks.data.map((x) => x.id);
   return {
     routines: routines.data,
     tasks: tasks.data,
-    taskGoals: await taskGoalsOf(
-      supabase,
-      tasks.data.map((x) => x.id),
-    ),
+    taskGoals: await taskGoalsOf(supabase, taskIds),
     routineGoals,
+    taskFlags: await taskFlagsOf(supabase, taskIds),
+    routineFlags,
   };
 }
 
@@ -174,6 +238,8 @@ type Saved = {
   tasks: DailyTaskRow[];
   taskGoals: GoalLinks;
   routineGoals: GoalLinks;
+  taskFlags: Flags;
+  routineFlags: Flags;
 };
 
 /** Quick Add (one-off for today) or a new routine item starting today. */
@@ -199,12 +265,22 @@ export async function addTask(input: TaskInput): Promise<Saved | Fail> {
           return fail(linkError);
         }
       }
+      const flagged = Boolean(input.nonNegotiable);
+      if (flagged) {
+        const flagError = await setTaskFlag(supabase, data.id, true);
+        if (flagError) {
+          await supabase.from("daily_tasks").delete().eq("id", data.id);
+          return fail(flagError);
+        }
+      }
       return {
         ok: true as const,
         routines: [],
         tasks: [data],
         taskGoals: { [data.id]: goalId },
         routineGoals: {},
+        taskFlags: { [data.id]: flagged },
+        routineFlags: {},
       };
     }
     const f = taskFields(input);
@@ -226,6 +302,14 @@ export async function addTask(input: TaskInput): Promise<Saved | Fail> {
         return fail(linkError);
       }
     }
+    if (input.nonNegotiable) {
+      // Also flags today's occurrence (database trigger).
+      const flagError = await setRoutineFlag(supabase, id, true);
+      if (flagError) {
+        await supabase.rpc("archive_routine_item", { p_id: id });
+        return fail(flagError);
+      }
+    }
     return { ok: true as const, ...(await routineWithToday(supabase, [id])) };
   });
 }
@@ -234,7 +318,15 @@ export async function addTask(input: TaskInput): Promise<Saved | Fail> {
 export async function updateTaskToday(
   id: string,
   input: TaskInput,
-): Promise<{ ok: true; task: DailyTaskRow; goalId: string | null } | Fail> {
+): Promise<
+  | {
+      ok: true;
+      task: DailyTaskRow;
+      goalId: string | null;
+      nonNegotiable: boolean;
+    }
+  | Fail
+> {
   const invalid = validateTaskInput({ ...input, once: true });
   if (invalid) return { ok: false, error: invalid };
   return guard(async () => {
@@ -250,8 +342,20 @@ export async function updateTaskToday(
       const linkError = await setTaskGoal(supabase, id, input.goalId);
       if (linkError) return fail(linkError);
     }
-    const links = await taskGoalsOf(supabase, [id]);
-    return { ok: true as const, task: data, goalId: links[id] ?? null };
+    if (input.nonNegotiable !== undefined) {
+      const flagError = await setTaskFlag(supabase, id, input.nonNegotiable);
+      if (flagError) return fail(flagError);
+    }
+    const [links, flags] = await Promise.all([
+      taskGoalsOf(supabase, [id]),
+      taskFlagsOf(supabase, [id]),
+    ]);
+    return {
+      ok: true as const,
+      task: data,
+      goalId: links[id] ?? null,
+      nonNegotiable: flags[id] ?? false,
+    };
   });
 }
 
@@ -281,6 +385,15 @@ export async function updateRoutine(
       // The template's goal: future occurrences and today's; history keeps its own.
       const linkError = await setRoutineGoal(supabase, routineId, input.goalId);
       if (linkError) return fail(linkError);
+    }
+    if (input.nonNegotiable !== undefined) {
+      // Same for the flag: future and today's occurrences; history keeps its own.
+      const flagError = await setRoutineFlag(
+        supabase,
+        routineId,
+        input.nonNegotiable,
+      );
+      if (flagError) return fail(flagError);
     }
     return {
       ok: true as const,

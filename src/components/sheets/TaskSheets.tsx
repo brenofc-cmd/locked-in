@@ -110,6 +110,14 @@ export function TaskFormSheet({
       linkableGoalId(draft?.goalId, app.goals) ??
       currentGoal,
   );
+  // V2 Phase 9: NÃO NEGOCIÁVEL (owner-only, never shared, no weight).
+  const [nonNegotiable, setNonNegotiable] = useState(
+    editing
+      ? (app.taskFlags[editing.id] ?? false)
+      : routine
+        ? (app.routineFlags[routine.id] ?? false)
+        : false,
+  );
   const goalOptions = linkableGoals(app.goals);
   const keptGoal =
     goalId && !goalOptions.some((g) => g.id === goalId)
@@ -171,6 +179,7 @@ export function TaskFormSheet({
       reminder,
       notes,
       goalId,
+      nonNegotiable,
     };
   }
 
@@ -259,6 +268,7 @@ export function TaskFormSheet({
     CATEGORY_LABEL[category],
     time,
     goalTitle && t.goalPicker.tag(goalTitle),
+    nonNegotiable && t.nonNegotiable.label,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -464,6 +474,20 @@ export function TaskFormSheet({
               <span className="text-xs text-dim">{t.taskSheet.hiddenNote}</span>
             </span>
             <SwitchTrack on={visible} />
+          </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={nonNegotiable}
+            data-testid="non-negotiable-switch"
+            onClick={() => setNonNegotiable((v) => !v)}
+            className="flex min-h-[52px] items-center justify-between text-left"
+          >
+            <span className="flex flex-col gap-[3px]">
+              <span className="text-[14.5px]">{t.nonNegotiable.switch}</span>
+              <span className="text-xs text-dim">{t.nonNegotiable.note}</span>
+            </span>
+            <SwitchTrack on={nonNegotiable} />
           </button>
           <input
             value={notes}

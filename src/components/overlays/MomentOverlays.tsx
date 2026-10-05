@@ -1,13 +1,20 @@
 "use client";
 
 import { t } from "@/i18n/pt-BR";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { loadWeekHabits } from "@/app/(app)/progress-actions";
+import { loadDayReview, loadWeekReview } from "@/app/(app)/reflection-actions";
+import {
+  FactRows,
+  ReflectionForm,
+  ReflectionView,
+} from "@/components/reviews/Reflection";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
-import { accountDay, weekdayName } from "@/lib/local-date";
+import { accountDay, addDays, weekdayName } from "@/lib/local-date";
 import { usePartnerView } from "@/components/use-partner-view";
 import {
   completedWeeks,
@@ -16,9 +23,17 @@ import {
   headToHead,
   reviewWeeks,
   weekRangeLabel,
+  weekStartOf,
   type Habit,
 } from "@/lib/progress";
 import { todayStats } from "@/lib/today";
+import {
+  ratio,
+  weekFactLines,
+  type Reflection,
+  type ReviewFacts,
+} from "@/lib/reviews";
+import type { Priority } from "@/lib/weekly-plan";
 
 /** Review day and weekly review (full-screen moments). The morning briefing
  *  is an inline card on Today since V2 Phase 4 (MorningCard). */
@@ -74,6 +89,21 @@ function ReviewDay() {
   const doneNames = list.filter((x) => x.done).map((x) => x.name);
   const skipped = list.filter((x) => x.skip).map((x) => x.name);
   const diff = pv.pct - stats.pct;
+  // V2 Phase 9: today's non-negotiables, live from my own state.
+  const flagged = list.filter((x) => app.taskFlags[x.id]);
+  const nn = ratio(flagged.filter((x) => x.done).length, flagged.length);
+  const [reflection, setReflection] = useState<Reflection | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void loadDayReview(app.today)
+      .catch(() => null)
+      .then((res) => {
+        if (alive && res?.ok) setReflection(res.reflection);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [app.today]);
 
   return (
     <Frame label={t.moments.reviewTodayAria} width="max-w-[520px]">
@@ -169,6 +199,22 @@ function ReviewDay() {
         {list.length === 0 && (
           <span className="text-sm text-muted">{t.moments.nothingToday}</span>
         )}
+        {nn && (
+          <div className="-mt-3 flex flex-col">
+            <FactRows
+              lines={[
+                { k: t.reviews.nonNegotiables, v: nn, testId: "fact-nn" },
+              ]}
+            />
+          </div>
+        )}
+        {reflection && (
+          <ReflectionForm
+            kind="day"
+            periodStart={app.today}
+            initial={reflection}
+          />
+        )}
       </div>
       <button type="button" onClick={app.closeOverlay} className={lightButton}>
         {t.moments.doneButton}
@@ -183,7 +229,8 @@ function ReviewDay() {
  * perfect days and habits are shown apart; head-to-head is the record.
  */
 function WeeklyReview({ start }: { start: string }) {
-  const { closeOverlay, partner, hasPartner, progress, week } = useApp();
+  const { closeOverlay, partner, hasPartner, progress, week, today } = useApp();
+  const router = useRouter();
   const weeks = reviewWeeks(progress.weeks, {
     planned: week.me.planned,
     completed: week.me.completed,
@@ -203,6 +250,25 @@ function WeeklyReview({ start }: { start: string }) {
   );
 
   const weekStart = w?.weekStart;
+  // V2 Phase 9: facts, priorities and my reflection of the week shown.
+  const [extra, setExtra] = useState<{
+    week: string;
+    facts: ReviewFacts;
+    priorities: Priority[];
+    reflection: Reflection;
+  } | null>(null);
+  useEffect(() => {
+    if (!weekStart) return;
+    let alive = true;
+    void loadWeekReview(weekStart)
+      .catch(() => null)
+      .then((res) => {
+        if (alive && res?.ok) setExtra({ week: weekStart, ...res });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [weekStart]);
   useEffect(() => {
     if (!weekStart) return;
     let alive = true;
@@ -250,6 +316,9 @@ function WeeklyReview({ start }: { start: string }) {
     ? w.leader?.who === "partner"
     : w.result === "partner";
   const pair = (a: string, b: string) => (them ? `${a} · ${b}` : a);
+  const shown = extra?.week === w.weekStart ? extra : null;
+  // The current and the last closed week take a reflection; older ones are read.
+  const editable = w.current || w.weekStart === addDays(weekStartOf(today), -7);
   const { best, missed } = habitExtremes(
     habits?.week === w.weekStart ? habits.list : [],
   );
@@ -269,6 +338,7 @@ function WeeklyReview({ start }: { start: string }) {
       k: t.moments.perfectDays,
       v: pair(String(me.perfect), them ? String(them.perfect) : ""),
     },
+    ...(shown ? weekFactLines(shown.facts, shown.priorities) : []),
     ...(best
       ? [{ k: t.moments.bestHabit, v: `${best.title} ${best.rate}%` }]
       : []),
@@ -375,6 +445,7 @@ function WeeklyReview({ start }: { start: string }) {
           {rows.map((r) => (
             <div
               key={r.k}
+              data-testid={"testId" in r ? r.testId : undefined}
               className="flex items-baseline justify-between gap-3 border-t border-white/6 py-3.5"
             >
               <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
@@ -384,14 +455,38 @@ function WeeklyReview({ start }: { start: string }) {
             </div>
           ))}
         </div>
+        {shown &&
+          (editable ? (
+            <ReflectionForm
+              key={shown.week}
+              kind="week"
+              periodStart={shown.week}
+              initial={shown.reflection}
+            />
+          ) : (
+            <ReflectionView kind="week" reflection={shown.reflection} />
+          ))}
       </div>
-      <button
-        type="button"
-        onClick={closeOverlay}
-        className={cx(lightButton, "h-[58px] text-[12.5px] tracking-[.26em]")}
-      >
-        {t.moments.close}
-      </button>
+      <div className="flex flex-col gap-2.5">
+        <button
+          type="button"
+          data-testid="plan-next-week"
+          onClick={() => {
+            closeOverlay();
+            router.push("/plan/week?w=next");
+          }}
+          className="h-[52px] w-full rounded-2xl border border-white/15 font-mono text-[12px] tracking-[.24em] text-text"
+        >
+          {t.reviews.planNext}
+        </button>
+        <button
+          type="button"
+          onClick={closeOverlay}
+          className={cx(lightButton, "h-[58px] text-[12.5px] tracking-[.26em]")}
+        >
+          {t.moments.close}
+        </button>
+      </div>
     </Frame>
   );
 }

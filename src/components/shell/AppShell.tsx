@@ -13,6 +13,7 @@ import {
   TodayIcon,
 } from "@/components/icons";
 import { FocusOverlay } from "@/components/overlays/FocusOverlay";
+import { Celebration } from "@/components/overlays/Celebration";
 import { MomentOverlays } from "@/components/overlays/MomentOverlays";
 import { useResumeShell } from "@/components/resume/use-resume";
 import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
@@ -84,6 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!settings.onboarded && <OnboardingScreen />}
       <FocusOverlay />
       <MomentOverlays />
+      <Celebration />
       <SheetHost />
       <Feedback />
       <DevPanel />

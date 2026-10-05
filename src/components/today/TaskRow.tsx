@@ -141,6 +141,7 @@ export function TaskRow({
             [
               skipped && `${task.id}-skip`,
               app.taskGoals[task.id] && `${task.id}-goal`,
+              app.taskFlags[task.id] && `${task.id}-nn`,
             ]
               .filter(Boolean)
               .join(" ") || undefined
@@ -261,8 +262,19 @@ function TaskMeta({ task }: { task: Task }) {
   // V2 Phase 5: my own goal link only (the map never holds a partner task).
   const goalId = app.taskGoals[task.id];
   const goal = goalId ? app.goals.find((g) => g.id === goalId) : undefined;
+  // V2 Phase 9: discreet, mine only (the map never holds a partner task).
+  const nonNegotiable = app.taskFlags[task.id] ?? false;
   return (
     <>
+      {nonNegotiable && (
+        <span
+          id={`${task.id}-nn`}
+          data-testid="task-non-negotiable"
+          className={cx(cls, "text-quiet")}
+        >
+          {t.nonNegotiable.label}
+        </span>
+      )}
       {mobile && <span className={cx(cls, "desk:hidden")}>{mobile}</span>}
       {task.meta && (
         <span className={cx(cls, "hidden desk:inline")}>{task.meta}</span>

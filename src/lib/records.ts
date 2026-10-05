@@ -52,12 +52,15 @@ export type Milestone = {
 /**
  * Every milestone with its state. Streak uses the LONGEST streak, so losing
  * the current run never takes a milestone back; focus uses whole hours of
- * settled effective focus; Perfect Days the closed-day total.
+ * settled effective focus; Perfect Days the closed-day total. V2 Phase 9: a
+ * milestone with a durable unlock (`unlocked`, database codes like
+ * "streak_30") stays CONQUISTADO whatever the numbers say later.
  */
 export function milestones(input: {
   longestStreak: number;
   totalFocusSeconds: number;
   totalPerfectDays: number;
+  unlocked?: ReadonlySet<string>;
 }): Milestone[] {
   const value: Record<MilestoneKind, number> = {
     streak: input.longestStreak,
@@ -65,13 +68,18 @@ export function milestones(input: {
     perfect: input.totalPerfectDays,
   };
   return (Object.keys(MILESTONES) as MilestoneKind[]).flatMap((kind) =>
-    MILESTONES[kind].map((target) => ({
-      key: `${kind}-${target}`,
-      kind,
-      target,
-      current: Math.min(value[kind], target),
-      reached: value[kind] >= target,
-    })),
+    MILESTONES[kind].map((target) => {
+      const reached =
+        value[kind] >= target ||
+        Boolean(input.unlocked?.has(`${kind}_${target}`));
+      return {
+        key: `${kind}-${target}`,
+        kind,
+        target,
+        current: reached ? target : Math.min(value[kind], target),
+        reached,
+      };
+    }),
   );
 }
 

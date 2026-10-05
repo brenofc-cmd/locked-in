@@ -3,6 +3,9 @@
 import { t } from "@/i18n/pt-BR";
 import { useEffect, useState } from "react";
 import { loadDayTasks, type DayTask } from "@/app/(app)/progress-actions";
+import { loadDayReview } from "@/app/(app)/reflection-actions";
+import { FactRows, ReflectionView } from "@/components/reviews/Reflection";
+import { dayFactLines, type Reflection, type ReviewFacts } from "@/lib/reviews";
 import { useApp } from "@/components/app-state";
 import { FocusPicker } from "@/components/focus/FocusPicker";
 import { MiniCheck, chipTone, cx } from "@/components/ui";
@@ -168,6 +171,23 @@ export function DaySheet({ date }: { date: string }) {
   const [items, setItems] = useState<DayTask[] | null>(null);
   const [focus, setFocus] = useState({ seconds: 0, sessions: 0 });
   const [error, setError] = useState(false);
+  // V2 Phase 9: that day's non-negotiables and my reflection (read-only).
+  const [review, setReview] = useState<{
+    facts: ReviewFacts;
+    reflection: Reflection;
+  } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void loadDayReview(date)
+      .catch(() => null)
+      .then((res) => {
+        if (alive && res?.ok) setReview(res);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [date]);
 
   useEffect(() => {
     let alive = true;
@@ -291,6 +311,14 @@ export function DaySheet({ date }: { date: string }) {
             </span>
           </span>
         </div>
+      )}
+      {review && (
+        <>
+          <div className="-mt-3 flex flex-col">
+            <FactRows lines={dayFactLines(review.facts)} />
+          </div>
+          <ReflectionView kind="day" reflection={review.reflection} />
+        </>
       )}
       <span className="text-xs text-dim">{t.miscSheets.dayNote}</span>
     </div>

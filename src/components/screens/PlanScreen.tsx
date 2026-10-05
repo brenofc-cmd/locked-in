@@ -4,6 +4,7 @@ import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
 import { countdown, eventHeading, groupUpcoming } from "@/lib/planner";
+import { planRow, planWeeks, prioritiesOf } from "@/lib/weekly-plan";
 
 /**
  * PLANEJAR (docs/NAVIGATION.md): one row per planning screen, each with the
@@ -16,6 +17,9 @@ export function PlanScreen({ goal }: { goal: string }) {
   const next = groupUpcoming(app.plannerEvents, app.today).flatMap(
     (g) => g.events,
   )[0];
+  const week = planRow(
+    prioritiesOf(app.priorities, planWeeks(app.today).current),
+  );
   const rows = [
     {
       href: "/planner",
@@ -27,6 +31,14 @@ export function PlanScreen({ goal }: { goal: string }) {
             .join(" · ")
         : "",
       testid: "plan-next",
+    },
+    {
+      // V2 Phase 9: this week's priorities, one compact line.
+      href: "/plan/week",
+      label: t.plan.week,
+      value: week.value,
+      meta: week.meta,
+      testid: "plan-week",
     },
     {
       href: "/goals",

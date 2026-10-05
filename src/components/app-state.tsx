@@ -24,6 +24,11 @@ import { updateDisplayName } from "@/app/(app)/actions";
 import { useAccountability } from "@/components/use-accountability";
 import { useHeartbeat } from "@/components/use-heartbeat";
 import { usePlanner } from "@/components/use-planner";
+import {
+  useReflection,
+  type ReflectionData,
+} from "@/components/use-reflection";
+import { unlockedCodes } from "@/lib/celebrations";
 import type { PlannerRow } from "@/lib/planner";
 import { useDuoRealtime } from "@/components/duo-realtime";
 import { useSession } from "@/components/session";
@@ -85,6 +90,7 @@ function useAppStateValue(
   initialFocus: InitialFocus,
   initialProgress: ProgressData,
   initialPlanner: PlannerRow[],
+  initialReflection: ReflectionData,
 ) {
   const pathname = usePathname();
   const router = useRouter();
@@ -496,6 +502,27 @@ function useAppStateValue(
       }),
     [pg.longestStreak, pg.records],
   );
+  // V2 Phase 9: celebrations (claimed from the numbers) and weekly priorities.
+  const reflection = useReflection(initialReflection, {
+    today: real.today,
+    todayPerfect:
+      tasks.length > 0 &&
+      tasks.every((x) => x.done && !x.id.startsWith("tmp-")),
+    milestones: allMilestones,
+    months,
+    toast,
+  });
+  // A durable unlock stays CONQUISTADO whatever the numbers say later.
+  const shownMilestones = useMemo(
+    () =>
+      milestones({
+        longestStreak: pg.longestStreak,
+        totalFocusSeconds: pg.records.totalFocusSeconds,
+        totalPerfectDays: pg.records.totalPerfectDays,
+        unlocked: unlockedCodes(reflection.celebrationRows),
+      }),
+    [pg.longestStreak, pg.records, reflection.celebrationRows],
+  );
 
   // The local day changed (midnight, or back from sleep on a new day): reload
   // so Today, Focus and Progress all start the new day from the database.
@@ -643,6 +670,9 @@ function useAppStateValue(
     syncGoals: real.syncGoals,
     taskGoals: real.taskGoals,
     routineGoals: real.routineGoals,
+    // V2 Phase 9: NÃO NEGOCIÁVEL (owner-only).
+    taskFlags: real.taskFlags,
+    routineFlags: real.routineFlags,
     linkRoutine: real.linkRoutine,
     setFocusGoal: fx.setFocusGoal,
     accountability,
@@ -655,7 +685,8 @@ function useAppStateValue(
     pastDuels,
     months,
     records: pg.records,
-    milestones: allMilestones,
+    milestones: shownMilestones,
+    ...reflection,
     hasPartner,
     reactions,
     react,
@@ -708,12 +739,14 @@ export function AppStateProvider({
   initialFocus,
   initialProgress,
   initialPlanner,
+  initialReflection,
   children,
 }: {
   initialTasks: TasksData;
   initialFocus: InitialFocus;
   initialProgress: ProgressData;
   initialPlanner: PlannerRow[];
+  initialReflection: ReflectionData;
   children: ReactNode;
 }) {
   const value = useAppStateValue(
@@ -721,6 +754,7 @@ export function AppStateProvider({
     initialFocus,
     initialProgress,
     initialPlanner,
+    initialReflection,
   );
   return (
     <AppStateContext.Provider value={value}>
