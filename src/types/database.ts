@@ -141,6 +141,133 @@ export type Database = {
           },
         ];
       };
+      celebrations: {
+        Row: {
+          achieved_at: string;
+          baseline: boolean;
+          key: string;
+          kind: string;
+          owner_id: string;
+          seen_at: string | null;
+          source_value: number | null;
+        };
+        Insert: {
+          achieved_at?: string;
+          baseline?: boolean;
+          key: string;
+          kind: string;
+          owner_id?: string;
+          seen_at?: string | null;
+          source_value?: number | null;
+        };
+        Update: {
+          achieved_at?: string;
+          baseline?: boolean;
+          key?: string;
+          kind?: string;
+          owner_id?: string;
+          seen_at?: string | null;
+          source_value?: number | null;
+        };
+        Relationships: [];
+      };
+      daily_task_non_negotiables: {
+        Row: { created_at: string; daily_task_id: string; owner_id: string };
+        Insert: {
+          created_at?: string;
+          daily_task_id: string;
+          owner_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          daily_task_id?: string;
+          owner_id?: string;
+        };
+        Relationships: [];
+      };
+      routine_non_negotiables: {
+        Row: { created_at: string; routine_item_id: string; owner_id: string };
+        Insert: {
+          created_at?: string;
+          routine_item_id: string;
+          owner_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          routine_item_id?: string;
+          owner_id?: string;
+        };
+        Relationships: [];
+      };
+      weekly_priorities: {
+        Row: {
+          created_at: string;
+          done_at: string | null;
+          id: string;
+          owner_id: string;
+          position: number;
+          status: string;
+          title: string;
+          updated_at: string;
+          week_start: string;
+        };
+        Insert: {
+          created_at?: string;
+          done_at?: string | null;
+          id?: string;
+          owner_id?: string;
+          position: number;
+          status?: string;
+          title: string;
+          updated_at?: string;
+          week_start: string;
+        };
+        Update: {
+          created_at?: string;
+          done_at?: string | null;
+          id?: string;
+          owner_id?: string;
+          position?: number;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+          week_start?: string;
+        };
+        Relationships: [];
+      };
+      reviews: {
+        Row: {
+          change_next: string | null;
+          created_at: string;
+          hindered: string | null;
+          kind: string;
+          owner_id: string;
+          period_start: string;
+          updated_at: string;
+          worked: string | null;
+        };
+        Insert: {
+          change_next?: string | null;
+          created_at?: string;
+          hindered?: string | null;
+          kind: string;
+          owner_id?: string;
+          period_start: string;
+          updated_at?: string;
+          worked?: string | null;
+        };
+        Update: {
+          change_next?: string | null;
+          created_at?: string;
+          hindered?: string | null;
+          kind?: string;
+          owner_id?: string;
+          period_start?: string;
+          updated_at?: string;
+          worked?: string | null;
+        };
+        Relationships: [];
+      };
       daily_task_goals: {
         Row: {
           created_at: string;
@@ -1238,6 +1365,19 @@ export type Database = {
           today_planned: number;
           today_completed: number;
           first_task_date: string | null;
+        }[];
+      };
+      my_review_facts: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          days_with_tasks: number;
+          planned: number;
+          completed: number;
+          focus_seconds: number;
+          perfect_days: number;
+          standard_days: number;
+          non_negotiable_planned: number;
+          non_negotiable_completed: number;
         }[];
       };
       my_records: {

@@ -225,3 +225,63 @@ revoke all on function public.dev_fixture_add_focus(jsonb) from public, anon;
 grant execute on function public.dev_fixture_add_focus(jsonb) to authenticated;
 revoke all on function public.dev_fixture_reset_focus() from public, anon;
 grant execute on function public.dev_fixture_reset_focus() to authenticated;
+
+-- V2 Phase 9: a celebrations run starts from no unlock / receipt (unlocks
+-- are immutable for the API roles). Deletes the caller's celebrations.
+create or replace function public.dev_fixture_reset_celebrations()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  delete from public.celebrations where owner_id = auth.uid();
+end;
+$$;
+
+-- V2 Phase 9: what shipping Phase 9 did for every existing user — record the
+-- milestones already reached as an (already seen) baseline.
+create or replace function public.dev_fixture_baseline_milestones()
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  return private.baseline_milestones(auth.uid());
+end;
+$$;
+
+-- V2 Phase 9: weekly priorities of closed weeks and reviews cannot be removed
+-- by their owner; a run starts from none. Also clears routine flags.
+create or replace function public.dev_fixture_reset_reflection()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  delete from public.weekly_priorities where owner_id = auth.uid();
+  delete from public.reviews where owner_id = auth.uid();
+  delete from public.routine_non_negotiables where owner_id = auth.uid();
+end;
+$$;
+
+revoke all on function public.dev_fixture_reset_celebrations() from public, anon;
+grant execute on function public.dev_fixture_reset_celebrations() to authenticated;
+revoke all on function public.dev_fixture_baseline_milestones() from public, anon;
+grant execute on function public.dev_fixture_baseline_milestones() to authenticated;
+revoke all on function public.dev_fixture_reset_reflection() from public, anon;
+grant execute on function public.dev_fixture_reset_reflection() to authenticated;
