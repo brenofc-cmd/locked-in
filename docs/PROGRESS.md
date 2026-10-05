@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED ON DEV (2026-10-05); production: see the Phase 8 section. Phase 7 VERIFIED; UI Information Architecture Polish VERIFIED. Next: Phase 9 (not started)
+LOCKED IN V2 — Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED; PRODUCTION DEPLOY — VERIFIED (2026-10-05). Phase 7 VERIFIED; UI Information Architecture Polish VERIFIED. Next: V2 Phase 9 — Celebrations + Reviews + Non-Negotiables + Weekly Planning (not started)
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -14,7 +14,7 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 - None.
 
-## Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED ON DEV (2026-10-05)
+## Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED (DEV + PROD, 2026-10-05)
 
 Scope: docs/ROADMAP.md → "V2 Phase 8", docs/MONTHLY_COMPETITION.md, ADR-080…085. Branch
 `v2-phase-8-monthly-champion-records` (from `main` at `477c35a`).
@@ -71,6 +71,32 @@ Gates (DEV, final):
 
 Not done (out of scope): celebrations, confetti, non-negotiables, weekly planning, new reviews, Web
 Push, XP, coins, levels, shop, global leaderboard, groups, AI coach, duo milestones.
+
+Production (2026-10-05):
+
+- Before: PROD at 42 migrations, 21 DEFINER, **0 `dev_*`**, no Phase 8 function.
+- Migration applied with the Supabase MCP, same SQL as the repository file: `20261005134423`
+  (`monthly_progression`, mapping in docs/DATABASE.md).
+- Validated on PROD: 43 migrations; DEFINER set = the reviewed 22, all `search_path=''`;
+  `duo_duel_months` DEFINER, `my_records` INVOKER, both `authenticated` only (anon / PUBLIC nothing);
+  nothing in `public` / `private` executable by anon or PUBLIC; **0 `dev_*`**; no month / record /
+  milestone table; md5 of both function bodies identical to DEV (the DEV `my_records` body was
+  re-created from the repository file: an in-body comment had been dropped when applying to DEV).
+- pgTAP `v2_phase8_monthly` **51/51** on PROD, rolled back (0 test users, no pgtap, no trigger left
+  disabled).
+- `main` fast-forwarded to `471e3ad`, pushed; GitHub deployment "Production" **success**
+  (https://locked-in-rust.vercel.app).
+- **Smoke on PROD (real duo, read only, nothing written)**: Progress → OUTUBRO 2026 · AO VIVO ·
+  EMPATADOS · 0 — 0 · 4 empates (the four FINAL draws of 1–4 Oct), details (VITÓRIAS 0 / 0,
+  EXECUÇÃO MENSAL 0% · 0/14 vs 0% · 0/4, FOCO MENSAL 0m / 0m, DESEMPATE "Vitórias, execução e foco
+  iguais", the rules) — never a champion; MESES ANTERIORES → SETEMBRO 2026 · MÊS ENCERRADO ·
+  CAMPEÃO DE SETEMBRO: MATHEUS · 0 — 2 · 1 empate (28/09 and 29/09 Matheus, 30/09 draw — the
+  Phase 7 API smoke); ÚLTIMOS 7 DUELOS unchanged; RECORDES (no focus / Perfect Day yet: 0 dias, —)
+  and MARCOS 0 de 9 with 0 / 7, 0h / 10h, 0 / 5. DUPLA: one row "MÊS · AO VIVO · Você 0 — 0
+  Matheus ›" → `/progress#month`, no summary on DUPLA. 71 s on DUPLA across a minute boundary: zero
+  requests (no session was running; the running-focus case is the e2e).
+- No smoke data was created, so nothing had to be removed.
+- **Pending (human)**: the two-device check (a FINAL day changing the month live) — not blocking.
 
 ## UI Information Architecture Polish — VERIFIED (DEV + PROD, 2026-10-05)
 

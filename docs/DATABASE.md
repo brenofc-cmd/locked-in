@@ -718,7 +718,7 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `daily_duel`                | `20261001102050` | `20261001135854` |
 | `daily_standard_history`    | `20261001114008` | `20261001135917` |
 | `duel_since`                | `20261001114507` | `20261001135936` |
-| `monthly_progression`       | `20261005122148` | (pending)        |
+| `monthly_progression`       | `20261005122148` | `20261005134423` |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 

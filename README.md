@@ -6,7 +6,7 @@ Mobile-first discipline and accountability app for two people: each runs a daily
 off, and sees the partner do the same in real time.
 
 Status: **V1 in production** (https://locked-in-rust.vercel.app). **V2 Phase 1 — Foundation + Restore
-State** verified; **V2 Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0** verified. **V2 Phase 3 — Goals, Vision & Accountability Mirror** verified. **V2 Phase 4 — North Star + Morning Experience** verified. **V2 Phase 5 — Goals → Actions → Proof** verified. **V2 Phase 6 — Duo Accountability 2.0** verified (production 2026-09-30). **V2 Phase 7 — Daily Duel + Transparent Gamification** verified (production 2026-10-01; visual smoke on PROD 2026-10-05). **UI Information Architecture Polish** verified (2026-10-05). **V2 Phase 8 — Monthly Champion + Personal Records + Milestones** verified on DEV. See [docs/PROGRESS.md](docs/PROGRESS.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+State** verified; **V2 Phase 2 — School Planner + Shared Calendar + Partner Presence 2.0** verified. **V2 Phase 3 — Goals, Vision & Accountability Mirror** verified. **V2 Phase 4 — North Star + Morning Experience** verified. **V2 Phase 5 — Goals → Actions → Proof** verified. **V2 Phase 6 — Duo Accountability 2.0** verified (production 2026-09-30). **V2 Phase 7 — Daily Duel + Transparent Gamification** verified (production 2026-10-01; visual smoke on PROD 2026-10-05). **UI Information Architecture Polish** verified (2026-10-05). **V2 Phase 8 — Monthly Champion + Personal Records + Milestones** verified (production 2026-10-05). See [docs/PROGRESS.md](docs/PROGRESS.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Stack
 

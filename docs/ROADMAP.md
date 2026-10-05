@@ -14,7 +14,7 @@ V2 is built in ten phases, each on its own branch, merged to `main` only when VE
 | 5    | Goals → Actions → Proof                 | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md)                |
 | 6    | Duo Accountability 2.0                  | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                                     |
 | 7    | Daily Duel + Transparent Gamification   | VERIFIED     | Daily duel derived from real actions: Execution / Focus / Consistency, transparent winner, Live vs Final (see below)                                |
-| 8    | Monthly Champion + Records + Milestones | IN PROGRESS  | Monthly champion from FINAL daily duels (wins, transparent tiebreaks), personal records, milestones — derived, Progress + one DUPLA row (see below) |
+| 8    | Monthly Champion + Records + Milestones | VERIFIED     | Monthly champion from FINAL daily duels (wins, transparent tiebreaks), personal records, milestones — derived, Progress + one DUPLA row (see below) |
 | 9–10 | —                                       | PENDING      | Defined when each phase starts (Phase 9: celebrations, reviews, non-negotiables, weekly planning; Web Push: Phase 10)                               |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
