@@ -23,8 +23,8 @@ import { groupBySection, nextLine, routinesOn, todayStats } from "@/lib/today";
  * of the day) → TOP 3 → tasks, then minimal context, one line each — the
  * duel, the next event, the why — after the tasks on a phone and in the side
  * column on a wide screen. The partner is the header chip on a phone and a
- * card on desktop (no header there); the live feed is desktop-wide only (the
- * full feed is on DUPLA).
+ * card on desktop (no header there); without a partner the invite card shows
+ * everywhere. The live feed is wide-screen only (the full feed is on DUPLA).
  */
 export function TodayScreen({ northStar }: { northStar: NorthStar }) {
   const app = useApp();
@@ -190,9 +190,13 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
         </div>
 
         <aside className="flex min-w-0 flex-col gap-7 wide:sticky wide:top-0">
-          <div className="hidden desk:contents">
-            {app.hasPartner ? <PartnerCard /> : <NoPartnerCard />}
-          </div>
+          {app.hasPartner ? (
+            <div className="hidden desk:contents">
+              <PartnerCard />
+            </div>
+          ) : (
+            <NoPartnerCard />
+          )}
           <div data-testid="today-context" className="flex flex-col">
             {app.hasPartner && <DuelCompact />}
             <UpcomingCard />
