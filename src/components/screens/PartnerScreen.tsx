@@ -3,6 +3,7 @@
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { DuelDetailed } from "@/components/duel/Duel";
+import { MonthRow } from "@/components/monthly/Monthly";
 import { useApp } from "@/components/app-state";
 import {
   CheckinPicker,
@@ -124,6 +125,7 @@ export function PartnerScreen() {
       </header>
 
       <DuelDetailed />
+      <MonthRow />
       <CommitmentsSection />
       <CheckinPicker />
 
