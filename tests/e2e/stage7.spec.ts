@@ -225,8 +225,20 @@ test("streak, standard, skipped, perfect days, chart and calendar from real hist
 
   // Standard 90 %: T-2 (80 %) no longer counts -> streak 2 (T-1 + today),
   // recalculated over history, persisted.
-  await tab(page, /mais/i).click();
-  await page.getByRole("link", { name: /ajustes/i }).click();
+  // Settings live in the profile menu (docs/NAVIGATION.md).
+  // The role skips the sidebar's (hidden) copy; retry until hydrated.
+  const profile = page.getByRole("button", { name: "Perfil de Carla" });
+  await expect(async () => {
+    if ((await profile.getAttribute("aria-expanded")) !== "true")
+      await profile.click();
+    await expect(profile).toHaveAttribute("aria-expanded", "true", {
+      timeout: 1000,
+    });
+  }).toPass({ timeout: 15_000 });
+  await page
+    .getByTestId("profile-menu")
+    .getByRole("link", { name: "Configurações" })
+    .click();
   await page.getByRole("radio", { name: "90%" }).click();
   await expect(page.getByRole("radio", { name: "90%" })).toHaveAttribute(
     "aria-checked",
@@ -254,7 +266,7 @@ test("streak, standard, skipped, perfect days, chart and calendar from real hist
   await expect(streak).toHaveText("4");
 
   // Without a duo there is no competition.
-  await tab(page, /parceiro/i).click();
+  await tab(page, /dupla/i).click();
   await expect(page.getByText("SEM DUPLA POR ENQUANTO")).toBeVisible();
 
   expect(c.errors).toEqual([]);
@@ -331,7 +343,7 @@ test("weekly competition updates live on both sides; private tasks count but nev
   await aWrites.idle();
 
   // Alice's own view is live from her tasks.
-  await tab(a.page, /parceiro/i).click();
+  await tab(a.page, /dupla/i).click();
   const aWeek = a.page.getByRole("region", { name: "Esta semana" });
   await expect(aWeek.getByTestId("week-me")).toHaveText("75%");
   await expect(aWeek.getByTestId("week-partner")).toHaveText("0%");
@@ -354,7 +366,7 @@ test("weekly competition updates live on both sides; private tasks count but nev
   // The current week is never a result: still 0 — 0 on both sides.
   const aH2h = a.page.getByRole("region", { name: "Confronto" });
   await expect(aH2h.getByTestId("h2h-score")).toHaveText(/^0\s*—\s*0$/);
-  await tab(b.page, /parceiro/i).click();
+  await tab(b.page, /dupla/i).click();
   await expect(bWeek.getByTestId("week-me")).toHaveText("100%");
   await expect(bWeek.getByTestId("week-leader")).toHaveText(
     /VOCÊ ESTÁ NA FRENTE\s*\+25%/,

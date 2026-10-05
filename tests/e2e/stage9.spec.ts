@@ -650,7 +650,7 @@ test("one channel per duo, no polling, clean reconnect", async ({
     .toBe(1);
 
   for (let i = 0; i < 3; i++) {
-    for (const name of [/PARCEIRO/, /FOCO/, /PROGRESSO/, /MAIS/, /HOJE/]) {
+    for (const name of [/DUPLA/, /FOCO/, /PLANEJAR/, /PROGRESSO/, /HOJE/]) {
       await tab(a.page, name).click();
       await a.page.waitForTimeout(250);
     }
@@ -669,7 +669,7 @@ test("one channel per duo, no polling, clean reconnect", async ({
   ).toEqual([]);
 
   // Offline -> online: one rejoin, no duplicated feed lines.
-  await tab(a.page, /PARCEIRO/).click();
+  await tab(a.page, /DUPLA/).click();
   const lines = await activity(a.page).getByRole("listitem").count();
   await a.context.setOffline(true);
   await expect(
@@ -715,6 +715,7 @@ test("HTTP hardening: headers, private routes and redirects", async ({
     "/partner",
     "/focus",
     "/progress",
+    "/plan",
     "/more",
     "/settings",
     "/challenges",
@@ -829,7 +830,7 @@ test("accessibility: no serious or critical axe violation on the main screens", 
     "/partner",
     "/focus",
     "/progress",
-    "/more",
+    "/plan",
     "/settings",
     "/challenges",
     "/duo",

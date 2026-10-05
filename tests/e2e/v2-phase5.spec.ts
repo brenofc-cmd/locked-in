@@ -444,6 +444,15 @@ test("12: the North Star shows this week's proof of the featured goal", async ({
   await A.from("goals").update({ is_featured: true }).eq("id", goal.study);
   const a = await open(browser, users.a, "/today");
   const star = a.page.getByTestId("north-star");
+  // One line on Today; opening it shows the goal and its proof.
+  const toggle = star.getByRole("button", { name: /LEMBRE-SE DO PORQUÊ/ });
+  await expect(async () => {
+    if ((await toggle.getAttribute("aria-expanded")) !== "true")
+      await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true", {
+      timeout: 1000,
+    });
+  }).toPass({ timeout: 15_000 });
   await expect(star.getByTestId("north-star-goal")).toContainText(STUDY);
   await expect(star.getByTestId("north-star-proof")).toContainText(
     /Esta semana: \d+ aç/,

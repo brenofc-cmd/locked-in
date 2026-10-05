@@ -89,7 +89,8 @@ const monthLabel = (page: Page) =>
     .filter({
       has: page.getByRole("button", { name: t.progressScreen.prevMonth }),
     })
-    .locator("h2");
+    // h3 under HISTÓRICO (docs/NAVIGATION.md).
+    .getByRole("heading", { level: 3 });
 
 const addButton = (page: Page) =>
   page.getByRole("button", { name: /Adicionar tarefa/ }).first();

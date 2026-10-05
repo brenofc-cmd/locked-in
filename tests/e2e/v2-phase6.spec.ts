@@ -302,12 +302,25 @@ test("3: check-in and CUMPRI (AUTODECLARADO) arrive live", async ({
   await b.context.close();
 });
 
+/** The 14-day history is collapsed on DUPLA (docs/NAVIGATION.md). */
+async function openHistory(page: Page) {
+  const toggle = page.getByRole("button", { name: A_.history });
+  await expect(async () => {
+    if ((await toggle.getAttribute("aria-expanded")) !== "true")
+      await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true", {
+      timeout: 1000,
+    });
+  }).toPass({ timeout: 15_000 });
+}
+
 test("4: when A's day closes, open commitments are MISSED and final", async ({
   browser,
 }) => {
   test.setTimeout(90_000);
   await fixture(A, "dev_fixture_close_today");
   const b = await open(browser, users.b, "/partner");
+  await openHistory(b.page);
   const history = b.page.getByTestId("history-commitment");
   await expect(history.filter({ hasText: PROMISE })).toHaveAttribute(
     "data-status",
@@ -343,6 +356,7 @@ test("5: a new partner never receives the old duo's history", async ({
   await expect(c.page.getByTestId("partner-commitments")).toContainText(
     A_.nonePartner("Alice"),
   );
+  await openHistory(c.page);
   await expect(c.page.getByText(PROMISE)).toHaveCount(0);
   await expect(c.page.getByTestId("history-commitment")).toHaveCount(0);
   expect((await C.from("commitments").select("id")).data).toEqual([]);

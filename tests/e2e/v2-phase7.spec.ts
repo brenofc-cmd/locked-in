@@ -12,6 +12,7 @@ import {
   duelHeadline,
   duelScore,
   withRunning,
+  type Duel,
   type DuelRow,
 } from "@/lib/duel";
 import { addDays } from "@/lib/local-date";
@@ -119,21 +120,50 @@ async function rowsOf(api: Api): Promise<DuelRow[]> {
   }));
 }
 
-/**
- * The live headline / score on screen equal what the rules derive from the
- * database numbers right now (today is always live; never "won").
- */
-async function expectToday(page: Page, scope = page.getByTestId("duel-today")) {
-  await expect(async () => {
-    const row = (await rowsOf(A)).find((r) => r.date === T)!;
-    // Bruno's running session ticks on screen: add it like the app does.
-    const { data: running } = await B.rpc("my_active_focus");
-    const duel = decideDuel({
+/** Today's duel as the rules derive it from the database right now. */
+async function liveDuel(adjust: (r: DuelRow) => DuelRow = (r) => r) {
+  const row = (await rowsOf(A)).find((r) => r.date === T)!;
+  // Bruno's running session ticks on screen: add it like the app does.
+  const { data: running } = await B.rpc("my_active_focus");
+  return decideDuel(
+    adjust({
       ...row,
       isFinal: false,
       partner: withRunning(row.partner, running?.[0] ?? null, Date.now()),
-    });
-    const text = duelHeadline(duel, "Bruno");
+    }),
+  );
+}
+
+/** Today shows one line: "Você 2 — 1 Bruno", or the headline when nothing
+ *  was decided; the headline is in the line's accessible name. */
+async function expectTodayLine(page: Page, duel: Duel, timeout = 1_000) {
+  const line = page.getByTestId("duel-today");
+  const headline = duelHeadline(duel, "Bruno");
+  expect(headline).not.toMatch(/VENC/);
+  await expect(line.getByTestId("duel-today-score")).toHaveText(
+    duel.outcome === "insufficient"
+      ? headline
+      : t.todayScreen.duelScore(duel.score.me, duel.score.partner, "Bruno"),
+    { timeout },
+  );
+  await expect(line).toHaveAttribute(
+    "aria-label",
+    D.dayAria(D.title, D.live, headline),
+  );
+}
+
+async function expectToday(page: Page) {
+  await expect(async () => expectTodayLine(page, await liveDuel())).toPass({
+    timeout: LIVE,
+  });
+  await expect(page.getByTestId("duel-today")).not.toContainText(/VENC/);
+}
+
+/** DUPLA: the detailed headline follows the same rules. */
+async function expectDetail(page: Page) {
+  const scope = page.getByTestId("duel-detailed");
+  await expect(async () => {
+    const text = duelHeadline(await liveDuel(), "Bruno");
     expect(text).not.toMatch(/VENC/);
     await expect(scope.getByTestId("duel-headline")).toHaveText(text, {
       timeout: 1_000,
@@ -187,27 +217,32 @@ test("1: Today is live — the partner's proof moves it, my check-off moves it a
 
   await expect(card(a.page)).toBeVisible();
   await expect(card(a.page).getByTestId("duel-phase")).toHaveText(D.live);
-  const execution = card(a.page).getByTestId("duel-cat-execution");
-  const consistency = card(a.page).getByTestId("duel-cat-consistency");
-  // Alice 0 / 1, Bruno 0 / 1: execution and consistency tied (focus is
-  // whatever the shared users recorded today — the headline follows the rules).
-  await expect(execution).toContainText(D.outcome.tie);
-  await expect(consistency).toContainText(D.outcome.tie);
+  // One line linking to the detail on DUPLA (docs/NAVIGATION.md).
+  await expect(card(a.page)).toHaveAttribute("href", "/partner#duel");
+  await expect(card(a.page).getByTestId("duel-cat-execution")).toHaveCount(0);
+  // Alice 0 / 1, Bruno 0 / 1 (focus is whatever the shared users recorded
+  // today — the line follows the rules).
   await expectToday(a.page);
 
   await complete(B, bTask);
-  await expect(execution).toContainText("BRUNO", { timeout: LIVE });
-  await expect(consistency).toContainText("BRUNO");
-  await expectToday(a.page);
+  await expect(async () => {
+    const duel = await liveDuel();
+    expect(duel.categories.find((c) => c.key === "execution")?.outcome).toBe(
+      "partner",
+    );
+    await expectTodayLine(a.page, duel);
+  }).toPass({ timeout: LIVE });
 
+  // Local: my side moves at once, before any re-read.
+  const after = await liveDuel((r) => ({
+    ...r,
+    me: { ...r.me, completed: r.me.completed + 1 },
+  }));
   await a.page
     .getByRole("checkbox", { name: "Ler 20 páginas", exact: true })
     .click();
-  // Local: my side moves at once, before any re-read.
-  await expect(execution).toContainText(D.outcome.tie, { timeout: 3_000 });
-  await expect(consistency).toContainText(D.outcome.tie);
+  await expectTodayLine(a.page, after, 3_000);
   await expectToday(a.page);
-  await expect(card(a.page)).not.toContainText(/VENC/);
   expect(a.errors).toEqual([]);
   await a.context.close();
 });
@@ -322,14 +357,14 @@ test("3: the partner's running focus ticks locally — no request while it runs"
   await a.page.waitForTimeout(10_000);
   expect(await seconds()).toBeGreaterThanOrEqual(before + 8);
   expect(requests).toEqual([]);
-  await expectToday(a.page, detail(a.page));
+  await expectDetail(a.page);
 
   // The session ends: the duel re-reads once (event) and keeps the time.
   const running = await seconds();
   await finishFocus(B);
   await a.page.waitForTimeout(3_000);
   expect(await seconds()).toBeGreaterThanOrEqual(running);
-  await expectToday(a.page, detail(a.page));
+  await expectDetail(a.page);
   expect(a.errors).toEqual([]);
   await a.context.close();
 });

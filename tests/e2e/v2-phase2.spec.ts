@@ -164,14 +164,11 @@ test("presence: ONLINE → last seen when A leaves → ONLINE again → EM FOCO 
   await expect(status).toHaveText(/^Visto por último (agora|há \d+ min)$/, {
     timeout: 60_000,
   });
-  // Today card: OFFLINE with the compact last seen.
+  // Today (phone): the header chip says OFFLINE with the last seen.
   await b.page
     .getByRole("link", { name: /LOCKED IN/ })
     .first()
     .click();
-  await expect(b.page.getByTestId("partner-seen")).toHaveText(
-    /^· VISTO (AGORA|HÁ \d+ MIN)$/,
-  );
   await expect(
     b.page.getByRole("link", { name: /^Alice: offline,.*Visto/ }),
   ).toBeVisible();
@@ -179,12 +176,12 @@ test("presence: ONLINE → last seen when A leaves → ONLINE again → EM FOCO 
   // A comes back: ONLINE (never from last seen, from presence).
   a = await open(browser, users.a, "/today");
   await connected(a.page, "/today");
-  await expect(b.page.getByTestId("partner-seen")).toHaveCount(0, {
-    timeout: LIVE,
-  });
   await expect(
     b.page.getByRole("link", { name: /^Alice: online,/ }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: LIVE });
+  await expect(
+    b.page.getByRole("link", { name: /^Alice: .*Visto/ }),
+  ).toHaveCount(0);
 
   // A starts a focus session: EM FOCO beats ONLINE and last seen.
   await finishFocus(A);
@@ -201,7 +198,9 @@ test("presence: ONLINE → last seen when A leaves → ONLINE again → EM FOCO 
   await expect(
     b.page.getByRole("link", { name: /^Alice: em foco,/ }),
   ).toBeVisible();
-  await expect(b.page.getByTestId("partner-seen")).toHaveCount(0);
+  await expect(
+    b.page.getByRole("link", { name: /^Alice: .*Visto/ }),
+  ).toHaveCount(0);
   await finishFocus(A);
   expect(b.errors).toEqual([]);
   await b.context.close();
@@ -303,13 +302,17 @@ test("1 + 9: A creates Prova / Física; it survives a refresh and shows on Today
     "Prova de Física",
   ]);
 
+  // Today shows only the next event, one line (docs/NAVIGATION.md).
   await a.page.goto("/today");
-  const card = a.page.getByRole("region", { name: t.planner.upcomingCard });
+  const card = a.page.getByRole("region", { name: t.todayScreen.next });
   await expect(card).toContainText("PROVA · FÍSICA");
   await expect(card).toContainText("EM 3 DIAS");
-  await expect(
-    card.getByRole("link", { name: t.planner.seePlanner }),
-  ).toBeVisible();
+  await expect(card.getByRole("button")).toHaveCount(1);
+  // PLANEJAR → PRÓXIMO shows it too and opens the planner.
+  await a.page.goto("/plan");
+  await expect(a.page.getByTestId("plan-next")).toContainText("PROVA · FÍSICA");
+  await a.page.getByTestId("plan-next").click();
+  await expect(a.page).toHaveURL(/\/planner$/);
   expect(a.errors).toEqual([]);
   await a.context.close();
 });

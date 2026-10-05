@@ -159,7 +159,14 @@ test("presence: online, focusing, back online, offline on close, multiple tabs",
   await expect(partnerCard(a.page, "Bruno", "em foco")).toBeVisible({
     timeout: LIVE,
   });
-  await expect(a.page.getByText(/· \d\d:\d\d$/).first()).toBeVisible();
+  // The partner card left Today on a phone (docs/NAVIGATION.md): the header
+  // chip opens DUPLA, which shows the running clock. The chip stays in the
+  // header, so the checks below hold on DUPLA too.
+  await partnerCard(a.page, "Bruno", "em foco").click();
+  await expect(a.page).toHaveURL(/\/partner$/);
+  await expect(a.page.getByTestId("partner-status")).toHaveText(
+    /· faltam \d\d:\d\d$/,
+  );
 
   // B ends it -> A sees ONLINE again.
   await b.page

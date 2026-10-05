@@ -59,6 +59,21 @@ async function open(browser: Browser, user: TestUser, path = "/today") {
 }
 
 const star = (page: Page) => page.getByTestId("north-star");
+const starToggle = (page: Page) =>
+  star(page).getByRole("button", { name: new RegExp(t.northStar.title) });
+
+/** Today shows the why as one line (docs/NAVIGATION.md); open it. */
+async function openStar(page: Page) {
+  const toggle = starToggle(page);
+  await expect(async () => {
+    if ((await toggle.getAttribute("aria-expanded")) !== "true")
+      await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true", {
+      timeout: 1000,
+    });
+  }).toPass({ timeout: 15_000 });
+  return star(page);
+}
 const morning = (page: Page) =>
   page.getByRole("region", { name: t.morning.aria });
 const top3 = (page: Page) => page.getByRole("region", { name: t.top3.title });
@@ -152,10 +167,13 @@ test("1: North Star shows the vision, the current goal and the mirror (fallback)
 }) => {
   test.setTimeout(90_000);
   const a = await open(browser, users.a);
-  const card = star(a.page);
-  await expect(
-    card.getByRole("heading", { name: t.northStar.title }),
-  ).toBeVisible();
+  // Closed: one line with the first item.
+  await expect(starToggle(a.page)).toHaveAttribute("aria-expanded", "false");
+  await expect(starToggle(a.page)).toContainText(
+    "Ter independência financeira",
+  );
+  await expect(star(a.page).getByTestId("north-star-goal")).toHaveCount(0);
+  const card = await openStar(a.page);
   await expect(card.getByTestId("north-star-vision")).toContainText(
     "Ter independência financeira",
   );
@@ -236,6 +254,7 @@ test("2: featuring another goal (and mirror) on /goals changes Today", async ({
     .first()
     .click();
   await expect(a.page).toHaveURL(/\/today$/);
+  await openStar(a.page);
   await expect(star(a.page).getByTestId("north-star-goal")).toContainText(
     "Ler 3 livros",
   );
@@ -258,6 +277,7 @@ test("3: archiving the featured vision → fallback; achieving the goal is never
   );
   await A.from("vision_items").update({ is_featured: true }).eq("id", v.id);
   const a = await open(browser, users.a);
+  await openStar(a.page);
   await expect(star(a.page).getByTestId("north-star-vision")).toContainText(
     "Ter um corpo forte",
   );
@@ -282,6 +302,7 @@ test("3: archiving the featured vision → fallback; achieving the goal is never
     .update({ status: "achieved" })
     .eq("title", "Ler 3 livros");
   await a.page.goto("/today");
+  await openStar(a.page);
   await expect(star(a.page).getByTestId("north-star-vision")).toContainText(
     "Ter independência financeira",
   );
@@ -551,11 +572,14 @@ test("10: without goals the North Star invites to set a direction", async ({
 }) => {
   test.setTimeout(90_000);
   const c = await open(browser, users.c);
-  await expect(
-    c.page.getByRole("heading", { name: t.northStar.emptyTitle }),
-  ).toBeVisible();
-  await expect(c.page.getByText(t.northStar.emptyText)).toBeVisible();
-  await c.page.getByRole("link", { name: t.northStar.emptyCta }).click();
+  // One line on Today that opens /goals (docs/NAVIGATION.md).
+  const empty = c.page.getByTestId("north-star-empty");
+  await expect(empty).toContainText(t.northStar.emptyTitle);
+  await expect(empty).toContainText(t.northStar.emptyText);
+  await expect(empty).toHaveAccessibleName(
+    `${t.northStar.emptyTitle}. ${t.northStar.emptyCta}`,
+  );
+  await empty.click();
   await expect(c.page).toHaveURL(/\/goals$/);
   expect(c.errors).toEqual([]);
   await c.context.close();

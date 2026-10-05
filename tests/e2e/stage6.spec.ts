@@ -245,14 +245,18 @@ test("the partner sees focus live: start, pause, resume, end, app closed; privat
   await finishFocus(A);
   const b = await open(browser, users.b, "/today");
   let a = await open(browser, users.a, "/focus");
+  // The partner card left Today on a phone (docs/NAVIGATION.md): Today keeps
+  // the header chip and the toasts, a second tab of B on DUPLA shows the clock.
+  const duo = await b.context.newPage();
+  await duo.goto("/partner");
 
   await expect(partnerCard(b.page, "online")).toBeVisible({ timeout: LIVE });
 
   // Start -> B: FOCUSING with the shared title and a running clock.
   await lockIn(a.page, "Projeto", "25");
-  const focusing = partnerCard(b.page, "em foco");
-  await expect(focusing).toBeVisible({ timeout: LIVE });
-  await expect(focusing).toContainText(/Projeto · 2[45]:\d\d/);
+  await expect(partnerCard(b.page, "em foco")).toBeVisible({ timeout: LIVE });
+  const focusing = duo.getByTestId("partner-status");
+  await expect(focusing).toContainText(/Projeto · faltam 2[45]:\d\d/);
   await expect(
     b.page.getByRole("status").getByText("Alice iniciou Foco — Projeto"),
   ).toBeVisible({ timeout: LIVE });
@@ -278,8 +282,12 @@ test("the partner sees focus live: start, pause, resume, end, app closed; privat
   await done.getByRole("textbox").fill("private note for me");
   await done.getByRole("button", { name: "PRONTO" }).click();
   await expect(partnerCard(b.page, "online")).toBeVisible({ timeout: LIVE });
+  // The live feed is on DUPLA on a phone (docs/NAVIGATION.md).
   await expect(
-    b.page.getByText(/Alice concluiu (<1|\d+) min de Foco/).first(),
+    duo
+      .getByRole("region", { name: "Atividade" })
+      .getByText(/Alice concluiu (<1|\d+) min de Foco/)
+      .first(),
   ).toBeVisible({ timeout: LIVE });
 
   // Private: a session on a private task shows no title to B.
@@ -287,6 +295,7 @@ test("the partner sees focus live: start, pause, resume, end, app closed; privat
   await expect(partnerCard(b.page, "em foco")).toBeVisible({ timeout: LIVE });
   await b.page.waitForTimeout(1500);
   await expect(b.page.getByText("Secret thesis")).toHaveCount(0);
+  await expect(duo.getByText("Secret thesis")).toHaveCount(0);
   await expect(
     b.page.getByRole("status").getByText("Alice iniciou Foco", { exact: true }),
   ).toBeVisible();

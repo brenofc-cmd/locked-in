@@ -39,6 +39,7 @@ test("private routes redirect to sign in without rendering private content", asy
     "/partner",
     "/focus",
     "/progress",
+    "/plan",
     "/more",
     "/routine",
     "/challenges",

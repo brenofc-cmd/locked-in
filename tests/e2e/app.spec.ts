@@ -69,24 +69,25 @@ test.describe("layout @layout", () => {
 test("navigation reaches every main section", async ({ page }) => {
   await openToday(page);
   const n = nav(page);
+  // docs/NAVIGATION.md: HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO.
   const targets: [RegExp, string, string | RegExp][] = [
-    [/parceiro/i, "/partner", "LUCAS"],
-    [/foco/i, "/focus", "NO QUE VOCÊ VAI TRABALHAR?"],
-    [/progress/i, "/progress", "PROGRESSO"],
-    [/hoje/i, "/today", GREETING("BRENDON")],
+    [/^dupla$/i, "/partner", "LUCAS"],
+    [/^foco$/i, "/focus", "NO QUE VOCÊ VAI TRABALHAR?"],
+    [/^planejar$/i, "/plan", "PLANEJAR"],
+    [/^progresso$/i, "/progress", "PROGRESSO"],
+    [/^hoje$/i, "/today", GREETING("BRENDON")],
   ];
   for (const [name, url, heading] of targets) {
-    await n.getByRole("link", { name }).click();
+    const link = n.getByRole("link", { name });
+    await link.click();
     await expect(page).toHaveURL(new RegExp(`${url}$`));
     await expect(
       page.getByRole("heading", { level: 1, name: heading }),
     ).toBeVisible();
+    await expect(link).toHaveAttribute("aria-current", "page");
   }
-  if (isMobile(page)) {
-    await n.getByRole("link", { name: /mais/i }).click();
-    await expect(page).toHaveURL(/\/more$/);
-    await expect(page.getByRole("heading", { name: "MAIS" })).toBeVisible();
-  }
+  // MAIS is gone from the navigation.
+  await expect(n.getByRole("link", { name: /^mais$/i })).toHaveCount(0);
 });
 
 test("completing a task updates row, count, percentage and bar; undo reverts", async ({
@@ -177,14 +178,11 @@ test("partner page shows the duo comparison and live activity; reactions work", 
   page,
 }) => {
   await openToday(page);
-  if (isMobile(page)) {
-    // Lucas's presence is real now; in the suite nobody is signed in as Lucas.
-    await page
-      .getByRole("link", { name: /Lucas está (online|offline)/ })
-      .click();
-  } else {
-    await page.getByRole("link", { name: /Abrir dupla/ }).click();
-  }
+  // Phone: the header chip; desktop: the partner card — same label
+  // (docs/NAVIGATION.md). Lucas's presence is real; nobody signs in as him.
+  await page
+    .getByRole("link", { name: /^Lucas: (online|offline),.*Abrir dupla\.$/ })
+    .click();
   await expect(page).toHaveURL(/\/partner$/);
   await expect(
     page.getByRole("heading", { level: 1, name: "LUCAS" }),
@@ -307,15 +305,18 @@ test("progress opens with the real numbers in every range", async ({
   ).toBeVisible();
 });
 
-test("more lists the secondary screens and opens routine", async ({ page }) => {
+test("the old /more opens PLANEJAR, which lists the planning screens", async ({
+  page,
+}) => {
   await page.goto("/more");
-  await expect(page.getByRole("heading", { name: "MAIS" })).toBeVisible();
-  const more = page.getByRole("navigation", { name: "Mais" });
-  for (const name of ["Rotina", "Desafios", "Convidar dupla", "Ajustes"]) {
+  await expect(page).toHaveURL(/\/plan$/);
+  await expect(page.getByRole("heading", { name: "PLANEJAR" })).toBeVisible();
+  const plan = page.getByRole("navigation", { name: "Planejamento" }).first();
+  for (const name of ["PRÓXIMO", "METAS", "ROTINA", "DESAFIOS"]) {
     await expect(
-      more.getByRole("link", { name: new RegExp(name) }),
+      plan.getByRole("link", { name: new RegExp(name) }),
     ).toBeVisible();
   }
-  await more.getByRole("link", { name: /Rotina/ }).click();
+  await plan.getByRole("link", { name: /ROTINA/ }).click();
   await expect(page.getByRole("heading", { name: "ROTINA" })).toBeVisible();
 });
