@@ -5,19 +5,89 @@
 V1 (the ten stages below) is in production: `main` at `606546f`, https://locked-in-rust.vercel.app.
 V2 is built in ten phases, each on its own branch, merged to `main` only when VERIFIED.
 
-| #    | Phase                                 | Status       | Scope                                                                                                                                |
-| ---- | ------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | Foundation + Restore State            | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md)                     |
-| 2    | School Planner + Shared Calendar      | **VERIFIED** | Planner (PRÓXIMOS / CALENDÁRIO, sharing, reminders, Today card, Add to tasks) + Partner Presence 2.0 / last seen (PLANNER.md)        |
-| 3    | Goals, Vision & Accountability Mirror | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)                 |
-| 4    | North Star + Morning Experience       | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)              |
-| 5    | Goals → Actions → Proof               | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md) |
-| 6    | Duo Accountability 2.0                | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                      |
-| 7    | Daily Duel + Transparent Gamification | VERIFIED     | Daily duel derived from real actions: Execution / Focus / Consistency, transparent winner, Live vs Final (see below)                 |
-| 8–10 | —                                     | PENDING      | Defined when each phase starts (Web Push: Phase 10)                                                                                  |
+| #    | Phase                                   | Status       | Scope                                                                                                                                               |
+| ---- | --------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Foundation + Restore State              | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md)                                    |
+| 2    | School Planner + Shared Calendar        | **VERIFIED** | Planner (PRÓXIMOS / CALENDÁRIO, sharing, reminders, Today card, Add to tasks) + Partner Presence 2.0 / last seen (PLANNER.md)                       |
+| 3    | Goals, Vision & Accountability Mirror   | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)                                |
+| 4    | North Star + Morning Experience         | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)                             |
+| 5    | Goals → Actions → Proof                 | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md)                |
+| 6    | Duo Accountability 2.0                  | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                                     |
+| 7    | Daily Duel + Transparent Gamification   | VERIFIED     | Daily duel derived from real actions: Execution / Focus / Consistency, transparent winner, Live vs Final (see below)                                |
+| 8    | Monthly Champion + Records + Milestones | IN PROGRESS  | Monthly champion from FINAL daily duels (wins, transparent tiebreaks), personal records, milestones — derived, Progress + one DUPLA row (see below) |
+| 9–10 | —                                       | PENDING      | Defined when each phase starts (Phase 9: celebrations, reviews, non-negotiables, weekly planning; Web Push: Phase 10)                               |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
 new animations, Web Push, new gamification.
+
+## V2 Phase 8 — Monthly Champion + Personal Records + Milestones (official scope, 2026-10-05)
+
+Goal: turn the real, historically stable data LOCKED IN already records into long-term progression.
+Phase 7 answers "who executed better today?"; Phase 8 answers "who was more consistent over the
+month?" and "what is my best performance so far?". Everything stays explainable. No hype, just proof.
+
+Questions: who had the best month in the duo · my personal records · which consistency milestones I
+reached · the next milestone.
+
+Deliverables: monthly champion (current month live + recent months, details on demand) · personal
+records · milestones (next first, the rest on demand) · one compact month row on DUPLA · realtime
+without polling · privacy · historical integrity · timezone / year boundaries · duo lifecycle.
+
+Rules (approved):
+
+1. **Built on the Daily Duel.** Each FINAL daily duel of the month gives a win to A, a win to B, a
+   draw, or no result (SEM RESULTADO SUFICIENTE). No parallel competition, no points: the monthly
+   score is literally **days won**; draws are counted apart; insufficient days give nothing.
+2. **Days of a month** = the duel dates of that calendar month (each side is its member's own local
+   day, as in Phase 7), from `duos.duel_since`; only FINAL days count (the same Phase 7 closing:
+   closed for both and nothing running). Today and any non-final day never count.
+3. **Minimum evidence:** at least **3 official days** (a win or a draw) in the month; fewer →
+   SEM RESULTADO SUFICIENTE NO MÊS (the numbers are still shown). The same minimum applies to the
+   live leader — no one is "ahead" on one day.
+4. **Decision:** more daily wins → **tiebreak 1** monthly Execution: `Σ completed / Σ planned` over
+   the FINAL days of the month where **both** had tasks (Execution comparable), exact ratio
+   (cross-multiplication) → **tiebreak 2** total effective focus seconds of the FINAL days of the
+   month (pauses never count) → otherwise **EMPATE DO MÊS**. No fourth tiebreak. A tiebreak that
+   cannot compare (no eligible day) does not decide. The reason is always shown.
+5. **Live vs Final:** the current month is **MÊS · AO VIVO** (ESTÁ NA FRENTE / EMPATADOS / SEM
+   RESULTADO SUFICIENTE AINDA) — never a champion. A month is FINAL only when its last calendar day
+   is a FINAL duel (closed for both members, nothing running) — no new closing concept. Then
+   **CAMPEÃO DE <MÊS>** / **EMPATE DO MÊS** / **SEM RESULTADO SUFICIENTE NO MÊS**.
+6. **Derived, never stored:** no monthly result / records / milestones table. A FINAL day cannot
+   move (closed history, Daily Standard versions, focus fixed at start, `duel_since`), so a FINAL
+   month cannot change champion (standard, timezone, goal, routine or duo changes).
+7. **History:** the current month + up to 5 previous months of the current duo (6), never whole
+   years by default. A month before the duo formed does not exist; a duo formed mid-month counts
+   only its days. Ending the duo leaves nothing to read; a new partner starts fresh.
+8. **Personal records (owner-only):** longest streak (the existing `longest` — same rules, ADR-038
+   unchanged) · most effective focus in a day (settled sessions, by the day a session started) ·
+   most effective focus in a closed Monday–Sunday week · most Perfect Days in a calendar month
+   (closed days, `planned > 0 and completed = planned`). Ties keep the **first** date / period. No
+   gamable records (tasks created / completed counts).
+9. **Milestones (MARCOS, personal, derived):** streak 7 / 30 / 100 days (from the longest streak),
+   effective focus 10 / 50 / 100 h (settled total), Perfect Days 5 / 10 / 30 (closed days, total).
+   Locked → progress ("23 de 30 dias"); reached → CONQUISTADO. No unlock date, no unlock table, no XP.
+10. **UI:** Progress keeps VISÃO GERAL → METAS → DUELOS → HISTÓRICO; the month summary leads
+    DUELOS (details and previous months on demand); RECORDES and MARCOS are compact rows (next
+    milestones first, the rest collapsed). DUPLA gets one row (MÊS · AO VIVO · Você 8 — 5 Matheus ›
+    → Progress). Today, Focus and Plan unchanged; no new tab, no big celebration (Phase 9).
+11. **Realtime:** the month is re-read with the duo numbers (the existing `partnerVersion` / partner
+    focus transitions) — events, never a timer; Focus stays without periodic requests.
+12. **Privacy:** the month exposes only dates / integers / booleans of the duo (the Phase 7 duel
+    numbers); never a task, goal, vision, mirror, Top 3, focus goal or commitment source. Records and
+    milestones read only the caller's own rows (SECURITY INVOKER).
+
+Architecture decision (2026-10-05): the database returns, for whole months, **the same per-day
+numbers as `duo_duels`** (`duo_duel_months`, DEFINER, built on `private.duel_side` and
+`private.standard_on`); the client decides each day with the existing `decideDuel` and the month
+with a pure `decideMonth` (`src/lib/monthly.ts`). One implementation of the duel rules — porting
+them to SQL would create a second competition to keep in sync. pgTAP covers the data (which days,
+FINAL, numbers, boundaries, immutability, privacy); unit tests cover the decisions; e2e checks the
+screen against both.
+
+Not in Phase 8: large victory animations, confetti, full-screen celebrations, non-negotiables,
+weekly planning, new reviews, Web Push / push notifications, XP, coins, levels, shop, global
+leaderboard, groups, AI coach, duo milestones ("won 3 months").
 
 ## V2 Phase 7 — Daily Duel + Transparent Gamification (official scope, 2026-10-01)
 
