@@ -5,20 +5,68 @@
 V1 (the ten stages below) is in production: `main` at `606546f`, https://locked-in-rust.vercel.app.
 V2 is built in ten phases, each on its own branch, merged to `main` only when VERIFIED.
 
-| #    | Phase                                   | Status       | Scope                                                                                                                                               |
-| ---- | --------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Foundation + Restore State              | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md)                                    |
-| 2    | School Planner + Shared Calendar        | **VERIFIED** | Planner (PRÓXIMOS / CALENDÁRIO, sharing, reminders, Today card, Add to tasks) + Partner Presence 2.0 / last seen (PLANNER.md)                       |
-| 3    | Goals, Vision & Accountability Mirror   | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)                                |
-| 4    | North Star + Morning Experience         | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)                             |
-| 5    | Goals → Actions → Proof                 | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md)                |
-| 6    | Duo Accountability 2.0                  | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                                     |
-| 7    | Daily Duel + Transparent Gamification   | VERIFIED     | Daily duel derived from real actions: Execution / Focus / Consistency, transparent winner, Live vs Final (see below)                                |
-| 8    | Monthly Champion + Records + Milestones | VERIFIED     | Monthly champion from FINAL daily duels (wins, transparent tiebreaks), personal records, milestones — derived, Progress + one DUPLA row (see below) |
-| 9–10 | —                                       | PENDING      | Defined when each phase starts (Phase 9: celebrations, reviews, non-negotiables, weekly planning; Web Push: Phase 10)                               |
+| #   | Phase                                                          | Status       | Scope                                                                                                                                                                                                  |
+| --- | -------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Foundation + Restore State                                     | **VERIFIED** | Versioned, user-scoped Resume State: last route at `/`, Progress range / month, scroll, drafts (RESUME_STATE.md)                                                                                       |
+| 2   | School Planner + Shared Calendar                               | **VERIFIED** | Planner (PRÓXIMOS / CALENDÁRIO, sharing, reminders, Today card, Add to tasks) + Partner Presence 2.0 / last seen (PLANNER.md)                                                                          |
+| 3   | Goals, Vision & Accountability Mirror                          | **VERIFIED** | /goals: VISÃO, METAS (90 dias / este mês / longo prazo, achieved, archive, milestones), ESPELHO — private (GOALS.md)                                                                                   |
+| 4   | North Star + Morning Experience                                | **VERIFIED** | LEMBRE-SE DO PORQUÊ (featured / fallback), TOP 3 DE HOJE (real tasks), morning card once per user / day (NORTH_STAR.md)                                                                                |
+| 5   | Goals → Actions → Proof                                        | **VERIFIED** | Tasks / routines (snapshot) / focus linked to private goals; proof derived (actions, focus, milestones); /goals/[id] (GOAL_PROOF.md)                                                                   |
+| 6   | Duo Accountability 2.0                                         | VERIFIED     | Partner Hub 2.0, shared commitments → proof, nudges, daily check-in (see below)                                                                                                                        |
+| 7   | Daily Duel + Transparent Gamification                          | VERIFIED     | Daily duel derived from real actions: Execution / Focus / Consistency, transparent winner, Live vs Final (see below)                                                                                   |
+| 8   | Monthly Champion + Records + Milestones                        | VERIFIED     | Monthly champion from FINAL daily duels (wins, transparent tiebreaks), personal records, milestones — derived, Progress + one DUPLA row (see below)                                                    |
+| 9   | Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning | IN PROGRESS  | Once-only, reduced-motion-aware celebrations of real facts; durable milestone unlocks; private non-negotiables; 3 weekly priorities; reflections + objective facts in the existing reviews (see below) |
+| 10  | —                                                              | PENDING      | Web Push + advanced reminders + final polish                                                                                                                                                           |
 
 Not in Phase 1 (by instruction): planner, goals / vision, North Star, Daily Duel, Monthly Champion,
 new animations, Web Push, new gamification.
+
+## V2 Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning (official scope, 2026-10-05)
+
+Goal: close the behavioural loop PLANEJAR → EXECUTAR → PROVAR → REFLETIR → CELEBRAR → AJUSTAR →
+REPETIR without turning LOCKED IN into a game or a motivational app. No hype, just proof.
+
+Navigation unchanged (HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO); no new tab; DUPLA and FOCO gain
+nothing; Today gains only a discreet "◇ NÃO NEGOCIÁVEL" label and a temporary celebration.
+
+Rules (approved):
+
+1. **Celebrations** — short (≈1–2 s), premium, rare, factual; a temporary overlay over the current
+   screen (no route change, never in Resume State), closable, `prefers-reduced-motion` → final state
+   without animation. Only: PERFECT DAY (the existing definition: planned > 0 and completed = planned,
+   celebrated when today becomes perfect, at most once per date), STREAK 7 / 30 / 100, FOCUS 10 / 50 /
+   100 h, PERFECT DAYS 5 / 10 / 30 (Phase 8 milestones, first crossing only), MONTHLY CHAMPION (a
+   FINAL month only, once per month; a final draw gets the smaller "MÊS ENCERRADO · EMPATE"; never a
+   live month). Nothing is sent to the partner (reactions stay the social layer).
+2. **Durable unlock** — reaching a milestone is a historical event, not an analytics cache: one
+   owner-only table `celebrations` (kind + key, unique per owner) holds the milestone unlocks
+   (validated by the database against the real numbers, immutable, with the value at unlock), the
+   Perfect Day / month receipts and `seen_at`, so each celebration shows once across devices. A
+   milestone stays unlocked even if a later standard change lowers the derived value.
+3. **Baseline** — milestones already reached when the feature ships are recorded as baseline
+   (already seen): no retroactive burst of celebrations.
+4. **Non-Negotiables** — a routine or a one-off task can be marked NÃO NEGOCIÁVEL. Private side
+   tables (the Phase 5 pattern: shareable task rows never carry the flag); a routine's flag is
+   snapshotted on each occurrence it generates and follows today's occurrence; a closed day's flag
+   never changes. No weight anywhere: completion, Daily Standard, streak, duel, month untouched. The
+   weekly review shows "NÃO NEGOCIÁVEIS 8 / 10".
+5. **Weekly Planning** — PRIORIDADES DA SEMANA (distinct from TOP 3 DE HOJE): at most 3 results for a
+   Monday–Sunday week (the existing week), one per position, open / done, set by the owner
+   (self-declared, never proof, never in the duel or the month). Current and next week editable; a
+   closed week is frozen. PLANEJAR gets one row (ESTA SEMANA · n prioridades / PLANEJE SUA SEMANA)
+   → `/plan/week`. Not on Today.
+6. **Reviews 2.0** — the existing Day Review and Weekly Review evolve (no parallel system): three
+   optional reflections each (O QUE FUNCIONOU? / O QUE ME ATRAPALHOU? / O QUE VOU MUDAR …), owner-only,
+   plus objective facts derived by the existing analytics (completion, focus, Daily Standard days with
+   the standard of each day, Perfect Days, Non-Negotiables, weekly priorities done). Facts are stated,
+   never interpreted (no AI). History stays in PROGRESSO → HISTÓRICO (weekly reviews; a past day shows
+   its reflection). After a weekly review: PLANEJAR PRÓXIMA SEMANA. The existing once-a-week toast is
+   the start-of-week moment (no new modal).
+7. **Privacy / integrity** — every new row is owner-only (partner, outsider, anon: zero); no new
+   channel; no SECURITY DEFINER function; no polling or timer that fetches.
+
+Not in Phase 9: Web Push / background push (Phase 10), XP, coins, levels, shop, global leaderboard,
+AI coach, generated motivational messages, groups.
 
 ## V2 Phase 8 — Monthly Champion + Personal Records + Milestones (official scope, 2026-10-05)
 

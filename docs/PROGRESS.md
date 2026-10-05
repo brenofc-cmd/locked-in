@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED; PRODUCTION DEPLOY — VERIFIED (2026-10-05). Phase 7 VERIFIED; UI Information Architecture Polish VERIFIED. Next: V2 Phase 9 — Celebrations + Reviews + Non-Negotiables + Weekly Planning (not started)
+LOCKED IN V2 — Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning — IN PROGRESS (scope: docs/ROADMAP.md → V2 Phase 9). Phases 1–8 VERIFIED.
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
