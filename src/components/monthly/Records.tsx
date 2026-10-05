@@ -144,6 +144,7 @@ function MilestoneLine({ m }: { m: Milestone }) {
       {!m.reached && (
         <span
           role="progressbar"
+          aria-label={milestoneTitle(m)}
           aria-valuemin={0}
           aria-valuemax={m.target}
           aria-valuenow={m.current}
