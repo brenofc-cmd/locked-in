@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — UI INFORMATION ARCHITECTURE POLISH — VERIFIED (DEV, 2026-10-05); production deploy and visual smoke: see the section below. V2 Phase 7 — VERIFIED (production visual smoke: see below). V2 Phase 8 — NOT STARTED
+LOCKED IN V2 — UI INFORMATION ARCHITECTURE POLISH — VERIFIED; PRODUCTION DEPLOY — VERIFIED (2026-10-05); V2 Phase 7 — VERIFIED (PHASE 7 PRODUCTION VISUAL SMOKE — VERIFIED 2026-10-05); V2 Phase 8 — NOT STARTED
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -14,7 +14,7 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 - None.
 
-## UI Information Architecture Polish — VERIFIED (DEV, 2026-10-05)
+## UI Information Architecture Polish — VERIFIED (DEV + PROD, 2026-10-05)
 
 Scope: docs/NAVIGATION.md (no feature added or removed; nothing in the database, analytics, duel,
 goal proof, focus, commitments, streak, Daily Standard, Planner or realtime changed). Branch
@@ -80,7 +80,28 @@ Gates (DEV, final):
   pre-existing "no data yet" state); profile menu Conta / Configurações / Dupla / Sair (Instalar app
   only when the browser offers it — not in headless Chromium). No code change came out of it.
 
-## Phase 7 — Daily Duel + Transparent Gamification — VERIFIED ON DEV (2026-10-01)
+Production (2026-10-05):
+
+- No database change: PROD Supabase (`xhjczzhmbulaiebpsktl`) not touched.
+- `main` fast-forwarded `25b2c76` → `0c10c24`, pushed; GitHub deployment "Production" **success**
+  for `0c10c24` (https://locked-in-rust.vercel.app); `/plan` is served (signed out → `/login?next=%2Fplan`).
+- **Visual smoke on PROD (real account, desktop 958 px, Chrome)** — read only, nothing written:
+  sidebar Hoje · Dupla · Foco · Planejar (Planner, Metas & Visão, Rotina, Desafios) · Progresso;
+  HOJE (tasks, morning card of the day, partner card on desktop, DUELO · AO VIVO · Você 0 — 0
+  Matheus, North Star one line); DUPLA (status, detailed duel, COMO É DECIDIDO opens, commitments,
+  check-in, feed); FOCO minimal; PLANEJAR four rows (Rotina "4 itens ativos"); Planner, Metas &
+  Visão, Rotina, Desafios, Configurações open; Resume State: `/plan` then `/` → `/plan`; profile
+  menu shows Conta / Configurações / Dupla / Sair (Instalar app only when offered). The Chrome
+  extension's synthetic clicks / keys did not reach the page (same as the Phase 7 attempt), so the
+  menu was opened through the DOM; a real mouse (Playwright, local build, 958 and 1440 px) toggles
+  it open / closed. The phone layout was verified locally (same commit), not on PROD.
+- **Phase 7 production visual smoke — VERIFIED**: Today compact duel (AO VIVO, never "won");
+  DUPLA detailed duel (EMPATE 0–0 live, Execução 0/4 · 0% vs 0/1 · 0%, Foco 0 min × 0 min "—"
+  not comparable, Consistência não bateu × não bateu EMPATE) + COMO É DECIDIDO; PROGRESSO
+  ÚLTIMOS 7 DUELOS, all RESULTADO FINAL: 28/09 MATHEUS VENCEU O DIA 0–2, 29/09 0–1, 30/09 → 04/10
+  EMPATE 0–0 — 28/09, 29/09 and 30/09 equal the Phase 7 API smoke.
+
+## Phase 7 — Daily Duel + Transparent Gamification — VERIFIED (DEV 2026-10-01, PROD visual 2026-10-05)
 
 Scope: docs/ROADMAP.md → "V2 Phase 7" (official consistency rule, live / final wording, Daily
 Standard history and Focus 0 × 0 neutral approved 2026-10-01), docs/DUEL.md, ADR-074…079. Branch
@@ -176,9 +197,8 @@ Production (2026-10-01):
   EMPATE (Focus 0 × 0 not counted); changing the owner's standard 80 → 70 left the 3 FINAL duels
   identical and today used 70; the partner read 0 versions of the owner's standard; the output is
   dates / integers / booleans only. Rollback verified (standards 80, 4 baselines, no version, no task).
-- **Pending (human)**: the visual smoke on PROD (Today card, Partner detail, Progress last 7, AO
-  VIVO / RESULTADO FINAL on screen) — the browser extension could not interact with the site in this
-  session; the same build passed the full e2e on DEV. Also the live two-person check.
+- Visual smoke on PROD: done 2026-10-05 (see UI Information Architecture Polish → Production). The
+  live two-person check stays manual.
 
 ## Phase 6 — Duo Accountability 2.0 — VERIFIED (2026-09-30)
 
