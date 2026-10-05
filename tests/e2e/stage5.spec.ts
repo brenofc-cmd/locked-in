@@ -128,6 +128,9 @@ test("A completes a task and B sees it live; undo withdraws it; a private task n
 
   // A completes Gym while B is on Today: B gets a toast, also without reload.
   await b.page.getByRole("link", { name: /hoje/i }).first().click();
+  // B must be off /partner first: there the feed shows it and no toast is
+  // raised (app-state), so an event arriving mid-navigation would be silent.
+  await expect(b.page).toHaveURL(/\/today$/);
   await a.page.getByRole("checkbox", { name: "Gym" }).click();
   await expect(
     b.page.getByRole("status").getByText("Alice concluiu Gym"),
