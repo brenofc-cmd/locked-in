@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { t } from "@/i18n/pt-BR";
 import {
   expect,
@@ -770,5 +771,78 @@ test("19: with push on, the app stays idle — no periodic request for 70 s", as
   });
   await a.page.waitForTimeout(70_000);
   expect(seen).toEqual([]);
+  await a.context.close();
+});
+
+// ------------------------------------------------- final UI audit (V2) ----
+
+test("20: axe — no serious / critical issue on push settings, next-week planning and the offline page", async ({
+  browser,
+}) => {
+  await fixture(A, "dev_fixture_reset_push");
+  const a = await open(browser, users.a, "/settings", {
+    permission: "default",
+    answer: "granted",
+  });
+  await a.page.getByRole("button", { name: P.enable }).click();
+  await expect(state(a.page)).toHaveText(P.state.on);
+  const report: string[] = [];
+  for (const path of ["/settings", "/plan/week?w=next", "/offline"]) {
+    await a.page.goto(path);
+    await a.page.waitForLoadState("load");
+    await a.page.waitForTimeout(600);
+    const { violations } = await new AxeBuilder({ page: a.page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    for (const v of violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    ))
+      report.push(`${path} ${v.id} (${v.impact})`);
+  }
+  expect(report).toEqual([]);
+  // The next week says so (no "desta semana" on PRÓXIMA SEMANA).
+  await a.page.goto("/plan/week?w=next");
+  await expect(
+    a.page.getByPlaceholder(t.weeklyPlan.placeholderNext),
+  ).toBeVisible();
+  await expect(a.page.getByText(t.weeklyPlan.emptyNext)).toBeVisible();
+  await a.context.close();
+});
+
+test("21: responsive — no horizontal scroll on the main screens from 375 to 1440", async ({
+  browser,
+}) => {
+  test.setTimeout(240_000);
+  const a = await open(browser, users.a, "/today");
+  const report: string[] = [];
+  for (const width of [375, 390, 430, 768, 958, 1180, 1440]) {
+    await a.page.setViewportSize({ width, height: 900 });
+    for (const path of [
+      "/today",
+      "/partner",
+      "/focus",
+      "/plan",
+      "/plan/week",
+      "/planner",
+      "/goals",
+      "/progress",
+      "/settings",
+    ]) {
+      await a.page.goto(path);
+      await a.page.waitForLoadState("load");
+      await a.page.waitForTimeout(300);
+      const over = await a.page.evaluate(() => {
+        const doc = document.scrollingElement!;
+        const main = document.querySelector("main");
+        return {
+          page: doc.scrollWidth - doc.clientWidth,
+          main: main ? main.scrollWidth - main.clientWidth : 0,
+        };
+      });
+      if (over.page > 0 || over.main > 0)
+        report.push(`${width} ${path} page+${over.page} main+${over.main}`);
+    }
+  }
+  expect(report).toEqual([]);
   await a.context.close();
 });
