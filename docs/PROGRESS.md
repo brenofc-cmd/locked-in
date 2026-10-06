@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 10 (last) — Web Push + Advanced Reminders + Final Polish / Audit — IN PROGRESS (scope: docs/ROADMAP.md → V2 Phase 10). Phases 1–9 VERIFIED (DEV + PROD).
+LOCKED IN V2 — Phase 10 (last) — Web Push + Advanced Reminders + Final Polish / Audit — DEV + PROD VERIFIED; two-device acceptance (Brendon + Matheus) PENDING (see "V2 PHASE 10" below). Phases 1–9 VERIFIED (DEV + PROD).
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -12,10 +12,99 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 ## Known issues (open)
 
-- Minor copy (Phase 9): on `/plan/week` the PRÓXIMA SEMANA tab reuses the "this week" strings
-  (`empty`: "Nenhuma prioridade para esta semana.", `placeholder`: "Uma prioridade desta semana",
-  `src/i18n/pt-BR.ts`). Saving there writes next week correctly; only the wording is off. Not
-  blocking.
+- None blocking. (The Phase 9 PRÓXIMA SEMANA wording was fixed in Phase 10 and verified on PROD.)
+
+## V2 PHASE 10 — Web Push + Advanced Reminders + Final Polish / Audit — DEV + PROD VERIFIED · two-device acceptance PENDING (2026-10-06)
+
+Status: DEV = **VERIFIED** · PRODUCTION DEPLOY = **VERIFIED** · FINAL PRODUCTION SMOKE = **VERIFIED**
+· WEB PUSH (PROD, real FCM, app closed, desktop Chrome) = **VERIFIED** · notification tap on a real
+device = **PENDING** (owner) · TWO-DEVICE ACCEPTANCE (Brendon + Matheus) = **PENDING** · V2
+PRODUCTION READY = **PENDING** until the two items above are done. V3 = NOT STARTED.
+
+Scope: docs/ROADMAP.md → "V2 Phase 10", docs/WEB_PUSH.md, ADR-092…099. Branch
+`v2-phase-10-web-push-final-polish` (fast-forwarded into `main` at `4c14b00`).
+
+Done:
+
+- **Web Push with the app closed** (ADR-092…096): per-device `push_subscriptions` (owner-only RLS,
+  push-service allowlist in the database and the sender, an endpoint owned by someone else cannot be
+  taken over), `notification_deliveries` (unique per user + dedup key, expiry, 30-day retention).
+  `pg_cron` every minute → `private.push_tick()` enqueues idempotently in SQL and wakes the Edge
+  Function `push-dispatch` through `pg_net` only when something is waiting. The function is
+  authenticated by a Vault secret generated in SQL (constant-time compare; 401 otherwise), signs
+  VAPID (RFC 8292) and encrypts aes128gcm (RFC 8291, checked byte for byte against the RFC vector)
+  on WebCrypto, with no library. 404 / 410 drop the device; retries with 2^n-minute backoff, failed
+  after 5; stuck claims released after 5 min. The VAPID private key lives only in Vault.
+- **Reminders** (server-side): Planner (08:00 local of the reminder day; "no dia" on a timed event:
+  min(08:00, 2 h before)), nudge delivery, Review do dia 21:00, Review semanal Sunday 19:00,
+  Planejamento semanal Monday 08:00, test (1 / min). Quiet hours defer; never sent after expiry or
+  > 24 h late. Payload carries no goal, vision, mirror or reflection; "Ocultar detalhes" sends
+  > generic text only.
+- **Settings**: "Notificações neste dispositivo" (permission asked only on tap, never on open),
+  per-kind switches, Ocultar detalhes, test button. Sign-out removes this device's row; a shared
+  browser's subscription of another user is dropped on open.
+- **PWA**: one service worker (`/sw.js`, `no-store`), navigations only, network first, static
+  `/offline` fallback; no data / API / auth caching; skipWaiting + claim. Click opens only
+  whitelisted routes.
+- **Polish**: PRÓXIMA SEMANA wording ("Nenhuma prioridade para a próxima semana." / "Uma prioridade
+  da próxima semana"); `source-map-js` 1.2.2 and `sharp` 0.35.5 advisories patched (`npm audit fix`,
+  no `--force`).
+- Migration `20261006105842_web_push`: two tables, five user_settings columns, INVOKER/private
+  functions only — **no new SECURITY DEFINER** (set stays 22).
+
+Gates (DEV, 2026-10-06):
+
+- lint ✓ · typecheck ✓ · format ✓ · build ✓ · unit **402/402** (+18 push-dispatch, +10 push, +10 sw).
+- E2E full suite: **199 passed, 1 skipped (`LI_SHOTS`), 0 failed** (23.9 min). `v2-phase10` 21/21
+  incl. axe (0 violations) and responsive (7 widths × 9 pages). Intermittent DEV-latency failures
+  seen in earlier full runs (stage8 challenges, stage9 END DUO, v2p3 milestone) each passed alone
+  and in the final clean run. WebKit desktop and iPhone: 9/9 each. Firefox: crashes at launch in
+  this environment (RenderCompositorSWGL) — environment limitation, not exercised.
+- pgTAP full DEV suite **1073/1073** (stage3 51, stage4 72, stage5 40, stage6 63, stage7 78, stage8
+  84, stage9 69, v2p2 63, v2p3 61, v2p4 57, v2p5 66, v2p6 99, v2p7 65, v2p8 51, v2p9 79, v2p10 75).
+- Real push on DEV: installed Chrome → FCM, app closed, delivered in ≈5 s.
+- Security: 30 tables all RLS, 0 anon grants; DEFINER 22; secret scan clean; client bundle has no
+  server-only strings; Edge Function logs carry counts only.
+- `npm audit --omit=dev`: 0. Remaining: dev-only `braces` (via `eslint-config-next`).
+
+Production (2026-10-06):
+
+- Migration applied as `20261006164706` (mapping in docs/DATABASE.md): 46 migrations, DEFINER 22,
+  0 `dev_*`, RLS on, anon 0 grants, the private push functions identical to DEV (md5).
+  `locked-in-push-tick` active; every run succeeded.
+- Edge Function `push-dispatch` v1 (`verify_jwt = false`, same files). Vault: URL + secret created
+  in SQL (never shown); one wake-up created the PROD VAPID pair. With the secret → 200 + counts;
+  wrong secret → 401; no header → 401; GET → 405.
+- Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Production, public key of PROD) set; the PROD bundle
+  carries the PROD key and not the DEV key, nothing private. (The project has no Preview /
+  Development env vars at all, so none was added there.)
+- pgTAP `v2_phase10_push` **75/75** on PROD in one transaction, rolled back (afterwards: 0 test
+  users, no pgtap, 0 rows in the push tables). The PROD copy scopes its cleanup deletes to the test
+  users.
+- GitHub deployment "Production" **success** for `4c14b00`; `/sw.js` 200 (`no-cache, no-store,
+must-revalidate`), `/offline` 200, `/today` signed out → 307 to sign-in.
+- **Real push on PROD (owner account, desktop Chrome, Windows)**: SW `/sw.js` registered; enable →
+  row stored (FCM, "Chrome · Windows"); test requested, then no LOCKED IN page open → cron 17:01:00
+  claimed 1, sent 1 (FCM accepted, 47 s after the request — the next tick); the service worker
+  showed "LOCKED IN · Notificação de teste. Está funcionando." with route `/settings`. Disable →
+  browser unsubscribed and the PROD row deleted. Push left **off** on that browser (owner's choice
+  to turn it back on).
+- Smoke: Today, Dupla, Planner, Planejar → Semana (both tabs), Progresso, Ajustes, Metas, Foco open
+  (200); PRÓXIMA SEMANA shows the corrected wording.
+- No polling: 83 s idle on Today with push code loaded, across a minute boundary (17:04:32 →
+  17:05:55 UTC) — **0 requests** (CDP network monitor, which captured a control request just
+  before).
+- No `[teste V10]` data was needed or created; the only new PROD row is the test delivery's log
+  (deleted by the 30-day retention).
+
+Pending (needs people, not code):
+
+- Tap a real push on a phone / desktop and see `/settings` open (the click route is verified by
+  e2e with the real service worker, not by a human tap on PROD).
+- Two-device acceptance, Brendon + Matheus: presence, task realtime, focus EM FOCO, duel, nudge →
+  push on the partner's phone with the app closed.
+- Sair with push on (removes the row) and quiet hours holding a reminder on PROD — verified on DEV
+  (e2e + pgTAP), not repeated on PROD to avoid signing the owner out / changing his settings.
 
 ## Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning — VERIFIED (DEV + PROD, 2026-10-06)
 

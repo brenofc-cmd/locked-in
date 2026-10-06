@@ -727,7 +727,7 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `monthly_progression`             | `20261005122148` | `20261005134423` |
 | `reflection_celebration_planning` | `20261005150455` | `20261005183305` |
 | `celebration_key_dates`           | `20261005163123` | `20261005183307` |
-| `web_push`                        | `20261006105842` | _pending_        |
+| `web_push`                        | `20261006105842` | `20261006164706` |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
