@@ -199,6 +199,55 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          failure_count: number;
+          id: string;
+          last_failure_at: string | null;
+          last_success_at: string | null;
+          p256dh: string;
+          updated_at: string;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          endpoint: string;
+          p256dh: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          auth?: string;
+          endpoint?: string;
+          p256dh?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
+      notification_deliveries: {
+        Row: {
+          attempts: number;
+          claimed_at: string | null;
+          created_at: string;
+          dedup_key: string;
+          error: string | null;
+          expires_at: string;
+          id: string;
+          kind: string;
+          next_attempt_at: string;
+          ref_id: string | null;
+          scheduled_for: string;
+          sent_at: string | null;
+          status: string;
+          user_id: string;
+        };
+        Insert: { kind: "test" };
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
       weekly_priorities: {
         Row: {
           created_at: string;
@@ -946,6 +995,11 @@ export type Database = {
           notify_task_reminders: boolean;
           notify_weekly_review: boolean;
           onboarding_completed_at: string | null;
+          push_hide_details: boolean;
+          push_nudges: boolean;
+          push_planner: boolean;
+          push_reviews: boolean;
+          push_weekly_plan: boolean;
           quiet_hours_enabled: boolean;
           quiet_hours_end: string;
           quiet_hours_start: string;
@@ -961,6 +1015,11 @@ export type Database = {
           notify_task_reminders?: boolean;
           notify_weekly_review?: boolean;
           onboarding_completed_at?: string | null;
+          push_hide_details?: boolean;
+          push_nudges?: boolean;
+          push_planner?: boolean;
+          push_reviews?: boolean;
+          push_weekly_plan?: boolean;
           quiet_hours_enabled?: boolean;
           quiet_hours_end?: string;
           quiet_hours_start?: string;

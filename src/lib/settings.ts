@@ -18,6 +18,13 @@ export type UserSettings = {
   /** "HH:MM" */
   quietHoursStart: string;
   quietHoursEnd: string;
+  /** V2 Phase 10: which kinds are pushed to an enabled device. */
+  pushPlanner: boolean;
+  pushNudges: boolean;
+  pushReviews: boolean;
+  pushWeeklyPlan: boolean;
+  /** Generic text only ("Lembrete do Planner") on the lock screen. */
+  pushHideDetails: boolean;
 };
 
 /** Editable columns (camelCase -> column). */
@@ -31,6 +38,11 @@ export const SETTING_COLUMNS = {
   quietHoursEnabled: "quiet_hours_enabled",
   quietHoursStart: "quiet_hours_start",
   quietHoursEnd: "quiet_hours_end",
+  pushPlanner: "push_planner",
+  pushNudges: "push_nudges",
+  pushReviews: "push_reviews",
+  pushWeeklyPlan: "push_weekly_plan",
+  pushHideDetails: "push_hide_details",
 } as const satisfies Partial<Record<keyof UserSettings, keyof SettingsRow>>;
 
 export type SettingKey = keyof typeof SETTING_COLUMNS;
@@ -50,6 +62,11 @@ export function settingsFromRow(row: SettingsRow | null): UserSettings {
     quietHoursEnabled: row?.quiet_hours_enabled ?? false,
     quietHoursStart: hm(row?.quiet_hours_start ?? "22:00"),
     quietHoursEnd: hm(row?.quiet_hours_end ?? "07:00"),
+    pushPlanner: row?.push_planner ?? true,
+    pushNudges: row?.push_nudges ?? true,
+    pushReviews: row?.push_reviews ?? true,
+    pushWeeklyPlan: row?.push_weekly_plan ?? true,
+    pushHideDetails: row?.push_hide_details ?? false,
   };
 }
 
