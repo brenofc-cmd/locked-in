@@ -285,3 +285,42 @@ revoke all on function public.dev_fixture_baseline_milestones() from public, ano
 grant execute on function public.dev_fixture_baseline_milestones() to authenticated;
 revoke all on function public.dev_fixture_reset_reflection() from public, anon;
 grant execute on function public.dev_fixture_reset_reflection() to authenticated;
+
+-- V2 Phase 10 (docs/WEB_PUSH.md): forget the caller's devices and deliveries
+-- (a documented reset of the push suite), and run the scheduler's enqueue for
+-- the caller only at a chosen moment (reminder windows without waiting).
+create or replace function public.dev_fixture_reset_push()
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  delete from public.push_subscriptions where user_id = auth.uid();
+  delete from public.notification_deliveries where user_id = auth.uid();
+end;
+$$;
+
+create or replace function public.dev_fixture_push_enqueue(p_now timestamptz)
+returns integer
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.dev_is_test_user() then
+    raise exception 'LI_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  return private.push_enqueue(p_now, auth.uid());
+end;
+$$;
+
+revoke all on function public.dev_fixture_reset_push() from public, anon;
+grant execute on function public.dev_fixture_reset_push() to authenticated;
+revoke all on function public.dev_fixture_push_enqueue(timestamptz) from public, anon;
+grant execute on function public.dev_fixture_push_enqueue(timestamptz) to authenticated;

@@ -222,6 +222,14 @@ export default defineConfig({
       dependencies: ["v2p8-390"],
       use: phone(390, 844),
     },
+    // V2 Phase 10: Web Push, reminders, service worker, PWA (Alice / Bruno /
+    // Carla), after the Phase 9 suite.
+    {
+      name: "v2p10-390",
+      testMatch: /v2-phase10\.spec\.ts/,
+      dependencies: ["v2p9-390"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
