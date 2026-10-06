@@ -101,3 +101,13 @@ Every route still works directly: `/today`, `/partner`, `/partner#duel`, `/focus
   `start_url`; Sair clears the resume; 375 / 390 / 430 / 768 / 1180 / 1440 without horizontal scroll.
 - The rest of the suite follows this navigation (docs/PROGRESS.md → UI Information Architecture
   Polish): full E2E 149 passed, 1 skipped (`LI_SHOTS`), 0 failed.
+
+## V2 Phase 10 (2026-10-06)
+
+No new tab, no new route in the navigation. Configurações gains **Notificações push** (this device:
+state in text, Ativar / Desativar, test notification, the kinds and Ocultar detalhes). A
+notification opens one of `/today`, `/partner`, `/planner`, `/plan/week`, `/progress`, `/settings`
+(explicit, so Resume State never overrides it). `/offline` is a static page shown by the service
+worker when a navigation fails without network; it is not a destination. Responsive audit
+(e2e v2-phase10 test 21): 375 / 390 / 430 / 768 / 958 / 1180 / 1440 × Today, DUPLA, FOCO,
+PLANEJAR, Semana, Planner, Metas, PROGRESSO, Configurações — no horizontal scroll.

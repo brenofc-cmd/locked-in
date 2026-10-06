@@ -1,7 +1,9 @@
-# Notifications (Stage 8)
+# Notifications (Stage 8, V2 Phase 10)
 
-LOCKED IN V1 notifies **only while the app is open** — in a tab (foreground or background) or as the
-installed app. There is no push: nothing is sent when the app is closed. Code:
+Two layers. **In the app** (this file, Stage 8): toasts, and browser notifications while LOCKED IN is
+open in a background tab. **Web Push** (V2 Phase 10, docs/WEB_PUSH.md): opt-in per device, delivered
+by the server with the app closed — planner reminders, DAR UM TOQUE, reviews, weekly planning and a
+test notification. Code:
 `src/lib/notifications.ts` (pure decisions, unit-tested), `notify()` in
 `src/components/app-state.tsx`.
 
@@ -38,15 +40,13 @@ preference on                         → in-app toast
 While the app is open, one timer per pending reminder later today (rescheduled when tasks change;
 past times are dropped). A closed app reminds nobody — stated in Settings.
 
-## Intentionally not supported in V1
+## Web Push (V2 Phase 10)
 
-- Web Push / service worker / VAPID keys / a push provider.
-- Edge Functions, queues or cron to send anything.
-- Email or SMS notifications.
-- Notifications for a closed app, and reminders at exact times when the app is not open.
-
-These need real infrastructure (and its security review); they are a candidate for after Stage 10,
-not a checkbox for V1 (ADR-045).
+Was "intentionally not supported in V1" (ADR-045); now opt-in per device (ADR-092…099):
+Configurações → Notificações push → "Ativar neste dispositivo" (the only place the permission is
+asked). Server-side scheduler (Supabase `pg_cron` + Edge Function), quiet hours respected, one
+delivery per logical event, sign-out drops the device. Still not supported: e-mail, SMS, pushes for
+task completions, celebrations or commitments. Details: docs/WEB_PUSH.md.
 
 ## Known behaviour
 
@@ -60,5 +60,6 @@ not a checkbox for V1 (ADR-045).
 
 Kind `planner_reminder`, governed by the same **Lembretes** preference as task reminders and by quiet
 hours (browser notification only). Due from 08:00 local on the reminder day (0 / 1 / 3 / 7 days
-before), once per event and due date per device; my own events only. Details: docs/PLANNER.md. Still
-no Web Push (V2 Phase 10).
+before), once per event and due date per device; my own events only. Details: docs/PLANNER.md. With
+Web Push on (V2 Phase 10) the server also sends it with the app closed, and this device then skips
+the in-app browser notification for it (the toast stays) — never twice.

@@ -212,3 +212,12 @@ the partner's focus transitions; my side of today is live from the screen and ru
 from the clock already on screen. Only FINAL days count in a month, so the month never ticks. My
 records / milestone totals are re-read once when one of my focus sessions ends. e2e: 72 s of a running
 partner session across a minute boundary — zero requests from DUPLA or Progress.
+
+## Web Push (V2 Phase 10)
+
+Push does not use Realtime: no new channel, broadcast or listener. Nudges still arrive as the
+existing `nudge_received` broadcast (toast) while the app is open; with the app closed the same
+nudge is delivered by Web Push from the database's own `nudges` row (docs/WEB_PUSH.md). The service
+worker registers once per page load and its update check is the browser's own (no timer); e2e:
+70 s on Today with push on — zero requests. Reconnect behaviour is unchanged (the single
+`duo:<duo_id>` channel, refetch on reconnect / visible).

@@ -77,12 +77,12 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 → v2p10-390 (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
 npm audit              # dependency advisories (0 at the end of Stage 9)
-npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase9), needs Docker. Without Docker:
+npx supabase test db   # pgTAP (supabase/tests: stage3 … stage9 + v2_phase2 … v2_phase10), needs Docker. Without Docker:
                        #   node supabase/dev/pgtap_dev.mjs <file> > out.sql, then run out.sql on DEV
                        #   (docs/DATABASE.md → Tests)
 ```
@@ -236,6 +236,19 @@ routing changed; run the pgTAP suite when a migration changed.
   self-declared (never proof), saved at once, not on Today. Reviews: optional owner-only
   reflections + facts from `my_review_facts` (INVOKER) — no AI or generated text. No new DEFINER,
   channel, broadcast or polling for any of it.
+- V2 Phase 10 (docs/WEB_PUSH.md, ADR-092…099): Web Push is opt-in per device — the permission
+  prompt runs only from Configurações → "Ativar neste dispositivo"; never on load, never silently.
+  One scheduler (Supabase `pg_cron` → `private.push_tick()` → `pg_net` → Edge Function
+  `push-dispatch`); never a browser scheduler, a Vercel cron, polling or a service-role key in
+  Vercel. One delivery per logical event (`notification_deliveries` unique `(user_id, dedup_key)`),
+  quiet hours defer and expiry wins, no payload stored, no goal / vision / mirror / reflection /
+  non-negotiable / private task in a push, click routes only from the whitelist (`routes.ts` =
+  `public/sw.js` ROUTES). VAPID private key and dispatch secret live only in Supabase Vault (never in
+  the repo, env, logs or docs); `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is the only public part. Sign-out must
+  keep sending `push_endpoint` (the server deletes the device). The service worker caches only the
+  offline page — never an API / auth / Supabase response. The function's copy lives in
+  `supabase/functions/push-dispatch/message.ts` (deployed alone); `index.ts` (Deno) is excluded from
+  `tsc`; the other function modules are typechecked and unit-tested.
 - Session (ISSUE-001, ADR-063): every Supabase client passes `global: { fetch: supabaseFetch }`
   (`src/lib/supabase/fetch.ts`). Never add a general retry, a sleep or a reload around auth, and
   never repeat any 401 other than PGRST303 "JWT issued at future"; a session the database refuses

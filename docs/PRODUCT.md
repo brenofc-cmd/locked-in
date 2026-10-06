@@ -128,3 +128,20 @@ month is only ever AO VIVO. "What is my best so far?" — my longest streak, mos
 week, most Perfect Days in a month, and fixed milestones (streak 7 / 30 / 100, focus 10 / 50 / 100 h,
 Perfect Days 5 / 10 / 30). All derived, personal records stay mine; no XP, coins, levels or ranking.
 Details: docs/MONTHLY_COMPETITION.md.
+
+### V2 Phase 9 — Celebrations, Reviews 2.0, Non-Negotiables, Weekly Planning
+
+Short, factual celebrations of real facts (a Perfect Day, a milestone, a month won), shown once on
+any device; NÃO NEGOCIÁVEL marks on tasks / routines (private, no weight); three PRIORIDADES DA
+SEMANA; reflections and objective facts in the Day and Weekly Reviews. Details: docs/CELEBRATIONS.md,
+docs/WEEKLY_PLANNING.md.
+
+### V2 Phase 10 — Web Push, reminders, final polish
+
+LOCKED IN now reaches you with the app closed — only if you turn it on, on each device
+(Configurações → Notificações push): your Planner reminders, a DAR UM TOQUE from your partner, the
+Review do dia / semanal if you have not written it, and a Monday nudge to plan the week. Once each,
+never in your quiet hours, never late for something that already started, and with "Ocultar
+detalhes" nothing personal on the lock screen. Signing out takes the device out, so a shared phone
+never shows someone else's reminders. Tapping opens the right screen. Offline, the app says so
+instead of breaking. Details: docs/WEB_PUSH.md.

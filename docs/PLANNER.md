@@ -66,7 +66,7 @@ through the existing `notify()` — the **Lembretes** preference (`notify_task_r
 hours apply. A reminder is due from **08:00 local** of `event_date − reminder_days_before`; if the app
 was closed then, it shows on the next open while the event is still ahead. Once per event and due
 date per device (`locked-in:v2:<userId>:planner-reminded`, cleared on sign-out). Only my own events
-remind me. No Web Push (Phase 10).
+remind me. With the app closed: Web Push (below).
 
 ## Add to tasks
 
@@ -80,6 +80,15 @@ the event's date never touches the task. A pre-filled form never overwrites the 
 `/planner` is restorable; the view (upcoming / calendar), an explicitly chosen month, the scroll and
 a 24 h draft of a **new** event are remembered (docs/RESUME_STATE.md). Events are never stored on the
 device.
+
+## Web Push (V2 Phase 10)
+
+With push on for a device (docs/WEB_PUSH.md), the same `reminder_days_before` also arrives with the
+app closed: 08:00 local of the reminder day (NO DIA / 1 / 3 / 7 DIAS ANTES); for NO DIA of a timed
+event at most 2 h before it; never after the event started; held back by quiet hours and sent when
+they end if still useful; once per event / reminder / date (`planner:<event>:<n>:<date>`). Text:
+"Prova amanhã" + the event title ("Lembrete do Planner" with Ocultar detalhes). Only my own events;
+a partner's shared event never reminds me. Tap → `/planner`.
 
 ## Performance
 

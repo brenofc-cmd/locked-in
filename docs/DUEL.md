@@ -165,3 +165,8 @@ the FINAL days of a month are decided by this same `decideDuel`.
   boundaries, today = the database's local date).
 - pgTAP: `supabase/tests/v2_phase7_duel.test.sql` (65).
 - E2E: `tests/e2e/v2-phase7.spec.ts` (project `v2p7-390`, 7 tests).
+
+## V2 Phase 10
+
+No change to the duel's rules, numbers or decision. A duel result is never pushed (ADR-097); the
+only accountability push is DAR UM TOQUE, the delivery of an existing nudge (docs/WEB_PUSH.md).

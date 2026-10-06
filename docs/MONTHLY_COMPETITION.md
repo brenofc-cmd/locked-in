@@ -154,3 +154,8 @@ no new index was needed.
 
 `dev_fixture_add_focus(p_rows)` (completed sessions on past days), `dev_fixture_reset_focus()` and the
 120-day `dev_fixture_backdate_duo` live in `supabase/dev/test_fixtures.sql` — never in production.
+
+## V2 Phase 10
+
+No change to the month, records or milestones; nothing of them is pushed (a monthly champion stays
+an in-app celebration, docs/CELEBRATIONS.md; Web Push: docs/WEB_PUSH.md).

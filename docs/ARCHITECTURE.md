@@ -14,16 +14,16 @@ Small app, two users, one backend. Keep it that way.
 
 ## Stack
 
-| Layer                  | Choice                                                         |
-| ---------------------- | -------------------------------------------------------------- |
-| Framework              | Next.js (App Router), React                                    |
-| Language               | TypeScript, `strict`                                           |
-| Styling                | Tailwind CSS v4 (tokens in `src/app/globals.css` via `@theme`) |
-| Backend                | Supabase only: Postgres, Auth, Realtime, Presence              |
-| Hosting                | Vercel                                                         |
-| Icons / dates / charts | Lucide React, date-fns, Recharts (added when first used)       |
-| Tests                  | Vitest (unit, jsdom), Playwright (e2e, mobile viewport)        |
-| Lint / format          | ESLint (next core-web-vitals + typescript) + Prettier          |
+| Layer                  | Choice                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Framework              | Next.js (App Router), React                                                                                                 |
+| Language               | TypeScript, `strict`                                                                                                        |
+| Styling                | Tailwind CSS v4 (tokens in `src/app/globals.css` via `@theme`)                                                              |
+| Backend                | Supabase only: Postgres, Auth, Realtime, Presence; V2 Phase 10: pg_cron, pg_net, Vault, one Edge Function (`push-dispatch`) |
+| Hosting                | Vercel                                                                                                                      |
+| Icons / dates / charts | Lucide React, date-fns, Recharts (added when first used)                                                                    |
+| Tests                  | Vitest (unit, jsdom), Playwright (e2e, mobile viewport)                                                                     |
+| Lint / format          | ESLint (next core-web-vitals + typescript) + Prettier                                                                       |
 
 Exact versions: [DECISIONS.md](DECISIONS.md) (ADR-002) and `package.json`.
 
@@ -267,6 +267,15 @@ database stamps the rest. Pure rules and the partner projection: `src/lib/accoun
 `src/components/partner/Accountability.tsx`, `src/components/sheets/CommitmentSheet.tsx`. Details:
 docs/ACCOUNTABILITY.md.
 
+## V2 Phase 10 — Web Push, reminders, PWA
+
+Server-side: `pg_cron` (every minute) → `private.push_tick()` (SQL: enqueue due reminders into
+`notification_deliveries`, unique per logical event) → `pg_net` → Edge Function `push-dispatch`
+(Deno; WebCrypto RFC 8291 / 8292; Vault keys; database owner connection). Client: one service worker
+`public/sw.js` (push, click → whitelisted route, offline page only — no data cache), Settings →
+Notificações push (`src/components/push/`, `src/lib/push.ts`, `src/app/(app)/push-actions.ts`), the
+sign-out form deletes the device row. Details: docs/WEB_PUSH.md, ADR-092…099.
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to
@@ -277,10 +286,12 @@ docs/ACCOUNTABILITY.md.
 
 ## Environment variables
 
-| Name                                   | Where           | Notes                                                         |
-| -------------------------------------- | --------------- | ------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`             | client + server | project URL, public                                           |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | client + server | publishable (anon-equivalent) key, public; safe only with RLS |
+| Name                                   | Where           | Notes                                                                                                                          |
+| -------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`             | client + server | project URL, public                                                                                                            |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | client + server | publishable (anon-equivalent) key, public; safe only with RLS                                                                  |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`         | client          | V2 Phase 10: Web Push public key of the matching Supabase project (Vault `push_vapid_public_key`); empty = push "indisponível" |
+| `SITE_URL`                             | server          | production origin for auth e-mail links                                                                                        |
 
 - Template: `.env.example`. Local values: `.env.local` (git-ignored). `.env.local` points at the
   **DEV** Supabase project.

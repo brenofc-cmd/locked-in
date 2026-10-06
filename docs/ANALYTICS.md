@@ -234,3 +234,11 @@ partner too, so a partner who has not opened the app today is still compared on 
   draws, ineligible, focus never decides, habits sample, insights, day boundary by time zone.
 - pgTAP: `supabase/tests/stage7_progress.test.sql` (78).
 - E2E: `tests/e2e/stage7.spec.ts` (3) and the real numbers in `tests/e2e/app.spec.ts`.
+
+## V2 Phase 10 — Web Push (no new number)
+
+Push adds no metric and changes no formula. The only facts it reads are the existing ones: a day
+with tasks and no reflection (Review do dia), a week with tasks and no reflection (Review semanal),
+a week without priorities (Planejamento semanal) — evaluated in SQL by `private.push_enqueue`
+(docs/WEB_PUSH.md). Completion, focus, streak, Daily Standard, duel, month, records and milestones
+are untouched.

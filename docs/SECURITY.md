@@ -131,8 +131,11 @@ microphone, geolocation, payment, usb), no `X-Powered-By`. HSTS is added by Verc
 
 ## Secrets
 
-- Only `NEXT_PUBLIC_SUPABASE_URL` and the publishable key reach the browser. No service-role /
-  secret key is used by the app or the tests. `SITE_URL` is server-only.
+- Only `NEXT_PUBLIC_SUPABASE_URL`, the publishable key and (V2 Phase 10) the VAPID **public** key
+  `NEXT_PUBLIC_VAPID_PUBLIC_KEY` reach the browser. No service-role / secret key is used by the app or
+  the tests. `SITE_URL` is server-only. The VAPID private key and the push dispatch secret are
+  generated inside Supabase (Edge Function / database) and live only in Supabase Vault — nobody
+  types, copies or sees them (docs/WEB_PUSH.md).
 - `.env*` (except `.env.example`), `tests/e2e/.auth/`, `test-results/`, `playwright-report/` are
   git-ignored; the git history was scanned in Stage 9 (no key, password or token ever committed).
 - DEV-only fixtures (`supabase/dev/test_fixtures.sql`) are never migrations and must not exist in
@@ -162,7 +165,10 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - `script-src` / `style-src` allow inline code: Next.js bootstraps with inline scripts; a nonce
   policy would force dynamic rendering of every page. Other CSP directives still limit origins,
   connections and framing. Revisit after V1.
-- Notifications only while the app is open; no push infrastructure (ADR-045).
+- ~~Notifications only while the app is open (ADR-045)~~ — superseded in V2 Phase 10 by opt-in Web
+  Push (ADR-092…099). Remaining push risks: a session that ends without Sair leaves that device's
+  row until the next sign-in on the browser drops the subscription (the push service then answers
+  410); a lock-screen preview shows the planner title / partner name unless "Ocultar detalhes" is on.
 - A viewer's week is framed by their own Monday: with far-apart timezones the partner's side of a
   just-closed week can still receive their last hours (both in São Paulo in practice).
 - A focus session that started on a challenge's last day and is still running keeps adding its time
@@ -321,3 +327,43 @@ the commits (history lock, duplicate challenges, headers, redirects, realtime le
 - DEV-only fixtures (never in production): `dev_fixture_reset_celebrations`,
   `dev_fixture_baseline_milestones`, `dev_fixture_reset_reflection`, refused unless the caller is a
   `li-…@example.com` test account.
+
+## V2 Phase 10 — Web Push and the final V2 audit (2026-10-06)
+
+- **Tables**: `push_subscriptions` and `notification_deliveries`, owner-only (RLS `user_id =
+auth.uid()`), column grants, anon / PUBLIC nothing, partner and outsider zero (pgTAP
+  `v2_phase10_push`, e2e). A client cannot write delivery bookkeeping, choose a dedup key, create any
+  delivery but a rate-limited test, change or delete a delivery, move an endpoint, or take over an
+  endpoint still owned by someone else (RLS `42501` on the upsert).
+- **Endpoints**: only FCM / Mozilla / Apple / WNS (database check + the same allowlist in the
+  sender) — the sender can never be pointed at an arbitrary host (no SSRF through a subscription).
+- **No new SECURITY DEFINER** (the set stays 22, asserted by `stage9_integrity`); every push
+  function is `private`, INVOKER and executable by no API role. The sender runs as the database
+  owner inside Supabase (Edge Function + `SUPABASE_DB_URL`), so no service-role key exists in Vercel.
+- **Scheduler**: `pg_cron` → `private.push_tick()` → `pg_net` → Edge Function. The function has
+  `verify_jwt = false` and checks `x-li-dispatch` against the Vault secret in constant time (401
+  otherwise, verified). Without the secret nothing runs; with it, it can only send what the
+  database already queued (no arbitrary text, no arbitrary recipient).
+- **Payload**: built at send time from minimal fields; never goals, vision, mirror, reflections,
+  non-negotiables or private tasks; "Ocultar detalhes" for generic text; encrypted end to end
+  (RFC 8291). Logs: counts only (checked in the function logs).
+- **Click routes**: a key mapped by a whitelist in the worker and the app; anything else → `/today`.
+- **Shared device**: sign-out deletes the device row server-side; a browser subscription that is not
+  the signed-in user's is unsubscribed on open (ADR-093, e2e test 5).
+- **Service worker**: caches only the static offline page; never an API, auth or Supabase response.
+  `/sw.js` and `/offline` are outside the auth proxy (static, no data) and `/sw.js` is `no-store`.
+
+### Final audit (2026-10-06, DEV)
+
+- Every `public` table: RLS on, at least one policy, anon / PUBLIC no table privilege (30 tables).
+- DEFINER (non-`dev_*`): exactly the reviewed 22, all `search_path=""`, none executable by anon; no
+  function executable by PUBLIC; trigger functions not callable by users (stage9_integrity 69/69).
+- IDOR coverage (pgTAP + e2e with real tokens): planner, goals, goal proof, weekly plan, reviews,
+  milestone unlocks, non-negotiables, push subscriptions, notification deliveries — partner,
+  outsider and anon get nothing, and the old partner loses access when a duo ends.
+- Secrets: tracked files and the whole git history scanned (JWTs, `sb_secret_`, service role, PEM /
+  JWK private keys, SMTP, connection strings) — nothing; `.env*` and `tests/e2e/.auth/` ignored.
+- Advisors: security — only the reviewed DEFINER 0029 set and the DEV fixtures (not applicable to
+  PROD) and `auth_leaked_password_protection` (manual / plan gate, checklist §2); performance — INFO
+  only: composite owner FKs whose leading column is indexed (accepted, same justification as
+  0001 above) and unused indexes on a low-traffic DEV database.

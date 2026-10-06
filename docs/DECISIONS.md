@@ -554,3 +554,51 @@ Status: Accepted.
 Decision: `public.reviews (owner_id, kind day|week, period_start, worked, hindered, change_next)`, ≤ 500 characters, empty = null, never for a future period. `public.my_review_facts(from, to)` (SECURITY INVOKER, ≤ 31 days, capped at today) derives the facts from `private.day_stats`, the Perfect Day definition, the standard in force on each day (the `private.standard_on` rule inlined, because `standard_on` is not executable by `authenticated`) and the non-negotiables. The existing Day / Weekly Reviews show them; `my_records()` now delegates to `private.records(user)` (same results; the function body changed). No AI, no generated text.
 Reason: Reflection closes the loop; facts must be the same numbers as everywhere else, and an INVOKER function keeps the reviewed DEFINER set at 22.
 Status: Accepted.
+
+# ADR-092 — Web Push is opt-in per device, from Settings only
+
+Decision: The browser permission prompt runs only from Configurações → "Ativar neste dispositivo". One `push_subscriptions` row per device / browser (endpoint unique, only known push services), upserted on re-registration; "Desativar neste dispositivo" deletes it and unsubscribes. No device is enabled silently; existing users start with no device. The state is written out (Ativas / Desativadas / bloqueadas / não suportado / instale na Tela de Início / indisponível).
+Reason: An unrequested prompt is noise, and a push must be something the user asked for on that device.
+Status: Accepted.
+
+# ADR-093 — Sign-out and shared devices: the device's subscription goes with the session
+
+Decision: The sign-out form carries this device's endpoint and `/auth/signout` deletes that row (RLS: own row only) before ending the session; the browser unsubscribes. On every signed-in open, a browser subscription that is not the signed-in user's (or was made with another server key) is unsubscribed. Taking over another user's endpoint is refused by RLS (`42501`) and the client subscribes afresh.
+Reason: B must never receive A's private pushes on a shared browser, also when A's session ended without Sair.
+Status: Accepted.
+
+# ADR-094 — One scheduler: Supabase pg_cron → SQL enqueue → pg_net → Edge Function
+
+Decision: `pg_cron` runs `private.push_tick()` every minute: it enqueues due deliveries in SQL and calls the Edge Function `push-dispatch` through `pg_net` only when something is pending. The function is authenticated by a secret generated inside the database (Vault) and reaches the database with the platform's `SUPABASE_DB_URL`. No Vercel Cron, no browser scheduler, no service-role key in Vercel.
+Reason: The data and the clock are in Postgres; Vercel Hobby cron runs once a day; one auditable path with no secret typed by anyone.
+Status: Accepted.
+
+# ADR-095 — Exactly one delivery per logical event
+
+Decision: `notification_deliveries` with `unique (user_id, dedup_key)` (`planner:<event>:<n>:<date>`, `nudge:<id>`, `review-day:<date>`, `review-week:<monday>`, `plan-week:<monday>`, `test:<second>`), claimed with `FOR UPDATE SKIP LOCKED`, released after 5 minutes if a run dies, retried with backoff on 429 / 5xx / network (failed after 5), 404 / 410 delete the device, expired rows are never sent, 30-day retention. No payload stored.
+Reason: The scheduler is at-least-once; the user must see each reminder once.
+Status: Accepted.
+
+# ADR-096 — Quiet hours defer, expiry wins
+
+Decision: The existing `user_settings` quiet hours (same rule as `inQuietHours`) hold a due reminder back; it is created when the window ends only if it is still before its expiry (event start, end of the day / week) and less than 24 h late. Planner reminders keep `reminder_days_before` (08:00 of the reminder day), and on the day of a timed event go at most 2 h before it. The test notification ignores quiet hours.
+Reason: A late "Prova amanhã" after the exam began is worse than none.
+Status: Accepted.
+
+# ADR-097 — Payload privacy and copy
+
+Decision: The text is built at send time in `supabase/functions/push-dispatch/message.ts` (pt-BR, deployed with the function — the one copy outside `src/i18n/pt-BR.ts`) from the fields `private.push_claim` returns: planner title / type / days / time, the partner's name and the commitment title for a nudge. Never a goal, vision, mirror, reflection, non-negotiable or private task. "Ocultar detalhes" sends generic text. The payload is `{k, t, b, r, g}`, encrypted end to end; logs carry counts only.
+Reason: A lock screen is public; the function runs outside the Next.js bundle.
+Status: Accepted.
+
+# ADR-098 — A notification opens a whitelisted route
+
+Decision: The payload carries a route key (`today`, `partner`, `planner`, `plan-week`, `progress`, `settings`), mapped by the service worker and the app (`routes.ts`, kept equal by a unit test); anything else opens `/today`. The click focuses an open LOCKED IN window and navigates it, or opens one; the explicit route beats Resume State.
+Reason: A URL from a payload (or a compromised sender) must never steer the app.
+Status: Accepted.
+
+# ADR-099 — One service worker: push + offline page, no data cache
+
+Decision: `public/sw.js` (scope `/`, `no-store`, `skipWaiting` + `clients.claim`) handles push, notification clicks and, for failed page navigations only, a static `/offline` page (copy from `pt-BR.ts`). It caches nothing else — no page, API, Supabase, auth response or token. VAPID: generated by the Edge Function into Vault; the public key is `NEXT_PUBLIC_VAPID_PUBLIC_KEY`; the subject is the site URL. Web Push crypto (RFC 8291 / 8292) is implemented on WebCrypto and checked against the RFC test vector, without an npm push library.
+Reason: An offline-first cache would show stale private data and risk serving one user's pages to another; the app must fail clearly offline, not silently.
+Status: Accepted.

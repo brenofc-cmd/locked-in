@@ -649,6 +649,11 @@ How to run:
   run, all 29 migrations): stage 3 `51/51`, stage 4 `72/72`, stage 5 `40/40`, stage 6 `63/63`,
   stage 7 `78/78`, stage 8 `84/84`, stage 9 `69/69` (457/457), `FAILED=0`; DEV verified free of
   fixtures afterwards.
+  **V2 final (2026-10-06, all 46 migrations, every file):** stage 3 `51/51`, stage 4 `72/72`,
+  stage 5 `40/40`, stage 6 `63/63`, stage 7 `78/78`, stage 8 `84/84`, stage 9 `69/69`, v2_phase2
+  `63/63`, v2_phase3 `61/61`, v2_phase4 `57/57`, v2_phase5 `66/66`, v2_phase6 `99/99`, v2_phase7
+  `65/65`, v2_phase8 `51/51`, v2_phase9 `79/79`, v2_phase10 `75/75` — **1073/1073**, `FAILED=0`;
+  afterwards DEV had no `*.lockedin` user, no pgtap extension, no disabled trigger, no probe table.
 
 End-to-end coverage of the same rules through the public API (publishable key, real sessions):
 `tests/e2e/stage3.spec.ts` → "database rules hold through the public API" and
@@ -722,6 +727,7 @@ versions. Never re-apply a migration to fix a version and never edit `supabase_m
 | `monthly_progression`             | `20261005122148` | `20261005134423` |
 | `reflection_celebration_planning` | `20261005150455` | `20261005183305` |
 | `celebration_key_dates`           | `20261005163123` | `20261005183307` |
+| `web_push`                        | `20261006105842` | _pending_        |
 
 ## V2 Phase 2 tables (migrations `20260929114849_user_presence_last_seen`, `20260929114909_planner_events`)
 
@@ -919,3 +925,46 @@ test_fixtures.sql, refused for non-test users, part of the automated suite):
 `dev_fixture_reset_celebrations()` (deletes the caller's celebrations),
 `dev_fixture_baseline_milestones()` (runs the baseline for the caller),
 `dev_fixture_reset_reflection()` (deletes the caller's priorities, reviews and routine flags).
+
+## V2 Phase 10 (migration `20261006105842_web_push`)
+
+Web Push and server-side reminders (docs/WEB_PUSH.md, ADR-092…099). Two owner-only tables, five
+`user_settings` columns, private SQL functions run by `pg_cron` and the Edge Function `push-dispatch`
+(database owner connection). **No new SECURITY DEFINER** (the reviewed set stays at 22) and no
+private push function is executable by an API role. Extensions: `pg_cron` (schema `pg_catalog`),
+`pg_net` (schema `extensions`, functions in `net`). Vault entries per environment (never in a
+migration): `push_dispatch_url`, `push_dispatch_secret`, `push_vapid_private_jwk`,
+`push_vapid_public_key`.
+
+- `public.push_subscriptions (id, user_id, endpoint unique, p256dh, auth, user_agent, created_at,
+updated_at, last_success_at, last_failure_at, failure_count)`: endpoint ≤ 1024 on FCM / Mozilla /
+  Apple / WNS only (check), keys base64url of the right length. Trigger `private.guard_push_subscription`
+  (INVOKER): an endpoint never changes owner / value (`LI_NOT_FOUND`), delivery fields start clean.
+  Grants: select, delete; insert / update `(endpoint, p256dh, auth, user_agent)` — upsert on
+  `endpoint` (an endpoint still owned by someone else → RLS `42501`). Policy: owner only. Index
+  `(user_id)`.
+- `public.notification_deliveries (id, user_id, kind, dedup_key, ref_id, scheduled_for, expires_at,
+status, attempts, next_attempt_at, claimed_at, sent_at, error, created_at)`, `unique (user_id,
+dedup_key)`; kind ∈ planner / nudge / review_day / review_week / plan_week / test; status ∈ pending
+  / sending / sent / failed / expired / skipped. No payload. Trigger `private.guard_notification_delivery`
+  (INVOKER): a client may only insert `kind = 'test'`, at most one a minute (`LI_RATE_LIMITED`), the
+  database writes every other field. Grants: select; insert `(kind)`. Policies: read own; insert own
+  test. Indexes: partial `(next_attempt_at) where status in ('pending','sending')`, `(created_at)`.
+- `user_settings.push_planner / push_nudges / push_reviews / push_weekly_plan` (default true) and
+  `push_hide_details` (default false); update granted to `authenticated` (RLS: own row).
+- Functions (all `private`, INVOKER, `search_path = ''`, executable by no API role):
+  `push_quiet(time, enabled, start, end)` (immutable, same rule as `inQuietHours`),
+  `push_audience(now, user)` (users with a device + their local clock and switches),
+  `push_enqueue(now, user)` (planner / nudge / review day / review week / plan week — outside quiet
+  hours, before expiry, < 24 h late; `on conflict do nothing`), `push_claim(limit, now)` (expires
+  overdue rows; `FOR UPDATE SKIP LOCKED`; releases rows of a run that died after 5 min; returns kind,
+  hide flag, the message fields and the user's devices), `push_finish(delivery, results, reason, now)`
+  (2xx sent; 404 / 410 delete the device; 429 / 5xx / 0 retry with 2^attempts min backoff, failed
+  after 5; other 4xx rejected; 10 failures in a row delete a device), `push_tick()` (enqueue, 30-day
+  retention, `net.http_post` to the function only when something is pending).
+- `pg_cron` job `locked-in-push-tick`, `* * * * *`, `select private.push_tick()`.
+
+pgTAP: `supabase/tests/v2_phase10_push.test.sql` (75). DEV-only fixtures (supabase/dev/test_fixtures.sql,
+test users only): `dev_fixture_reset_push()` (deletes the caller's devices and deliveries — the push
+suite's documented reset), `dev_fixture_push_enqueue(p_now)` (the scheduler's enqueue for the caller
+at a chosen moment).

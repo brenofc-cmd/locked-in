@@ -33,7 +33,9 @@ PRIORIDADES DA SEMANA — distinct from TOP 3 DE HOJE. `public.weekly_priorities
 - UI: PLANEJAR has one row (ESTA SEMANA · "2 prioridades" · "1 / 2 feitas", or "Planeje sua
   semana") → `/plan/week` (ESTA SEMANA / PRÓXIMA SEMANA). **No draft**: each add, edit, tick or
   removal saves at once (a tick is optimistic, rolled back with a toast). Not on Today. Not a
-  restorable route (Resume State unchanged).
+  restorable route (Resume State unchanged). The PRÓXIMA SEMANA tab speaks of the next week
+  ("Uma prioridade da próxima semana", "Nenhuma prioridade para a próxima semana." — fixed in V2
+  Phase 10; it always saved to the right week).
 - Loaded with the layout (this and next week) — `src/lib/reflection-data.ts`; pure helpers in
   `src/lib/weekly-plan.ts`.
 
@@ -54,6 +56,14 @@ semana, PROGRESSO → HISTÓRICO → weeks) evolve; there is no parallel system.
   NEGOCIÁVEIS and PRIORIDADES to its existing numbers; the Day Review adds NÃO NEGOCIÁVEIS (live).
 - After a weekly review: **PLANEJAR PRÓXIMA SEMANA** → `/plan/week?w=next`.
 - The once-a-week toast stays the start-of-week moment (no new modal).
+
+## Web Push (V2 Phase 10)
+
+With push on for a device (docs/WEB_PUSH.md): **Review do dia** at 21:00 for a day with tasks and no
+reflection (→ `/today`), **Review semanal** Sunday 19:00 for a week with tasks and no reflection
+(→ `/progress`), **Planejamento semanal** Monday 08:00 for a week without priorities
+(→ `/plan/week`) — once per period each, outside quiet hours, never after the period ended. The text
+never contains a reflection or a priority.
 
 ## Privacy
 

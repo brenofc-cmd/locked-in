@@ -72,7 +72,7 @@ settings; the Stage 9 tools could neither read nor change them, and no code depe
 - [ ] Sign up with a real address → confirmation email → link lands on `/today` → onboarding.
 - [ ] Password reset email → link → new password → sign in.
 - [ ] `/login?next=https://evil.example` → after sign-in stays on the site.
-- [ ] Manifest and icons load; the app installs; no service worker is registered.
+- [ ] Manifest and icons load; the app installs; exactly one service worker (`/sw.js`, scope `/`) is registered (V2 Phase 10; before it: none).
 - [ ] Browser console: no errors on Today, Partner, Focus, Progress, Settings.
 
 ## 5. Real two-user acceptance (Brendon + Lucas)
@@ -83,6 +83,20 @@ settings; the Stage 9 tools could neither read nor change them, and no code depe
 - [ ] Progress, streak, weekly comparison; a challenge together; settings and notifications.
 - [ ] Next day: yesterday is read-only; the streak and the week are unchanged by any attempt.
 - [ ] Sign out / sign in on each device; nothing lost.
+
+## V2 Phase 10 — Web Push (each environment, docs/WEB_PUSH.md)
+
+- [ ] Migration `web_push` applied; `cron.job` has `locked-in-push-tick` (`* * * * *`, active);
+      `pg_cron` / `pg_net` installed; no `dev_*` function.
+- [ ] Edge Function `push-dispatch` deployed (`verify_jwt = false`), same files as the repository.
+- [ ] Vault: `push_dispatch_url` (this project's function URL) and `push_dispatch_secret` (generated
+      in SQL, never shown); one wake-up call creates `push_vapid_private_jwk` / `push_vapid_public_key`.
+- [ ] Function check: with the secret → 200 + counts; without → 401.
+- [ ] Vercel env `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = this project's public key (Production ↔ PROD,
+      Preview / Development ↔ DEV), then redeploy.
+- [ ] pgTAP `v2_phase10_push` on the project (rolled back).
+- [ ] Real device: enable → row stored; test notification with the app closed → arrives; tap → opens
+      `/settings`; disable → no more pushes; Sair → row gone; quiet hours hold a reminder back.
 
 ## 6. After go-live
 

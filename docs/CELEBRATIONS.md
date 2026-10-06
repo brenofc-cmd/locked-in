@@ -13,7 +13,8 @@ text. Scope: docs/ROADMAP.md → "V2 Phase 9". Decisions: ADR-086…088.
 | Monthly     | the month (YYYY-MM-01)      | a FINAL month I won (CAMPEÃO DE <MÊS>) or drew (MÊS ENCERRADO · EMPATE), ended in the last 7 days                |
 
 Never: a live month, a lost or insufficient month, a partner's achievement, anything sent to the
-partner (reactions stay the social layer).
+partner (reactions stay the social layer). Never a Web Push either (V2 Phase 10, ADR-097): a
+celebration is an in-app moment only.
 
 ## One table: `public.celebrations`
 
