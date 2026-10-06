@@ -2,13 +2,29 @@
 
 import { LOCALE, t } from "@/i18n/pt-BR";
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 
 const noSubscribe = () => () => {};
 import { updateSetting, updateTimezone } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { useInstallPrompt } from "@/components/use-install-prompt";
+import {
+  detectSupport,
+  disablePush,
+  enablePush,
+  permissionNow,
+  prepareSignOut,
+  syncPushDevice,
+} from "@/components/push/push-device";
+import { requestTestPush } from "@/app/(app)/push-actions";
+import { pushState, type PushState } from "@/lib/push";
 import { clearResume } from "@/lib/resume-state";
 import { SwitchTrack, cx } from "@/components/ui";
 import { STANDARD_OPTIONS } from "@/lib/constants";
@@ -184,7 +200,7 @@ export function SettingsScreen() {
             </label>
           </div>
         )}
-        <BrowserNotifications />
+        <PushSettings settings={s} save={save} />
         <span className="pt-3 text-[12.5px] leading-[1.5] text-dim">
           {t.settings.notifyNote}
         </span>
@@ -229,8 +245,13 @@ export function SettingsScreen() {
         <form
           action="/auth/signout"
           method="post"
-          onSubmit={() => clearResume(me.id)}
+          onSubmit={(e) => {
+            clearResume(me.id);
+            // V2 Phase 10: this device stops receiving my pushes.
+            prepareSignOut(e.currentTarget);
+          }}
         >
+          <input type="hidden" name="push_endpoint" defaultValue="" />
           <button
             type="submit"
             className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
@@ -370,6 +391,159 @@ function Profile() {
         </span>
       </div>
     </section>
+  );
+}
+
+const PUSH_KINDS: { k: BoolKey; label: string; d: string }[] = [
+  { k: "pushPlanner", label: t.push.planner, d: t.push.plannerD },
+  { k: "pushNudges", label: t.push.nudges, d: t.push.nudgesD },
+  { k: "pushReviews", label: t.push.reviews, d: t.push.reviewsD },
+  { k: "pushWeeklyPlan", label: t.push.weeklyPlan, d: t.push.weeklyPlanD },
+  { k: "pushHideDetails", label: t.push.hideDetails, d: t.push.hideDetailsD },
+];
+
+const PUSH_TEXT: Record<PushState, string> = {
+  on: t.push.state.on,
+  off: t.push.state.off,
+  denied: t.push.state.denied,
+  unsupported: t.push.state.unsupported,
+  "ios-install": t.push.state.iosInstall,
+  unconfigured: t.push.state.unconfigured,
+};
+
+/**
+ * Web Push on this device (V2 Phase 10, docs/WEB_PUSH.md). The browser
+ * prompt appears only after "Ativar neste dispositivo"; the state is always
+ * written out (never only a colour).
+ */
+function PushSettings({
+  settings,
+  save,
+}: {
+  settings: UserSettings;
+  save: <K extends SettingKey>(key: K, value: UserSettings[K]) => Promise<void>;
+}) {
+  const app = useApp();
+  const support = useSyncExternalStore(
+    noSubscribe,
+    detectSupport,
+    () => "unsupported" as const,
+  );
+  const initialPerm = useSyncExternalStore(
+    noSubscribe,
+    permissionNow,
+    () => "default" as const,
+  );
+  const [perm, setPerm] = useState<NotificationPermission | null>(null);
+  const [subscribed, setSubscribed] = useState(false);
+  const [busy, setBusy] = useState<"enable" | "disable" | "test" | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void syncPushDevice().then((on) => {
+      if (alive) setSubscribed(on);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const state = pushState(support, perm ?? initialPerm, subscribed);
+
+  async function enable() {
+    setBusy("enable");
+    const res = await enablePush();
+    setPerm(permissionNow());
+    setSubscribed(res.ok);
+    setBusy(null);
+    if (!res.ok)
+      app.toast({
+        text: res.denied ? t.push.errors.denied : t.push.errors.failed,
+        sub: t.push.sub,
+      });
+  }
+
+  async function disable() {
+    setBusy("disable");
+    const ok = await disablePush();
+    if (ok) setSubscribed(false);
+    setBusy(null);
+    if (!ok) app.toast({ text: t.push.errors.disableFailed, sub: t.push.sub });
+  }
+
+  async function test() {
+    setBusy("test");
+    const res = await requestTestPush().catch(() => null);
+    setBusy(null);
+    app.toast({
+      text: res?.ok ? t.push.testSent : (res?.error ?? t.errors.network),
+      sub: t.push.sub,
+    });
+  }
+
+  const fallback = state === "unsupported" || state === "unconfigured";
+
+  return (
+    <div className="flex flex-col" data-testid="push-settings">
+      <div className="flex min-h-[62px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-white/5 py-3">
+        <span className="flex min-w-0 flex-1 basis-[220px] flex-col gap-1">
+          <span className="text-[14.5px]">{t.push.title}</span>
+          <span
+            role="status"
+            data-testid="push-state"
+            data-state={state}
+            className="text-[12.5px] leading-[1.5] text-dim"
+          >
+            {PUSH_TEXT[state]}
+          </span>
+        </span>
+        {state === "off" && (
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void enable()}
+            className="h-11 shrink-0 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-50"
+          >
+            {busy === "enable" ? t.push.enabling : t.push.enable}
+          </button>
+        )}
+        {state === "on" && (
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void disable()}
+            className="h-11 shrink-0 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-50"
+          >
+            {busy === "disable" ? t.push.disabling : t.push.disable}
+          </button>
+        )}
+      </div>
+      {state === "on" && (
+        <>
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void test()}
+            className="flex min-h-[52px] items-center border-b border-white/5 text-left text-[14.5px] disabled:opacity-50"
+          >
+            {t.push.test}
+          </button>
+          <span className="pt-4 pb-1 text-[12.5px] text-dim">
+            {t.push.kindsHeading}
+          </span>
+          {PUSH_KINDS.map((n) => (
+            <Toggle
+              key={n.k}
+              label={n.label}
+              d={n.d}
+              on={settings[n.k]}
+              onChange={(v) => void save(n.k, v)}
+            />
+          ))}
+        </>
+      )}
+      {fallback && <BrowserNotifications />}
+    </div>
   );
 }
 

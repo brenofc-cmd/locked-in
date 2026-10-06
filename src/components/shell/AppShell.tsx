@@ -15,6 +15,7 @@ import {
 import { FocusOverlay } from "@/components/overlays/FocusOverlay";
 import { Celebration } from "@/components/overlays/Celebration";
 import { MomentOverlays } from "@/components/overlays/MomentOverlays";
+import { usePushRuntime } from "@/components/push/PushRuntime";
 import { useResumeShell } from "@/components/resume/use-resume";
 import { OnboardingScreen } from "@/components/screens/OnboardingScreen";
 import { useSession } from "@/components/session";
@@ -68,6 +69,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [pathname]);
   // V2: last route + scroll of this device (after the reset above).
   useResumeShell(me.id, pathname, mainRef);
+  // V2 Phase 10: this device's push subscription + notification clicks.
+  usePushRuntime();
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden bg-bg desk:flex-row">

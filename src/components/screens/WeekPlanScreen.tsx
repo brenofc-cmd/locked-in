@@ -83,7 +83,9 @@ export function WeekPlanScreen({
           ))}
         </ol>
         {list.length === 0 && (
-          <p className="m-0 py-3 text-[14px] text-dim">{W.empty}</p>
+          <p className="m-0 py-3 text-[14px] text-dim">
+            {tab === "next" ? W.emptyNext : W.empty}
+          </p>
         )}
         {full ? (
           <p
@@ -93,7 +95,11 @@ export function WeekPlanScreen({
             {W.full}
           </p>
         ) : (
-          <AddPriority key={weekStart} weekStart={weekStart} />
+          <AddPriority
+            key={weekStart}
+            weekStart={weekStart}
+            next={tab === "next"}
+          />
         )}
       </section>
       <p className="m-0 text-xs text-dim">{W.selfDeclared}</p>
@@ -101,7 +107,13 @@ export function WeekPlanScreen({
   );
 }
 
-function AddPriority({ weekStart }: { weekStart: string }) {
+function AddPriority({
+  weekStart,
+  next,
+}: {
+  weekStart: string;
+  next: boolean;
+}) {
   const app = useApp();
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +144,7 @@ function AddPriority({ weekStart }: { weekStart: string }) {
             setError(null);
           }}
           maxLength={PRIORITY_TITLE_MAX}
-          placeholder={W.placeholder}
+          placeholder={next ? W.placeholderNext : W.placeholder}
           aria-label={W.add}
           enterKeyHint="done"
           className={field}

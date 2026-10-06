@@ -669,13 +669,13 @@ export const t = {
     notifications: "NOTIFICAÇÕES",
     quietHours: "Horário silencioso",
     quietHoursD:
-      "Sem notificações do navegador nesse intervalo. O app continua atualizando.",
+      "Sem notificações nesse intervalo, nem push. Um lembrete que cair nele chega quando ele terminar, se ainda fizer sentido.",
     from: "Das",
     to: "às",
     quietStart: "Início do horário silencioso",
     quietEnd: "Fim do horário silencioso",
     notifyNote:
-      "As notificações funcionam enquanto o LOCKED IN está aberto (em uma aba ou instalado). Nada é enviado quando o app está fechado.",
+      "Os avisos acima aparecem com o LOCKED IN aberto (em uma aba ou instalado). Com o app fechado, só chega o que estiver ativado em Notificações push.",
     privacy: "PRIVACIDADE",
     privacyText:
       "Oculte uma tarefa pelas opções dela. Tarefas ocultas ainda contam nos seus números; sua dupla nunca vê os nomes delas. Sua dupla só vê Online, Em foco ou Offline.",
@@ -700,6 +700,54 @@ export const t = {
     allow: "Permitir",
     install: "Instalar o LOCKED IN",
     installD: "Abre como um app, direto da tela inicial.",
+  },
+
+  /** V2 Phase 10: Web Push on this device (docs/WEB_PUSH.md). */
+  push: {
+    heading: "NOTIFICAÇÕES PUSH",
+    title: "Notificações neste dispositivo",
+    state: {
+      on: "Ativas neste dispositivo. Chegam mesmo com o LOCKED IN fechado.",
+      off: "Desativadas neste dispositivo.",
+      denied:
+        "Notificações estão bloqueadas neste navegador. Altere a permissão nas configurações do site.",
+      unsupported: "Este navegador não recebe notificações push.",
+      iosInstall:
+        "No iPhone, adicione o LOCKED IN à Tela de Início (Compartilhar → Adicionar à Tela de Início) e abra por lá para ativar.",
+      unconfigured: "Notificações push indisponíveis neste ambiente.",
+    },
+    enable: "Ativar neste dispositivo",
+    disable: "Desativar neste dispositivo",
+    enabling: "Ativando…",
+    disabling: "Desativando…",
+    test: "Enviar notificação de teste",
+    testSent: "Teste enviado. Deve chegar em até um minuto.",
+    sub: "NOTIFICAÇÕES",
+    kindsHeading: "O que chega por push",
+    planner: "Planner",
+    plannerD: "Provas, trabalhos e entregas, no dia do lembrete escolhido.",
+    nudges: "Toques da dupla",
+    nudgesD: "Quando sua dupla dá um toque em um compromisso seu.",
+    reviews: "Reviews",
+    reviewsD:
+      "Às 21h, se o dia ainda não tem revisão; domingo às 19h, a semana.",
+    weeklyPlan: "Planejamento semanal",
+    weeklyPlanD: "Segunda às 8h, se a semana ainda não tem prioridades.",
+    hideDetails: "Ocultar detalhes",
+    hideDetailsD:
+      "Mostra só “Lembrete do Planner” ou “Você recebeu um toque”, sem títulos.",
+    errors: {
+      failed: "Não foi possível ativar as notificações. Tente de novo.",
+      denied: "Permissão negada. Nada será pedido de novo.",
+      rateLimited: "Aguarde um minuto para enviar outro teste.",
+      disableFailed: "Não foi possível desativar agora. Tente de novo.",
+    },
+  },
+
+  offline: {
+    title: "Sem conexão",
+    text: "O LOCKED IN precisa da internet para mostrar seus dados reais. Nada foi perdido.",
+    retry: "Tentar de novo",
   },
 
   duoScreen: {
@@ -1040,12 +1088,14 @@ export const t = {
     next: "PRÓXIMA SEMANA",
     add: "Adicionar prioridade",
     placeholder: "Uma prioridade desta semana",
+    placeholderNext: "Uma prioridade da próxima semana",
     save: "SALVAR",
     cancel: "Cancelar",
     edit: "Editar",
     remove: "Remover",
     full: "Três prioridades. O suficiente.",
     empty: "Nenhuma prioridade para esta semana.",
+    emptyNext: "Nenhuma prioridade para a próxima semana.",
     doneAria: (title: string) => `${title}: feita`,
     toggleAria: (title: string) => title,
     doneRatio: (r: string) => `${r} feitas`,

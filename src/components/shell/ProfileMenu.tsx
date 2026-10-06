@@ -7,6 +7,7 @@ import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { Avatar, cx } from "@/components/ui";
 import { useInstallPrompt } from "@/components/use-install-prompt";
+import { prepareSignOut } from "@/components/push/push-device";
 import { clearResume } from "@/lib/resume-state";
 
 /**
@@ -151,9 +152,14 @@ export function ProfileMenu({
           <form
             action="/auth/signout"
             method="post"
-            onSubmit={() => clearResume(me.id)}
+            onSubmit={(e) => {
+              clearResume(me.id);
+              // V2 Phase 10: this device stops receiving my pushes.
+              prepareSignOut(e.currentTarget);
+            }}
             className="mt-1 border-t border-white/7 pt-1"
           >
+            <input type="hidden" name="push_endpoint" defaultValue="" />
             <button
               type="submit"
               data-menu-item

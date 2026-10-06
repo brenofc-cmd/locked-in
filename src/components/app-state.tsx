@@ -24,6 +24,7 @@ import { updateDisplayName } from "@/app/(app)/actions";
 import { useAccountability } from "@/components/use-accountability";
 import { useHeartbeat } from "@/components/use-heartbeat";
 import { usePlanner } from "@/components/use-planner";
+import { pushEndpoint } from "@/components/push/push-device";
 import {
   useReflection,
   type ReflectionData,
@@ -260,7 +261,9 @@ function useAppStateValue(
         visible: document.visibilityState === "visible",
       });
       if (d.toast) toast(msg);
-      if (d.browser) {
+      // V2 Phase 10: a device with Web Push on already gets the planner
+      // reminder from the server; never twice.
+      if (d.browser && !(kind === "planner_reminder" && pushEndpoint())) {
         try {
           new Notification("LOCKED IN", {
             body: msg.text,
