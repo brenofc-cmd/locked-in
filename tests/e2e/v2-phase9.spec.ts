@@ -590,7 +590,7 @@ test("11: weekly planning — validation, edit, remove, next week, database rule
   await expect(
     a.page.getByRole("radio", { name: new RegExp(W.next) }),
   ).toHaveAttribute("aria-checked", "true");
-  await expect(a.page.getByText(W.empty)).toBeVisible();
+  await expect(a.page.getByText(W.emptyNext)).toBeVisible();
   const input = a.page.getByRole("textbox", { name: W.add });
   await input.fill("   ");
   // SALVAR is aria-disabled while blank; Enter still submits and explains.
