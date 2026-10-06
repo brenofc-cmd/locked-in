@@ -524,6 +524,7 @@ test("12: Planejamento semanal — Monday once, never for a planned week", async
   });
   await enqueue(A, at(monday, "08:00"));
   expect(await deliveries(A, "plan_week")).toHaveLength(0);
+  await fixture(A, "dev_fixture_reset_reflection");
 });
 
 // ------------------------------------------------------ service worker ----
@@ -780,6 +781,7 @@ test("20: axe — no serious / critical issue on push settings, next-week planni
   browser,
 }) => {
   await fixture(A, "dev_fixture_reset_push");
+  await fixture(A, "dev_fixture_reset_reflection"); // next week starts empty
   const a = await open(browser, users.a, "/settings", {
     permission: "default",
     answer: "granted",
