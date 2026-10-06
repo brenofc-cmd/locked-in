@@ -57,6 +57,17 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        // V2 Phase 10: the browser always re-checks the service worker, so
+        // nobody stays on an old one (docs/WEB_PUSH.md → Updates).
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
     ];
   },
 };
