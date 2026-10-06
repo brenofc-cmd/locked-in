@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phases 1–9 VERIFIED (DEV + PROD). Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning — VERIFIED 2026-10-06. V2 Phase 10 (Web Push) — NOT STARTED.
+LOCKED IN V2 — Phase 10 (last) — Web Push + Advanced Reminders + Final Polish / Audit — IN PROGRESS (scope: docs/ROADMAP.md → V2 Phase 10). Phases 1–9 VERIFIED (DEV + PROD).
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
