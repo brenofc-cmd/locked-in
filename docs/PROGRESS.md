@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning — IN PROGRESS (scope: docs/ROADMAP.md → V2 Phase 9). Phases 1–8 VERIFIED.
+LOCKED IN V2 — Phases 1–9 VERIFIED (DEV + PROD). Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning — VERIFIED 2026-10-06. V2 Phase 10 (Web Push) — NOT STARTED.
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -12,7 +12,110 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 ## Known issues (open)
 
-- None.
+- Minor copy (Phase 9): on `/plan/week` the PRÓXIMA SEMANA tab reuses the "this week" strings
+  (`empty`: "Nenhuma prioridade para esta semana.", `placeholder`: "Uma prioridade desta semana",
+  `src/i18n/pt-BR.ts`). Saving there writes next week correctly; only the wording is off. Not
+  blocking.
+
+## Phase 9 — Celebrations + Reviews 2.0 + Non-Negotiables + Weekly Planning — VERIFIED (DEV + PROD, 2026-10-06)
+
+Status: **V2 PHASE 9 = VERIFIED** · DEV = VERIFIED · PRODUCTION DEPLOY = VERIFIED · PRODUCTION
+SMOKE = VERIFIED · V2 Phase 10 = NOT STARTED.
+
+Scope: docs/ROADMAP.md → "V2 Phase 9", docs/CELEBRATIONS.md, docs/WEEKLY_PLANNING.md, ADR-086…091.
+Commits on `main`: `9ba97d3` scope · `5a8a039` db · `92913d2` fix(db) date-shaped keys · `e41247d`
+feat · `18f0720` tests · `d829aa3` docs · `179863a` PROD migration versions (the deployed commit).
+
+Done:
+
+- **Celebrations** (ADR-086…088): one owner-only `public.celebrations` (PK owner / kind / key).
+  PERFECT DAY (today only, while perfect, once per date), milestones streak 7 / 30 / 100, focus 10 /
+  50 / 100 h, Perfect Days 5 / 10 / 30 (first crossing), MONTHLY CHAMPION (a FINAL month only; a final
+  draw → MÊS ENCERRADO · EMPATE; never live). The client claims `(kind, key)` from numbers already on
+  screen (`claimsToMake()`, `src/lib/celebrations.ts`); the INVOKER guard validates them against the
+  real numbers; only `seen_at` is client-updatable (stamped once); no delete. Card ≈2 s, non-modal,
+  closable, never in Resume State; motion only under `motion-safe`.
+- **Milestone unlocks**: durable (CONQUISTADO stays if the derived value later drops); the
+  migration ran `private.baseline_milestones()` for every profile (`baseline = true`, seen) — no
+  retroactive burst.
+- **Non-Negotiables** (ADR-089): owner-only `daily_task_non_negotiables` / `routine_non_negotiables`
+  (no column on the shared rows), a routine's flag follows today's occurrence and is snapshotted on
+  each generated one, closed days frozen; discreet "◇ NÃO NEGOCIÁVEL" on Today; no weight anywhere.
+- **Weekly Planning** (ADR-090): `weekly_priorities`, ≤ 3 per Monday week, this / next week, closed
+  weeks frozen, self-declared; PLANEJAR → ESTA SEMANA row → `/plan/week`; not on Today.
+- **Reviews 2.0** (ADR-091): `reviews` (three optional owner-only reflections per day / week) + facts
+  from `my_review_facts(p_from, p_to)` (INVOKER, ≤ 31 days, the standard in force each day). Weekly
+  Review → PLANEJAR PRÓXIMA SEMANA.
+- Migrations `20261005150455_reflection_celebration_planning`, `20261005163123_celebration_key_dates`:
+  five owner-only tables, two INVOKER functions, **no new SECURITY DEFINER** (set stays 22).
+
+Gates (DEV, final, 2026-10-06 on `179863a`):
+
+- lint ✓ · typecheck ✓ · format ✓ · unit **364/364** (+16 `reflection`) · build ✓
+- E2E full suite in one clean run: **178 passed, 1 skipped (`LI_SHOTS`), 0 failed** (179, 19.8 min,
+  `--workers=1`); `v2-phase9` **17/17** (Perfect Day once / every device / never again that day,
+  milestone queue, durable unlock, baseline, reduced motion, monthly champion and final draw, task
+  and routine NÃO NEGOCIÁVEL, weekly planning, Day / Weekly Review, past-day reflection read-only,
+  privacy, no new channel, **70 s idle on PLANEJAR → SEMANA and PROGRESSO with a pending claim — no
+  periodic request**). Focus regressions still green: `v2-phase8` 72 s of running focus across a
+  minute boundary with zero requests, `v2-phase7` partner's running focus, `stage6` no per-second
+  traffic.
+- pgTAP: `v2_phase9_reflection` **79/79** (run on PROD this session, rolled back). The full DEV
+  pgTAP suite was not re-run in this verification session (no Docker / psql here).
+- `npm audit`: dev-only `braces` (via `eslint-config-next`, unchanged). **New since Phase 8:**
+  production dependency `source-map-js` 1.0.0–1.2.1 high (GHSA-68fv-2mgg-jv7q, build-time via
+  `postcss`); `npm audit fix` available — not applied here (docs-only verification), follow-up.
+
+Production (2026-10-05 / 2026-10-06):
+
+- Migrations applied (2026-10-05): `20261005183305` (`reflection_celebration_planning`),
+  `20261005183307` (`celebration_key_dates`) — mapping in docs/DATABASE.md. GitHub deployment
+  "Production" **success** for `179863a` (https://locked-in-rust.vercel.app).
+- Validated on PROD: 45 migrations; DEFINER = the reviewed 22, all with `search_path`; **0 `dev_*`**;
+  the five tables RLS on, anon 0 grants; `my_review_facts` / `my_records` INVOKER; nothing in
+  `private` executable by anon / PUBLIC. Advisors: no new entry (the reviewed DEFINER functions and
+  the pre-existing leaked-password item, docs/PRODUCTION_CHECKLIST.md).
+- pgTAP `v2_phase9_reflection` **79/79** on PROD in one transaction, rolled back (afterwards: 4
+  users, 0 test users, no pgtap, no trigger left disabled).
+- **Baseline correct**: no real user had reached any milestone (max values 1 / 1 / 0 against 7 / 5 /
+  10 h) → 0 baseline rows, 0 celebrations; Today and Progress opened with no celebration burst;
+  MARCOS 0 de 9.
+- **Smoke on PROD (real account, Chrome desktop ≈960 px, 2026-10-06)**:
+  - NÃO NEGOCIÁVEL: `[teste V9] tarefa` added to today with the flag ("Só você vê. Não muda nenhum
+    placar.") → Today shows "◇ NÃO NEGOCIÁVEL". In one rolled-back transaction as the owner,
+    `duo_duels`, `duo_duel_months`, `duo_weeks`, `my_daily_progress`, `my_progress_summary`,
+    `my_today` gave **identical results with and without the flag**; as the partner: the task
+    visible (shared), **0** task flags, **0** routine flags.
+  - Weekly Planning: `/plan/week` → 3 priorities `[teste V9] prioridade 1…3`; then "Três
+    prioridades. O suficiente." and **no input for a 4th**; priority 1 marked done → persisted after
+    reload; PLANEJAR row "3 prioridades · 1 / 3 feitas".
+  - Day Review (Today → Revisar o dia): facts 0 / 5 feitas, 0m de foco, "Faltam 4 para atingir seu
+    padrão", NÃO NEGOCIÁVEIS 0 / 1; the three reflections (O que funcionou? / O que me atrapalhou? /
+    O que vou mudar amanhã?) saved (SALVO).
+  - Weekly Review (Progresso → HISTÓRICO → SEMANA 40 → ›): SEMANA 41 EM ANDAMENTO, tarefas 0 / 9,
+    foco 0m, Dias perfeitos 0, Dias com padrão 0 / 2, NÃO NEGOCIÁVEIS 0 / 1, PRIORIDADES 1 / 3 —
+    **equal to `my_review_facts` / `weekly_priorities` read as the owner**; SEMANA 40 (2 / 26, 0 / 7)
+    equal too. Reflections saved; PLANEJAR PRÓXIMA SEMANA → `/plan/week?w=next` (PRÓXIMA SEMANA).
+  - History: PROGRESSO → HISTÓRICO calendar and weekly reviews open after reload.
+  - Privacy (rolled back, as the partner): 0 reviews, 0 priorities, 0 celebrations, 0 flags.
+  - No polling: 72 s idle on Today across a minute boundary (10:29:06 → 10:30:18 UTC) — **0
+    requests** (network tracker, verified by a control fetch it did capture; Performance API: 0
+    resources in the window).
+  - Perfect Day / milestone / monthly celebration and reduced motion were **not forced on PROD**
+    (that would mean completing the owner's real routine) — verified by the e2e on DEV and by the
+    database guard on PROD (pgTAP above); decided with the owner.
+- **Cleanup**: a leftover from the 2026-10-05 smoke (`[teste V9] tarefa`, 05/10, pending, flagged)
+  inflated that closed day to 0 / 5 → removed as admin with the owner's approval (05/10 back to its
+  real 0 / 4; still 0 %, so the 05/10 duel is unchanged). Today's smoke data removed afterwards
+  (1 task + its flag, 3 priorities, 2 reviews). Final PROD state: 0 `[teste V9]` rows, 0 flags, 0
+  priorities, 0 reviews, 0 celebrations; Today back to 0 / 4.
+
+Remaining (real, not blocking): the PRÓXIMA SEMANA copy (Known issues); `source-map-js` advisory;
+the full DEV pgTAP suite re-run; a celebration seen live on PROD will happen with real use (first
+Perfect Day).
+
+Not in Phase 9: Web Push / background push (Phase 10), XP, coins, levels, shop, global leaderboard,
+AI coach, generated motivational messages, groups.
 
 ## Phase 8 — Monthly Champion + Personal Records + Milestones — VERIFIED (DEV + PROD, 2026-10-05)
 
