@@ -58,34 +58,34 @@ of it. The PNG is visual reference only: it is never imported, embedded or rende
 
 ### Palette (from the sheet)
 
-| Role               | Colour                                      |
-| ------------------ | ------------------------------------------- |
-| Graphite (lids)    | `#0d0f12`                                   |
-| Head / body        | `#3a4148` → `#1f2429` → `#0d0f12` radial     |
-| Wings / crest      | `#3a4148` → `#0d0f12` linear                 |
-| Core slot          | `#07080a` with emerald outline              |
-| Light grey (beak / feet) | `#a7afb7` + beak shade `#727a82`       |
-| Eyes               | sclera `#f3f1ea`, pupil `#08090b`           |
-| Emerald (iris, glow) | `#00e676`                                |
-| Mint (core, rim)    | `#7cffb3`                                  |
+| Role                     | Colour                                   |
+| ------------------------ | ---------------------------------------- |
+| Graphite (lids)          | `#0d0f12`                                |
+| Head / body              | `#3a4148` → `#1f2429` → `#0d0f12` radial |
+| Wings / crest            | `#3a4148` → `#0d0f12` linear             |
+| Core slot                | `#07080a` with emerald outline           |
+| Light grey (beak / feet) | `#a7afb7` + beak shade `#727a82`         |
+| Eyes                     | sclera `#f3f1ea`, pupil `#08090b`        |
+| Emerald (iris, glow)     | `#00e676`                                |
+| Mint (core, rim)         | `#7cffb3`                                |
 
 Rook uses the approved sheet's Emerald / Mint palette. The interface accent is independent;
 the character colours live in `ROOK_COLORS`.
 
 ## Poses
 
-| Pose          | Eyes                                     | Wings | Beak   | Core | Other            | Use                                       |
-| ------------- | ---------------------------------------- | ----- | ------ | ---- | ---------------- | ----------------------------------------- |
-| `neutral`     | open, light lid                          | rest  | closed | .7   | —                | Default, empty states                     |
-| `focused`     | open, deep lid                           | rest  | closed | .8   | —                | Focus start (transition only)             |
-| `ready`       | open, high lid                           | +10°  | closed | .85  | stands up        | Morning, onboarding, push setup           |
-| `proud`       | happy arcs                               | +14°  | closed | 1    | stands up        | Perfect Day, 30 / 100-day streak, records |
-| `celebrating` | happy arcs                               | +62°  | open   | 1    | four green marks | Monthly Champion, 7-day streak            |
-| `watching`    | open, looks up                           | −6°   | closed | .55  | crouched         | Duo, waiting for proof                    |
-| `supportive`  | happy arcs                               | +6°   | closed | .9   | small heart      | Nudges received, a hard day acknowledged  |
-| `tired`       | half lids                                | −8°   | closed | .4   | crouched         | End of a long day — fact, never drama     |
-| `reviewing`   | open, looks up                           | rest  | closed | .7   | head tilt −7°    | Day / week review                         |
-| Duo           | two small Rooks side by side (`RookDuo`) |       |        |      |                  | DUPLA empty state, duo moments            |
+| Pose          | Eyes                                     | Wings       | Beak   | Core | Other                    | Use                                       |
+| ------------- | ---------------------------------------- | ----------- | ------ | ---- | ------------------------ | ----------------------------------------- |
+| `neutral`     | open, light lid                          | rest        | closed | .7   | —                        | Default, empty states                     |
+| `focused`     | open, deep lid                           | rest        | closed | .8   | —                        | Focus start (transition only)             |
+| `ready`       | open, high lid                           | +10°        | closed | .85  | stands up                | Morning, onboarding, push setup           |
+| `proud`       | happy arcs                               | +14°        | closed | 1    | stands up                | Perfect Day, 30 / 100-day streak, records |
+| `celebrating` | happy arcs                               | +105°       | open   | 1    | four green marks         | Monthly Champion, 7-day streak            |
+| `watching`    | open, looks up                           | −6°         | closed | .55  | crouched                 | Duo, waiting for proof                    |
+| `supportive`  | happy arcs                               | +6° / +100° | closed | .9   | raised right wing, heart | Nudges received, a hard day acknowledged  |
+| `tired`       | half lids                                | −8°         | closed | .4   | crouched                 | End of a long day — fact, never drama     |
+| `reviewing`   | open, looks up                           | rest        | closed | .7   | head tilt −7°            | Day / week review                         |
+| Duo           | two small Rooks side by side (`RookDuo`) |             |        |      |                          | DUPLA empty state, duo moments            |
 
 ## Motion
 

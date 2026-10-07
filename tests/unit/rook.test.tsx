@@ -50,23 +50,29 @@ describe("Rook (docs/ROOK.md)", () => {
   // Visual review only (ROOK_SHEET=<dir>): the character sheet as HTML.
   it.runIf(!!process.env.ROOK_SHEET)("writes the character sheet", () => {
     const dir = process.env.ROOK_SHEET!;
+    fs.mkdirSync(dir, { recursive: true });
+    // Separate React roots need distinct IDs in the shared review document.
+    let root = 0;
+    const render = (element: Parameters<typeof renderToStaticMarkup>[0]) =>
+      renderToStaticMarkup(element, { identifierPrefix: `sheet${root++}` });
     const cell = (inner: string, label: string) =>
       `<div class="cell">${inner}<span>${label}</span></div>`;
     const poses = ROOK_POSES.map((p) =>
-      cell(renderToStaticMarkup(<Rook pose={p} size={128} />), p),
+      cell(render(<Rook pose={p} size={128} />), p),
     ).join("");
     const sizes = [24, 32, 48, 96, 192, 512]
-      .map((s) => cell(renderToStaticMarkup(<Rook size={s} />), `${s}`))
+      .map((s) => cell(render(<Rook size={s} />), `${s}`))
       .join("");
     const sil = [24, 32, 64]
-      .map((s) => cell(renderToStaticMarkup(<Rook size={s} />), `${s}`))
+      .map((s) => cell(render(<Rook size={s} />), `${s}`))
       .join("");
-    const duo = cell(renderToStaticMarkup(<RookDuo size={96} />), "duo");
+    const duo = cell(render(<RookDuo size={96} />), "duo");
     // App icon candidates (docs/DESIGN_SYSTEM.md → App icon).
-    const head = renderToStaticMarkup(<Rook size={100} />).replace(
-      'viewBox="0 0 120 120"',
-      'viewBox="14 6 92 92"',
-    );
+    const head = () =>
+      render(<Rook size={100} />).replace(
+        'viewBox="0 0 120 120"',
+        'viewBox="14 6 92 92"',
+      );
     const icon = (inner: string, s: number) =>
       `<div style="width:${s}px;height:${s}px;border-radius:${s * 0.22}px;background:#0c0c0e;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px #222">${inner}</div>`;
     const A = (s: number) =>
@@ -76,7 +82,7 @@ describe("Rook (docs/ROOK.md)", () => {
       );
     const B = (s: number) =>
       icon(
-        head.replace(
+        head().replace(
           /width="100" height="100"/,
           `width="${s * 0.92}" height="${s * 0.92}"`,
         ),

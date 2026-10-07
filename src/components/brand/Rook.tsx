@@ -98,7 +98,7 @@ const POSES: Record<RookPose, Pose> = {
     eyes: "happy",
     lid: [0, 0],
     look: [0, 0],
-    wings: 62,
+    wings: 105,
     beak: "open",
     core: 1,
     tilt: 0,
@@ -270,6 +270,7 @@ export function Rook({
   const glow = `rg${uid}`;
   const rim = `rr${uid}`;
   const feather = `rf${uid}`;
+  const rightWing = p.extra === "heart" ? 100 : p.wings;
   const head =
     "M60 28C85 28 101 44 103 64L107 71Q103 77 96 78C82 84 38 84 24 78Q17 77 13 71L19 64C21 43 36 28 60 28Z";
   return (
@@ -328,20 +329,6 @@ export function Rook({
             opacity=".35"
           />
         </g>
-        <g
-          data-part="wing-left"
-          {...move("32px 74px", `rotate(${p.wings}deg)`)}
-        >
-          <Wing fill={`url(#${feather})`} />
-        </g>
-        <g
-          data-part="wing-right"
-          {...move("88px 74px", `rotate(${-p.wings}deg)`)}
-        >
-          <g transform="translate(120 0) scale(-1 1)">
-            <Wing fill={`url(#${feather})`} />
-          </g>
-        </g>
         <g data-part="head">
           <path
             d={head}
@@ -349,6 +336,26 @@ export function Rook({
             stroke={`url(#${rim})`}
             strokeWidth=".9"
           />
+        </g>
+        <g
+          data-part="wing-left"
+          {...move(
+            "32px 74px",
+            `translateX(${-Math.max(0, p.wings - 20) * 0.12}px) rotate(${p.wings}deg)`,
+          )}
+        >
+          <Wing fill={`url(#${feather})`} />
+        </g>
+        <g
+          data-part="wing-right"
+          {...move(
+            "88px 74px",
+            `translateX(${Math.max(0, rightWing - 20) * 0.12}px) rotate(${-rightWing}deg)`,
+          )}
+        >
+          <g transform="translate(120 0) scale(-1 1)">
+            <Wing fill={`url(#${feather})`} />
+          </g>
         </g>
         {/* Three distinct feathers: short left, upright right, tall swept centre. */}
         <g
