@@ -306,20 +306,16 @@
     transform: none;
   }
 }
-/* Focus start: Rook appears, holds, leaves (ends invisible). */
-@keyframes li-cameo {
+/* Perfect Day: the screen quiets for a beat behind the moment. */
+@keyframes li-dim {
   0% {
     opacity: 0;
-    transform: translate(-50%, 6px);
   }
-  20%,
-  70% {
-    opacity: 1;
-    transform: translate(-50%, 0);
+  30% {
+    opacity: 0.35;
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -4px);
   }
 }
 @keyframes li-breathe {
@@ -329,6 +325,161 @@
   }
   50% {
     opacity: 0.85;
+  }
+}
+
+/*
+ * Rook's one-shot actions (docs/MOTION.md → Rook). Individual `rotate`,
+ * `translate` and `scale` compose with each part's pose transform, so an
+ * action never fights the pose. Nothing here loops except the Focus idle
+ * blink, and all of it is motion-safe; `lock` keeps its end state (with
+ * reduced motion that end state simply appears).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-act="ack"] [data-part="proof-core"] {
+    animation: rook-core 0.65s var(--ease-out-quick);
+  }
+  [data-act="ack"] [data-part="eyes"] {
+    animation:
+      rook-blink 0.65s ease,
+      rook-nod 0.65s var(--ease-settle);
+  }
+  [data-act="ack"]
+    :is([data-part="head"], [data-part="crest"], [data-part="beak"]) {
+    animation: rook-nod 0.65s var(--ease-settle);
+  }
+  [data-act="ack"] [data-part="wing-left"] {
+    animation: rook-wing-left 0.65s var(--ease-settle);
+  }
+  [data-act="ack"] [data-part="wing-right"] {
+    animation: rook-wing-right 0.65s var(--ease-settle);
+  }
+  [data-act="tap"] [data-part="wing-right"] {
+    animation: rook-tap 0.52s ease-in-out;
+  }
+  [data-act="tap"] [data-part="eyes"] {
+    animation: rook-look 0.52s var(--ease-settle);
+  }
+  [data-idle] [data-part="eyes"] {
+    animation: rook-idle-blink 7s ease-in-out infinite 2s;
+  }
+}
+[data-act="lock"] [data-part="wing-left"] {
+  animation: rook-lock-left 0.6s var(--ease-settle) forwards;
+}
+[data-act="lock"] [data-part="wing-right"] {
+  animation: rook-lock-right 0.6s var(--ease-settle) forwards;
+}
+[data-act="lock"] [data-part="posture"] {
+  animation: rook-lean 0.6s var(--ease-settle) forwards;
+}
+[data-core="milestone"] [data-part="proof-core"] {
+  filter: drop-shadow(0 0 5px rgb(0 230 118 / 0.55));
+}
+@keyframes rook-core {
+  0% {
+    scale: 1;
+    filter: brightness(1);
+  }
+  30% {
+    scale: 1.14;
+    filter: brightness(1.7) drop-shadow(0 0 5px rgb(0 230 118 / 0.6));
+  }
+  100% {
+    scale: 1;
+    filter: brightness(1);
+  }
+}
+@keyframes rook-blink {
+  0%,
+  16%,
+  34%,
+  100% {
+    scale: 1 1;
+  }
+  25% {
+    scale: 1 0.12;
+  }
+}
+@keyframes rook-nod {
+  0%,
+  30%,
+  100% {
+    translate: 0 0;
+  }
+  52% {
+    translate: 0 2.5px;
+  }
+  76% {
+    translate: 0 -0.5px;
+  }
+}
+@keyframes rook-wing-left {
+  0%,
+  25%,
+  100% {
+    rotate: 0deg;
+  }
+  50% {
+    rotate: 10deg;
+  }
+}
+@keyframes rook-wing-right {
+  0%,
+  25%,
+  100% {
+    rotate: 0deg;
+  }
+  50% {
+    rotate: -10deg;
+  }
+}
+@keyframes rook-tap {
+  0%,
+  40%,
+  80%,
+  100% {
+    rotate: 0deg;
+  }
+  20%,
+  60% {
+    rotate: -16deg;
+  }
+}
+@keyframes rook-look {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40%,
+  70% {
+    translate: -2px -1px;
+  }
+}
+@keyframes rook-idle-blink {
+  0%,
+  94%,
+  100% {
+    scale: 1 1;
+  }
+  97% {
+    scale: 1 0.12;
+  }
+}
+@keyframes rook-lock-left {
+  to {
+    rotate: -12deg;
+  }
+}
+@keyframes rook-lock-right {
+  to {
+    rotate: 12deg;
+  }
+}
+@keyframes rook-lean {
+  to {
+    translate: 0 1.5px;
+    scale: 1.02;
   }
 }
 

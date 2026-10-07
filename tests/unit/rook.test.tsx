@@ -3,6 +3,11 @@ import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Rook, RookDuo, ROOK_POSES } from "@/components/brand/Rook";
+import {
+  MomentArt,
+  STORIES,
+  momentFor,
+} from "@/components/overlays/Celebration";
 
 describe("Rook (docs/ROOK.md)", () => {
   it("is decorative by default: hidden from assistive tech, never focusable", () => {
@@ -28,6 +33,36 @@ describe("Rook (docs/ROOK.md)", () => {
       // Motion stays on the compositor: transforms only, no layout props.
       expect(html).not.toMatch(/style="[^"]*(width|height|top|left):/);
     }
+  });
+
+  it("names its parts, so actions can move them", () => {
+    const html = renderToStaticMarkup(<Rook />);
+    for (const part of [
+      "posture",
+      "head",
+      "crest",
+      "eyes",
+      "beak",
+      "wing-left",
+      "wing-right",
+      "proof-core",
+    ])
+      expect(html).toContain(`data-part="${part}"`);
+  });
+
+  it("Proof Core states and one-shot actions are attributes, nothing by default", () => {
+    const quiet = renderToStaticMarkup(<Rook />);
+    expect(quiet).not.toMatch(/data-(core|act|idle)=/);
+    const html = renderToStaticMarkup(<Rook core="milestone" act="ack" idle />);
+    expect(html).toContain('data-core="milestone"');
+    expect(html).toContain('data-act="ack"');
+    expect(html).toContain('data-idle="true"');
+    // OFF is dimmer than PROOF.
+    const level = (h: string) =>
+      Number(/opacity="([\d.]+)" class="transition-opacity/.exec(h)?.[1]);
+    expect(level(renderToStaticMarkup(<Rook core="off" />))).toBeLessThan(
+      level(renderToStaticMarkup(<Rook core="proof" />)),
+    );
   });
 
   it("two Rooks on one page never share gradient / clip ids", () => {
@@ -104,7 +139,33 @@ describe("Rook (docs/ROOK.md)", () => {
           `<div class="row">${[16, 32, 64, 192, 512].map((s) => cell(f(s), `${n} ${s}`)).join("")}</div>`,
       )
       .join("");
-    const html = `<!doctype html><meta charset="utf-8"><style>
+    // Every frame of every celebration story, with the app's built CSS
+    // (ROOK_CSS=<built .css>) so the real classes apply.
+    const boards: [string, Parameters<typeof momentFor>[0]][] = [
+      ["perfect day", { kind: "perfect_day", key: "2026-10-07" }],
+      ["streak 7", { kind: "milestone", key: "streak_7" }],
+      ["streak 30", { kind: "milestone", key: "streak_30" }],
+      ["streak 100", { kind: "milestone", key: "streak_100" }],
+      ["focus 50h", { kind: "milestone", key: "focus_50" }],
+      ["month", { kind: "monthly", key: "2026-09" }],
+    ];
+    const storyboards = boards
+      .map(([name, row]) => {
+        const m = momentFor(row);
+        return `<div class="row">${STORIES[m.story]
+          .map((f, i) =>
+            cell(
+              renderToStaticMarkup(<MomentArt moment={m} still={i} />),
+              `${name} · ${f.at} ms`,
+            ),
+          )
+          .join("")}</div>`;
+      })
+      .join("");
+    const css = process.env.ROOK_CSS
+      ? `<link rel="stylesheet" href="file:///${process.env.ROOK_CSS.replaceAll("\\", "/")}">`
+      : "";
+    const html = `<!doctype html><meta charset="utf-8">${css}<style>
       body{margin:0;background:#0c0c0e;color:#8e8d87;font:11px ui-monospace,monospace;letter-spacing:.12em}
       h2{margin:0;padding:18px 28px 0;font-size:11px;font-weight:400}
       .row{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap;padding:16px 28px 22px}
@@ -115,7 +176,8 @@ describe("Rook (docs/ROOK.md)", () => {
     <h2>DUO</h2><div class="row">${duo}</div>
     <h2>SIZES</h2><div class="row">${sizes}</div>
     <h2>SILHOUETTE</h2><div class="row light sil">${sil}</div>
-    <h2>APP ICON CANDIDATES</h2>${iconRows}`;
+    <h2>APP ICON CANDIDATES</h2>${iconRows}
+    <h2>CELEBRATION STORYBOARDS</h2>${storyboards}`;
     fs.writeFileSync(path.join(dir, "rook-sheet.html"), html);
   });
 });

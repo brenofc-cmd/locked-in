@@ -35,6 +35,30 @@ export const ROOK_POSES: RookPose[] = [
   "reviewing",
 ];
 
+/**
+ * Proof Core states (docs/ROOK.md → Proof Core): the rarer the event, the
+ * brighter. OFF / IDLE for ordinary presence, ACTIVE while working (Focus),
+ * PROOF when something was done, MILESTONE only in rare moments.
+ */
+export type CoreState = "off" | "idle" | "active" | "proof" | "milestone";
+const CORE_LEVEL: Record<CoreState, number> = {
+  off: 0.12,
+  idle: 0.55,
+  active: 0.8,
+  proof: 1,
+  milestone: 1,
+};
+
+/**
+ * One-shot character actions (docs/MOTION.md → Rook). They play once when
+ * `act` / `actKey` change and never loop:
+ * - ack: task proof — the Core lights, a blink, a short nod, the wings
+ *   acknowledge, settle (~650 ms);
+ * - tap: duo — two quick taps of a wing and a look (~520 ms);
+ * - lock: Focus start — wings come in towards the Core, a lean forward.
+ */
+export type RookAct = "ack" | "tap" | "lock";
+
 type Eyes = "open" | "happy" | "half";
 type Pose = {
   eyes: Eyes;
@@ -56,7 +80,7 @@ type Pose = {
 const POSES: Record<RookPose, Pose> = {
   neutral: {
     eyes: "open",
-    lid: [8, 4],
+    lid: [5, 4],
     look: [0, 0],
     wings: 0,
     beak: "closed",
@@ -257,14 +281,26 @@ export function Rook({
   size = 96,
   label,
   className,
+  core,
+  act,
+  actKey = 0,
+  idle = false,
 }: {
   pose?: RookPose;
   size?: number;
   /** Only when Rook himself carries meaning (otherwise decorative). */
   label?: string;
   className?: string;
+  /** Proof Core state; defaults to the pose's own level. */
+  core?: CoreState;
+  /** A one-shot action; replayed whenever `actKey` changes. */
+  act?: RookAct;
+  actKey?: number | string;
+  /** Focus idle: an occasional blink, nothing else (motion-safe only). */
+  idle?: boolean;
 }) {
-  const p = POSES[pose];
+  const base = POSES[pose];
+  const p = core ? { ...base, core: CORE_LEVEL[core] } : base;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const body = `rb${uid}`;
   const glow = `rg${uid}`;
@@ -280,6 +316,11 @@ export function Rook({
       height={size}
       className={cx("shrink-0 overflow-visible", className)}
       data-rook={pose}
+      data-core={core ?? undefined}
+      data-act={act ?? undefined}
+      data-idle={idle || undefined}
+      // A new key replays the act from its first frame.
+      key={act ? `${act}-${actKey}` : undefined}
       focusable="false"
       {...(label
         ? { role: "img", "aria-label": label }
@@ -376,7 +417,10 @@ export function Rook({
           />
         </g>
         {/* eyes */}
-        <g data-part="eyes">
+        <g
+          data-part="eyes"
+          style={{ transformBox: "view-box", transformOrigin: "60px 57px" }}
+        >
           <Eye cx={40.5} side={1} pose={p} id={`re1${uid}`} />
           <Eye cx={79.5} side={-1} pose={p} id={`re2${uid}`} />
         </g>
@@ -413,7 +457,10 @@ export function Rook({
           </g>
         )}
         {/* proof core */}
-        <g data-part="proof-core">
+        <g
+          data-part="proof-core"
+          style={{ transformBox: "view-box", transformOrigin: "60px 93px" }}
+        >
           <rect
             x="54"
             y="83"

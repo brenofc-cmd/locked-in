@@ -87,26 +87,51 @@ the character colours live in `ROOK_COLORS`.
 | `reviewing`   | open, looks up                           | rest        | closed | .7   | head tilt −7°            | Day / week review                         |
 | Duo           | two small Rooks side by side (`RookDuo`) |             |        |      |                          | DUPLA empty state, duo moments            |
 
+## Proof Core
+
+A brand element, not a light that is always on. States (`core` prop, `data-core`):
+
+| State       | Level    | When                                                  |
+| ----------- | -------- | ----------------------------------------------------- |
+| `off`       | .12      | Nothing proved yet today; the 100-day silhouette      |
+| `idle`      | .55      | Ordinary presence                                     |
+| `active`    | .8       | Working — the Focus session                           |
+| `proof`     | 1        | Something was done (standard met, a moment, a toast)  |
+| `milestone` | 1 + glow | Only in rare moments (streak 7 / 30 / 100, the month) |
+
+The rarer the event, the more intensity is allowed. No constant glow.
+
 ## Motion
 
 - Between poses: CSS transitions on the part transforms (wings, irises, the whole bird), 300 ms,
   `--ease-settle`; eye shapes swap. Core opacity also transitions. Reduced motion makes both instant.
 - Stable SVG groups expose `data-part`: `posture`, `feet`, `body`, `wing-left`, `wing-right`,
-  `head`, `crest`, `eyes`, `beak`, `proof-core`. Wings pivot at their shoulders; the crest and
-  head can be animated independently without tracing or replacing an image.
-- Rook never loops. He moves once at a moment (settles, nods, lifts the wing) and stays still.
-- Focus: Rook may appear only at the start (READY → FOCUSED) and at the end (a nod); never beside
-  the running timer.
+  `head`, `crest`, `eyes`, `beak`, `proof-core`. Wings pivot at their shoulders.
+- **One-shot actions** (`act` prop, `data-act`, replayed by `actKey`; keyframes `rook-*` in
+  `globals.css`, individual `rotate` / `translate` / `scale` so they compose with the pose):
+  - `ack` — task proof (~650 ms): the Core lights, a blink, a short nod, the wings acknowledge,
+    settle. Frequent by design, so it stays small.
+  - `tap` — duo moments (~520 ms): two quick taps of a wing and a look.
+  - `lock` — Focus start (~600 ms): the wings come in towards the Core, a slight lean forward; the
+    end state is kept (with reduced motion it simply appears).
+- **Idle** (`idle` prop, Focus only): an occasional blink every ~7 s; nothing else moves. Off with
+  reduced motion. This is the only repeating motion Rook has.
 - See [MOTION.md](MOTION.md) for the moment choreography (Perfect Day, streak Ring, champion).
 
 ## Usage
 
-**Where Rook appears**: onboarding, the morning card (occasionally), important empty states (vision,
-week plan, duo), Perfect Day, streak milestones (the Ring), milestones, Monthly Champion, reviews,
-push setup.
+**Where Rook appears** (one Rook in the content of a screen; a transient moment — a toast or a
+celebration — may add one for a few seconds):
 
-**Where Rook never appears**: on tasks, on cards in general, in navigation, beside trivial numbers,
-continuously during Focus. Scarcity is the point.
+- **HOJE** — small, beside the greeting: `ready` before the first task, `neutral` after, `proud` on a
+  Perfect Day; `ack` on every task proved; Core `off` → `idle` → `proof` (standard met).
+- **FOCO** — in the session: `focused` + `lock`, Core `active`, idle blink; complete: `proud` + `ack`.
+- **DUPLA** — the empty state (two Rooks); toasts: nudge sent / received (`tap`), a reaction (`ack`).
+- Onboarding, important empty states (vision, the week), push setup, the day review (`reviewing`),
+  Perfect Day, streak and other milestones, the Monthly Champion.
+
+**Where Rook never appears**: on task rows, on cards in general, in navigation, in loading or error
+states (clarity first), beside trivial numbers. Scarcity is the point.
 
 ## Do / Don't
 
