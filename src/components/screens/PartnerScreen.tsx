@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
+import { useState } from "react";
 import { DuelDetailed } from "@/components/duel/Duel";
 import { MonthRow } from "@/components/monthly/Monthly";
 import { useApp } from "@/components/app-state";
@@ -34,10 +35,14 @@ import {
   weeksWithData,
 } from "@/lib/progress";
 
+/** Activity lines shown before "Ver toda a atividade". */
+const FEED_PREVIEW = 6;
+
 export function PartnerScreen() {
   const app = useApp();
   const pv = usePartnerView();
   const { partner } = app;
+  const [allActivity, setAllActivity] = useState(false);
 
   if (!app.hasPartner) {
     return (
@@ -196,11 +201,26 @@ export function PartnerScreen() {
               {t.partnerScreen.activity}
             </h2>
           </div>
+          {/* Newest first; the latest few by default, the rest (up to 20) on tap. */}
           <div className="flex flex-col-reverse">
-            {app.feed.map((e) => (
-              <ActivityItem key={e.id} event={e} />
-            ))}
+            {(allActivity ? app.feed : app.feed.slice(-FEED_PREVIEW)).map(
+              (e) => (
+                <ActivityItem key={e.id} event={e} />
+              ),
+            )}
           </div>
+          {app.feed.length > FEED_PREVIEW && (
+            <button
+              type="button"
+              aria-expanded={allActivity}
+              onClick={() => setAllActivity((v) => !v)}
+              className="flex min-h-11 items-center border-t border-white/5 text-left text-[13px] text-muted underline-offset-[3px] hover:text-text hover:underline"
+            >
+              {allActivity
+                ? t.partnerScreen.activityLess
+                : t.partnerScreen.activityAll(app.feed.length)}
+            </button>
+          )}
         </section>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
@@ -270,9 +290,21 @@ export function PartnerScreen() {
               }
             />
           </div>
-          <span className="text-[12.5px] leading-[1.5] text-dim">
-            {t.partnerScreen.rule}
-          </span>
+          {/* The rule is one tap away, like the duel's (less text on DUPLA). */}
+          <details className="group border-t border-white/5">
+            <summary className="flex h-11 cursor-pointer list-none items-center justify-between font-mono text-[10.5px] tracking-[.14em] text-dim hover:text-text [&::-webkit-details-marker]:hidden">
+              {t.duel.rulesTitle}
+              <span
+                aria-hidden="true"
+                className="text-faint transition-transform group-open:rotate-90"
+              >
+                ›
+              </span>
+            </summary>
+            <p className="m-0 pb-1 text-[12.5px] leading-[1.5] text-muted">
+              {t.partnerScreen.rule}
+            </p>
+          </details>
           <button
             type="button"
             onClick={() =>

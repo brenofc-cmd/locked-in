@@ -303,6 +303,8 @@ export const t = {
     noScore: "SEM PLACAR AINDA",
     focus: "FOCO",
     streak: "SEQUÊNCIA",
+    activityAll: (n: number) => `Ver toda a atividade (${n})`,
+    activityLess: "Mostrar menos",
     rule: "A semana é vencida pela porcentagem de tarefas agendadas concluídas. Número de tarefas e tempo de foco aparecem à parte.",
     reviewWeek: "Revisar esta semana",
     headToHeadAria: "Confronto",
