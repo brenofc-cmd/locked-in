@@ -1078,6 +1078,7 @@ export const t = {
     ok: "OK",
     continue: "CONTINUAR",
     signature: "SEM HYPE. SÓ PROVA.",
+    hundred: "100 DIAS DE PROVA.",
     perfectDay: "DIA PERFEITO",
     perfectDayLine: (n: number) =>
       n === 1
