@@ -28,15 +28,15 @@ export function ChallengesScreen() {
   if (!app.hasPartner) {
     return (
       <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
-        <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
+        <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.challengesScreen.title}
         </h1>
-        <p className="text-[26px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty">
+        <p className="text-heading leading-[1.3] font-medium tracking-display text-pretty">
           {t.challengesScreen.needsPartner}
         </p>
         <Link
           href="/duo"
-          className="flex h-[52px] items-center self-start rounded-[14px] bg-accent px-[22px] font-mono text-xs font-semibold tracking-[.22em] text-bg"
+          className="flex h-[52px] items-center self-start rounded-2xl bg-accent px-6 font-mono text-small font-semibold tracking-eyebrow text-bg"
         >
           {t.challengesScreen.invitePartner}
         </Link>
@@ -52,42 +52,40 @@ export function ChallengesScreen() {
   );
 
   return (
-    <div className="flex flex-col gap-[26px] animate-[li-fade-up_.4s_ease]">
+    <div className="flex flex-col gap-6 animate-[li-fade-up_.4s_ease]">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-2.5">
-          <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-            {t.challengesScreen.title}
-          </h1>
-          <span className="text-[14.5px] text-muted">
+          <h1 className="page-title">{t.challengesScreen.title}</h1>
+          <span className="text-body text-muted">
             {t.challengesScreen.subtitle}
           </span>
         </div>
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "challenge" })}
-          className="h-11 rounded-xl border border-white/12 px-4 text-sm"
+          className="h-11 rounded-xl border border-line-strong px-4 text-body"
         >
           {t.challengesScreen.newChallenge}
         </button>
       </header>
 
       {challenges === null && !error && (
-        <span className="text-[13.5px] text-dim">
+        <span className="text-small text-dim">
           {t.challengesScreen.loading}
         </span>
       )}
       {error && (
-        <span role="alert" className="text-[13.5px] text-danger">
+        <span role="alert" className="text-small text-danger">
           {t.challengesScreen.loadFailed}
         </span>
       )}
 
       {challenges !== null && active.length === 0 && (
-        <div className="flex flex-col gap-2 border-y border-white/7 py-6">
-          <span className="font-mono text-[11px] tracking-[.16em] text-dim">
+        <div className="flex flex-col gap-2 border-y border-line py-6">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.challengesScreen.noActive}
           </span>
-          <span className="text-[15px] text-muted">
+          <span className="text-body text-muted">
             {t.challengesScreen.createTogether}
           </span>
         </div>
@@ -106,7 +104,7 @@ export function ChallengesScreen() {
           aria-label={t.challengesScreen.completedAria}
           className="flex flex-col gap-3.5"
         >
-          <h2 className="border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+          <h2 className="border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted">
             {t.challengesScreen.completed}
           </h2>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
@@ -150,21 +148,21 @@ function ChallengeCard({
     <article
       aria-label={c.title}
       data-testid="challenge-card"
-      className="flex flex-col gap-5 rounded-[18px] border border-white/7 bg-card p-[22px] animate-[li-rise_.4s_ease]"
+      className="flex flex-col gap-5 rounded-2xl border border-line bg-card p-6 animate-[li-rise_.4s_ease]"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="flex min-w-0 flex-col gap-1.5">
-          <h2 className="text-lg font-semibold tracking-[.02em] break-words uppercase">
+          <h2 className="text-lead font-semibold tracking-meta break-words uppercase">
             {c.title}
           </h2>
-          <span className="text-[13px] text-dim">
+          <span className="text-small text-dim">
             {goalLabel(c.type, c.target)} · {periodLabel(c.start, c.end)}
           </span>
         </span>
         <span
           data-testid="challenge-status"
           className={cx(
-            "font-mono text-[10px] tracking-[.14em] whitespace-nowrap",
+            "font-mono text-meta tracking-eyebrow whitespace-nowrap",
             status === "active" ? "text-accent" : "text-dim",
           )}
         >
@@ -174,7 +172,7 @@ function ChallengeCard({
       {verdict && (
         <span
           data-testid="challenge-verdict"
-          className="font-mono text-[11px] tracking-[.2em]"
+          className="font-mono text-meta tracking-eyebrow"
         >
           {verdict}
         </span>
@@ -198,7 +196,7 @@ function ChallengeCard({
         <button
           type="button"
           onClick={() => onDelete(c.id)}
-          className="h-11 self-start text-[13px] text-dim underline underline-offset-[3px]"
+          className="h-11 self-start text-small text-dim underline underline-offset-[3px]"
         >
           {t.challengesScreen.deleteBeforeStart}
         </button>
@@ -224,7 +222,7 @@ function Bar({
     <div className="flex flex-col gap-2">
       <div
         className={cx(
-          "flex justify-between gap-3 text-sm",
+          "flex justify-between gap-3 text-body",
           !me && "text-muted",
         )}
       >
@@ -233,9 +231,9 @@ function Bar({
           {value}
         </span>
       </div>
-      <div className="h-[5px] rounded-[3px] bg-white/6">
+      <div className="h-[5px] rounded-sm bg-white/6">
         <div
-          className={cx("h-full rounded-[3px]", me ? "bg-accent" : "bg-ghost")}
+          className={cx("h-full rounded-sm", me ? "bg-accent" : "bg-ghost")}
           style={{ width: `${width}%` }}
         />
       </div>

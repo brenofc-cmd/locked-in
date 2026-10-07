@@ -35,8 +35,8 @@ export function ReactButton({
       }
       data-testid="react-button"
       className={cx(
-        "h-9 min-w-11 shrink-0 rounded-full border px-2.5 text-xs",
-        mine ? "border-accent-line text-text" : "border-white/9 text-muted",
+        "h-9 min-w-11 shrink-0 rounded-full border px-2.5 text-small",
+        mine ? "border-accent-line text-text" : "border-line-strong text-muted",
       )}
     >
       {mine ? reactionLabel(mine) : t.reactButton.react}
@@ -54,7 +54,7 @@ export function ReceivedReaction({ eventId }: { eventId: string }) {
   return (
     <span
       data-testid="received-reaction"
-      className="shrink-0 rounded-full border border-white/9 px-2.5 py-1 text-xs text-muted"
+      className="shrink-0 rounded-full border border-line-strong px-2.5 py-1 text-small text-muted"
     >
       {reactionLabel(theirs)} <span className="text-dim">{partner.name}</span>
     </span>

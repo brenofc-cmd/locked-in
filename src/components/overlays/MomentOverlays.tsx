@@ -75,9 +75,9 @@ function Frame({
 }
 
 const bigTitle =
-  "m-0 text-[44px] leading-none font-semibold tracking-[-0.035em] max-[384px]:text-[38px] desk:text-[64px]";
+  "m-0 text-num-l leading-none font-semibold tracking-number max-[384px]:text-display desk:text-num-xl";
 const lightButton =
-  "h-[60px] w-full rounded-2xl bg-text font-mono text-[13px] font-semibold tracking-[.3em] text-bg transition-transform duration-100 active:scale-[.97]";
+  "h-[60px] w-full rounded-2xl bg-text font-mono text-small font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97]";
 
 function ReviewDay() {
   const app = useApp();
@@ -107,9 +107,9 @@ function ReviewDay() {
 
   return (
     <Frame label={t.moments.reviewTodayAria} width="max-w-[520px]">
-      <div className="flex flex-col gap-[34px]">
+      <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-3.5">
-          <span className="font-mono text-xs tracking-[.14em] text-dim">
+          <span className="font-mono text-small tracking-eyebrow text-dim">
             {weekdayName(app.today)} ·{" "}
             {t.moments.day(accountDay(me.createdAt, me.timezone, app.today))}
           </span>
@@ -122,26 +122,26 @@ function ReviewDay() {
         <div className="flex items-end justify-between gap-4">
           <span
             data-testid="review-pct"
-            className="text-[64px] leading-[.82] font-medium tracking-[-0.055em] desk:text-[112px]"
+            className="text-num-xl leading-[.82] font-medium tracking-number desk:text-num-hero"
           >
             {stats.pct}
-            <span className="text-[26px] text-quiet desk:text-[40px]">%</span>
+            <span className="text-heading text-dim desk:text-display">%</span>
           </span>
           <span className="flex flex-col items-end gap-2">
-            <span className="text-[15px] tabular-nums">
+            <span className="text-body tabular-nums">
               {stats.done} / {stats.total}{" "}
               <span className="text-dim">{t.moments.done}</span>
             </span>
             <span
               data-testid="review-focus"
-              className="font-mono text-[11px] tracking-[.14em] text-muted"
+              className="font-mono text-meta tracking-eyebrow text-muted"
             >
               {formatMinutes(app.focusMin).toUpperCase()}{" "}
               {t.moments.focusSuffix}
             </span>
           </span>
         </div>
-        <div className="flex items-center gap-2.5 text-sm text-muted">
+        <div className="flex items-center gap-2.5 text-body text-muted">
           <span
             aria-hidden="true"
             className={cx(
@@ -154,24 +154,24 @@ function ReviewDay() {
             : t.moments.moreToMeet(stats.needed)}
         </div>
         {app.hasPartner && (
-          <div className="flex flex-col gap-3 border-t border-white/7 pt-[18px]">
+          <div className="flex flex-col gap-3 border-t border-line pt-5">
             <div className="flex items-baseline justify-between">
-              <span className="text-[13px] font-semibold tracking-[.16em]">
+              <span className="text-small font-semibold tracking-eyebrow">
                 {app.partner.name.toUpperCase()}
               </span>
               <span className="flex items-baseline gap-3.5 tabular-nums">
-                <span className="text-[15px] text-muted">
+                <span className="text-body text-muted">
                   {pv.done} / {pv.total}
                 </span>
                 <span
                   data-testid="review-partner-pct"
-                  className="text-[28px] font-medium tracking-[-0.03em]"
+                  className="text-number font-medium tracking-display"
                 >
                   {pv.pct}%
                 </span>
               </span>
             </div>
-            <span className="text-sm text-muted">
+            <span className="text-body text-muted">
               {diff > 0
                 ? t.moments.partnerAheadToday(app.partner.name, diff)
                 : diff < 0
@@ -189,15 +189,15 @@ function ReviewDay() {
         ).map(([k, names]) =>
           names.length > 0 ? (
             <div key={k} className="flex flex-col gap-1.5">
-              <span className="font-mono text-[11px] tracking-[.16em] text-dim">
+              <span className="font-mono text-meta tracking-eyebrow text-dim">
                 {k}
               </span>
-              <span className="text-sm text-muted">{names.join(" · ")}</span>
+              <span className="text-body text-muted">{names.join(" · ")}</span>
             </div>
           ) : null,
         )}
         {list.length === 0 && (
-          <span className="text-sm text-muted">{t.moments.nothingToday}</span>
+          <span className="text-body text-muted">{t.moments.nothingToday}</span>
         )}
         {nn && (
           <div className="-mt-3 flex flex-col">
@@ -285,7 +285,7 @@ function WeeklyReview({ start }: { start: string }) {
   if (!w) {
     return (
       <Frame label={t.moments.weeklyAria} width="max-w-[560px]">
-        <span className="text-[15px] text-muted">{t.moments.firstReview}</span>
+        <span className="text-body text-muted">{t.moments.firstReview}</span>
         <button type="button" onClick={closeOverlay} className={lightButton}>
           {t.moments.close}
         </button>
@@ -357,16 +357,16 @@ function WeeklyReview({ start }: { start: string }) {
 
   return (
     <Frame label={t.moments.weekReviewAria(w.week)} width="max-w-[560px]">
-      <div className="flex flex-col gap-[30px]">
+      <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <span className="flex flex-col gap-1.5">
             <span
               data-testid="weekly-title"
-              className="font-mono text-xs tracking-[.22em] text-accent"
+              className="font-mono text-small tracking-eyebrow text-accent"
             >
               {t.moments.weekTitle(w.week, w.current)}
             </span>
-            <span className="font-mono text-[11px] tracking-[.14em] text-dim">
+            <span className="font-mono text-meta tracking-eyebrow text-dim">
               {weekRangeLabel(w.weekStart)}
             </span>
           </span>
@@ -376,7 +376,7 @@ function WeeklyReview({ start }: { start: string }) {
               aria-label={t.moments.olderWeek}
               disabled={i >= weeks.length - 1}
               onClick={() => setI((x) => Math.min(weeks.length - 1, x + 1))}
-              className="size-11 rounded-xl border border-white/10 text-base text-text disabled:text-off"
+              className="size-11 rounded-xl border border-line-strong text-base text-text disabled:text-off"
             >
               ‹
             </button>
@@ -385,7 +385,7 @@ function WeeklyReview({ start }: { start: string }) {
               aria-label={t.moments.newerWeek}
               disabled={i <= 0}
               onClick={() => setI((x) => Math.max(0, x - 1))}
-              className="size-11 rounded-xl border border-white/10 text-base text-text disabled:text-off"
+              className="size-11 rounded-xl border border-line-strong text-base text-text disabled:text-off"
             >
               ›
             </button>
@@ -395,15 +395,15 @@ function WeeklyReview({ start }: { start: string }) {
           <div
             className={cx(
               "flex items-end justify-between pb-1.5",
-              partnerAhead ? "text-quiet" : "text-text",
+              partnerAhead ? "text-dim" : "text-text",
             )}
           >
-            <span className="text-[13px] font-semibold tracking-[.16em]">
+            <span className="text-small font-semibold tracking-eyebrow">
               {t.moments.you}
             </span>
             <span
               data-testid="weekly-me"
-              className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]"
+              className="text-num-xl leading-[.8] font-medium tracking-number tabular-nums desk:text-num-3xl"
             >
               {w.mePct === null ? "—" : `${w.mePct}%`}
             </span>
@@ -414,7 +414,7 @@ function WeeklyReview({ start }: { start: string }) {
                 <span className="h-px flex-1 bg-white/8" />
                 <span
                   data-testid="weekly-verdict"
-                  className="text-center font-mono text-[11px] tracking-[.2em] text-muted"
+                  className="text-center font-mono text-meta tracking-eyebrow text-muted"
                 >
                   {verdict}
                 </span>
@@ -425,15 +425,15 @@ function WeeklyReview({ start }: { start: string }) {
                   "flex items-end justify-between gap-3",
                   partnerAhead || w.result === "draw"
                     ? "text-text"
-                    : "text-quiet",
+                    : "text-dim",
                 )}
               >
-                <span className="text-[13px] font-semibold tracking-[.16em]">
+                <span className="text-small font-semibold tracking-eyebrow">
                   {partner.name.toUpperCase()}
                 </span>
                 <span
                   data-testid="weekly-partner"
-                  className="text-[64px] leading-[.8] font-medium tracking-[-0.06em] tabular-nums desk:text-[96px]"
+                  className="text-num-xl leading-[.8] font-medium tracking-number tabular-nums desk:text-num-3xl"
                 >
                   {w.partnerPct === null ? "—" : `${w.partnerPct}%`}
                 </span>
@@ -446,12 +446,12 @@ function WeeklyReview({ start }: { start: string }) {
             <div
               key={r.k}
               data-testid={"testId" in r ? r.testId : undefined}
-              className="flex items-baseline justify-between gap-3 border-t border-white/6 py-3.5"
+              className="flex items-baseline justify-between gap-3 border-t border-line py-3.5"
             >
-              <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+              <span className="font-mono text-meta tracking-eyebrow text-dim">
                 {r.k}
               </span>
-              <span className="text-right text-[15px]">{r.v}</span>
+              <span className="text-right text-body">{r.v}</span>
             </div>
           ))}
         </div>
@@ -475,14 +475,14 @@ function WeeklyReview({ start }: { start: string }) {
             closeOverlay();
             router.push("/plan/week?w=next");
           }}
-          className="h-[52px] w-full rounded-2xl border border-white/15 font-mono text-[12px] tracking-[.24em] text-text"
+          className="h-[52px] w-full rounded-2xl border border-line-strong font-mono text-small tracking-brand text-text"
         >
           {t.reviews.planNext}
         </button>
         <button
           type="button"
           onClick={closeOverlay}
-          className={cx(lightButton, "h-[58px] text-[12.5px] tracking-[.26em]")}
+          className={cx(lightButton, "h-[58px] text-small tracking-brand")}
         >
           {t.moments.close}
         </button>

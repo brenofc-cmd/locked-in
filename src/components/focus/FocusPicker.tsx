@@ -21,7 +21,7 @@ export function FocusGoalSelect({ compact = false }: { compact?: boolean }) {
   const kept = current && !options.some((g) => g.id === current.id);
   return (
     <label className="flex min-w-0 flex-col gap-2">
-      <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+      <span className="font-mono text-meta tracking-eyebrow text-dim">
         {t.goalPicker.focusLabel}
       </span>
       <select
@@ -30,7 +30,7 @@ export function FocusGoalSelect({ compact = false }: { compact?: boolean }) {
         aria-label={t.goalPicker.focusAria}
         disabled={focus.phase === "complete"}
         className={cx(
-          "min-w-0 rounded-xl border border-white/10 bg-bg px-3 text-base text-text outline-none [color-scheme:dark] focus:border-white/30",
+          "min-w-0 rounded-xl border border-line-strong bg-bg px-3 text-base text-text outline-none [color-scheme:dark] focus:border-line-bold",
           compact ? "h-11" : "h-12",
         )}
       >
@@ -92,8 +92,8 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               aria-checked={on}
               onClick={() => setFocusTask(label, taskId, goalOf(taskId))}
               className={cx(
-                "flex items-center justify-between border-b border-white/5 px-0.5 text-left",
-                compact ? "h-[54px] text-base" : "h-14 text-[17px]",
+                "flex items-center justify-between border-b border-line px-0.5 text-left",
+                compact ? "h-[54px] text-base" : "h-14 text-lead",
                 on ? "text-text" : "text-muted",
               )}
             >
@@ -102,7 +102,7 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
                 aria-hidden="true"
                 className={cx(
                   "flex size-[22px] items-center justify-center rounded-full border-[1.5px]",
-                  on ? "border-accent" : "border-white/20",
+                  on ? "border-accent" : "border-line-bold",
                 )}
               >
                 <span
@@ -134,20 +134,20 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               }
               onClick={() => setFocusDur(d.value)}
               className={cx(
-                "flex flex-col items-center justify-center gap-1 rounded-[14px] border p-0 transition-all duration-150 active:scale-[.95]",
+                "flex flex-col items-center justify-center gap-1 rounded-2xl border p-0 transition-all duration-150 active:scale-[.95]",
                 compact ? "h-[68px]" : "h-[76px]",
                 chipTone(on),
               )}
             >
               <span
                 className={cx(
-                  "font-medium tracking-[-0.03em]",
-                  compact ? "text-[23px]" : "text-[26px]",
+                  "font-medium tracking-display",
+                  compact ? "text-title" : "text-heading",
                 )}
               >
                 {d.value === "custom" && focus.custom ? focus.custom : d.n}
               </span>
-              <span className="font-mono text-[9.5px] tracking-[.14em] text-dim">
+              <span className="font-mono text-meta tracking-eyebrow text-dim">
                 {d.u}
               </span>
             </button>
@@ -165,9 +165,9 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
             onChange={(e) => setFocusCustom(e.target.value)}
             placeholder="45"
             aria-label={t.focusUi.customMinutesAria}
-            className="h-12 w-[110px] rounded-xl border border-white/12 bg-bg px-3.5 text-lg outline-none"
+            className="h-12 w-[110px] rounded-xl border border-line-strong bg-bg px-3.5 text-lead outline-none"
           />
-          <span className="font-mono text-[11px] tracking-[.14em] text-dim">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.focusUi.minutes}
           </span>
         </div>

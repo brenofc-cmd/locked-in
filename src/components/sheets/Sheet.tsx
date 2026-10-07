@@ -47,11 +47,11 @@ export function Sheet({
           aria-modal="true"
           aria-label={label}
           tabIndex={-1}
-          className="pointer-events-auto max-h-[88%] w-full overflow-y-auto rounded-t-[28px] border border-white/8 bg-sheet px-5 pt-2.5 pb-[calc(24px+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.5)] outline-none animate-[li-slide-up_.34s_cubic-bezier(.2,.8,.2,1)] desk:w-[440px] desk:rounded-[20px] desk:pb-6 desk:animate-[li-fade-up_.28s_ease]"
+          className="pointer-events-auto max-h-[88%] w-full overflow-y-auto rounded-t-3xl border border-line bg-sheet px-5 pt-2.5 pb-[calc(24px+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.5)] outline-none animate-[li-slide-up_.34s_cubic-bezier(.2,.8,.2,1)] desk:w-[440px] desk:rounded-3xl desk:pb-6 desk:animate-[li-fade-up_.28s_ease]"
         >
           <div
             aria-hidden="true"
-            className="mx-auto mb-[18px] h-[5px] w-[38px] rounded-[3px] bg-[#2c2c30]"
+            className="mx-auto mb-5 h-[5px] w-[38px] rounded-sm bg-off"
           />
           {children}
         </div>

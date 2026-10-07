@@ -23,7 +23,7 @@ import {
 
 const W = t.weeklyPlan;
 const field =
-  "h-12 min-w-0 flex-1 rounded-xl border border-white/12 bg-bg px-3.5 text-base outline-none focus:border-white/30";
+  "h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-bg px-3.5 text-base outline-none focus:border-line-bold";
 
 export function WeekPlanScreen({
   initialWeek,
@@ -38,18 +38,16 @@ export function WeekPlanScreen({
   const full = freePosition(list) === null;
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-[22px] animate-[li-fade-up_.4s_ease]">
+    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 animate-[li-fade-up_.4s_ease]">
       <Link
         href="/plan"
-        className="-mb-2 w-fit font-mono text-[11px] tracking-[.18em] text-dim"
+        className="-mb-2 w-fit font-mono text-meta tracking-eyebrow text-dim"
       >
         ‹ {W.back}
       </Link>
       <header className="flex flex-col gap-2">
-        <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          {W.title}
-        </h1>
-        <span className="text-[14.5px] text-muted">{W.subtitle}</span>
+        <h1 className="page-title">{W.title}</h1>
+        <span className="text-body text-muted">{W.subtitle}</span>
       </header>
       <div role="radiogroup" aria-label={W.tabsAria} className="flex gap-1.5">
         {(["current", "next"] as const).map((k) => (
@@ -62,14 +60,14 @@ export function WeekPlanScreen({
             className={cx(
               "flex h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border",
               tab === k
-                ? "border-white/30 bg-selected text-text"
-                : "border-white/8 text-muted",
+                ? "border-line-bold bg-selected text-text"
+                : "border-line text-muted",
             )}
           >
-            <span className="font-mono text-[11px] tracking-[.16em]">
+            <span className="font-mono text-meta tracking-eyebrow">
               {k === "current" ? W.current : W.next}
             </span>
-            <span className="font-mono text-[10px] tracking-[.08em] text-dim">
+            <span className="font-mono text-meta tracking-meta text-dim">
               {weekRangeLabel(weeks[k])}
             </span>
           </button>
@@ -83,14 +81,14 @@ export function WeekPlanScreen({
           ))}
         </ol>
         {list.length === 0 && (
-          <p className="m-0 py-3 text-[14px] text-dim">
+          <p className="m-0 py-3 text-body text-dim">
             {tab === "next" ? W.emptyNext : W.empty}
           </p>
         )}
         {full ? (
           <p
             data-testid="week-full"
-            className="m-0 border-t border-white/6 pt-3 text-[13px] text-dim"
+            className="m-0 border-t border-line pt-3 text-small text-dim"
           >
             {W.full}
           </p>
@@ -102,7 +100,7 @@ export function WeekPlanScreen({
           />
         )}
       </section>
-      <p className="m-0 text-xs text-dim">{W.selfDeclared}</p>
+      <p className="m-0 text-small text-dim">{W.selfDeclared}</p>
     </div>
   );
 }
@@ -130,7 +128,7 @@ function AddPriority({
 
   return (
     <form
-      className="flex flex-col gap-2 border-t border-white/6 pt-3"
+      className="flex flex-col gap-2 border-t border-line pt-3"
       onSubmit={(e) => {
         e.preventDefault();
         if (!busy) void add();
@@ -153,7 +151,7 @@ function AddPriority({
           type="submit"
           aria-disabled={busy || !title.trim()}
           className={cx(
-            "h-12 shrink-0 rounded-xl px-4 font-mono text-[11.5px] font-semibold tracking-[.2em]",
+            "h-12 shrink-0 rounded-xl px-4 font-mono text-meta font-semibold tracking-eyebrow",
             title.trim() ? "bg-accent text-bg" : "bg-selected text-ghost",
           )}
         >
@@ -161,7 +159,7 @@ function AddPriority({
         </button>
       </div>
       {error && (
-        <p role="alert" className="m-0 text-[13px] text-danger">
+        <p role="alert" className="m-0 text-small text-danger">
           {error}
         </p>
       )}
@@ -178,7 +176,7 @@ function PriorityLine({ p }: { p: Priority }) {
 
   if (editing) {
     return (
-      <li className="flex flex-col gap-2 border-t border-white/6 py-3">
+      <li className="flex flex-col gap-2 border-t border-line py-3">
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -203,7 +201,7 @@ function PriorityLine({ p }: { p: Priority }) {
           />
           <button
             type="submit"
-            className="h-12 shrink-0 rounded-xl bg-text px-4 font-mono text-[11.5px] font-semibold tracking-[.2em] text-bg"
+            className="h-12 shrink-0 rounded-xl bg-text px-4 font-mono text-meta font-semibold tracking-eyebrow text-bg"
           >
             {W.save}
           </button>
@@ -215,12 +213,12 @@ function PriorityLine({ p }: { p: Priority }) {
             setError(null);
             setEditing(false);
           }}
-          className="h-9 w-fit text-[13px] text-dim"
+          className="h-9 w-fit text-small text-dim"
         >
           {W.cancel}
         </button>
         {error && (
-          <p role="alert" className="m-0 text-[13px] text-danger">
+          <p role="alert" className="m-0 text-small text-danger">
             {error}
           </p>
         )}
@@ -232,7 +230,7 @@ function PriorityLine({ p }: { p: Priority }) {
     <li
       data-testid="week-priority"
       data-status={p.status}
-      className="flex min-h-[60px] items-center gap-2 border-t border-white/6"
+      className="flex min-h-[60px] items-center gap-2 border-t border-line"
     >
       <button
         type="button"
@@ -247,17 +245,17 @@ function PriorityLine({ p }: { p: Priority }) {
         <span
           aria-hidden="true"
           className={cx(
-            "flex size-[30px] shrink-0 items-center justify-center rounded-[9px] border-[1.5px] font-mono text-[11px]",
+            "flex size-[30px] shrink-0 items-center justify-center rounded-xl border-[1.5px] font-mono text-meta",
             done
               ? "border-accent bg-accent text-bg"
-              : "border-white/25 text-dim",
+              : "border-line-bold text-dim",
           )}
         >
           {done ? "✓" : p.position}
         </span>
         <span
           className={cx(
-            "min-w-0 flex-1 text-[15px] break-words",
+            "min-w-0 flex-1 text-body break-words",
             done && "text-muted line-through decoration-white/30",
           )}
         >
@@ -267,7 +265,7 @@ function PriorityLine({ p }: { p: Priority }) {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="h-10 shrink-0 rounded-lg px-2 text-[13px] text-dim"
+        className="h-10 shrink-0 rounded-lg px-2 text-small text-dim"
       >
         {W.edit}
       </button>
@@ -275,7 +273,7 @@ function PriorityLine({ p }: { p: Priority }) {
         type="button"
         aria-label={`${W.remove}: ${p.title}`}
         onClick={() => void app.removePriority(p.id)}
-        className="h-10 shrink-0 rounded-lg px-2 text-[13px] text-dim"
+        className="h-10 shrink-0 rounded-lg px-2 text-small text-dim"
       >
         ✕
       </button>

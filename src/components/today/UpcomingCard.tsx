@@ -20,22 +20,22 @@ export function UpcomingCard() {
       <button
         type="button"
         onClick={() => app.openSheet({ kind: "planner", event: next })}
-        className="flex min-h-[56px] w-full items-center justify-between gap-3 border-t border-white/6 py-2.5 text-left"
+        className="flex min-h-[56px] w-full items-center justify-between gap-3 border-t border-line py-2.5 text-left"
       >
         <span className="flex min-w-0 flex-col gap-1">
-          <span className="font-mono text-[10.5px] tracking-[.18em] text-dim">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.todayScreen.next}
             {!next.mine && ` · ${app.partner.name.toUpperCase()}`}
           </span>
-          <span className="truncate font-mono text-[11.5px] tracking-[.1em]">
+          <span className="truncate font-mono text-meta tracking-meta">
             {eventSummary(next)}
           </span>
         </span>
-        <span className="flex shrink-0 items-center gap-2.5 font-mono text-[11px] tracking-[.08em] text-dim tabular-nums">
+        <span className="flex shrink-0 items-center gap-2.5 font-mono text-meta tracking-meta text-dim tabular-nums">
           {[countdown(next.date, app.today), next.time]
             .filter(Boolean)
             .join(" · ")}
-          <span aria-hidden="true" className="text-faint">
+          <span aria-hidden="true" className="text-ghost">
             ›
           </span>
         </span>

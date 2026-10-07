@@ -66,7 +66,7 @@ export function ProfileMenu({
   }
 
   const item =
-    "flex min-h-11 w-full items-center px-4 text-left text-[14px] hover:bg-white/5 focus-visible:bg-white/5";
+    "flex min-h-11 w-full items-center px-4 text-left text-body hover:bg-white/5 focus-visible:bg-white/5";
   const links = [
     { href: "/settings#conta", label: t.shell.account },
     { href: "/settings", label: t.shell.settings },
@@ -87,7 +87,7 @@ export function ProfileMenu({
           "flex items-center gap-2.5 rounded-full",
           variant === "header"
             ? "size-9 justify-center"
-            : "h-11 w-full rounded-[10px] px-2.5 hover:bg-white/4",
+            : "h-11 w-full rounded-xl px-2.5 hover:bg-white/4",
           active && variant === "sidebar" && "bg-chip",
         )}
       >
@@ -95,14 +95,14 @@ export function ProfileMenu({
           initial={initial}
           me
           className={cx(
-            "size-7 text-xs",
+            "size-7 text-small",
             active && "ring-2 ring-accent ring-offset-2 ring-offset-bg",
           )}
         />
         {variant === "sidebar" && (
           <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-            <span className="truncate text-[13px]">{userName}</span>
-            <span className="font-mono text-[10px] tracking-[.1em] text-dim">
+            <span className="truncate text-small">{userName}</span>
+            <span className="font-mono text-meta tracking-meta text-dim">
               {t.shell.duoFooter}
             </span>
           </span>
@@ -113,15 +113,15 @@ export function ProfileMenu({
           id={panelId}
           data-testid="profile-menu"
           className={cx(
-            "absolute z-30 flex w-[232px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141416] py-1.5 shadow-[0_18px_50px_rgba(0,0,0,.55)]",
+            "absolute z-30 flex w-[232px] flex-col overflow-hidden rounded-2xl border border-line-strong bg-card py-1.5 shadow-[0_18px_50px_rgba(0,0,0,.55)]",
             variant === "header"
               ? "top-[calc(100%+8px)] right-0"
               : "bottom-[calc(100%+8px)] left-0",
           )}
         >
-          <span className="flex flex-col gap-0.5 border-b border-white/7 px-4 pt-2 pb-3">
-            <span className="truncate text-[14px]">{userName}</span>
-            <span className="truncate text-[12px] text-dim">{me.email}</span>
+          <span className="flex flex-col gap-0.5 border-b border-line px-4 pt-2 pb-3">
+            <span className="truncate text-body">{userName}</span>
+            <span className="truncate text-small text-dim">{me.email}</span>
           </span>
           <nav aria-label={t.shell.profile} className="flex flex-col pt-1">
             {links.map((l) => (
@@ -157,7 +157,7 @@ export function ProfileMenu({
               // V2 Phase 10: this device stops receiving my pushes.
               prepareSignOut(e.currentTarget);
             }}
-            className="mt-1 border-t border-white/7 pt-1"
+            className="mt-1 border-t border-line pt-1"
           >
             <input type="hidden" name="push_endpoint" defaultValue="" />
             <button

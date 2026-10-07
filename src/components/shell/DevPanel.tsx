@@ -54,29 +54,29 @@ export function DevPanel() {
   ];
 
   return (
-    <div className="absolute top-[60px] right-2 z-[95] flex flex-col items-end gap-1.5 font-mono text-[11px] desk:top-3 desk:right-3">
+    <div className="absolute top-[60px] right-2 z-[95] flex flex-col items-end gap-1.5 font-mono text-meta desk:top-3 desk:right-3">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="h-7 rounded-md border border-dashed border-accent/60 bg-bg px-2 tracking-[.14em] text-accent"
+        className="h-7 rounded-lg border border-dashed border-accent/60 bg-bg px-2 tracking-eyebrow text-accent"
       >
         DEV
       </button>
       {open && (
-        <div className="flex w-56 flex-col gap-1 rounded-lg border border-white/10 bg-sheet p-2 shadow-[0_14px_40px_rgba(0,0,0,0.5)]">
+        <div className="flex w-56 flex-col gap-1 rounded-lg border border-line-strong bg-sheet p-2 shadow-[0_14px_40px_rgba(0,0,0,0.5)]">
           {actions.map(([label, run]) => (
             <button
               key={label}
               type="button"
               onClick={run}
-              className="h-8 rounded-md px-2 text-left text-muted hover:bg-white/5 hover:text-text"
+              className="h-8 rounded-lg px-2 text-left text-muted hover:bg-white/5 hover:text-text"
             >
               {label}
             </button>
           ))}
           {/* V2 Resume State of this user on this device (read on open). */}
-          <pre className="max-h-48 overflow-auto rounded-md bg-bg p-2 text-[10px] leading-[1.4] whitespace-pre-wrap text-dim">
+          <pre className="max-h-48 overflow-auto rounded-lg bg-bg p-2 text-meta leading-[1.4] whitespace-pre-wrap text-dim">
             {JSON.stringify(
               { resume: loadResume(me.id), daily: loadMarks(me.id) },
               null,

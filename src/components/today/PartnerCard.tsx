@@ -22,7 +22,7 @@ export function PartnerCard() {
         pv.total,
         pv.seen,
       )}
-      className="flex flex-col gap-3.5 rounded-2xl border border-white/7 bg-card p-[18px] text-left transition-[box-shadow,transform] duration-700 active:scale-[.985]"
+      className="flex flex-col gap-3.5 rounded-2xl border border-line bg-card p-5 text-left transition-[box-shadow,transform] duration-700 active:scale-[.985]"
       style={{
         boxShadow: pv.flashing
           ? "0 0 0 1px color-mix(in oklab,var(--color-accent) 50%,transparent),0 0 40px color-mix(in oklab,var(--color-accent) 8%,transparent)"
@@ -31,14 +31,14 @@ export function PartnerCard() {
     >
       <div className="flex w-full items-center justify-between">
         <span className="flex items-center gap-2.5">
-          <Avatar initial={partner.initial} className="size-8 text-[13px]" />
-          <span className="flex flex-col gap-[3px]">
-            <span className="text-sm font-semibold tracking-[.06em]">
+          <Avatar initial={partner.initial} className="size-8 text-small" />
+          <span className="flex flex-col gap-1">
+            <span className="text-body font-semibold tracking-meta">
               {partner.name.toUpperCase()}
             </span>
             <span
               className={cx(
-                "flex items-center gap-1.5 font-mono text-[10px] tracking-[.14em]",
+                "flex items-center gap-1.5 font-mono text-meta tracking-eyebrow",
                 pv.live ? "text-accent" : "text-dim",
               )}
             >
@@ -52,11 +52,11 @@ export function PartnerCard() {
             </span>
           </span>
         </span>
-        <span className="flex flex-col items-end gap-[3px]">
-          <span className="text-[30px] leading-none font-medium tracking-[-0.04em] tabular-nums">
+        <span className="flex flex-col items-end gap-1">
+          <span className="text-number leading-none font-medium tracking-number tabular-nums">
             {pv.pct}%
           </span>
-          <span className="font-mono text-[10.5px] text-dim">
+          <span className="font-mono text-meta text-dim">
             {pv.done} / {pv.total}
           </span>
         </span>
@@ -64,7 +64,7 @@ export function PartnerCard() {
       {pv.line && (
         <span
           className={cx(
-            "text-[13px] tabular-nums",
+            "text-small tabular-nums",
             pv.lineTone === "text" && "text-text",
             pv.lineTone === "muted" && "text-muted",
             pv.lineTone === "dim" && "text-dim",
@@ -78,18 +78,18 @@ export function PartnerCard() {
 }
 
 const CARD_LINK =
-  "flex h-11 items-center self-start rounded-xl border border-white/14 px-[18px] font-mono text-[11.5px] font-semibold tracking-[.2em]";
+  "flex h-11 items-center self-start rounded-xl border border-line-strong px-5 font-mono text-meta font-semibold tracking-eyebrow";
 
 /** Real state: no duo yet, or a duo still waiting for the partner. */
 export function NoPartnerCard() {
   const { duo } = useSession();
   const waiting = duo !== null;
   return (
-    <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-white/12 p-5">
-      <span className="font-mono text-[11px] tracking-[.16em] text-dim">
+    <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-line-strong p-5">
+      <span className="font-mono text-meta tracking-eyebrow text-dim">
         {waiting ? t.partnerCard.waiting : t.partnerCard.noPartner}
       </span>
-      <span className="text-[15px] leading-[1.45] text-pretty">
+      <span className="text-body leading-[1.45] text-pretty">
         {waiting
           ? t.partnerCard.shareCodeLine(duo.inviteCode)
           : t.partnerCard.inviteLine}

@@ -28,9 +28,9 @@ import {
   savePlannerDraft,
 } from "@/lib/resume-state";
 
-const monoLabel = "font-mono text-[10.5px] tracking-[.16em] text-dim";
+const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "rounded-xl border border-white/10 bg-bg text-text outline-none focus:border-white/30";
+  "rounded-xl border border-line-strong bg-bg text-text outline-none focus:border-line-bold";
 
 const reminderLabel = (r: Reminder) =>
   t.planner.reminders[
@@ -63,7 +63,7 @@ function AddToTasks({ event }: { event: PlannerEvent }) {
       onClick={() =>
         app.openSheet({ kind: "add", prefill: taskSuggestion(event) })
       }
-      className="h-12 rounded-2xl border border-white/12 font-mono text-[11.5px] font-semibold tracking-[.2em]"
+      className="h-12 rounded-2xl border border-line-strong font-mono text-meta font-semibold tracking-eyebrow"
     >
       {t.planner.addToTasks}
     </button>
@@ -74,25 +74,25 @@ function PartnerEvent({ event }: { event: PlannerEvent }) {
   const app = useApp();
   return (
     <div className="flex flex-col gap-4">
-      <span className="font-mono text-[11px] tracking-[.18em] text-muted">
+      <span className="font-mono text-meta tracking-eyebrow text-muted">
         {t.planner.eventOf(app.partner.name)}
       </span>
       <div className="flex flex-col gap-1.5">
         <span className={monoLabel}>{eventHeading(event)}</span>
-        <span className="text-[19px] font-medium">{event.title}</span>
-        <span className="text-sm text-muted">
+        <span className="text-title font-medium">{event.title}</span>
+        <span className="text-body text-muted">
           {[dateLabel(event.date), event.time, countdown(event.date, app.today)]
             .filter(Boolean)
             .join(" · ")}
         </span>
         {event.important && (
-          <span className="font-mono text-[10.5px] tracking-[.16em] text-accent">
+          <span className="font-mono text-meta tracking-eyebrow text-accent">
             {t.planner.importantTag}
           </span>
         )}
       </div>
       {event.notes && (
-        <p className="text-[14.5px] leading-[1.5] whitespace-pre-wrap text-muted">
+        <p className="text-body leading-[1.5] whitespace-pre-wrap text-muted">
           {event.notes}
         </p>
       )}
@@ -183,14 +183,14 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
           type="button"
           disabled={pending}
           onClick={() => void remove()}
-          className="h-14 rounded-[14px] bg-danger font-mono text-[12.5px] font-semibold tracking-[.2em] text-bg disabled:opacity-60"
+          className="h-14 rounded-2xl bg-danger font-mono text-small font-semibold tracking-eyebrow text-bg disabled:opacity-60"
         >
           {t.planner.confirmDeleteYes}
         </button>
         <button
           type="button"
           onClick={() => setConfirmDelete(false)}
-          className="h-12 text-sm text-dim"
+          className="h-12 text-body text-dim"
         >
           {t.planner.cancel}
         </button>
@@ -208,14 +208,14 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
       }}
     >
       <div className="flex min-h-8 items-center justify-between">
-        <span className="font-mono text-[11px] tracking-[.18em] text-muted">
+        <span className="font-mono text-meta tracking-eyebrow text-muted">
           {event ? t.planner.editEvent : t.planner.newEvent}
         </span>
         {event && (
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
-            className="h-9 rounded-lg px-2.5 text-sm text-danger"
+            className="h-9 rounded-lg px-2.5 text-body text-danger"
           >
             {t.planner.delete}
           </button>
@@ -239,7 +239,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
               aria-checked={form.type === type}
               onClick={() => set("type", type)}
               className={cx(
-                "h-[38px] rounded-[10px] border px-[13px] font-mono text-[11.5px] tracking-[.1em]",
+                "h-[38px] rounded-xl border px-3 font-mono text-meta tracking-meta",
                 chipTone(form.type === type),
               )}
             >
@@ -256,7 +256,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
         placeholder={t.planner.fields.titlePlaceholder}
         aria-label={t.planner.fields.title}
         enterKeyHint="done"
-        className="h-14 rounded-[14px] border border-white/12 bg-bg px-4 text-[17px] outline-none focus:border-white/30"
+        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
       />
       <input
         value={form.subject}
@@ -297,7 +297,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
         onClick={() => set("important", !form.important)}
         className="flex min-h-[48px] items-center justify-between text-left"
       >
-        <span className="text-[14.5px]">{t.planner.fields.important}</span>
+        <span className="text-body">{t.planner.fields.important}</span>
         <SwitchTrack on={form.important} />
       </button>
       <div className="flex flex-col gap-1">
@@ -312,11 +312,13 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
             !app.hasPartner && "opacity-50",
           )}
         >
-          <span className="text-[14.5px]">{t.planner.fields.share}</span>
+          <span className="text-body">{t.planner.fields.share}</span>
           <SwitchTrack on={form.shared} />
         </button>
         {!app.hasPartner && (
-          <span className="text-xs text-dim">{t.planner.noPartnerShare}</span>
+          <span className="text-num-heros text-dim">
+            {t.planner.noPartnerShare}
+          </span>
         )}
       </div>
 
@@ -337,7 +339,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
               aria-checked={form.reminder === r}
               onClick={() => set("reminder", r)}
               className={cx(
-                "h-[38px] rounded-[10px] border px-[11px] font-mono text-[10.5px] tracking-[.08em]",
+                "h-[38px] rounded-xl border px-3 font-mono text-meta tracking-meta",
                 chipTone(form.reminder === r),
               )}
             >
@@ -358,7 +360,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
       />
 
       {error && (
-        <p role="alert" className="-mt-2 text-[13px] text-danger">
+        <p role="alert" className="-mt-2 text-small text-danger">
           {error}
         </p>
       )}
@@ -366,7 +368,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
         type="submit"
         aria-disabled={!valid || pending}
         className={cx(
-          "h-14 rounded-2xl font-mono text-[12.5px] font-semibold tracking-[.28em] transition-all duration-200 active:scale-[.97]",
+          "h-14 rounded-2xl font-mono text-small font-semibold tracking-brand transition-all duration-200 active:scale-[.97]",
           valid && !pending ? "bg-accent text-bg" : "bg-selected text-ghost",
         )}
       >

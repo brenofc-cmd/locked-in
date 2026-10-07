@@ -93,11 +93,11 @@ export function TaskRow({
   const leftOpacity = dx > 0 ? Math.min(1, dx / 80) : 0;
 
   return (
-    <div className="relative overflow-hidden border-b border-white/5">
+    <div className="relative overflow-hidden border-b border-line">
       <div aria-hidden="true" className="absolute inset-0 flex justify-between">
         <div
           className={cx(
-            "flex flex-1 items-center pl-5 font-mono text-[11px] tracking-[.2em] text-accent",
+            "flex flex-1 items-center pl-5 font-mono text-meta tracking-eyebrow text-accent",
             dx > 80 ? "bg-accent-strong" : "bg-accent-swipe",
           )}
           style={{ opacity: leftOpacity }}
@@ -105,7 +105,7 @@ export function TaskRow({
           {task.done ? t.taskRow.undo : t.taskRow.complete}
         </div>
         <div
-          className="flex flex-1 items-center justify-end bg-chip pr-5 font-mono text-[11px] tracking-[.2em] text-muted"
+          className="flex flex-1 items-center justify-end bg-chip pr-5 font-mono text-meta tracking-eyebrow text-muted"
           style={{ opacity: dx < 0 ? 1 : 0 }}
         >
           {t.taskRow.options}
@@ -154,13 +154,13 @@ export function TaskRow({
           <span
             aria-hidden="true"
             className={cx(
-              "flex size-[34px] shrink-0 items-center justify-center rounded-[10px] border-[1.5px] desk:size-[30px]",
+              "flex size-[34px] shrink-0 items-center justify-center rounded-xl border-[1.5px] desk:size-[30px]",
               skipped ? "border-dashed" : "border-solid",
               task.done
                 ? "border-accent bg-accent"
                 : skipped
-                  ? "border-white/10"
-                  : "border-white/24",
+                  ? "border-line-strong"
+                  : "border-line-bold",
             )}
             style={{
               transform: popping ? "scale(0.8)" : "scale(1)",
@@ -175,7 +175,7 @@ export function TaskRow({
 
           <span
             className={cx(
-              "hidden w-[42px] shrink-0 font-mono text-xs tabular-nums desk:block",
+              "hidden w-[42px] shrink-0 font-mono text-small tabular-nums desk:block",
               task.done ? "text-[#4e4d4a]" : "text-dim",
             )}
           >
@@ -189,15 +189,15 @@ export function TaskRow({
                 <span
                   aria-hidden="true"
                   data-testid="task-rank"
-                  className="shrink-0 font-mono text-[11px] text-accent tabular-nums"
+                  className="shrink-0 font-mono text-meta text-accent tabular-nums"
                 >
                   {task.priority}
                 </span>
               )}
               <span
                 className={cx(
-                  "text-[16.5px] decoration-[rgba(236,235,230,0.25)] transition-colors duration-300 desk:text-base",
-                  muted ? "text-quiet" : "text-text",
+                  "text-lead decoration-[rgba(236,235,230,0.25)] transition-colors duration-300 desk:text-base",
+                  muted ? "text-dim" : "text-text",
                   task.done && "line-through",
                 )}
               >
@@ -209,8 +209,8 @@ export function TaskRow({
 
           <span
             className={cx(
-              "flex shrink-0 items-center gap-1.5 font-mono text-[10.5px] tracking-[.08em]",
-              skipped ? "text-dim" : task.done ? "text-quiet" : "text-dim",
+              "flex shrink-0 items-center gap-1.5 font-mono text-meta tracking-meta",
+              skipped ? "text-dim" : task.done ? "text-dim" : "text-dim",
             )}
           >
             {task.unsynced && (
@@ -235,7 +235,7 @@ export function TaskRow({
           type="button"
           onClick={onOptions}
           aria-label={t.taskRow.optionsFor(task.name)}
-          className="flex h-11 w-9 shrink-0 items-center justify-center gap-[3px] rounded-lg hover:bg-white/4"
+          className="flex h-11 w-9 shrink-0 items-center justify-center gap-1 rounded-lg hover:bg-white/4"
         >
           <span
             aria-hidden="true"
@@ -258,7 +258,7 @@ export function TaskRow({
 function TaskMeta({ task }: { task: Task }) {
   const app = useApp();
   const mobile = [task.time, task.meta].filter(Boolean).join(" · ");
-  const cls = "font-mono text-[10.5px] tracking-[.1em] text-dim";
+  const cls = "font-mono text-meta tracking-meta text-dim";
   // V2 Phase 5: my own goal link only (the map never holds a partner task).
   const goalId = app.taskGoals[task.id];
   const goal = goalId ? app.goals.find((g) => g.id === goalId) : undefined;
@@ -270,7 +270,7 @@ function TaskMeta({ task }: { task: Task }) {
         <span
           id={`${task.id}-nn`}
           data-testid="task-non-negotiable"
-          className={cx(cls, "text-quiet")}
+          className={cx(cls, "text-dim")}
         >
           {t.nonNegotiable.label}
         </span>
@@ -283,7 +283,7 @@ function TaskMeta({ task }: { task: Task }) {
         <span
           id={`${task.id}-goal`}
           data-testid="task-goal"
-          className={cx(cls, "truncate text-quiet")}
+          className={cx(cls, "truncate text-dim")}
         >
           {t.goalPicker.tag(goal.title)}
         </span>

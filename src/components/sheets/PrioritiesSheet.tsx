@@ -12,7 +12,7 @@ import {
   removePriority,
 } from "@/lib/north-star";
 
-const monoLabel = "font-mono text-[10.5px] tracking-[.16em] text-dim";
+const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const iconBtn =
   "flex size-10 shrink-0 items-center justify-center rounded-lg text-dim hover:text-text disabled:opacity-25";
 
@@ -42,7 +42,7 @@ export function PrioritiesSheet() {
   }
 
   if (tasks.length === 0)
-    return <p className="text-[15px] text-muted">{t.top3.noTasks}</p>;
+    return <p className="text-body text-muted">{t.top3.noTasks}</p>;
 
   return (
     <div className="flex flex-col gap-5">
@@ -61,15 +61,15 @@ export function PrioritiesSheet() {
           {chosen.map((task, i) => (
             <li
               key={task.id}
-              className="flex min-h-[52px] items-center gap-2 border-t border-white/6"
+              className="flex min-h-[52px] items-center gap-2 border-t border-line"
             >
               <span
                 aria-hidden="true"
-                className="w-5 font-mono text-[12px] text-accent tabular-nums"
+                className="w-5 font-mono text-small text-accent tabular-nums"
               >
                 {i + 1}
               </span>
-              <span className="min-w-0 flex-1 truncate text-[15px]">
+              <span className="min-w-0 flex-1 truncate text-body">
                 {task.name}
               </span>
               <button
@@ -103,29 +103,29 @@ export function PrioritiesSheet() {
         </ol>
       )}
       <div className="flex flex-col gap-2">
-        <span className="text-[13px] text-dim">
+        <span className="text-small text-dim">
           {full ? t.top3.max : t.top3.pickerHint}
         </span>
         <ul className="flex flex-col">
           {others.map((task) => (
-            <li key={task.id} className="border-t border-white/6">
+            <li key={task.id} className="border-t border-line">
               <button
                 type="button"
                 disabled={full}
                 aria-label={t.top3.pick(task.name)}
                 onClick={() => setIds((x) => addPriority(x, task.id) ?? x)}
-                className="flex min-h-[48px] w-full items-center gap-3 text-left text-[15px] disabled:text-quiet"
+                className="flex min-h-[48px] w-full items-center gap-3 text-left text-body disabled:text-dim"
               >
                 <span
                   aria-hidden="true"
-                  className="flex size-5 items-center justify-center rounded-full border border-white/20 text-[12px] text-dim"
+                  className="flex size-5 items-center justify-center rounded-full border border-line-bold text-small text-dim"
                 >
                   +
                 </span>
                 <span
                   className={cx(
                     "min-w-0 flex-1 truncate",
-                    (task.done || task.skip) && "text-quiet",
+                    (task.done || task.skip) && "text-dim",
                   )}
                 >
                   {task.name}
@@ -139,7 +139,7 @@ export function PrioritiesSheet() {
         type="button"
         onClick={() => void save()}
         aria-disabled={saving}
-        className="h-14 rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.28em] text-bg active:scale-[.97]"
+        className="h-14 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
       >
         {t.top3.save}
       </button>

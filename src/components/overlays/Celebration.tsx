@@ -68,23 +68,23 @@ export function Celebration() {
         onBlur={() => setHeld(null)}
         className="pointer-events-auto flex w-full max-w-[420px] items-center gap-4 rounded-2xl border border-accent/30 bg-raised px-5 py-4 shadow-[0_12px_40px_rgba(0,0,0,.5)] motion-safe:animate-[li-fade-up_.35s_ease]"
       >
-        <span aria-hidden="true" className="text-[18px] text-accent">
+        <span aria-hidden="true" className="text-lead text-accent">
           ◆
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span
             data-testid="celebration-title"
-            className="font-mono text-[12px] font-semibold tracking-[.2em] text-accent"
+            className="font-mono text-small font-semibold tracking-eyebrow text-accent"
           >
             {copy.title}
           </span>
-          <span className="text-[13.5px] text-muted">{copy.line}</span>
+          <span className="text-small text-muted">{copy.line}</span>
         </span>
         <button
           type="button"
           onClick={() => dismissCelebration(row)}
           aria-label={t.celebrations.close}
-          className="h-10 shrink-0 rounded-xl border border-white/12 px-3.5 font-mono text-[11px] tracking-[.2em] text-text"
+          className="h-10 shrink-0 rounded-xl border border-line-strong px-3.5 font-mono text-meta tracking-eyebrow text-text"
         >
           {t.celebrations.ok}
         </button>

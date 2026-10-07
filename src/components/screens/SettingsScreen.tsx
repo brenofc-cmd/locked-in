@@ -37,7 +37,7 @@ const since = (iso: string) =>
     year: "numeric",
   });
 
-const heading = "font-mono text-[11px] font-normal tracking-[.16em] text-muted";
+const heading = "font-mono text-meta font-normal tracking-eyebrow text-muted";
 
 type BoolKey = {
   [K in SettingKey]: UserSettings[K] extends boolean ? K : never;
@@ -88,9 +88,7 @@ export function SettingsScreen() {
 
   return (
     <div className="flex max-w-[620px] flex-col gap-9 animate-[li-fade-up_.4s_ease]">
-      <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-        {t.settings.title}
-      </h1>
+      <h1 className="page-title">{t.settings.title}</h1>
 
       <Profile />
 
@@ -98,7 +96,7 @@ export function SettingsScreen() {
         <h2 id="standard-h" className={heading}>
           {t.settings.dailyStandard}
         </h2>
-        <span className="text-[13.5px] leading-[1.5] text-dim">
+        <span className="text-small leading-[1.5] text-dim">
           {t.settings.standardHelp}
         </span>
         <div
@@ -116,10 +114,10 @@ export function SettingsScreen() {
                 aria-checked={on}
                 onClick={() => app.setStandard(o)}
                 className={cx(
-                  "h-[46px] rounded-xl border text-[15px] font-medium",
+                  "h-[46px] rounded-xl border text-body font-medium",
                   on
                     ? "border-text bg-text text-bg"
-                    : "border-white/9 text-muted",
+                    : "border-line-strong text-muted",
                 )}
               >
                 {o}%
@@ -132,7 +130,7 @@ export function SettingsScreen() {
       <section aria-labelledby="daily-h" className="flex flex-col">
         <h2
           id="daily-h"
-          className={cx(heading, "border-b border-white/9 pb-2")}
+          className={cx(heading, "border-b border-line-strong pb-2")}
         >
           {t.settings.daily}
         </h2>
@@ -153,7 +151,7 @@ export function SettingsScreen() {
       <section aria-labelledby="notif-h" className="flex flex-col">
         <h2
           id="notif-h"
-          className={cx(heading, "border-b border-white/9 pb-2")}
+          className={cx(heading, "border-b border-line-strong pb-2")}
         >
           {t.settings.notifications}
         </h2>
@@ -173,7 +171,7 @@ export function SettingsScreen() {
           onChange={(v) => void save("quietHoursEnabled", v)}
         />
         {s.quietHoursEnabled && (
-          <div className="flex items-center gap-3 border-b border-white/5 py-3 text-sm">
+          <div className="flex items-center gap-3 border-b border-line py-3 text-body">
             <label className="flex items-center gap-2">
               <span className="text-dim">{t.settings.from}</span>
               <input
@@ -183,7 +181,7 @@ export function SettingsScreen() {
                 onChange={(e) =>
                   e.target.value && void save("quietHoursStart", e.target.value)
                 }
-                className="h-11 rounded-xl border border-white/10 bg-field px-3 text-text outline-none"
+                className="h-11 rounded-xl border border-line-strong bg-field px-3 text-text outline-none"
               />
             </label>
             <label className="flex items-center gap-2">
@@ -195,13 +193,13 @@ export function SettingsScreen() {
                 onChange={(e) =>
                   e.target.value && void save("quietHoursEnd", e.target.value)
                 }
-                className="h-11 rounded-xl border border-white/10 bg-field px-3 text-text outline-none"
+                className="h-11 rounded-xl border border-line-strong bg-field px-3 text-text outline-none"
               />
             </label>
           </div>
         )}
         <PushSettings settings={s} save={save} />
-        <span className="pt-3 text-[12.5px] leading-[1.5] text-dim">
+        <span className="pt-3 text-small leading-[1.5] text-dim">
           {t.settings.notifyNote}
         </span>
       </section>
@@ -210,18 +208,21 @@ export function SettingsScreen() {
         <h2 id="privacy-h" className={heading}>
           {t.settings.privacy}
         </h2>
-        <span className="text-[13.5px] leading-[1.5] text-dim">
+        <span className="text-small leading-[1.5] text-dim">
           {t.settings.privacyText}
         </span>
       </section>
 
       <section aria-labelledby="duo-h" className="flex flex-col">
-        <h2 id="duo-h" className={cx(heading, "border-b border-white/9 pb-2")}>
+        <h2
+          id="duo-h"
+          className={cx(heading, "border-b border-line-strong pb-2")}
+        >
           {t.settings.duo}
         </h2>
         <Link
           href="/duo"
-          className="flex min-h-[56px] items-center justify-between gap-3 border-b border-white/5 text-[14.5px]"
+          className="flex min-h-[56px] items-center justify-between gap-3 border-b border-line text-body"
         >
           <span>
             {duo?.partner
@@ -230,7 +231,7 @@ export function SettingsScreen() {
                 ? t.settings.waitingPartner
                 : t.settings.noPartner}
           </span>
-          <span aria-hidden="true" className="text-faint">
+          <span aria-hidden="true" className="text-ghost">
             ›
           </span>
         </Link>
@@ -254,12 +255,12 @@ export function SettingsScreen() {
           <input type="hidden" name="push_endpoint" defaultValue="" />
           <button
             type="submit"
-            className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
+            className="h-11 rounded-xl border border-line-strong px-5 text-body"
           >
             {t.settings.signOut}
           </button>
         </form>
-        <span className="text-[12.5px] text-dim">
+        <span className="text-small text-dim">
           {t.settings.since(me.email, since(me.createdAt))}
         </span>
       </div>
@@ -284,11 +285,11 @@ function Toggle({
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      className="flex min-h-[62px] items-center justify-between gap-4 border-b border-white/5 py-2 text-left"
+      className="flex min-h-[62px] items-center justify-between gap-4 border-b border-line py-2 text-left"
     >
       <span className="flex flex-col gap-1">
-        <span className="text-[14.5px]">{label}</span>
-        <span className="text-[12.5px] text-dim">{d}</span>
+        <span className="text-body">{label}</span>
+        <span className="text-small text-dim">{d}</span>
       </span>
       <SwitchTrack on={on} />
     </button>
@@ -331,7 +332,7 @@ function Profile() {
           });
         }}
       >
-        <label htmlFor="display-name" className="text-[13px] text-dim">
+        <label htmlFor="display-name" className="text-small text-dim">
           {t.settings.displayName}
         </label>
         <div className="flex gap-2">
@@ -341,19 +342,19 @@ function Profile() {
             maxLength={40}
             autoComplete="given-name"
             onChange={(e) => setName(e.target.value)}
-            className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 text-base outline-none focus:border-white/30"
+            className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
           />
           <button
             type="submit"
             disabled={!dirtyName || pending}
-            className="h-12 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-50"
+            className="h-12 rounded-xl border border-line-strong px-4 text-body disabled:opacity-50"
           >
             {pending ? t.settings.saving : t.settings.save}
           </button>
         </div>
       </form>
       <div className="flex flex-col gap-2">
-        <label htmlFor="timezone" className="text-[13px] text-dim">
+        <label htmlFor="timezone" className="text-small text-dim">
           {t.settings.timezone}
         </label>
         <select
@@ -378,7 +379,7 @@ function Profile() {
               }
             });
           }}
-          className="h-12 min-w-0 rounded-xl border border-white/10 bg-field px-3 text-[15px] text-text outline-none"
+          className="h-12 min-w-0 rounded-xl border border-line-strong bg-field px-3 text-body text-text outline-none"
         >
           {zones.map((z) => (
             <option key={z} value={z}>
@@ -386,7 +387,7 @@ function Profile() {
             </option>
           ))}
         </select>
-        <span className="text-[12.5px] leading-[1.5] text-dim">
+        <span className="text-small leading-[1.5] text-dim">
           {t.settings.timezoneNote}
         </span>
       </div>
@@ -485,14 +486,14 @@ function PushSettings({
 
   return (
     <div className="flex flex-col" data-testid="push-settings">
-      <div className="flex min-h-[62px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-white/5 py-3">
+      <div className="flex min-h-[62px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3">
         <span className="flex min-w-0 flex-1 basis-[220px] flex-col gap-1">
-          <span className="text-[14.5px]">{t.push.title}</span>
+          <span className="text-body">{t.push.title}</span>
           <span
             role="status"
             data-testid="push-state"
             data-state={state}
-            className="text-[12.5px] leading-[1.5] text-dim"
+            className="text-small leading-[1.5] text-dim"
           >
             {PUSH_TEXT[state]}
           </span>
@@ -502,7 +503,7 @@ function PushSettings({
             type="button"
             disabled={busy !== null}
             onClick={() => void enable()}
-            className="h-11 shrink-0 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-50"
+            className="h-11 shrink-0 rounded-xl border border-line-strong px-4 text-body disabled:opacity-50"
           >
             {busy === "enable" ? t.push.enabling : t.push.enable}
           </button>
@@ -512,7 +513,7 @@ function PushSettings({
             type="button"
             disabled={busy !== null}
             onClick={() => void disable()}
-            className="h-11 shrink-0 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-50"
+            className="h-11 shrink-0 rounded-xl border border-line-strong px-4 text-body disabled:opacity-50"
           >
             {busy === "disable" ? t.push.disabling : t.push.disable}
           </button>
@@ -524,11 +525,11 @@ function PushSettings({
             type="button"
             disabled={busy !== null}
             onClick={() => void test()}
-            className="flex min-h-[52px] items-center border-b border-white/5 text-left text-[14.5px] disabled:opacity-50"
+            className="flex min-h-[52px] items-center border-b border-line text-left text-body disabled:opacity-50"
           >
             {t.push.test}
           </button>
-          <span className="pt-4 pb-1 text-[12.5px] text-dim">
+          <span className="pt-4 pb-1 text-small text-dim">
             {t.push.kindsHeading}
           </span>
           {PUSH_KINDS.map((n) => (
@@ -562,13 +563,10 @@ function BrowserNotifications() {
 
   if (perm === "unsupported") return null;
   return (
-    <div className="flex min-h-[62px] items-center justify-between gap-4 border-b border-white/5 py-2">
+    <div className="flex min-h-[62px] items-center justify-between gap-4 border-b border-line py-2">
       <span className="flex flex-col gap-1">
-        <span className="text-[14.5px]">{t.settings.browserNotifications}</span>
-        <span
-          className="text-[12.5px] text-dim"
-          data-testid="browser-permission"
-        >
+        <span className="text-body">{t.settings.browserNotifications}</span>
+        <span className="text-small text-dim" data-testid="browser-permission">
           {perm === "granted"
             ? t.settings.permGranted
             : perm === "denied"
@@ -583,7 +581,7 @@ function BrowserNotifications() {
             const res = await Notification.requestPermission();
             setPerm(res);
           }}
-          className="h-11 shrink-0 rounded-xl border border-white/12 px-4 text-sm"
+          className="h-11 shrink-0 rounded-xl border border-line-strong px-4 text-body"
         >
           {t.settings.allow}
         </button>
@@ -600,13 +598,13 @@ function InstallApp() {
     <button
       type="button"
       onClick={() => void install()}
-      className="flex min-h-[56px] items-center justify-between gap-3 border-y border-white/7 text-left text-[14.5px]"
+      className="flex min-h-[56px] items-center justify-between gap-3 border-y border-line text-left text-body"
     >
       <span className="flex flex-col gap-1">
         <span>{t.settings.install}</span>
-        <span className="text-[12.5px] text-dim">{t.settings.installD}</span>
+        <span className="text-small text-dim">{t.settings.installD}</span>
       </span>
-      <span aria-hidden="true" className="text-faint">
+      <span aria-hidden="true" className="text-ghost">
         ›
       </span>
     </button>

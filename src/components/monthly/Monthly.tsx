@@ -47,13 +47,13 @@ export function Disclosure({
       aria-controls={panelId}
       onClick={() => setOpen((o) => !o)}
       data-testid={testId}
-      className="flex min-h-11 w-full items-center justify-between font-mono text-[11px] font-normal tracking-[.16em] text-dim hover:text-text"
+      className="flex min-h-11 w-full items-center justify-between font-mono text-meta font-normal tracking-eyebrow text-dim hover:text-text"
     >
       {label}
       <span
         aria-hidden="true"
         className={cx(
-          "text-faint transition-transform duration-200",
+          "text-ghost transition-transform duration-200",
           open && "rotate-90",
         )}
       >
@@ -62,7 +62,7 @@ export function Disclosure({
     </button>
   );
   return (
-    <div className="flex flex-col border-t border-white/7">
+    <div className="flex flex-col border-t border-line">
       {level === "h3" ? <h3 className="m-0">{button}</h3> : button}
       <div id={panelId} hidden={!open} className="flex flex-col pb-2">
         {children}
@@ -76,7 +76,7 @@ function PhaseTag({ month }: { month: Month }) {
     <span
       data-testid="month-phase"
       className={cx(
-        "flex items-center gap-1.5 font-mono text-[10px] tracking-[.16em]",
+        "flex items-center gap-1.5 font-mono text-meta tracking-eyebrow",
         month.final ? "text-muted" : "text-accent",
       )}
     >
@@ -103,18 +103,18 @@ function DetailRow({
     <div
       role="row"
       data-testid={testId}
-      className="grid grid-cols-[1.2fr_1fr_1fr] items-baseline gap-2 border-t border-white/7 py-2.5"
+      className="grid grid-cols-[1.2fr_1fr_1fr] items-baseline gap-2 border-t border-line py-2.5"
     >
       <span
         role="rowheader"
-        className="font-mono text-[10.5px] tracking-[.12em] text-muted"
+        className="font-mono text-meta tracking-meta text-muted"
       >
         {label}
       </span>
-      <span role="cell" className="text-[13px] tabular-nums">
+      <span role="cell" className="text-small tabular-nums">
         {me}
       </span>
-      <span role="cell" className="text-[13px] tabular-nums">
+      <span role="cell" className="text-small tabular-nums">
         {partner}
       </span>
     </div>
@@ -129,7 +129,7 @@ function MonthDetail({ month, name }: { month: Month; name: string }) {
       <div role="table" aria-label={monthTitle(month.month)}>
         <div
           role="row"
-          className="grid grid-cols-[1.2fr_1fr_1fr] gap-2 pb-1.5 font-mono text-[9.5px] tracking-[.14em] text-dim"
+          className="grid grid-cols-[1.2fr_1fr_1fr] gap-2 pb-1.5 font-mono text-meta tracking-eyebrow text-dim"
         >
           <span role="columnheader" />
           <span role="columnheader">{M.you}</span>
@@ -156,20 +156,20 @@ function MonthDetail({ month, name }: { month: Month; name: string }) {
           testId="month-focus"
         />
       </div>
-      <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 pt-1 text-[13px]">
-        <dt className="font-mono text-[10.5px] tracking-[.12em] text-muted">
+      <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 pt-1 text-small">
+        <dt className="font-mono text-meta tracking-meta text-muted">
           {M.drawsLabel}
         </dt>
         <dd data-testid="month-draws" className="m-0 tabular-nums">
           {month.draws}
         </dd>
-        <dt className="font-mono text-[10.5px] tracking-[.12em] text-muted">
+        <dt className="font-mono text-meta tracking-meta text-muted">
           {M.insufficientDays}
         </dt>
         <dd data-testid="month-insufficient" className="m-0 tabular-nums">
           {month.insufficientDays}
         </dd>
-        <dt className="font-mono text-[10.5px] tracking-[.12em] text-muted">
+        <dt className="font-mono text-meta tracking-meta text-muted">
           {M.tiebreakLabel}
         </dt>
         <dd data-testid="month-tiebreak-detail" className="m-0">
@@ -189,23 +189,23 @@ function MonthHead({ month, name }: { month: Month; name: string }) {
       <span className="flex items-baseline justify-between gap-3">
         <span
           data-testid="month-headline"
-          className="font-mono text-[12.5px] font-semibold tracking-[.18em]"
+          className="font-mono text-small font-semibold tracking-eyebrow"
         >
           {monthHeadline(month, name)}
         </span>
         <span
           data-testid="month-score"
-          className="font-mono text-[12.5px] text-muted tabular-nums"
+          className="font-mono text-small text-muted tabular-nums"
         >
           {monthScore(month)}
         </span>
       </span>
       {champion && (
-        <span data-testid="month-champion" className="text-[20px] font-medium">
+        <span data-testid="month-champion" className="text-title font-medium">
           {champion}
         </span>
       )}
-      <span className="flex flex-wrap gap-x-3 font-mono text-[11px] tracking-[.08em] text-dim">
+      <span className="flex flex-wrap gap-x-3 font-mono text-meta tracking-meta text-dim">
         <span data-testid="month-draws-line">{M.draws(month.draws)}</span>
         {tiebreak && (
           <span data-testid="month-tiebreak" className="text-muted">
@@ -214,7 +214,7 @@ function MonthHead({ month, name }: { month: Month; name: string }) {
         )}
       </span>
       {month.officialDays < MIN_OFFICIAL_DAYS && (
-        <span className="text-[12.5px] text-dim">
+        <span className="text-small text-dim">
           {M.minimum(month.officialDays)}
         </span>
       )}
@@ -237,17 +237,17 @@ export function MonthSummary() {
     >
       {!current ? (
         <>
-          <h2 className="m-0 border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+          <h2 className="m-0 border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted">
             {M.title}
           </h2>
-          <span className="text-[13px] text-dim">{M.none}</span>
+          <span className="text-small text-dim">{M.none}</span>
         </>
       ) : (
         <>
-          <h2 className="m-0 flex items-baseline justify-between border-b border-white/9 pb-2 font-normal">
+          <h2 className="m-0 flex items-baseline justify-between border-b border-line-strong pb-2 font-normal">
             <span
               data-testid="month-title"
-              className="font-mono text-[11px] tracking-[.16em] text-muted"
+              className="font-mono text-meta tracking-eyebrow text-muted"
             >
               {monthTitle(current.month)}
             </span>
@@ -265,7 +265,7 @@ export function MonthSummary() {
               <div data-testid="month-current-details">
                 <MonthDetail month={current} name={partner.name} />
               </div>
-              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 pt-3 text-[12.5px] leading-[1.45] text-muted">
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 pt-3 text-small leading-[1.45] text-muted">
                 {M.rules.map((r) => (
                   <li key={r}>{r}</li>
                 ))}
@@ -273,9 +273,7 @@ export function MonthSummary() {
             </Disclosure>
             <Disclosure label={M.previous} testId="month-previous-toggle">
               {previous.length === 0 ? (
-                <span className="py-2 text-[13px] text-dim">
-                  {M.noPrevious}
-                </span>
+                <span className="py-2 text-small text-dim">{M.noPrevious}</span>
               ) : (
                 <ol className="m-0 flex list-none flex-col p-0">
                   {previous.map((m) => (
@@ -284,9 +282,9 @@ export function MonthSummary() {
                       data-testid="month-previous"
                       data-month={m.month}
                       aria-label={monthAria(m, userName, partner.name)}
-                      className="flex flex-col gap-2 border-t border-white/7 py-3"
+                      className="flex flex-col gap-2 border-t border-line py-3"
                     >
-                      <span className="flex items-baseline justify-between gap-3 font-mono text-[11px] tracking-[.14em] text-muted">
+                      <span className="flex items-baseline justify-between gap-3 font-mono text-meta tracking-eyebrow text-muted">
                         {monthTitle(m.month)}
                         <PhaseTag month={m} />
                       </span>
@@ -314,19 +312,19 @@ export function MonthRow() {
       href="/progress#month"
       data-testid="month-row"
       aria-label={monthAria(current, userName, partner.name)}
-      className="flex min-h-[56px] items-center justify-between gap-3 border-y border-white/6 py-2.5"
+      className="flex min-h-[56px] items-center justify-between gap-3 border-y border-line py-2.5"
     >
       <span className="flex min-w-0 flex-col gap-1">
-        <span className="flex items-center gap-2 font-mono text-[10.5px] tracking-[.18em] text-dim">
+        <span className="flex items-center gap-2 font-mono text-meta tracking-eyebrow text-dim">
           {M.title}
           <span aria-hidden="true">·</span>
           <PhaseTag month={current} />
         </span>
-        <span className="truncate text-[14px]">
+        <span className="truncate text-body">
           {M.duoRow(current.me.wins, current.partner.wins, partner.name)}
         </span>
       </span>
-      <span aria-hidden="true" className="text-faint">
+      <span aria-hidden="true" className="text-ghost">
         ›
       </span>
     </Link>

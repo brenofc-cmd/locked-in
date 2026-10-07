@@ -11,14 +11,14 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 /** The square-in-square LOCKED IN mark. */
 export function LogoMark({ size = "sm" }: { size?: "sm" | "md" | "lg" }) {
   const outer = {
-    sm: "size-[14px] border-2 rounded-[3px]",
-    md: "size-[15px] border-2 rounded-[3px]",
-    lg: "size-7 border-[2.5px] rounded-[6px]",
+    sm: "size-[14px] border-2 rounded-sm",
+    md: "size-[15px] border-2 rounded-sm",
+    lg: "size-7 border-[2.5px] rounded-lg",
   }[size];
   const inner = {
-    sm: "size-1 rounded-[1px]",
-    md: "size-[5px] rounded-[1px]",
-    lg: "size-2 rounded-[2px]",
+    sm: "size-1 rounded-xs",
+    md: "size-[5px] rounded-xs",
+    lg: "size-2 rounded-xs",
   }[size];
   return (
     <span
@@ -101,11 +101,11 @@ export function ProgressBar({
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cx("relative h-1 rounded bg-white/6", className)}
+      className={cx("relative h-1 rounded-sm bg-white/6", className)}
     >
       <div
         className={cx(
-          "h-full rounded transition-[width] duration-700 ease-[cubic-bezier(.2,.8,.2,1)]",
+          "h-full rounded-sm transition-[width] duration-700 ease-[cubic-bezier(.2,.8,.2,1)]",
           tone === "accent" && "bg-accent",
           tone === "text" && "bg-text",
           tone === "partner" && "bg-ghost",
@@ -127,7 +127,7 @@ export function ProgressBar({
 export function SectionHeader({
   label,
   right,
-  tracking = "tracking-[.16em]",
+  tracking = "tracking-eyebrow",
   as: As = "div",
 }: {
   label: ReactNode;
@@ -136,12 +136,12 @@ export function SectionHeader({
   as?: "div" | "h2";
 }) {
   return (
-    <As className="flex items-baseline justify-between border-b border-white/9 pb-2 font-normal">
-      <span className={cx("font-mono text-[11px] text-muted", tracking)}>
+    <As className="flex items-baseline justify-between border-b border-line-strong pb-2 font-normal">
+      <span className={cx("font-mono text-meta text-muted", tracking)}>
         {label}
       </span>
       {right !== undefined && (
-        <span className="font-mono text-[11px] text-dim tabular-nums">
+        <span className="font-mono text-meta text-dim tabular-nums">
           {right}
         </span>
       )}
@@ -162,10 +162,8 @@ export function SwitchTrack({
       aria-hidden="true"
       className={cx(
         "relative shrink-0 transition-colors duration-200",
-        compact
-          ? "h-[22px] w-9 rounded-[11px]"
-          : "h-[26px] w-11 rounded-[13px]",
-        on ? "bg-accent" : "bg-[#2a2a2d]",
+        compact ? "h-[22px] w-9 rounded-xl" : "h-[26px] w-11 rounded-xl",
+        on ? "bg-accent" : "bg-off",
       )}
     >
       <span
@@ -184,7 +182,7 @@ export function SwitchTrack({
 export function chipTone(on: boolean) {
   return on
     ? "border-accent-line bg-accent-soft text-text"
-    : "border-white/9 bg-transparent text-muted";
+    : "border-line-strong bg-transparent text-muted";
 }
 
 export function CheckPath({
@@ -198,7 +196,7 @@ export function CheckPath({
     <path
       d="M3.5 8.5l3 3 6-7"
       fill="none"
-      stroke="#0A0A0B"
+      stroke="var(--color-bg)"
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -223,7 +221,7 @@ export function MiniCheck({
   radius?: number;
   light?: boolean;
 }) {
-  const fill = light ? "#ECEBE6" : "var(--color-accent)";
+  const fill = light ? "var(--color-text)" : "var(--color-accent)";
   return (
     <span
       aria-hidden="true"
@@ -240,7 +238,7 @@ export function MiniCheck({
         <path
           d="M3.5 8.5l3 3 6-7"
           fill="none"
-          stroke="#0A0A0B"
+          stroke="var(--color-bg)"
           strokeWidth={2.4}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -252,7 +250,7 @@ export function MiniCheck({
 }
 
 export const Chevron = () => (
-  <span aria-hidden="true" className="text-faint">
+  <span aria-hidden="true" className="text-ghost">
     ›
   </span>
 );

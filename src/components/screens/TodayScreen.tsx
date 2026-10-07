@@ -40,21 +40,18 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
   return (
     <div className="flex flex-col animate-[li-fade-up_.4s_ease]">
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 desk:gap-12 wide:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex min-w-0 flex-col gap-[26px] desk:gap-10">
-          <header className="flex flex-col gap-[18px]">
+        <div className="flex min-w-0 flex-col gap-6 desk:gap-10">
+          <header className="flex flex-col gap-5">
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs tracking-[.06em] text-dim">
+                <span className="font-mono text-small tracking-meta text-dim">
                   {dateLabel(app.today)}
                 </span>
-                <span className="font-mono text-[11.5px] tracking-[.22em] text-accent">
+                <span className="font-mono text-meta tracking-eyebrow text-accent">
                   {t.todayScreen.day(dayNumber)}
                 </span>
               </div>
-              <h1
-                suppressHydrationWarning
-                className="m-0 text-[25px] leading-[1.1] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]"
-              >
+              <h1 suppressHydrationWarning className="page-title">
                 {t.todayScreen.greeting(
                   daypartAt(app.now, me.timezone),
                   app.userName.toUpperCase(),
@@ -66,19 +63,19 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                 data-testid="today-pct"
                 aria-label={t.todayScreen.pctAria(stats.pct)}
                 className={cx(
-                  "flex items-baseline text-[64px] leading-[.82] font-medium tracking-[-0.055em] tabular-nums transition-colors duration-[400ms] desk:text-[84px] wide:text-[112px]",
+                  "flex items-baseline text-num-xl leading-[.82] font-medium tracking-number tabular-nums transition-colors duration-[400ms] desk:text-num-3xl wide:text-num-hero",
                   stats.perfect ? "text-accent" : "text-text",
                 )}
               >
                 {stats.pct}
-                <span className="ml-0.5 text-[26px] tracking-[-0.02em] text-quiet desk:text-[40px]">
+                <span className="ml-0.5 text-heading tracking-display text-dim desk:text-display">
                   %
                 </span>
               </span>
               <div className="flex flex-col items-end gap-2 pb-0.5">
                 <span
                   data-testid="today-count"
-                  className="text-[15px] tabular-nums"
+                  className="text-body tabular-nums"
                 >
                   {stats.done} / {stats.total}{" "}
                   <span className="text-dim">{t.todayScreen.done}</span>
@@ -86,11 +83,11 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                 <button
                   type="button"
                   onClick={() => app.openSheet({ kind: "streak" })}
-                  className="flex h-7 items-center gap-1.5 font-mono text-[11px] tracking-[.14em] text-muted hover:text-text"
+                  className="flex h-7 items-center gap-1.5 font-mono text-meta tracking-eyebrow text-muted hover:text-text"
                 >
                   <span data-testid="today-streak">{app.streak}</span>{" "}
                   {t.todayScreen.streakSuffix}
-                  <span aria-hidden="true" className="text-faint">
+                  <span aria-hidden="true" className="text-ghost">
                     ›
                   </span>
                 </button>
@@ -105,7 +102,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
               />
               <span
                 className={cx(
-                  "text-[13px]",
+                  "text-small",
                   stats.standardMet ? "text-accent" : "text-muted",
                 )}
               >
@@ -117,12 +114,12 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
           <MorningCard star={northStar} />
 
           {stats.perfect && (
-            <div className="flex items-center justify-between gap-4 rounded-[14px] bg-accent-wash px-5 py-[18px] animate-[li-glow_3.6s_ease-in-out_infinite]">
+            <div className="flex items-center justify-between gap-4 rounded-2xl bg-accent-wash px-5 py-5 animate-[li-glow_3.6s_ease-in-out_infinite]">
               <span className="flex items-baseline gap-4">
-                <span className="text-[26px] font-semibold tracking-[-0.03em] text-accent">
+                <span className="text-heading font-semibold tracking-display text-accent">
                   100%
                 </span>
-                <span className="font-mono text-[12.5px] tracking-[.28em]">
+                <span className="font-mono text-small tracking-brand">
                   {t.todayScreen.standardMet}
                 </span>
               </span>
@@ -133,20 +130,20 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
 
           <section
             aria-label={t.todayScreen.tasksAria}
-            className="flex flex-col gap-[30px]"
+            className="flex flex-col gap-8"
           >
             {empty && (
-              <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-white/12 p-5">
-                <span className="font-mono text-[11px] tracking-[.16em] text-dim">
+              <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-line-strong p-5">
+                <span className="font-mono text-meta tracking-eyebrow text-dim">
                   {t.todayScreen.noRoutine}
                 </span>
-                <span className="text-[15px] leading-[1.45]">
+                <span className="text-body leading-[1.45]">
                   {t.todayScreen.buildStandard}
                 </span>
                 <button
                   type="button"
                   onClick={() => app.openSheet({ kind: "add", repeat: true })}
-                  className="flex h-11 items-center self-start rounded-xl border border-white/14 px-[18px] font-mono text-[11.5px] font-semibold tracking-[.2em]"
+                  className="flex h-11 items-center self-start rounded-xl border border-line-strong px-5 font-mono text-meta font-semibold tracking-eyebrow"
                 >
                   {t.todayScreen.createRoutine}
                 </button>
@@ -158,7 +155,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                   as="h2"
                   label={sec.name}
                   right={sec.count}
-                  tracking="tracking-[.18em]"
+                  tracking="tracking-eyebrow"
                 />
                 {sec.tasks.map((task) => (
                   <TaskRow
@@ -177,12 +174,12 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
             <button
               type="button"
               onClick={() => app.openSheet({ kind: "add" })}
-              className="-mt-3.5 hidden h-11 self-start rounded-xl border border-dashed border-white/16 px-4 text-sm text-muted hover:border-white/30 hover:text-text desk:block"
+              className="-mt-3.5 hidden h-11 self-start rounded-xl border border-dashed border-line-strong px-4 text-body text-muted hover:border-line-bold hover:text-text desk:block"
             >
               {t.todayScreen.addTask}
             </button>
             {rest.length > 0 && (
-              <span className="text-[13px] text-dim">
+              <span className="text-small text-dim">
                 {t.todayScreen.restToday} {rest.map((r) => r.name).join(" · ")}
               </span>
             )}
@@ -204,10 +201,10 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
             <button
               type="button"
               onClick={() => app.openOverlay({ kind: "review" })}
-              className="flex min-h-[52px] items-center justify-between border-y border-white/6 text-[13.5px] text-muted hover:text-text"
+              className="flex min-h-[52px] items-center justify-between border-y border-line text-small text-muted hover:text-text"
             >
               <span>{t.todayScreen.reviewToday}</span>
-              <span aria-hidden="true" className="text-faint">
+              <span aria-hidden="true" className="text-ghost">
                 ›
               </span>
             </button>
@@ -215,7 +212,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
           <button
             type="button"
             onClick={() => app.openSheet({ kind: "focus" })}
-            className="hidden h-14 items-center justify-center gap-3 rounded-[14px] bg-accent font-mono text-[13px] font-semibold tracking-[.3em] text-bg transition-transform duration-100 active:scale-[.97] desk:flex"
+            className="hidden h-14 items-center justify-center gap-3 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97] desk:flex"
           >
             <LockGlyph />
             LOCK IN
@@ -223,18 +220,18 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
           {feedShort.length > 0 && (
             <div className="hidden flex-col wide:flex">
               <div className="flex items-center justify-between pb-1">
-                <span className="flex items-center gap-[9px]">
+                <span className="flex items-center gap-2">
                   <span
                     aria-hidden="true"
                     className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
                   />
-                  <h2 className="font-mono text-[11px] font-normal tracking-[.2em]">
+                  <h2 className="font-mono text-meta font-normal tracking-eyebrow">
                     {t.todayScreen.live}
                   </h2>
                 </span>
                 <Link
                   href="/partner"
-                  className="flex h-9 items-center text-[12.5px] text-dim hover:text-text"
+                  className="flex h-9 items-center text-small text-dim hover:text-text"
                 >
                   {t.todayScreen.seeAll}
                 </Link>
@@ -249,19 +246,19 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
         </aside>
       </div>
 
-      <div className="sticky bottom-0 z-[5] -mx-[18px] -mb-7 flex gap-2.5 bg-[linear-gradient(to_top,#0A0A0B_72%,rgba(10,10,11,0))] px-[18px] pt-[18px] pb-3.5 desk:hidden">
+      <div className="sticky bottom-0 z-[5] -mx-5 -mb-7 flex gap-2.5 bg-[linear-gradient(to_top,var(--color-bg)_72%,transparent)] px-5 pt-5 pb-3.5 desk:hidden">
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "add" })}
           aria-label={t.todayScreen.addTaskAria}
-          className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/12 bg-[#141416] text-[26px] font-light transition-transform duration-100 active:scale-[.92]"
+          className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-line-strong bg-card text-heading font-light transition-transform duration-100 active:scale-[.92]"
         >
           +
         </button>
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "focus" })}
-          className="flex h-14 flex-1 items-center justify-center gap-3 rounded-2xl bg-accent font-mono text-[13px] font-semibold tracking-[.3em] text-bg transition-transform duration-100 active:scale-[.97]"
+          className="flex h-14 flex-1 items-center justify-center gap-3 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97]"
         >
           <LockGlyph />
           LOCK IN

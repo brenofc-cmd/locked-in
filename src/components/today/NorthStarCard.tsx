@@ -31,11 +31,11 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
             <span aria-hidden="true">◇ </span>
             {t.northStar.emptyTitle}
           </span>
-          <span className="truncate text-[13.5px] text-muted">
+          <span className="truncate text-small text-muted">
             {t.northStar.emptyText}
           </span>
         </span>
-        <span aria-hidden="true" className="text-faint">
+        <span aria-hidden="true" className="text-ghost">
           ›
         </span>
       </Link>
@@ -86,7 +86,7 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
             {t.northStar.title}
           </span>
           {!open && (
-            <span className="truncate text-[14px] text-muted">
+            <span className="truncate text-body text-muted">
               {rows[0]?.text}
             </span>
           )}
@@ -94,7 +94,7 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
         <span
           aria-hidden="true"
           className={cx(
-            "text-faint transition-transform duration-200",
+            "text-ghost transition-transform duration-200",
             open && "rotate-90",
           )}
         >
@@ -108,18 +108,18 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
               key={r.k}
               data-testid={`north-star-${r.k}`}
               className={cx(
-                "flex flex-col gap-1 border-t border-white/6 py-3",
-                r.k === "mirror" && "border-l-2 border-l-white/20 pl-3",
+                "flex flex-col gap-1 border-t border-line py-3",
+                r.k === "mirror" && "border-l-2 border-l-line-bold pl-3",
               )}
             >
-              <h3 className="m-0 font-mono text-[10px] font-normal tracking-[.16em] text-dim">
+              <h3 className="m-0 font-mono text-meta font-normal tracking-eyebrow text-dim">
                 {r.label}
               </h3>
-              <p className="m-0 text-[15px] leading-[1.4] text-pretty">
+              <p className="m-0 text-body leading-[1.4] text-pretty">
                 {r.text}
               </p>
               {r.more && (
-                <p className="m-0 text-[13.5px] leading-[1.5] whitespace-pre-wrap text-muted">
+                <p className="m-0 text-small leading-[1.5] whitespace-pre-wrap text-muted">
                   {r.more}
                 </p>
               )}
@@ -127,7 +127,7 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
                 <Link
                   href={r.href}
                   data-testid="north-star-proof"
-                  className="self-start font-mono text-[10.5px] tracking-[.08em] text-dim tabular-nums hover:text-text"
+                  className="self-start font-mono text-meta tracking-meta text-dim tabular-nums hover:text-text"
                 >
                   {r.proof}
                 </Link>
@@ -137,7 +137,7 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
           <Link
             href="/goals"
             aria-label={t.northStar.manageAria}
-            className="flex h-10 items-center self-start font-mono text-[11px] tracking-[.14em] text-dim hover:text-text"
+            className="flex h-10 items-center self-start font-mono text-meta tracking-eyebrow text-dim hover:text-text"
           >
             {t.northStar.manage}
           </Link>
@@ -148,5 +148,5 @@ export function NorthStarCard({ star }: { star: NorthStar }) {
 }
 
 const line =
-  "flex min-h-[56px] w-full items-center justify-between gap-3 border-t border-white/6 py-2.5 text-left";
-const label = "font-mono text-[10.5px] tracking-[.18em] text-dim";
+  "flex min-h-[56px] w-full items-center justify-between gap-3 border-t border-line py-2.5 text-left";
+const label = "font-mono text-meta tracking-eyebrow text-dim";

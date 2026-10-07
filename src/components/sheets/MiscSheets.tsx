@@ -27,7 +27,7 @@ import { dayState, focusLabel, percent } from "@/lib/progress";
 import { ROUTINE_TEMPLATES, TEMPLATE_NAMES } from "@/lib/routine-templates";
 import { todayStats } from "@/lib/today";
 
-const heading = "font-mono text-[11px] tracking-[.18em] text-muted";
+const heading = "font-mono text-meta tracking-eyebrow text-muted";
 
 export function ReactSheet({
   eventId,
@@ -40,10 +40,10 @@ export function ReactSheet({
   const { me } = useSession();
   const mine = reactions[eventId]?.[me.id] ?? null;
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
         <span className={heading}>{t.miscSheets.react}</span>
-        <span className="text-[17px]">{title}</span>
+        <span className="text-lead">{title}</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {REACTION_TYPES.map((r) => {
@@ -61,11 +61,11 @@ export function ReactSheet({
                   : t.miscSheets.sendAria(label)
               }
               className={cx(
-                "h-[72px] rounded-[18px] border p-0 transition-transform duration-100 active:scale-[.88]",
+                "h-[72px] rounded-2xl border p-0 transition-transform duration-100 active:scale-[.88]",
                 on
                   ? "border-accent-line bg-accent-soft"
-                  : "border-white/8 bg-raised",
-                isEmojiReaction(r) ? "text-[26px]" : "text-[13px]",
+                  : "border-line bg-raised",
+                isEmojiReaction(r) ? "text-heading" : "text-small",
               )}
             >
               {label}
@@ -77,7 +77,7 @@ export function ReactSheet({
         <button
           type="button"
           onClick={() => void react(eventId, null)}
-          className="h-11 self-start text-[13px] text-dim underline underline-offset-[3px]"
+          className="h-11 self-start text-small text-dim underline underline-offset-[3px]"
         >
           {t.miscSheets.removeReaction}
         </button>
@@ -95,7 +95,7 @@ export function FocusSheet() {
       <button
         type="button"
         onClick={startFocus}
-        className="h-[58px] rounded-2xl bg-accent font-mono text-[13px] font-semibold tracking-[.32em] text-bg active:scale-[.97]"
+        className="h-[58px] rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
       >
         {t.miscSheets.startFocus}
       </button>
@@ -122,13 +122,13 @@ export function StreakSheet() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-baseline gap-2.5">
-        <span className="text-[56px] leading-[.9] font-medium tracking-[-0.05em]">
+        <span className="text-num-xl leading-[.9] font-medium tracking-number">
           {streak}
         </span>
-        <span className="font-mono text-xs tracking-[.16em] text-muted">
+        <span className="font-mono text-small tracking-eyebrow text-muted">
           {t.miscSheets.dayStreak}
         </span>
-        <span className="ml-auto font-mono text-[11px] tracking-[.12em] text-dim">
+        <span className="ml-auto font-mono text-meta tracking-meta text-dim">
           {t.miscSheets.longest(longestStreak)}
         </span>
       </div>
@@ -136,12 +136,12 @@ export function StreakSheet() {
         {rules.map((r) => (
           <div
             key={r.text}
-            className="flex gap-3 border-t border-white/6 py-3 text-[14.5px] leading-[1.45]"
+            className="flex gap-3 border-t border-line py-3 text-body leading-[1.45]"
           >
             <span
               aria-hidden="true"
               className={cx(
-                "mt-[7px] size-1.5 shrink-0 rounded-full",
+                "mt-2 size-1.5 shrink-0 rounded-full",
                 r.on ? "bg-accent" : "border-[1.5px] border-missed",
               )}
             />
@@ -149,13 +149,13 @@ export function StreakSheet() {
           </div>
         ))}
       </div>
-      <div className="rounded-xl bg-raised px-4 py-3.5 text-sm leading-[1.5] text-muted">
+      <div className="rounded-xl bg-raised px-4 py-3.5 text-body leading-[1.5] text-muted">
         {today}
       </div>
       <button
         type="button"
         onClick={closeSheet}
-        className="h-[52px] rounded-[14px] border border-white/12 text-[15px]"
+        className="h-[52px] rounded-2xl border border-line-strong text-body"
       >
         {t.miscSheets.gotIt}
       </button>
@@ -222,12 +222,12 @@ export function DaySheet({ date }: { date: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-end justify-between gap-3">
         <span className="flex flex-col gap-1.5">
-          <span className="font-mono text-[11px] tracking-[.16em] text-muted">
+          <span className="font-mono text-meta tracking-eyebrow text-muted">
             {dateLabel(date)}
           </span>
           <span
             className={cx(
-              "text-[15px]",
+              "text-body",
               items === null
                 ? "text-dim"
                 : state === "missed"
@@ -244,7 +244,7 @@ export function DaySheet({ date }: { date: string }) {
         </span>
         <span
           data-testid="day-pct"
-          className="text-[44px] leading-[.85] font-medium tracking-[-0.045em] tabular-nums"
+          className="text-num-l leading-[.85] font-medium tracking-number tabular-nums"
         >
           {pct === null ? "—" : `${pct}%`}
         </span>
@@ -255,12 +255,12 @@ export function DaySheet({ date }: { date: string }) {
           return (
             <div
               key={it.id}
-              className="flex min-h-12 items-center gap-3 border-t border-white/5"
+              className="flex min-h-12 items-center gap-3 border-t border-line"
             >
               <span
                 aria-hidden="true"
                 className={cx(
-                  "flex size-[18px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px]",
+                  "flex size-[18px] shrink-0 items-center justify-center rounded-lg border-[1.5px]",
                   missed
                     ? "border-dashed border-missed"
                     : "border-accent bg-accent",
@@ -270,7 +270,7 @@ export function DaySheet({ date }: { date: string }) {
                   <path
                     d="M3.5 8.5l3 3 6-7"
                     fill="none"
-                    stroke="#0A0A0B"
+                    stroke="var(--color-bg)"
                     strokeWidth="2.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -280,7 +280,7 @@ export function DaySheet({ date }: { date: string }) {
               </span>
               <span
                 className={cx(
-                  "flex-1 text-[14.5px]",
+                  "flex-1 text-body",
                   missed ? "text-text" : "text-muted",
                 )}
               >
@@ -288,7 +288,7 @@ export function DaySheet({ date }: { date: string }) {
               </span>
               <span
                 className={cx(
-                  "font-mono text-[10px] tracking-[.12em]",
+                  "font-mono text-meta tracking-meta",
                   missed ? "text-danger" : "text-dim",
                 )}
               >
@@ -299,11 +299,11 @@ export function DaySheet({ date }: { date: string }) {
         })}
       </div>
       {items !== null && (
-        <div className="flex items-baseline justify-between border-t border-white/8 pt-3">
-          <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+        <div className="flex items-baseline justify-between border-t border-line pt-3">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.miscSheets.focus}
           </span>
-          <span className="text-[15px] tabular-nums" data-testid="day-focus">
+          <span className="text-body tabular-nums" data-testid="day-focus">
             {focusLabel(focus.seconds)}
             <span className="text-dim">
               {" "}
@@ -320,7 +320,7 @@ export function DaySheet({ date }: { date: string }) {
           <ReflectionView kind="day" reflection={review.reflection} />
         </>
       )}
-      <span className="text-xs text-dim">{t.miscSheets.dayNote}</span>
+      <span className="text-num-heros text-dim">{t.miscSheets.dayNote}</span>
     </div>
   );
 }
@@ -350,7 +350,7 @@ export function TemplateSheet() {
   const chosen = items.filter((i) => i.on && !have.has(i.name.toLowerCase()));
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-5">
       <span className={heading}>{t.miscSheets.useTemplate}</span>
       <div
         role="radiogroup"
@@ -365,7 +365,7 @@ export function TemplateSheet() {
             aria-checked={pick === n}
             onClick={() => choose(n)}
             className={cx(
-              "h-10 rounded-[10px] border px-3.5 text-sm",
+              "h-10 rounded-xl border px-3.5 text-body",
               chipTone(pick === n),
             )}
           >
@@ -379,7 +379,7 @@ export function TemplateSheet() {
           return (
             <div
               key={it.name + i}
-              className="flex min-h-[46px] items-center gap-3 border-t border-white/5 text-[15px]"
+              className="flex min-h-[46px] items-center gap-3 border-t border-line text-body"
             >
               <button
                 type="button"
@@ -399,7 +399,7 @@ export function TemplateSheet() {
               <span className={cx("flex-1", !it.on && "text-dim")}>
                 {it.name}
               </span>
-              <span className="font-mono text-[10px] tracking-[.12em] text-dim">
+              <span className="font-mono text-meta tracking-meta text-dim">
                 {owned ? t.miscSheets.have : t.miscSheets.new}
               </span>
             </div>
@@ -418,21 +418,19 @@ export function TemplateSheet() {
             placeholder={t.miscSheets.addOwn}
             aria-label={t.miscSheets.addItemAria}
             maxLength={80}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 text-[15px] outline-none"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 text-body outline-none"
           />
           <button
             type="button"
             onClick={addOwn}
             aria-label={t.miscSheets.addAria}
-            className="size-11 rounded-xl border border-white/12 text-xl"
+            className="size-11 rounded-xl border border-line-strong text-title"
           >
             +
           </button>
         </div>
       </div>
-      <span className="text-[12.5px] text-dim">
-        {t.miscSheets.templateNote}
-      </span>
+      <span className="text-small text-dim">{t.miscSheets.templateNote}</span>
       <button
         type="button"
         disabled={busy || chosen.length === 0}
@@ -445,7 +443,7 @@ export function TemplateSheet() {
           setBusy(false);
           if (ok) closeSheet();
         }}
-        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg disabled:opacity-50"
+        className="h-14 rounded-2xl bg-text font-mono text-small font-semibold tracking-brand text-bg disabled:opacity-50"
       >
         {busy
           ? t.miscSheets.adding
@@ -493,8 +491,8 @@ export function ChallengeSheet() {
   }
 
   const field =
-    "h-12 w-full min-w-0 rounded-xl border border-white/10 bg-field px-3.5 text-[15px] outline-none focus:border-white/30";
-  const label = "font-mono text-[10.5px] tracking-[.16em] text-dim";
+    "h-12 w-full min-w-0 rounded-xl border border-line-strong bg-field px-3.5 text-body outline-none focus:border-line-bold";
+  const label = "font-mono text-meta tracking-eyebrow text-dim";
 
   return (
     <form
@@ -536,7 +534,7 @@ export function ChallengeSheet() {
               aria-checked={draft.type === k}
               onClick={() => setType(k)}
               className={cx(
-                "h-[46px] rounded-xl border text-[14.5px]",
+                "h-[46px] rounded-xl border text-body",
                 chipTone(draft.type === k),
               )}
             >
@@ -586,18 +584,16 @@ export function ChallengeSheet() {
           />
         </label>
       </div>
-      <span className="text-[12.5px] text-dim">
-        {t.miscSheets.challengeNote}
-      </span>
+      <span className="text-small text-dim">{t.miscSheets.challengeNote}</span>
       {error && (
-        <p role="alert" className="text-[13px] text-danger">
+        <p role="alert" className="text-small text-danger">
           {error}
         </p>
       )}
       <button
         type="submit"
         disabled={busy}
-        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.26em] text-bg disabled:opacity-50"
+        className="h-14 rounded-2xl bg-text font-mono text-small font-semibold tracking-brand text-bg disabled:opacity-50"
       >
         {busy ? t.miscSheets.creating : t.miscSheets.create}
       </button>

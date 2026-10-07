@@ -20,7 +20,7 @@ import { goalTypeLabel, type Goal } from "@/lib/goals";
 import { scheduleLabel } from "@/lib/today";
 
 const h2 =
-  "border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted";
+  "border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted";
 const MARK: Record<ProofKind, string> = {
   task: "✓",
   focus: "◷",
@@ -106,20 +106,18 @@ export function GoalDetailScreen({
         <Link
           href="/goals"
           aria-label={t.proof.backAria}
-          className="flex h-9 items-center self-start font-mono text-[11px] tracking-[.16em] text-dim hover:text-text"
+          className="flex h-9 items-center self-start font-mono text-meta tracking-eyebrow text-dim hover:text-text"
         >
           ‹ {t.proof.back}
         </Link>
-        <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+        <span className="font-mono text-meta tracking-eyebrow text-dim">
           {goalTypeLabel(goal.type)}
           {!active &&
             ` · ${goal.status === "achieved" ? t.goals.statusAchieved : t.goals.statusArchived}`}
         </span>
-        <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] text-pretty max-[384px]:text-[23px] desk:text-[38px]">
-          {goal.title}
-        </h1>
+        <h1 className="page-title">{goal.title}</h1>
         {!active && (
-          <p className="m-0 text-[13.5px] text-muted">{t.proof.inactive}</p>
+          <p className="m-0 text-small text-muted">{t.proof.inactive}</p>
         )}
       </div>
 
@@ -128,17 +126,14 @@ export function GoalDetailScreen({
           {t.proof.thisWeek}
         </h2>
         {weekLines.length === 0 ? (
-          <p className="m-0 text-[14px] text-dim">{t.proof.noneWeek}</p>
+          <p className="m-0 text-body text-dim">{t.proof.noneWeek}</p>
         ) : (
           <ul
             data-testid="proof-week"
             className="m-0 flex list-none flex-col gap-2 p-0"
           >
             {weekLines.map((l) => (
-              <li
-                key={l.mark}
-                className="flex items-baseline gap-3 text-[17px]"
-              >
+              <li key={l.mark} className="flex items-baseline gap-3 text-lead">
                 <span
                   aria-hidden="true"
                   className="w-4 text-center text-accent"
@@ -157,13 +152,13 @@ export function GoalDetailScreen({
           <button
             type="button"
             onClick={() => app.openSheet({ kind: "add", goalId: goal.id })}
-            className="h-12 rounded-xl border border-white/14 font-mono text-[11px] font-semibold tracking-[.18em]"
+            className="h-12 rounded-xl border border-line-strong font-mono text-meta font-semibold tracking-eyebrow"
           >
             {t.proof.createTask}
           </button>
           <Link
             href={`/focus?goal=${goal.id}`}
-            className="flex h-12 items-center justify-center rounded-xl bg-accent font-mono text-[11px] font-semibold tracking-[.18em] text-bg"
+            className="flex h-12 items-center justify-center rounded-xl bg-accent font-mono text-meta font-semibold tracking-eyebrow text-bg"
           >
             {t.proof.startFocus}
           </Link>
@@ -175,7 +170,7 @@ export function GoalDetailScreen({
           {t.proof.latest}
         </h2>
         {proofs.length === 0 ? (
-          <p className="m-0 text-[14px] text-dim">{t.proof.none}</p>
+          <p className="m-0 text-body text-dim">{t.proof.none}</p>
         ) : (
           <div data-testid="proof-timeline" className="flex flex-col gap-5">
             {groupByDay(proofs, app.today).map((day) => (
@@ -186,7 +181,7 @@ export function GoalDetailScreen({
               >
                 <h3
                   id={`proof-day-${day.date}`}
-                  className="m-0 font-mono text-[10.5px] font-normal tracking-[.16em] text-dim"
+                  className="m-0 font-mono text-meta font-normal tracking-eyebrow text-dim"
                 >
                   {day.heading}
                 </h3>
@@ -197,7 +192,7 @@ export function GoalDetailScreen({
                       <li
                         key={`${p.kind}:${p.id}`}
                         data-kind={p.kind}
-                        className="flex items-start gap-3 border-b border-white/5 py-2.5"
+                        className="flex items-start gap-3 border-b border-line py-2.5"
                       >
                         <span
                           aria-hidden="true"
@@ -206,10 +201,10 @@ export function GoalDetailScreen({
                           {MARK[p.kind]}
                         </span>
                         <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="text-[15px] text-pretty">
+                          <span className="text-body text-pretty">
                             {line.text}
                           </span>
-                          <span className="font-mono text-[10.5px] tracking-[.08em] text-dim tabular-nums">
+                          <span className="font-mono text-meta tracking-meta text-dim tabular-nums">
                             {line.sub}
                           </span>
                         </span>
@@ -224,7 +219,7 @@ export function GoalDetailScreen({
                 type="button"
                 onClick={() => void loadMore()}
                 disabled={loading}
-                className="h-11 self-start rounded-xl border border-white/12 px-4 font-mono text-[11px] tracking-[.16em] text-muted"
+                className="h-11 self-start rounded-xl border border-line-strong px-4 font-mono text-meta tracking-eyebrow text-muted"
               >
                 {loading ? t.proof.loading : t.proof.loadMore}
               </button>
@@ -238,7 +233,7 @@ export function GoalDetailScreen({
           {t.proof.linked}
         </h2>
         {linkedRoutines.length === 0 && linkedToday.length === 0 && (
-          <p className="m-0 text-[14px] text-dim">{t.proof.linkedNone}</p>
+          <p className="m-0 text-body text-dim">{t.proof.linkedNone}</p>
         )}
         {linkedRoutines.length > 0 && (
           <ul
@@ -248,11 +243,11 @@ export function GoalDetailScreen({
             {linkedRoutines.map((r) => (
               <li
                 key={r.id}
-                className="flex min-h-[56px] items-center gap-3 border-b border-white/6"
+                className="flex min-h-[56px] items-center gap-3 border-b border-line"
               >
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate text-[15px]">{r.name}</span>
-                  <span className="font-mono text-[10.5px] tracking-[.08em] text-dim">
+                  <span className="truncate text-body">{r.name}</span>
+                  <span className="font-mono text-meta tracking-meta text-dim">
                     {scheduleLabel(r.days)}
                   </span>
                 </span>
@@ -276,10 +271,10 @@ export function GoalDetailScreen({
             {linkedToday.map((x) => (
               <li
                 key={x.id}
-                className="flex min-h-12 flex-col justify-center gap-0.5 border-b border-white/6"
+                className="flex min-h-12 flex-col justify-center gap-0.5 border-b border-line"
               >
-                <span className="truncate text-[15px]">{x.name}</span>
-                <span className="font-mono text-[10.5px] tracking-[.08em] text-dim">
+                <span className="truncate text-body">{x.name}</span>
+                <span className="font-mono text-meta tracking-meta text-dim">
                   {t.proof.today}
                 </span>
               </li>
@@ -291,7 +286,7 @@ export function GoalDetailScreen({
             type="button"
             onClick={() => setPicking(true)}
             aria-expanded={false}
-            className="h-11 self-start rounded-xl border border-dashed border-white/16 px-4 font-mono text-[11px] tracking-[.16em] text-muted"
+            className="h-11 self-start rounded-xl border border-dashed border-line-strong px-4 font-mono text-meta tracking-eyebrow text-muted"
           >
             + {t.proof.linkAction}
           </button>
@@ -300,9 +295,9 @@ export function GoalDetailScreen({
           <div
             role="group"
             aria-labelledby="link-pick"
-            className="flex flex-col gap-2 rounded-2xl border border-white/10 p-4"
+            className="flex flex-col gap-2 rounded-2xl border border-line-strong p-4"
           >
-            <span id="link-pick" className="text-[13.5px] text-muted">
+            <span id="link-pick" className="text-small text-muted">
               {linkable.length ? t.proof.linkPick : t.proof.linkNone}
             </span>
             {linkable.map((r) => {
@@ -315,13 +310,11 @@ export function GoalDetailScreen({
                   type="button"
                   onClick={() => void link(r.id, true, r.name)}
                   aria-label={t.proof.linkRoutine(r.name)}
-                  className="flex min-h-12 flex-col items-start justify-center gap-0.5 rounded-xl border border-white/10 bg-raised px-3 py-2 text-left"
+                  className="flex min-h-12 flex-col items-start justify-center gap-0.5 rounded-xl border border-line-strong bg-raised px-3 py-2 text-left"
                 >
-                  <span className="text-[15px]">{r.name}</span>
+                  <span className="text-body">{r.name}</span>
                   <span
-                    className={cx(
-                      "font-mono text-[10.5px] tracking-[.08em] text-dim",
-                    )}
+                    className={cx("font-mono text-meta tracking-meta text-dim")}
                   >
                     {[
                       scheduleLabel(r.days),
@@ -336,7 +329,7 @@ export function GoalDetailScreen({
             <button
               type="button"
               onClick={() => setPicking(false)}
-              className="h-10 self-start text-sm text-dim"
+              className="h-10 self-start text-body text-dim"
             >
               {t.taskSheet.cancel}
             </button>
