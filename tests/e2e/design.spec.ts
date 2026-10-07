@@ -65,6 +65,25 @@ const checkbox = (page: Page, name: string) =>
   page
     .getByRole("region", { name: t.todayScreen.tasksAria })
     .getByRole("checkbox", { name, exact: true });
+/**
+ * Complete a task once hydrated. A click before hydration is lost or replayed
+ * during hydration (the bar then mounts at the new value: no glow), so wait
+ * until React owns the row (it attaches its props to the node), then click.
+ */
+async function complete(page: Page, name: string) {
+  const row = checkbox(page, name);
+  await expect
+    .poll(
+      () =>
+        row.evaluate((el) =>
+          Object.keys(el).some((k) => k.startsWith("__reactProps$")),
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe(true);
+  await row.click();
+  await expect(row).toHaveAttribute("aria-checked", "true");
+}
 const box = (page: Page, name: string) =>
   checkbox(page, name).locator("span[aria-hidden='true']").first();
 const bg = (page: Page, name: string) =>
@@ -118,8 +137,7 @@ test("2: the same with reduced motion — same states, no movement", async ({
 }) => {
   const a = await open(browser, "/today", { reducedMotion: "reduce" });
   const name = "Morning Run";
-  await checkbox(a.page, name).click();
-  await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "true");
+  await complete(a.page, name);
   await expect.poll(() => bg(a.page, name)).not.toBe(ACCENT);
   await expect(pulse(a.page)).toHaveCount(1);
   expect(
@@ -219,7 +237,7 @@ test("6b: Today — Rook acknowledges each task proved, nothing on load", async 
   const rook = a.page.locator("main svg[data-rook]");
   await expect(rook).toHaveCount(1);
   await expect(rook).not.toHaveAttribute("data-act");
-  await checkbox(a.page, "Morning Run").click();
+  await complete(a.page, "Morning Run");
   await expect(rook).toHaveAttribute("data-act", "ack");
   expect(
     await rook
