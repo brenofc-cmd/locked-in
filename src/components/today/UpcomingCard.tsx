@@ -2,7 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
-import { countdown, eventHeading, groupUpcoming } from "@/lib/planner";
+import { countdown, eventSummary, groupUpcoming } from "@/lib/planner";
 
 /**
  * Today: only the next school event (mine or the partner's shared one), one
@@ -28,7 +28,7 @@ export function UpcomingCard() {
             {!next.mine && ` · ${app.partner.name.toUpperCase()}`}
           </span>
           <span className="truncate font-mono text-[11.5px] tracking-[.1em]">
-            {eventHeading(next)}
+            {eventSummary(next)}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2.5 font-mono text-[11px] tracking-[.08em] text-dim tabular-nums">

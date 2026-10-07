@@ -9,7 +9,7 @@ import { cx } from "@/components/ui";
 import { usePartnerView } from "@/components/use-partner-view";
 import { addDays, localTimeHM, weekdayName } from "@/lib/local-date";
 import { nextEvent, topThree, type NorthStar } from "@/lib/north-star";
-import { countdown, eventHeading } from "@/lib/planner";
+import { countdown, eventSummary } from "@/lib/planner";
 import { percent } from "@/lib/progress";
 import { loadMarks, setMark } from "@/lib/resume-state";
 
@@ -167,7 +167,7 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
               {t.morning.next}
             </span>
             <span className="min-w-0 truncate text-right font-mono text-[11.5px] tracking-[.08em]">
-              {eventHeading(next)} ·{" "}
+              {eventSummary(next)} ·{" "}
               {[countdown(next.date, app.today), next.time]
                 .filter(Boolean)
                 .join(" · ")}

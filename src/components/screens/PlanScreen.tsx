@@ -3,7 +3,7 @@
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useApp } from "@/components/app-state";
-import { countdown, eventHeading, groupUpcoming } from "@/lib/planner";
+import { countdown, eventSummary, groupUpcoming } from "@/lib/planner";
 import { planRow, planWeeks, prioritiesOf } from "@/lib/weekly-plan";
 
 /**
@@ -24,7 +24,7 @@ export function PlanScreen({ goal }: { goal: string }) {
     {
       href: "/planner",
       label: t.plan.next,
-      value: next ? eventHeading(next) : t.plan.noNext,
+      value: next ? eventSummary(next) : t.plan.noNext,
       meta: next
         ? [countdown(next.date, app.today), next.time]
             .filter(Boolean)

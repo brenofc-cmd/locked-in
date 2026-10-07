@@ -5,6 +5,7 @@ import {
   dayAria,
   dueReminders,
   eventHeading,
+  eventSummary,
   fromRow,
   groupOf,
   groupUpcoming,
@@ -73,6 +74,26 @@ describe("planner: labels and mapping", () => {
         eventHeading(ev({ type: ty as PlannerEvent["type"], subject: "" })),
       ),
     ).toEqual(["PROVA", "TRABALHO", "LIÇÃO", "ENTREGA", "EVENTO"]);
+  });
+
+  it("summary: the subject when there is one, else the title — never the type twice or alone", () => {
+    expect(eventSummary(ev())).toBe("PROVA · FÍSICA");
+    expect(
+      eventSummary(ev({ subject: "", title: "Prova de Matemática" })),
+    ).toBe("PROVA DE MATEMÁTICA");
+    expect(eventSummary(ev({ subject: "", title: "prova" }))).toBe("PROVA");
+    expect(
+      eventSummary(
+        ev({ type: "homework", subject: "", title: "Licao de casa" }),
+      ),
+    ).toBe("LICAO DE CASA");
+    expect(eventSummary(ev({ subject: "", title: "Simulado ENEM" }))).toBe(
+      "PROVA · SIMULADO ENEM",
+    );
+    expect(eventSummary(ev({ subject: "", title: "Provas finais" }))).toBe(
+      "PROVA · PROVAS FINAIS",
+    );
+    expect(eventSummary(ev({ subject: "  ", title: "  " }))).toBe("PROVA");
   });
 
   it("row <-> event keeps local dates and times as text", () => {

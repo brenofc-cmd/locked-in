@@ -233,6 +233,27 @@ export function eventHeading(e: Pick<PlannerEvent, "type" | "subject">) {
     .join(" · ");
 }
 
+const bare = (s: string) =>
+  s.normalize("NFD").replace(/\p{M}/gu, "").toUpperCase();
+
+/**
+ * One line where the event appears alone (Today, PLANEJAR, morning card):
+ * "PROVA · FÍSICA"; without a subject the title, prefixed by the type only
+ * when the title does not already say it ("PROVA DE MATEMÁTICA", not
+ * "PROVA · PROVA DE MATEMÁTICA") — never just the type.
+ */
+export function eventSummary(
+  e: Pick<PlannerEvent, "type" | "subject" | "title">,
+) {
+  if (e.subject.trim()) return eventHeading(e);
+  const title = e.title.trim().toUpperCase();
+  const type = typeLabel(e.type);
+  if (!title) return type;
+  const head = bare(type);
+  const saysType = bare(title) === head || bare(title).startsWith(`${head} `);
+  return saysType ? title : `${type} · ${title}`;
+}
+
 export type PlannerCell =
   | { kind: "blank"; key: string }
   | {
