@@ -113,8 +113,16 @@ test("visual matrix", async ({ browser }) => {
         await page.screenshot({ path: `${DIR}/${width}-${name}-fold.png` });
         await full(page, `${DIR}/${width}-${name}-full.png`);
       }
-      // Reviews (dialogs) on the two primary widths only.
+      // Reviews and a Focus session on the two primary widths only.
       if (width === 390 || width === 1440) {
+        await page.goto("/focus");
+        await page.getByRole("button", { name: "LOCK IN" }).click();
+        await page.waitForTimeout(1500);
+        await page.screenshot({ path: `${DIR}/${width}-focus-running.png` });
+        await page.getByRole("button", { name: t.focusUi.endAria }).click();
+        await page.waitForTimeout(900);
+        await page.screenshot({ path: `${DIR}/${width}-focus-done.png` });
+        await page.getByRole("button", { name: t.focusUi.done }).click();
         await page.goto("/today");
         await page
           .getByRole("button", { name: t.todayScreen.reviewToday })
