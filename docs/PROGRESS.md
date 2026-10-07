@@ -1,7 +1,7 @@
 # LOCKED IN DEVELOPMENT STATUS
 
 Current:
-LOCKED IN V2 — Phase 10 (last) — Web Push + Advanced Reminders + Final Polish / Audit — DEV + PROD VERIFIED; two-device acceptance (Brendon + Matheus) PENDING (see "V2 PHASE 10" below). Phases 1–9 VERIFIED (DEV + PROD).
+LOCKED IN V2 — Phase 10 (last) — Web Push + Advanced Reminders + Final Polish / Audit — DEV + PROD VERIFIED; UI declutter VERIFIED (DEV + PROD, 2026-10-07); final human acceptance PENDING — web push click test + two-device acceptance (Brendon + Matheus), to be run against `main` at the declutter docs commit or later (see "V2 UI DECLUTTER" and "V2 PHASE 10" below). Phases 1–9 VERIFIED (DEV + PROD).
 
 V1 baseline: `main` at `606546f` is what runs in production (https://locked-in-rust.vercel.app,
 GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is kept unchanged.
@@ -13,6 +13,50 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 ## Known issues (open)
 
 - None blocking. (The Phase 9 PRÓXIMA SEMANA wording was fixed in Phase 10 and verified on PROD.)
+
+## V2 UI DECLUTTER — VERIFIED (DEV + PROD, 2026-10-07)
+
+Status: UI DECLUTTER = **VERIFIED** · PRODUCTION DEPLOY = **VERIFIED** · V2 PHASE 10 = **PENDING
+FINAL HUMAN ACCEPTANCE** · WEB PUSH FINAL CLICK TEST = **PENDING** · TWO-DEVICE ACCEPTANCE =
+**PENDING** · LOCKED IN V2 = **PENDING** · V2 PRODUCTION READY = **PENDING** · V3 = NOT STARTED.
+
+Scope: UI only, before the final acceptance. Branch `v2-ui-declutter` (fast-forwarded into `main`
+from `1b30f1b`): `05a31cc`, `c6005ef`, `bfe5941`, `737b9c6`. No SQL, no migration, nothing on
+Supabase PROD; Daily Duel scoring, Monthly Champion, Focus, Daily Standard, Push, reminders, RLS
+and Realtime untouched.
+
+- **Event summary** (`eventSummary()` in `src/lib/planner.ts`; Today, PLANEJAR → PRÓXIMO, morning
+  card): with a subject `PROVA · FÍSICA` (unchanged); without one the title, and the type only when
+  the title does not already start with it (accent / case-insensitive): `PROVA DE MATEMÁTICA`, never
+  `PROVA · PROVA DE MATEMÁTICA`, never the type alone. Planner list / sheet keep `eventHeading()`.
+- **DUPLA → ATIVIDADE**: the latest 6 lines; "Ver toda a atividade (n)" / "Mostrar menos"
+  (`aria-expanded`) toggles the rest of the loaded feed — nothing dropped. The week's rule moved
+  behind COMO É DECIDIDO (native details / summary).
+- **Duel → COMO É DECIDIDO**: an `aria-hidden` chevron that turns 90° when open (Tailwind v4
+  `rotate`, under the existing transition); keyboard and expanded state come from the native
+  summary.
+
+Gates (DEV, 2026-10-07): lint ✓ · typecheck ✓ · format ✓ · build ✓ · unit **403/403** (+1
+summary). E2E full suite `--workers=1`: **200 passed, 1 skipped (`LI_SHOTS`), 0 failed, 0 flaky**
+(23.3 min, `--retries=1` set, no retry used) incl. new `v2p10` test 22 (summary on Today / PLANEJAR,
+feed 6 → all → 6 with keyboard, both rule sections by Enter / Space / click with chevron rotation,
+axe 0 serious / critical on DUPLA expanded). Three earlier full runs each stopped at one known
+DEV-latency failure in untouched code (stage7 day sheet, v2p7 test 5 — API only, stage6 presence
+leave from a previous context); each passed alone. Visual review 375 / 390 / 430 / 768 / 958 /
+1180 / 1440: summary `PROVA DE MATEMÁTICA · EM 2 DIAS` on Today, PLANEJAR and the morning card;
+feed 6 → 9 → 6; no horizontal scroll.
+
+Production (2026-10-07): GitHub deployment "Production" **success** for `737b9c6`. Smoke with the
+owner account, read only (nothing written): `/today`, `/plan` (no upcoming Planner event on that
+account, so the summary line has nothing to show — covered by DEV e2e on the same commit), DUPLA
+at 960 px and phone width: feed 6 → "Ver toda a atividade (10)" → 10 → "Mostrar menos" → 6,
+`aria-expanded` false → true; both COMO É DECIDIDO open / close, chevron none → 90deg; no
+horizontal scroll.
+
+Pending (people): the final human acceptance listed under V2 PHASE 10 → Pending, run against the
+new `main` (not `1b30f1b`): tap a real notification with the app closed (app opens, right route, no
+duplicate tab); Brendon + Matheus on two devices — presence, task realtime, EM FOCO, Daily Duel,
+nudge, nudge via push with the app closed, notification click.
 
 ## V2 PHASE 10 — Web Push + Advanced Reminders + Final Polish / Audit — DEV + PROD VERIFIED · two-device acceptance PENDING (2026-10-06)
 
