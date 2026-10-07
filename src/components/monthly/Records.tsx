@@ -8,6 +8,7 @@
  */
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
+import { cx } from "@/components/ui";
 import { Disclosure } from "@/components/monthly/Monthly";
 import { dateLabel } from "@/lib/local-date";
 import { monthTitle } from "@/lib/monthly";
@@ -35,21 +36,22 @@ function RecordRow({
   testId: string;
 }) {
   return (
+    // A personal best reads as an achievement: the number first, then
+    // what it is and when it happened (not a label / value table row).
     <div
       data-testid={testId}
-      className="flex items-baseline justify-between gap-3 border-t border-line py-2.5"
+      className="flex min-w-0 flex-col gap-1.5 border-t border-line pt-3"
     >
-      <dt className="font-mono text-meta tracking-eyebrow text-muted">
-        {label}
-      </dt>
-      <dd className="m-0 flex items-baseline gap-2 text-right">
-        <span className="text-body font-medium tabular-nums">{value}</span>
-        {when && (
-          <span className="font-mono text-meta tracking-meta text-dim">
-            {when}
-          </span>
+      <dd
+        className={cx(
+          "m-0 text-title font-medium tracking-display tabular-nums",
+          value === R.none && "text-ghost",
         )}
+      >
+        {value}
       </dd>
+      <dt className="eyebrow text-muted">{label}</dt>
+      {when && <span className="text-small text-dim">{when}</span>}
     </div>
   );
 }
@@ -65,7 +67,7 @@ export function RecordsSection() {
       <h2 className="m-0 border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted">
         {R.title}
       </h2>
-      <dl className="m-0 flex flex-col">
+      <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-5 pt-1 desk:grid-cols-4">
         <RecordRow
           label={R.longestStreak}
           value={R.days(longestStreak)}
@@ -119,6 +121,8 @@ export function RecordsSection() {
 }
 
 function MilestoneLine({ m }: { m: Milestone }) {
+  // Three states: locked (far), near (≥ 70 %), reached — said in words too.
+  const near = !m.reached && m.current / m.target >= 0.7;
   return (
     <li
       data-testid="milestone"
@@ -128,7 +132,17 @@ function MilestoneLine({ m }: { m: Milestone }) {
       className="flex flex-col gap-1.5 border-t border-line py-2.5"
     >
       <span className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-meta tracking-eyebrow">
+        <span
+          className={cx(
+            "font-mono text-meta tracking-eyebrow",
+            m.reached || near ? "text-text" : "text-muted",
+          )}
+        >
+          {m.reached && (
+            <span aria-hidden="true" className="mr-1.5 text-accent">
+              ◆
+            </span>
+          )}
           {milestoneTitle(m)}
         </span>
         <span
@@ -138,7 +152,11 @@ function MilestoneLine({ m }: { m: Milestone }) {
               : "font-mono text-meta text-muted tabular-nums"
           }
         >
-          {m.reached ? R.reached : milestoneProgress(m)}
+          {m.reached
+            ? R.reached
+            : near
+              ? `${milestoneProgress(m)} · ${R.near}`
+              : milestoneProgress(m)}
         </span>
       </span>
       {!m.reached && (
@@ -152,7 +170,10 @@ function MilestoneLine({ m }: { m: Milestone }) {
           className="block h-[3px] overflow-hidden rounded-full bg-white/8"
         >
           <span
-            className="block h-full bg-white/50"
+            className={cx(
+              "block h-full",
+              near ? "bg-accent-line" : "bg-white/40",
+            )}
             style={{ width: `${(100 * m.current) / m.target}%` }}
           />
         </span>

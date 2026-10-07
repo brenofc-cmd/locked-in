@@ -45,6 +45,8 @@ const sectionLabel =
 
 function barColor(b: Bar, standard: number, range: Range) {
   if (b.pct === null) return "bg-white/6";
+  // Today is still open: never judged (red) before the day closes.
+  if (b.current && range === "7" && b.pct < standard) return "bg-off";
   if (b.pct < standard)
     return "bg-[color-mix(in_oklab,var(--color-danger)_55%,var(--color-chip))]";
   if (b.pct === 100 || (b.current && range !== "7")) return "bg-accent";
@@ -133,8 +135,9 @@ export function ProgressScreen() {
         </div>
       </header>
 
-      {/* Results first (docs/NAVIGATION.md): VISÃO GERAL → METAS → DUELOS
-          (month, last 7) → RECORDES / MARCOS → HISTÓRICO. The overview fits
+      {/* Big signals first (docs/NAVIGATION.md): VISÃO GERAL → the trend
+          chart → METAS → DUELOS (month, last 7) → RECORDES / MARCOS →
+          HISTÓRICO (calendar, weekly reviews, insights). The overview fits
           the first viewport. */}
       <section
         aria-labelledby="progress-overview"
@@ -192,16 +195,6 @@ export function ProgressScreen() {
         </div>
       </section>
 
-      <GoalProgress range={range} />
-      <MonthSummary />
-      <DuelHistory />
-      <RecordsSection />
-      <MilestonesSection />
-
-      <h2 className={cx(sectionLabel, "-mb-2 border-t border-line pt-6")}>
-        {t.progressScreen.history}
-      </h2>
-
       <section
         aria-label={t.progressScreen.chartAria}
         className="flex flex-col gap-3"
@@ -233,7 +226,9 @@ export function ProgressScreen() {
                     "text-center text-small font-medium tabular-nums",
                     b.pct === 100
                       ? "text-accent"
-                      : b.pct !== null && b.pct < app.standard
+                      : b.pct !== null &&
+                          b.pct < app.standard &&
+                          !(b.current && range === "7")
                         ? "text-danger"
                         : "text-muted",
                   )}
@@ -287,6 +282,16 @@ export function ProgressScreen() {
           ))}
         </div>
       </section>
+
+      <GoalProgress range={range} />
+      <MonthSummary />
+      <DuelHistory />
+      <RecordsSection />
+      <MilestonesSection />
+
+      <h2 className={cx(sectionLabel, "-mb-2 border-t border-line pt-6")}>
+        {t.progressScreen.history}
+      </h2>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
