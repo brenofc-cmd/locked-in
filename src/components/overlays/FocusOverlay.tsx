@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { FocusGoalSelect } from "@/components/focus/FocusPicker";
 import { StatusDot, cx } from "@/components/ui";
 import { formatClock } from "@/lib/format";
@@ -27,7 +28,16 @@ export function FocusOverlay() {
         aria-label={t.focusUi.sessionAria}
         className="absolute inset-0 z-50 flex flex-col bg-stage animate-[li-fade-in_.7s_ease]"
       >
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-7 pt-6 text-center">
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-7 pt-6 text-center">
+          {/* Start of the session: Rook locks in for a moment, then leaves
+              the screen to the timer (never animated beside it). With
+              reduced motion he is simply not shown. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-6 left-1/2 opacity-0 motion-safe:animate-[li-cameo_1.9s_var(--ease-settle)_both]"
+          >
+            <Rook pose="focused" size={56} />
+          </span>
           <span className="flex items-center gap-2.5 font-mono text-meta tracking-brand text-accent">
             <span
               aria-hidden="true"
@@ -133,6 +143,9 @@ export function FocusOverlay() {
     >
       <div className="mx-auto flex min-h-full max-w-[460px] flex-col justify-center gap-7 px-6 pt-12 pb-8 desk:px-8 desk:py-16">
         <div className="flex flex-col items-center gap-3 text-center">
+          <span className="motion-safe:animate-[li-rook-land_.6s_var(--ease-settle)_.1s_both]">
+            <Rook pose="proud" size={64} />
+          </span>
           <span
             data-testid="focus-minutes"
             className="text-num-2xl leading-none font-light tracking-number tabular-nums desk:text-num-hero"

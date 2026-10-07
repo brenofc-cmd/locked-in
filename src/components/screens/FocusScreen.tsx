@@ -28,13 +28,17 @@ export function FocusScreen({ goalId = null }: { goalId?: string | null }) {
       <div className="flex flex-col gap-6">
         <h1 className="page-title">{t.focusUi.question}</h1>
         <FocusPicker />
-        <button
-          type="button"
-          onClick={app.startFocus}
-          className="h-[62px] rounded-2xl bg-accent font-mono text-body font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97]"
-        >
-          LOCK IN
-        </button>
+        {/* The one action of the screen: pinned in reach on a phone, so it
+            is on the first view however long the task list is. */}
+        <div className="sticky bottom-0 z-[5] -mx-5 -mb-7 bg-[linear-gradient(to_top,var(--color-bg)_72%,transparent)] px-5 pt-5 pb-3.5 desk:static desk:m-0 desk:bg-none desk:p-0">
+          <button
+            type="button"
+            onClick={app.startFocus}
+            className="h-[62px] w-full rounded-2xl bg-accent font-mono text-body font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97]"
+          >
+            LOCK IN
+          </button>
+        </div>
       </div>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2.5 border-t border-line-strong pt-3.5">
