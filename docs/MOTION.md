@@ -9,7 +9,8 @@ animation follows. Every day is calm; proof may be loud, briefly. Keyframes and 
 | Level | Name        | Duration    | Use                                                        |
 | ----- | ----------- | ----------- | ---------------------------------------------------------- |
 | 0     | Static      | —           | Data and reading                                           |
-| 1     | Micro       | 100–200 ms  | Press, check, toggle, chevron, chip, nav tap               |
+| 1     | Micro       | 100–250 ms  | Press, check, toggle, chevron, chip, nav tap               |
+| 1½    | Character   | 350–700 ms  | Rook's one-shot actions (ack, tap, lock)                   |
 | 2     | Transition  | 180–350 ms  | Sheet, accordion, screen entry (fade + 10 px), pose change |
 | 3     | Celebration | 700–1800 ms | Perfect Day, streak milestones, Monthly Champion — rare    |
 
@@ -24,8 +25,9 @@ Tap → the checkbox is checked at once (`aria-checked`, optimistic write) → t
 flashes full green while the check draws (300 ms) → after ~420 ms it settles to the quiet done state
 (`accent-strong` + green check), the name dims and strikes through → the progress bar's fill grows and
 a single glow passes over it (`li-bar-pulse`, 600 ms, only when progress goes **up**, never on load) →
-a light haptic (`navigator.vibrate(8)`) where the platform allows, only from the user's own tap. No
-confetti. Interaction is never blocked.
+a light haptic (`navigator.vibrate(8)`) where the platform allows, only from the user's own tap →
+Today's Rook acknowledges (`ack`: Core lights, blink, nod, wings, settle, ~650 ms). No confetti.
+Interaction is never blocked.
 
 ## Navigation
 
@@ -34,25 +36,36 @@ Tabs: colour change + a 150 ms press scale. Screens enter with a 400 ms fade + 1
 
 ## Focus
 
-The quietest screen. LOCK IN → the session fades in (700 ms); Rook appears focused for ~1.9 s at the
-top (`li-cameo`), then leaves the timer alone — Rook never animates beside a running timer. The ring
-advances once a second (linear). Paused: the timer dims and breathes. Complete: Rook lands proud above
-the real minutes (`li-rook-land`), then the reflection.
+The quietest screen; the timer dominates; nothing competitive moves. LOCK IN → the session fades in
+(700 ms); Rook (52 px, above the task) goes `focused` and `lock`s in — the wings come in towards the
+Proof Core, a slight lean, the Core turns ACTIVE — then stays almost still: an occasional blink every
+~7 s, nothing else (no blink with reduced motion; Core IDLE while paused). The ring advances once a
+second (linear, local clock — no network). Paused: the timer dims. Complete: Rook `proud` + `ack`
+(the wings relax, a nod, the Core pulses once) above the real minutes, then the reflection.
 
-## Streak — The Ring
+## Streak — a hierarchy, not one animation made bigger
 
-LOCKED IN's own streak language (not a flame): a thin ring of light behind Rook.
+LOCKED IN's own streak language (not a flame): the Proof Core and **the Ring** (emerald, the Core's
+colour).
 
-- **7 days** (card): the Ring draws itself closed (`li-ring-draw`, 900 ms), Rook lifts his wings
-  (`celebrating`).
-- **30 days** (stage): the Ring closes and a second, inner ring fades in; Rook `proud`.
-- **100 days** (stage, rare): the full Ring with **100** at its top; Rook `proud`; title + "SEM HYPE.
-  SÓ PROVA."; CONTINUAR.
+- **Ordinary day** (the standard is met while the app is open): small — the streak number on Today
+  settles in the streak colour inside a thin ring that closes once and fades; Today's Rook Core
+  turns PROOF. No takeover.
+- **7 days** (stage, the first real milestone): calm → anticipation (Rook crouches, watching) → the
+  Proof Core charges (MILESTONE) → Rook opens his wings (`celebrating`) as the Ring draws closed →
+  the **7** badge lands → he settles `proud`.
+- **30 days** (stage, rarer): the same arc, plus a second inner ring and a Core that stays at
+  MILESTONE through the settle.
+- **100 days** (stage, rare): a silhouette (Rook at 12 % brightness, Core OFF) → the Proof Core
+  ignites through the silhouette → Rook is revealed `proud` → a strong Ring → the **100** badge →
+  "100 DIAS DE PROVA." Premium, not spectacle: no particles, no flashes.
 
 ## Perfect Day
 
-The day's peak-end moment: when the last valid task closes the day, a card with Rook landing proud
-over a small disc of light, DIA PERFEITO and the count. No particles, no sound.
+The day's peak-end moment: when the last valid task closes the day, the screen quiets for a beat (a
+35 % dim that fades out, behind the card), the Proof Core turns PROOF with an `ack`, Rook settles
+`proud` over a small disc of light, DIA PERFEITO and the count. Shown once per day (database
+`seen_at`). No particles, no sound.
 
 ## Milestones
 
@@ -63,8 +76,15 @@ are distinct in words and colour on PROGRESSO (no animation there).
 ## Monthly Champion
 
 The biggest competitive moment, still premium: the stage opens (`li-stage-in`, 500 ms, ≤ 4 % scale),
-the crest of light draws itself above Rook (`celebrating`), CAMPEÃO DO MÊS + the score. No trophy, no
-fireworks, no confetti. A draw gets the same stage without the crest.
+the Core charges to MILESTONE, Rook lifts his wings and a geometric **rook-tower crown** (the chess
+rook's battlements) draws itself above him, then he settles `proud`; CAMPEÃO DE <MÊS> + the real
+score. No trophy, coins, XP, fireworks or confetti. A draw gets the stage without the crown.
+
+## Duo
+
+Small, human feedback: nudge sent / received → a toast with a 32 px Rook doing `tap`; a reaction to
+my task → `ack`; the daily duel's numbers settle when the score changes (`li-settle`). No celebration
+on DUPLA.
 
 ## Daily duel
 
@@ -84,7 +104,7 @@ with a way forward.
 ## Celebration rules (unchanged from Phase 9)
 
 Shown once (database `seen_at`), one at a time, non-modal (`role=status`), auto-close after 2 s (card)
-or 3.2 s (stage) of visible time, held while pointed at or focused, OK / CONTINUAR to close. Never a
+or 4.2 s (stage) of visible time, held while pointed at or focused, OK / CONTINUAR to close. Never a
 live month, a partner's result or anything not verified.
 
 ## Reduced motion
@@ -96,7 +116,8 @@ of truth):
   `animation-duration: .01ms`);
 - transforms change instantly (`transition-property` limited to colour / opacity / stroke);
 - colour and opacity feedback remain (the check still fills, the row still dims);
-- no zoom, no translate, no bounce, no particles; the Focus cameo is not shown; celebrations appear in
-  their final frame.
+- no zoom, no translate, no bounce, no particles, no loop (the Focus idle blink is off); Rook's
+  actions do not play (`lock` shows its end state); celebration stories show their last frame at
+  once.
 
 No information depends on motion: every moment has its text, every state its ARIA.

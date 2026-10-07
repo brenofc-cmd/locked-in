@@ -650,3 +650,26 @@ source.
 Reason: WCAG 2.3.3 and web.dev guidance — remove vestibular triggers, not the confirmation that an
 action worked.
 Status: Accepted.
+
+# ADR-105 — Rook acts on proof: Proof Core states and one-shot actions
+
+Decision: `Rook` gains `core` (off / idle / active / proof / milestone), `act` (ack / tap / lock,
+replayed by `actKey`) and `idle` (Focus: an occasional blink), all as data attributes animated by
+CSS keyframes on the named parts with individual `rotate` / `translate` / `scale`. Today shows one
+small Rook beside the greeting that acknowledges every task proved; Focus keeps a still, locked-in
+Rook during the session (amends ADR-102: he no longer leaves the timer, but nothing but a blink
+moves); duo toasts carry a 32 px Rook. Native SVG + CSS — no Rive, Lottie or animation library.
+Reason: The character should respond to real actions while staying calm and cheap.
+Status: Accepted.
+
+# ADR-106 — Celebration stories by rarity
+
+Decision: Each celebration kind plays its own frames (`STORIES` in `Celebration.tsx`, local timers,
+last frame at once with reduced motion): Perfect Day (the screen dims for a beat), 7 days
+(anticipation → Core charge → wings → Ring → badge → settle; now a stage), 30 days (+ inner ring,
+Core stays MILESTONE), 100 days (silhouette → Core ignition → reveal → strong Ring → badge → "100
+DIAS DE PROVA."), focus (clock ring), Perfect-Day milestones, the month (rook-tower crown) and the
+draw. Stages stay 4.2 s. The ordinary day's streak moment is a ring around the number on Today. The
+Phase 9 contract (once, non-modal, held while read) and every rule are unchanged.
+Reason: Rare = special without making the same animation bigger.
+Status: Accepted.

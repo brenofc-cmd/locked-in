@@ -264,6 +264,8 @@ routing changed; run the pgTAP suite when a migration changed.
   `text` / `muted` / `dim` only (`ghost` / `faint` / `off` never for text). Green = proof (done,
   progress, the one primary action, the brand). Caps only for eyebrows / meta. Motion: transform /
   opacity, `motion-safe:` keyframes, never looping, never blocking; reduced motion must keep every
-  state readable. Rook (`src/components/brand/Rook.tsx`): decorative (`aria-hidden`), at most one per
-  screen, never on rows / cards / nav / beside the running timer. Celebrations keep the Phase 9
-  contract (once, non-modal, held while read); staging only via `momentFor()`.
+  state readable. Rook (`src/components/brand/Rook.tsx`): decorative (`aria-hidden`), one in the content
+  of a screen (+ a transient toast / moment), never on rows / cards / nav / loading / errors; his
+  actions (`act`) answer real events only; during Focus he only blinks. Celebrations keep the
+  Phase 9 contract (once, non-modal, held while read); staging only via `momentFor()` / `STORIES`.
+  No XP, coins, levels or invented numbers.
