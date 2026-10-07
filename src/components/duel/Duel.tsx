@@ -206,8 +206,14 @@ export function DuelDetailed() {
         })}
       </div>
       <details className="group border-t border-white/7 pt-2.5">
-        <summary className="flex h-9 cursor-pointer list-none items-center font-mono text-[11px] tracking-[.16em] text-dim hover:text-text">
+        <summary className="flex h-9 cursor-pointer list-none items-center justify-between font-mono text-[11px] tracking-[.16em] text-dim hover:text-text [&::-webkit-details-marker]:hidden">
           {t.duel.rulesTitle}
+          <span
+            aria-hidden="true"
+            className="text-faint transition-transform group-open:rotate-90"
+          >
+            ›
+          </span>
         </summary>
         <ul className="m-0 flex list-none flex-col gap-2 p-0 pt-1 text-[13px] leading-[1.45] text-muted">
           {t.duel.rules.map((r) => (
