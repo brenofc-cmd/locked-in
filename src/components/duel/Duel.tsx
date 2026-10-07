@@ -77,23 +77,51 @@ function Phase({ duel }: { duel: Duel }) {
 
 function Headline({ duel, name }: { duel: Duel; name: string }) {
   const score = duelScore(duel);
+  const { me, partner } = duel.score;
+  // The scoreboard answers "who is ahead" before any rule is read.
   return (
-    <span className="flex items-baseline justify-between gap-3">
+    <div className="flex flex-col gap-2">
+      {score && (
+        <div
+          data-testid="duel-score"
+          className="flex items-center justify-between gap-3"
+        >
+          <span className="sr-only">{score}</span>
+          <span aria-hidden="true" className="eyebrow text-muted">
+            {t.duel.you}
+          </span>
+          <span
+            aria-hidden="true"
+            // Replays a short settle when the score changes.
+            key={score}
+            className="flex items-baseline gap-3 text-num-l leading-none font-medium tracking-number tabular-nums motion-safe:animate-[li-settle_.45s_var(--ease-settle)]"
+          >
+            <span className={me >= partner ? "text-text" : "text-dim"}>
+              {me}
+            </span>
+            <span className="text-title text-ghost">—</span>
+            <span className={partner >= me ? "text-text" : "text-dim"}>
+              {partner}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="eyebrow max-w-[30%] truncate text-right text-muted"
+          >
+            {name.toUpperCase()}
+          </span>
+        </div>
+      )}
       <span
         data-testid="duel-headline"
-        className="font-mono text-small font-semibold tracking-eyebrow"
+        className={cx(
+          "font-mono text-small font-semibold tracking-eyebrow",
+          score && "text-center",
+        )}
       >
         {duelHeadline(duel, name)}
       </span>
-      {score && (
-        <span
-          data-testid="duel-score"
-          className="font-mono text-small text-muted tabular-nums"
-        >
-          {score}
-        </span>
-      )}
-    </span>
+    </div>
   );
 }
 

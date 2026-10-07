@@ -6,11 +6,11 @@ import { useState } from "react";
 import { DuelDetailed } from "@/components/duel/Duel";
 import { MonthRow } from "@/components/monthly/Monthly";
 import { useApp } from "@/components/app-state";
+import { RookDuo } from "@/components/brand/Rook";
 import {
   CheckinPicker,
   CommitmentHistory,
   CommitmentsSection,
-  PartnerCheckinLine,
   PartnerDayLine,
 } from "@/components/partner/Accountability";
 import { ActivityItem } from "@/components/today/ActivityItem";
@@ -47,6 +47,7 @@ export function PartnerScreen() {
   if (!app.hasPartner) {
     return (
       <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
+        <RookDuo size={72} />
         <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.partnerScreen.noPartner}
         </h1>
@@ -123,10 +124,7 @@ export function PartnerScreen() {
           tone="text"
           className="overflow-hidden"
         />
-        <div className="flex flex-col gap-1.5">
-          <PartnerCheckinLine />
-          <PartnerDayLine />
-        </div>
+        <PartnerDayLine />
       </header>
 
       <DuelDetailed />

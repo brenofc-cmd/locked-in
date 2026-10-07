@@ -7,7 +7,7 @@
  * public title, status, generic proof kind and proof time.
  */
 import { t } from "@/i18n/pt-BR";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { ReactButton, ReceivedReaction } from "@/components/today/Reactions";
@@ -83,46 +83,52 @@ export function PartnerDayLine() {
   const met =
     std !== null &&
     standardMet(app.partnerCounts.total, app.partnerCounts.done, std);
+  const state = acc.partnerCheckin;
+  // The partner's day as four plain facts (label over value), not a line
+  // of caps: readable at a glance, no colour needed to understand it.
   return (
-    <div
+    <dl
       data-testid="partner-day-line"
-      className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-meta tracking-eyebrow text-dim"
+      className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 desk:grid-cols-4"
     >
-      <span>
-        {A.focusToday}{" "}
-        <span className="text-text" data-testid="partner-focus-today">
+      <Fact label={A.factCheckin} testId="partner-checkin">
+        {state ? A.checkinStates[state] : A.factNone}
+      </Fact>
+      <Fact label={A.focusToday}>
+        <span data-testid="partner-focus-today">
           {focusLabel(acc.partnerFocusSeconds)}
         </span>
-      </span>
+      </Fact>
       {std !== null && (
-        <span>
-          {A.standardToday} {std}%{" "}
-          <span className={met ? "text-accent" : "text-text"}>
-            {met ? A.standardMet : A.standardOpen}
+        <Fact label={`${A.standardToday} ${std}%`}>
+          <span className={met ? "text-accent" : undefined}>
+            {met ? A.factMet : A.factOpen}
           </span>
-        </span>
+        </Fact>
       )}
-      <span data-testid="partner-commitment-summary">
-        {s.total ? A.summary(s.proven, s.total) : A.summaryNone}
-      </span>
-    </div>
+      <Fact label={A.factCommitments}>
+        <span data-testid="partner-commitment-summary">
+          {s.total ? A.summary(s.proven, s.total) : A.factNone}
+        </span>
+      </Fact>
+    </dl>
   );
 }
 
-/** "CHECK-IN · PRECISO DE COBRANÇA" under the partner's name. */
-export function PartnerCheckinLine() {
-  const { accountability, partner } = useApp();
-  const state = accountability.partnerCheckin;
+function Fact({
+  label,
+  testId,
+  children,
+}: {
+  label: string;
+  testId?: string;
+  children: ReactNode;
+}) {
   return (
-    <span
-      data-testid="partner-checkin"
-      className="font-mono text-meta tracking-eyebrow text-dim"
-    >
-      {A.checkinPartner(partner.name.toUpperCase())} ·{" "}
-      <span className={state ? "text-text" : undefined}>
-        {state ? A.checkinStates[state] : A.checkinNone}
-      </span>
-    </span>
+    <div data-testid={testId} className="flex min-w-0 flex-col gap-1">
+      <dt className="eyebrow text-dim">{label}</dt>
+      <dd className="m-0 truncate text-small text-text">{children}</dd>
+    </div>
   );
 }
 
