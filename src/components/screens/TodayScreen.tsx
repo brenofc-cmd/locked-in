@@ -114,7 +114,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
           <MorningCard star={northStar} />
 
           {stats.perfect && (
-            <div className="flex items-center justify-between gap-4 rounded-2xl bg-accent-wash px-5 py-5 animate-[li-glow_3.6s_ease-in-out_infinite]">
+            <div className="flex items-center justify-between gap-4 rounded-2xl bg-accent-wash px-5 py-5 motion-safe:animate-[li-glow_1.8s_ease-in-out_1]">
               <span className="flex items-baseline gap-4">
                 <span className="text-heading font-semibold tracking-display text-accent">
                   100%

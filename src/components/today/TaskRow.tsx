@@ -86,8 +86,10 @@ export function TaskRow({
     }, 60);
     const v = dx;
     setDx(0);
-    if (v > 80) onToggle();
-    else if (v < -90) onOptions();
+    if (v > 80) {
+      if (!task.done) tick();
+      onToggle();
+    } else if (v < -90) onOptions();
   }
 
   const leftOpacity = dx > 0 ? Math.min(1, dx / 80) : 0;
@@ -147,36 +149,40 @@ export function TaskRow({
               .join(" ") || undefined
           }
           onClick={() => {
-            if (!suppressClick.current) onToggle();
+            if (suppressClick.current) return;
+            if (!task.done) tick();
+            onToggle();
           }}
           className="flex min-h-16 min-w-0 flex-1 items-center gap-3.5 py-2 pl-0.5 text-left desk:min-h-[66px] desk:gap-4"
         >
           <span
             aria-hidden="true"
             className={cx(
-              "flex size-[34px] shrink-0 items-center justify-center rounded-xl border-[1.5px] desk:size-[30px]",
+              "flex size-[34px] shrink-0 items-center justify-center rounded-xl border-[1.5px] transition-[background-color,border-color,scale] duration-200 ease-[var(--ease-spring)] desk:size-[30px]",
               skipped ? "border-dashed" : "border-solid",
-              task.done
-                ? "border-accent bg-accent"
-                : skipped
-                  ? "border-line-strong"
-                  : "border-line-bold",
+              // Completing: a bright beat of green, then it settles to a
+              // quiet done state so open work stays the loudest thing.
+              task.done && popping
+                ? "scale-[.92] border-accent bg-accent"
+                : task.done
+                  ? "border-accent-line bg-accent-strong"
+                  : skipped
+                    ? "border-line-strong"
+                    : "border-line-bold",
             )}
-            style={{
-              transform: popping ? "scale(0.8)" : "scale(1)",
-              transition:
-                "background .25s ease, border-color .25s ease, transform .22s cubic-bezier(.3,1.6,.5,1)",
-            }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16">
-              <CheckPath drawn={task.done} />
+              <CheckPath
+                drawn={task.done}
+                color={popping ? "var(--color-bg)" : "var(--color-accent)"}
+              />
             </svg>
           </span>
 
           <span
             className={cx(
               "hidden w-[42px] shrink-0 font-mono text-small tabular-nums desk:block",
-              task.done ? "text-[#4e4d4a]" : "text-dim",
+              "text-dim",
             )}
           >
             {task.time || "—"}
@@ -223,8 +229,9 @@ export function TaskRow({
             {skipped ? (
               <span id={`${task.id}-skip`}>{task.skip}</span>
             ) : task.done ? (
-              <span>
-                <span className="hidden desk:inline">{t.taskRow.done}</span>
+              // The completion time is detail: desktop only (it has the room).
+              <span className="hidden desk:inline">
+                {t.taskRow.done}
                 {task.doneAt}
               </span>
             ) : null}
@@ -239,20 +246,32 @@ export function TaskRow({
         >
           <span
             aria-hidden="true"
-            className="size-[3px] rounded-full bg-faint"
+            className="size-[3px] rounded-full bg-ghost"
           />
           <span
             aria-hidden="true"
-            className="size-[3px] rounded-full bg-faint"
+            className="size-[3px] rounded-full bg-ghost"
           />
           <span
             aria-hidden="true"
-            className="size-[3px] rounded-full bg-faint"
+            className="size-[3px] rounded-full bg-ghost"
           />
         </button>
       </div>
     </div>
   );
+}
+
+/**
+ * A very light haptic on completion, where the browser allows it (Android
+ * Chrome); only ever from the user's own tap. An enhancement, never needed.
+ */
+function tick() {
+  try {
+    navigator.vibrate?.(8);
+  } catch {
+    // Not supported or not allowed: nothing to do.
+  }
 }
 
 function TaskMeta({ task }: { task: Task }) {

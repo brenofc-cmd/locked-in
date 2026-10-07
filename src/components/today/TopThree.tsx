@@ -36,6 +36,12 @@ export function TopThree() {
           {top.length ? t.top3.edit : t.top3.define}
         </button>
       </div>
+      {top.length === 0 && (
+        // No empty header: say what the section is for (recognition).
+        <p className="m-0 border-t border-line pt-3 text-small text-dim">
+          {t.top3.empty}
+        </p>
+      )}
       {top.length > 0 && (
         <ol className="flex flex-col">
           {top.map((task) => {
@@ -65,12 +71,15 @@ export function TopThree() {
                       "flex size-[22px] shrink-0 items-center justify-center rounded-lg border-[1.5px]",
                       skipped ? "border-dashed border-line-strong" : "",
                       task.done
-                        ? "border-accent bg-accent"
+                        ? "border-accent-line bg-accent-strong"
                         : !skipped && "border-line-bold",
                     )}
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16">
-                      <CheckPath drawn={task.done} />
+                      <CheckPath
+                        drawn={task.done}
+                        color="var(--color-accent)"
+                      />
                     </svg>
                   </span>
                   <span

@@ -3,6 +3,7 @@
  * approved design (design-reference/export/Locked In v3.dc.html).
  */
 import type { CSSProperties, ReactNode } from "react";
+import { ProgressPulse } from "@/components/progress-pulse";
 
 export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
@@ -105,13 +106,14 @@ export function ProgressBar({
     >
       <div
         className={cx(
-          "h-full rounded-sm transition-[width] duration-700 ease-[cubic-bezier(.2,.8,.2,1)]",
+          "h-full rounded-sm transition-[width] duration-700 ease-[var(--ease-out-quick)]",
           tone === "accent" && "bg-accent",
           tone === "text" && "bg-text",
           tone === "partner" && "bg-ghost",
         )}
         style={{ width: `${pct}%` }}
       />
+      {tone === "accent" && <ProgressPulse pct={pct} />}
       {marker !== undefined && (
         <span
           aria-hidden="true"
@@ -188,22 +190,24 @@ export function chipTone(on: boolean) {
 export function CheckPath({
   drawn,
   strokeWidth = 2.2,
+  color = "var(--color-bg)",
 }: {
   drawn: boolean;
   strokeWidth?: number;
+  color?: string;
 }) {
   return (
     <path
       d="M3.5 8.5l3 3 6-7"
       fill="none"
-      stroke="var(--color-bg)"
+      stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       style={{
         strokeDasharray: 16,
         strokeDashoffset: drawn ? 0 : 16,
-        transition: "stroke-dashoffset .3s ease .06s",
+        transition: "stroke-dashoffset .3s ease .06s, stroke .3s ease",
       }}
     />
   );

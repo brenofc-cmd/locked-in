@@ -34,9 +34,13 @@ export function ReactButton({
           : t.reactButton.reactTo(name)
       }
       data-testid="react-button"
+      // Unreacted: a quiet text action (no outline on every row); reacted:
+      // the chosen reaction as a small pill. 44 px tall either way.
       className={cx(
-        "h-9 min-w-11 shrink-0 rounded-full border px-2.5 text-small",
-        mine ? "border-accent-line text-text" : "border-line-strong text-muted",
+        "h-11 min-w-11 shrink-0 rounded-full px-3 text-small transition-colors duration-150 active:scale-[.96]",
+        mine
+          ? "border border-accent-line text-text"
+          : "text-dim hover:bg-white/5 hover:text-text",
       )}
     >
       {mine ? reactionLabel(mine) : t.reactButton.react}

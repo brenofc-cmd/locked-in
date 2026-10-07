@@ -4,10 +4,17 @@ import { t } from "@/i18n/pt-BR";
 import { useEffect, useRef, useState } from "react";
 import { updateSetting } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
 import { usePartnerView } from "@/components/use-partner-view";
-import { addDays, localTimeHM, weekdayName } from "@/lib/local-date";
+import {
+  accountDay,
+  addDays,
+  isoWeekday,
+  localTimeHM,
+  weekdayName,
+} from "@/lib/local-date";
 import { nextEvent, topThree, type NorthStar } from "@/lib/north-star";
 import { countdown, eventSummary } from "@/lib/planner";
 import { percent } from "@/lib/progress";
@@ -52,6 +59,9 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
   const now = new Date(app.now);
   const y = app.progressDays.find((d) => d.day === addDays(app.today, -1));
   const yesterday = y ? percent(y.completed, y.planned) : null;
+  const withRook =
+    isoWeekday(app.today) === 1 ||
+    accountDay(me.createdAt, me.timezone, app.today) === 1;
   const next = nextEvent(
     app.plannerEvents,
     app.today,
@@ -96,7 +106,10 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
       className="flex flex-col gap-5 rounded-2xl border border-line bg-card p-5 animate-[li-fade-up_.4s_ease] desk:p-6"
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="font-mono text-meta tracking-eyebrow text-dim tabular-nums">
+        {/* Rook opens the day only now and then (Mondays and day 1) —
+            scarce on purpose, never every morning. */}
+        {withRook && <Rook pose="ready" size={44} className="-my-2" />}
+        <span className="mr-auto font-mono text-meta tracking-eyebrow text-dim tabular-nums">
           {t.morning.eyebrow(
             localTimeHM(now, me.timezone),
             weekdayName(app.today),

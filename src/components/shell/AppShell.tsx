@@ -217,19 +217,21 @@ function BottomNav({ pathname }: { pathname: string }) {
               under(pathname, href) ? "page" : on ? "true" : undefined
             }
             className={cx(
-              "flex h-[58px] flex-1 flex-col items-center justify-center gap-1 transition-[color,transform] duration-200 active:scale-[.92]",
+              "flex h-[58px] min-w-0 flex-1 flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 active:scale-[.94]",
               on ? "text-text" : "text-dim",
             )}
           >
             <span
               className={cx(
                 "flex h-7 items-center justify-center rounded-xl px-3.5 transition-colors duration-200",
+                // FOCO keeps its green icon as identity, but only the
+                // current tab gets a filled pill (one "you are here").
                 isFocus
                   ? on
                     ? "bg-accent text-bg"
-                    : "bg-accent-tab text-accent"
+                    : "text-accent"
                   : on
-                    ? "bg-white/8"
+                    ? "bg-selected"
                     : "bg-transparent",
               )}
             >
@@ -237,7 +239,7 @@ function BottomNav({ pathname }: { pathname: string }) {
             </span>
             <span
               className={cx(
-                "text-meta tracking-meta",
+                "text-meta tracking-normal",
                 on ? "font-semibold" : "font-medium",
               )}
             >
