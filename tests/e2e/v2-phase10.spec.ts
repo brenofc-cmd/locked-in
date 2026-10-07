@@ -848,3 +848,123 @@ test("21: responsive — no horizontal scroll on the main screens from 375 to 14
   expect(report).toEqual([]);
   await a.context.close();
 });
+
+// ------------------------------------------------------- UI declutter ----
+
+test("22: declutter — one-line event summaries, a compact activity feed, expandable rules", async ({
+  browser,
+}) => {
+  test.setTimeout(180_000);
+  await clearEvents(A);
+  // No subject, and the title already says PROVA: never "PROVA · PROVA …".
+  const ins = await A.from("planner_events").insert({
+    title: "Prova de Matemática",
+    event_type: "exam",
+    event_date: addDays(T, 2),
+  });
+  if (ins.error) throw new Error(ins.error.message);
+
+  // Bruno completes 8 shared tasks: Alice's feed has more than the preview.
+  await makeDuo(A, B);
+  await resetTasks(B);
+  const titles = Array.from({ length: 8 }, (_, i) => `Declutter ${i + 1}`);
+  for (const title of titles) {
+    const { error } = await B.rpc("create_routine_item", {
+      p_title: title,
+      p_days: [1, 2, 3, 4, 5, 6, 7],
+    });
+    if (error) throw new Error(error.message);
+  }
+  for (const title of titles) {
+    const upd = await B.from("daily_tasks")
+      .update({ status: "completed" })
+      .eq("task_date", T)
+      .eq("title", title);
+    if (upd.error) throw new Error(upd.error.message);
+  }
+
+  const a = await open(browser, users.a, "/today");
+  const card = a.page.getByRole("region", { name: t.todayScreen.next });
+  await expect(card).toContainText("PROVA DE MATEMÁTICA");
+  await expect(card).not.toContainText("PROVA · PROVA");
+  await a.page.goto("/plan");
+  await expect(a.page.getByTestId("plan-next")).toContainText(
+    "PROVA DE MATEMÁTICA",
+  );
+  await expect(a.page.getByTestId("plan-next")).not.toContainText(
+    "PROVA · PROVA",
+  );
+
+  // DUPLA: the latest 6 lines, the rest one tap away, nothing lost.
+  await a.page.goto("/partner");
+  const feed = a.page.getByRole("region", {
+    name: t.partnerScreen.activityAria,
+  });
+  const items = feed.getByTestId("activity-item");
+  await expect(items).toHaveCount(6);
+  for (const title of titles.slice(-3)) await expect(feed).toContainText(title);
+  const more = feed.getByRole("button", { name: /Ver toda a atividade/ });
+  await expect(more).toHaveAttribute("aria-expanded", "false");
+  const label = (await more.textContent()) ?? "";
+  const total = Number(/\((\d+)\)/.exec(label)?.[1]);
+  expect(total).toBeGreaterThanOrEqual(8);
+  await more.click();
+  await expect(items).toHaveCount(total);
+  for (const title of titles) await expect(feed).toContainText(title);
+  const less = feed.getByRole("button", {
+    name: t.partnerScreen.activityLess,
+  });
+  await expect(less).toHaveAttribute("aria-expanded", "true");
+  // Keyboard: Enter collapses back to the preview.
+  await less.focus();
+  await a.page.keyboard.press("Enter");
+  await expect(items).toHaveCount(6);
+  await expect(more).toBeFocused();
+
+  // Duel and week rules: closed by default, the chevron turns when open,
+  // the summary works from the keyboard.
+  const rulesOf = (scope: ReturnType<Page["getByTestId"]>) => ({
+    details: scope.locator("details"),
+    summary: scope.locator("summary"),
+    chevron: scope.locator("summary > span[aria-hidden='true']"),
+  });
+  const rotation = (l: ReturnType<Page["locator"]>) =>
+    l.evaluate((el) => getComputedStyle(el).rotate);
+  for (const scope of [
+    a.page.getByTestId("duel-detailed"),
+    a.page.getByRole("region", { name: t.partnerScreen.thisWeekAria }),
+  ]) {
+    const r = rulesOf(scope as ReturnType<Page["getByTestId"]>);
+    await expect(r.summary).toHaveText(new RegExp(t.duel.rulesTitle));
+    await expect(r.details).toHaveJSProperty("open", false);
+    expect(await rotation(r.chevron)).toBe("none");
+    await r.summary.focus();
+    await a.page.keyboard.press("Enter");
+    await expect(r.details).toHaveJSProperty("open", true);
+    await expect.poll(() => rotation(r.chevron)).toBe("90deg");
+    await a.page.keyboard.press("Space");
+    await expect(r.details).toHaveJSProperty("open", false);
+    await r.summary.click();
+    await expect(r.details).toHaveJSProperty("open", true);
+  }
+  await expect(a.page.getByTestId("duel-detailed")).toContainText(
+    t.duel.rules[0],
+  );
+  await expect(a.page.locator("main")).toContainText(t.partnerScreen.rule);
+
+  // axe on DUPLA with everything expanded.
+  await more.click();
+  await expect(items).toHaveCount(total);
+  await a.page.waitForTimeout(800); // the lines' entry animation (0.55 s)
+  const { violations } = await new AxeBuilder({ page: a.page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(
+    violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => v.id),
+  ).toEqual([]);
+  expect(a.errors).toEqual([]);
+  await a.context.close();
+  await clearEvents(A);
+});
