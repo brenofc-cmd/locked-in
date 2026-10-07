@@ -230,12 +230,20 @@ export default defineConfig({
       dependencies: ["v2p9-390"],
       use: phone(390, 844),
     },
-    // Final design pass: the visual review matrix (LI_SHOTS=<dir>, skipped
-    // otherwise). Run alone: npx playwright test --project=visual --no-deps
+    // Final design pass: behaviour the design promises (motion / reduced
+    // motion, Focus first view, Rook, axe at 390 + 1440).
+    {
+      name: "design-390",
+      testMatch: /design\.spec\.ts/,
+      dependencies: ["v2p10-390"],
+      use: { ...phone(390, 844), channel: "chromium" },
+    },
+    // The visual review matrix (LI_SHOTS=<dir>, skipped otherwise).
+    // Run alone: npx playwright test --project=visual --no-deps
     {
       name: "visual",
       testMatch: /visual\.spec\.ts/,
-      dependencies: ["v2p10-390"],
+      dependencies: ["design-390"],
       use: phone(390, 844),
     },
   ],

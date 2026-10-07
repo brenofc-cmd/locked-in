@@ -38,20 +38,21 @@ function RecordRow({
   return (
     // A personal best reads as an achievement: the number first, then
     // what it is and when it happened (not a label / value table row).
+    // dt stays first in the markup; `order` puts the number on top.
     <div
       data-testid={testId}
       className="flex min-w-0 flex-col gap-1.5 border-t border-line pt-3"
     >
+      <dt className="order-2 eyebrow text-muted">{label}</dt>
       <dd
         className={cx(
-          "m-0 text-title font-medium tracking-display tabular-nums",
+          "order-1 m-0 text-title font-medium tracking-display tabular-nums",
           value === R.none && "text-ghost",
         )}
       >
         {value}
       </dd>
-      <dt className="eyebrow text-muted">{label}</dt>
-      {when && <span className="text-small text-dim">{when}</span>}
+      {when && <dd className="order-3 m-0 text-small text-dim">{when}</dd>}
     </div>
   );
 }

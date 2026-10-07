@@ -78,7 +78,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <MobileHeader pathname={pathname} />
       <main
         ref={mainRef}
-        className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
+        // scroll-padding keeps a focused row clear of the sticky action bar
+        // (WCAG 2.4.11) on phones.
+        className="min-h-0 min-w-0 flex-1 scroll-pb-28 overflow-x-hidden overflow-y-auto desk:scroll-pb-0"
       >
         <div className="mx-auto max-w-[1120px] px-5 pt-5 pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-12 wide:pt-11 wide:pb-24">
           {settings.onboarded ? children : null}

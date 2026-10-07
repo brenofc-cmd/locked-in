@@ -62,6 +62,42 @@ describe("Rook (docs/ROOK.md)", () => {
       .map((s) => cell(renderToStaticMarkup(<Rook size={s} />), `${s}`))
       .join("");
     const duo = cell(renderToStaticMarkup(<RookDuo size={96} />), "duo");
+    // App icon candidates (docs/DESIGN_SYSTEM.md → App icon).
+    const head = renderToStaticMarkup(<Rook size={100} />).replace(
+      'viewBox="0 0 120 120"',
+      'viewBox="14 6 92 92"',
+    );
+    const icon = (inner: string, s: number) =>
+      `<div style="width:${s}px;height:${s}px;border-radius:${s * 0.22}px;background:#0c0c0e;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px #222">${inner}</div>`;
+    const A = (s: number) =>
+      icon(
+        `<div style="width:${s * 0.46}px;height:${s * 0.46}px;border:${Math.max(1.5, s * 0.075)}px solid #c6e07b;border-radius:${s * 0.09}px;display:grid;place-items:center"><div style="width:${s * 0.13}px;height:${s * 0.13}px;background:#c6e07b;border-radius:${s * 0.025}px"></div></div>`,
+        s,
+      );
+    const B = (s: number) =>
+      icon(
+        head.replace(
+          /width="100" height="100"/,
+          `width="${s * 0.92}" height="${s * 0.92}"`,
+        ),
+        s,
+      );
+    const Cc = (s: number) =>
+      icon(
+        `<div style="width:${s * 0.46}px;height:${s * 0.46}px;border:${Math.max(1.5, s * 0.075)}px solid #c6e07b;border-radius:${s * 0.09}px;display:grid;place-items:center"><div style="width:${s * 0.1}px;height:${s * 0.24}px;background:#c6e07b;border-radius:${s * 0.05}px;box-shadow:0 0 ${s * 0.08}px #c6e07b"></div></div>`,
+        s,
+      );
+    const icons = [
+      ["A · mark", A],
+      ["B · rook", B],
+      ["C · mark + core", Cc],
+    ] as const;
+    const iconRows = icons
+      .map(
+        ([n, f]) =>
+          `<div class="row">${[16, 32, 64, 192, 512].map((s) => cell(f(s), `${n} ${s}`)).join("")}</div>`,
+      )
+      .join("");
     const html = `<!doctype html><meta charset="utf-8"><style>
       body{margin:0;background:#0c0c0e;color:#8e8d87;font:11px ui-monospace,monospace;letter-spacing:.12em}
       h2{margin:0;padding:18px 28px 0;font-size:11px;font-weight:400}
@@ -72,7 +108,8 @@ describe("Rook (docs/ROOK.md)", () => {
     <h2>POSES</h2><div class="row">${poses}</div>
     <h2>DUO</h2><div class="row">${duo}</div>
     <h2>SIZES</h2><div class="row">${sizes}</div>
-    <h2>SILHOUETTE</h2><div class="row light sil">${sil}</div>`;
+    <h2>SILHOUETTE</h2><div class="row light sil">${sil}</div>
+    <h2>APP ICON CANDIDATES</h2>${iconRows}`;
     fs.writeFileSync(path.join(dir, "rook-sheet.html"), html);
   });
 });
