@@ -10,6 +10,7 @@ import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
 import { useState } from "react";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { cx } from "@/components/ui";
 import { weekRangeLabel } from "@/lib/records";
 import {
@@ -81,9 +82,13 @@ export function WeekPlanScreen({
           ))}
         </ol>
         {list.length === 0 && (
-          <p className="m-0 py-3 text-body text-dim">
-            {tab === "next" ? W.emptyNext : W.empty}
-          </p>
+          // An empty week is ground to prepare, not a missing record.
+          <div className="flex items-center gap-4 py-3">
+            <Rook pose="ready" size={56} />
+            <p className="m-0 text-body text-muted">
+              {tab === "next" ? W.emptyNext : W.empty}
+            </p>
+          </div>
         )}
         {full ? (
           <p

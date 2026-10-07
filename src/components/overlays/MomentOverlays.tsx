@@ -11,6 +11,7 @@ import {
   ReflectionView,
 } from "@/components/reviews/Reflection";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { useSession } from "@/components/session";
 import { cx } from "@/components/ui";
 import { formatMinutes } from "@/lib/format";
@@ -108,106 +109,58 @@ function ReviewDay() {
   return (
     <Frame label={t.moments.reviewTodayAria} width="max-w-[520px]">
       <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-3.5">
-          <span className="font-mono text-small tracking-eyebrow text-dim">
-            {weekdayName(app.today)} ·{" "}
-            {t.moments.day(accountDay(me.createdAt, me.timezone, app.today))}
-          </span>
-          <h1 className={bigTitle}>
-            {t.moments.today}
-            <br />
-            {stats.perfect ? t.moments.complete : t.moments.soFar}
-          </h1>
-        </div>
-        <div className="flex items-end justify-between gap-4">
-          <span
-            data-testid="review-pct"
-            className="text-num-xl leading-[.82] font-medium tracking-number desk:text-num-hero"
-          >
-            {stats.pct}
-            <span className="text-heading text-dim desk:text-display">%</span>
-          </span>
-          <span className="flex flex-col items-end gap-2">
-            <span className="text-body tabular-nums">
-              {stats.done} / {stats.total}{" "}
-              <span className="text-dim">{t.moments.done}</span>
+        {/* Reflection first, facts second (docs/FINAL_DESIGN_RESEARCH.md):
+            a short summary, the questions, then the detail. */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3.5">
+            <span className="font-mono text-small tracking-eyebrow text-dim">
+              {weekdayName(app.today)} ·{" "}
+              {t.moments.day(accountDay(me.createdAt, me.timezone, app.today))}
             </span>
+            <h1 className={bigTitle}>
+              {t.moments.today}
+              <br />
+              {stats.perfect ? t.moments.complete : t.moments.soFar}
+            </h1>
+          </div>
+          <Rook pose="reviewing" size={72} className="-mt-2 shrink-0" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-4">
             <span
-              data-testid="review-focus"
-              className="font-mono text-meta tracking-eyebrow text-muted"
+              data-testid="review-pct"
+              className="text-num-l leading-none font-medium tracking-number tabular-nums"
             >
-              {formatMinutes(app.focusMin).toUpperCase()}{" "}
-              {t.moments.focusSuffix}
+              {stats.pct}
+              <span className="text-title text-dim">%</span>
             </span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5 text-body text-muted">
-          <span
-            aria-hidden="true"
-            className={cx(
-              "size-1.5 rounded-full",
-              stats.standardMet ? "bg-accent" : "bg-faint",
-            )}
-          />
-          {stats.standardMet
-            ? t.moments.standardMetStreak(app.streak)
-            : t.moments.moreToMeet(stats.needed)}
-        </div>
-        {app.hasPartner && (
-          <div className="flex flex-col gap-3 border-t border-line pt-5">
-            <div className="flex items-baseline justify-between">
-              <span className="text-small font-semibold tracking-eyebrow">
-                {app.partner.name.toUpperCase()}
+            <span className="flex items-baseline gap-3 tabular-nums">
+              <span className="text-body">
+                {stats.done} / {stats.total}{" "}
+                <span className="text-dim">{t.moments.done}</span>
               </span>
-              <span className="flex items-baseline gap-3.5 tabular-nums">
-                <span className="text-body text-muted">
-                  {pv.done} / {pv.total}
-                </span>
-                <span
-                  data-testid="review-partner-pct"
-                  className="text-number font-medium tracking-display"
-                >
-                  {pv.pct}%
-                </span>
+              <span
+                data-testid="review-focus"
+                className="font-mono text-meta tracking-eyebrow text-muted"
+              >
+                {formatMinutes(app.focusMin).toUpperCase()}{" "}
+                {t.moments.focusSuffix}
               </span>
-            </div>
-            <span className="text-body text-muted">
-              {diff > 0
-                ? t.moments.partnerAheadToday(app.partner.name, diff)
-                : diff < 0
-                  ? t.moments.youAheadToday(-diff)
-                  : t.moments.levelToday}
             </span>
           </div>
-        )}
-        {(
-          [
-            [t.moments.doneList, doneNames],
-            [t.moments.skippedList, skipped],
-            [t.moments.notDoneList, notDone],
-          ] as const
-        ).map(([k, names]) =>
-          names.length > 0 ? (
-            <div key={k} className="flex flex-col gap-1.5">
-              <span className="font-mono text-meta tracking-eyebrow text-dim">
-                {k}
-              </span>
-              <span className="text-body text-muted">{names.join(" · ")}</span>
-            </div>
-          ) : null,
-        )}
-        {list.length === 0 && (
-          <span className="text-body text-muted">{t.moments.nothingToday}</span>
-        )}
-        {nn && (
-          <div className="-mt-3 flex flex-col">
-            <FactRows
-              lines={[
-                { k: t.reviews.nonNegotiables, v: nn, testId: "fact-nn" },
-              ]}
+          <div className="flex items-center gap-2.5 text-small text-muted">
+            <span
+              aria-hidden="true"
+              className={cx(
+                "size-1.5 rounded-full",
+                stats.standardMet ? "bg-accent" : "bg-ghost",
+              )}
             />
+            {stats.standardMet
+              ? t.moments.standardMetStreak(app.streak)
+              : t.moments.moreToMeet(stats.needed)}
           </div>
-        )}
+        </div>
         {reflection && (
           <ReflectionForm
             kind="day"
@@ -215,6 +168,66 @@ function ReviewDay() {
             initial={reflection}
           />
         )}
+        <div className="flex flex-col gap-5 border-t border-line pt-5">
+          <span className="eyebrow text-dim">{t.moments.facts}</span>
+          {app.hasPartner && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-baseline justify-between">
+                <span className="text-small font-semibold tracking-eyebrow">
+                  {app.partner.name.toUpperCase()}
+                </span>
+                <span className="flex items-baseline gap-3.5 tabular-nums">
+                  <span className="text-small text-muted">
+                    {pv.done} / {pv.total}
+                  </span>
+                  <span
+                    data-testid="review-partner-pct"
+                    className="text-title font-medium tracking-display"
+                  >
+                    {pv.pct}%
+                  </span>
+                </span>
+              </div>
+              <span className="text-small text-muted">
+                {diff > 0
+                  ? t.moments.partnerAheadToday(app.partner.name, diff)
+                  : diff < 0
+                    ? t.moments.youAheadToday(-diff)
+                    : t.moments.levelToday}
+              </span>
+            </div>
+          )}
+          {(
+            [
+              [t.moments.doneList, doneNames],
+              [t.moments.skippedList, skipped],
+              [t.moments.notDoneList, notDone],
+            ] as const
+          ).map(([k, names]) =>
+            names.length > 0 ? (
+              <div key={k} className="flex flex-col gap-1.5">
+                <span className="font-mono text-meta tracking-eyebrow text-dim">
+                  {k}
+                </span>
+                <span className="text-small text-muted">
+                  {names.join(" · ")}
+                </span>
+              </div>
+            ) : null,
+          )}
+          {list.length === 0 && (
+            <span className="text-small text-muted">
+              {t.moments.nothingToday}
+            </span>
+          )}
+          {nn && (
+            <FactRows
+              lines={[
+                { k: t.reviews.nonNegotiables, v: nn, testId: "fact-nn" },
+              ]}
+            />
+          )}
+        </div>
       </div>
       <button type="button" onClick={app.closeOverlay} className={lightButton}>
         {t.moments.doneButton}

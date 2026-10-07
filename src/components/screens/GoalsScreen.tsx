@@ -16,6 +16,7 @@ import {
   setVisionArchived,
 } from "@/app/(app)/goals-actions";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { useResumeValue } from "@/components/resume/use-resume";
 import { useSession } from "@/components/session";
 import { Sheet } from "@/components/sheets/Sheet";
@@ -311,11 +312,14 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function Empty({ text }: { text: string }) {
+function Empty({ text, rook = false }: { text: string; rook?: boolean }) {
   return (
-    <p className="text-title leading-[1.3] font-medium tracking-display text-pretty text-muted">
-      {text}
-    </p>
+    <div className="flex items-center gap-4">
+      {rook && <Rook pose="ready" size={64} />}
+      <p className="m-0 text-title leading-[1.3] font-medium tracking-display text-pretty text-muted">
+        {text}
+      </p>
+    </div>
   );
 }
 
@@ -441,7 +445,7 @@ function VisionSection({
       className="flex flex-col gap-4"
     >
       <AddButton label={t.goals.addVision} onClick={onAdd} />
-      {active.length === 0 && <Empty text={t.goals.empty.vision} />}
+      {active.length === 0 && <Empty text={t.goals.empty.vision} rook />}
       <ul className="flex flex-col gap-3">
         {active.map((v) => (
           <li

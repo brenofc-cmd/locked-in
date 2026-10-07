@@ -88,7 +88,7 @@ export function ReflectionForm({
         <span className="font-mono text-meta tracking-eyebrow text-muted">
           {R.reflection}
         </span>
-        <span className="text-num-heros text-dim">{R.optional}</span>
+        <span className="text-small text-dim">{R.optional}</span>
       </span>
       {REFLECTION_FIELDS.map((f) => (
         <label key={f} className="flex flex-col gap-1.5">
@@ -150,7 +150,7 @@ export function ReflectionView({
       </span>
       {REFLECTION_FIELDS.filter((f) => reflection[f]).map((f) => (
         <div key={f} className="flex flex-col gap-0.5">
-          <span className="text-num-heros text-dim">{text[f]}</span>
+          <span className="text-small text-dim">{text[f]}</span>
           <span className="text-body break-words whitespace-pre-wrap text-muted">
             {reflection[f]}
           </span>

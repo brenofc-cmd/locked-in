@@ -8,6 +8,7 @@ import { completeOnboarding } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { LogoMark, MiniCheck, chipTone, cx } from "@/components/ui";
+import { Rook } from "@/components/brand/Rook";
 import { NETWORK_ERROR } from "@/lib/invite-code";
 import { onboardingStart, type OnboardingStep } from "@/lib/onboarding";
 import {
@@ -184,7 +185,12 @@ export function OnboardingScreen() {
 
         {step === 0 && (
           <div className="flex flex-col gap-6 animate-[li-rise_.4s_ease]">
-            <LogoMark size="lg" />
+            <span className="flex items-end justify-between">
+              <LogoMark size="lg" />
+              <span className="motion-safe:animate-[li-rook-land_.7s_var(--ease-settle)_.25s_both]">
+                <Rook pose="ready" size={112} />
+              </span>
+            </span>
             <h1 className="text-display leading-none font-semibold tracking-meta">
               LOCKED IN
             </h1>
@@ -382,7 +388,7 @@ export function OnboardingScreen() {
                   {t.onboarding.yourCode}
                 </span>
                 <span
-                  className="font-mono text-2xl tracking-meta"
+                  className="font-mono text-title tracking-meta"
                   data-testid="onboarding-code"
                 >
                   {duo.inviteCode}

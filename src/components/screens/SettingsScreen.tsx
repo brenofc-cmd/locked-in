@@ -13,6 +13,7 @@ import {
 const noSubscribe = () => () => {};
 import { updateSetting, updateTimezone } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { useSession } from "@/components/session";
 import { useInstallPrompt } from "@/components/use-install-prompt";
 import {
@@ -487,6 +488,8 @@ function PushSettings({
   return (
     <div className="flex flex-col" data-testid="push-settings">
       <div className="flex min-h-[62px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3">
+        {/* Setting push up is a moment worth a nod from Rook (off only). */}
+        {state === "off" && <Rook pose="ready" size={44} />}
         <span className="flex min-w-0 flex-1 basis-[220px] flex-col gap-1">
           <span className="text-body">{t.push.title}</span>
           <span
