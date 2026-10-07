@@ -26,7 +26,9 @@ import {
  * main screen at 390 and 1440. Alice (A) with the approved design's day and
  * a duo with Bruno (B); reset afterwards through the suite's helpers.
  */
-test.describe.configure({ mode: "serial" });
+// Each test signs in (DEV latency can take seconds): 60 s, like the other
+// suites that sign in.
+test.describe.configure({ mode: "serial", timeout: 60_000 });
 
 let A: Api;
 let B: Api;
