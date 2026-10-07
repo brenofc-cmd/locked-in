@@ -206,7 +206,7 @@ function BottomNav({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label={t.shell.tabsNav}
-      className="flex shrink-0 border-t border-line bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] desk:hidden"
+      className="flex shrink-0 border-t border-line bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] max-[359px]:px-0 desk:hidden"
     >
       {TABS.map(({ href, label, Icon }) => {
         const on = isActive(pathname, href);
@@ -241,7 +241,8 @@ function BottomNav({ pathname }: { pathname: string }) {
             </span>
             <span
               className={cx(
-                "text-meta tracking-normal",
+                // 320 px: PLANEJAR / PROGRESSO must not touch.
+                "text-meta tracking-normal max-[359px]:tracking-tighter",
                 on ? "font-semibold" : "font-medium",
               )}
             >

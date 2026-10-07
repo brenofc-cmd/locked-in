@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { cx } from "@/components/ui";
 
 /** Snackbar (Undo), toasts (partner events) and the connection pill. */
@@ -60,7 +61,15 @@ export function Feedback() {
             role="status"
             className="flex min-h-14 items-center gap-3 rounded-2xl border border-line-strong bg-raised py-2.5 pr-2.5 pl-4 shadow-[0_14px_40px_rgba(0,0,0,0.5)] animate-[li-enter_.45s_cubic-bezier(.2,.8,.2,1)] desk:max-w-[360px]"
           >
-            {x.emoji ? (
+            {x.rook ? (
+              <Rook
+                pose={x.rook === "tap" ? "supportive" : "proud"}
+                core="proof"
+                act={x.rook}
+                size={32}
+                className="-my-1"
+              />
+            ) : x.emoji ? (
               <span className="text-title leading-none" aria-hidden="true">
                 {x.emoji}
               </span>

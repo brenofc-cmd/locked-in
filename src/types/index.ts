@@ -151,6 +151,8 @@ export type Toast = {
   text: string;
   sub: string;
   emoji?: string;
+  /** A tiny Rook acknowledging a duo moment (docs/ROOK.md → Usage). */
+  rook?: "tap" | "ack";
   actions?: { label: string; aria: string; run: () => void }[];
 };
 

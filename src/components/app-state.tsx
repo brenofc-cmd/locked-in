@@ -335,6 +335,7 @@ function useAppStateValue(
         notify("reaction", {
           text: reactionToastText(partnerName, target ?? null),
           sub: reactionLabel(type),
+          rook: "ack",
         });
       }),
     [onPartnerReaction, partnerName, notify],
@@ -439,6 +440,7 @@ function useAppStateValue(
         notify("partner_activity", {
           text: t.accountability.nudgeToast(partnerName),
           sub: title ? t.accountability.nudgeToastSub(title) : "",
+          rook: "tap",
         });
       }),
     [onNudge, partnerName, notify],

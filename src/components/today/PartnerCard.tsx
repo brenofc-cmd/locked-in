@@ -38,7 +38,7 @@ export function PartnerCard() {
             </span>
             <span
               className={cx(
-                "flex items-center gap-1.5 font-mono text-meta tracking-eyebrow",
+                "flex items-center gap-1.5 font-mono text-meta tracking-meta whitespace-nowrap",
                 pv.live ? "text-accent" : "text-dim",
               )}
             >

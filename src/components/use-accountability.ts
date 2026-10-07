@@ -147,6 +147,7 @@ export function useAccountability({
         toast({
           text: t.accountability.nudgeSent(partner.name),
           sub: c.title.toUpperCase(),
+          rook: "tap",
         });
     },
     [myId, partner, toast, withBusy],

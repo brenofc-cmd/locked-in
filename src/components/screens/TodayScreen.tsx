@@ -11,6 +11,7 @@ import { MorningCard } from "@/components/today/MorningCard";
 import { NorthStarCard } from "@/components/today/NorthStarCard";
 import { NoPartnerCard, PartnerCard } from "@/components/today/PartnerCard";
 import { TaskRow } from "@/components/today/TaskRow";
+import { StreakNumber, TodayRook } from "@/components/today/TodayRook";
 import { TopThree } from "@/components/today/TopThree";
 import { UpcomingCard } from "@/components/today/UpcomingCard";
 import { ProgressBar, SectionHeader, cx } from "@/components/ui";
@@ -51,12 +52,20 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                   {t.todayScreen.day(dayNumber)}
                 </span>
               </div>
-              <h1 suppressHydrationWarning className="page-title">
-                {t.todayScreen.greeting(
-                  daypartAt(app.now, me.timezone),
-                  app.userName.toUpperCase(),
-                )}
-              </h1>
+              {/* Rook beside the greeting: he reacts to each task proved. */}
+              <div className="flex items-end justify-between gap-3">
+                <h1 suppressHydrationWarning className="page-title">
+                  {t.todayScreen.greeting(
+                    daypartAt(app.now, me.timezone),
+                    app.userName.toUpperCase(),
+                  )}
+                </h1>
+                <TodayRook
+                  done={stats.done}
+                  standardMet={stats.standardMet}
+                  perfect={stats.perfect}
+                />
+              </div>
             </div>
             <div className="flex items-end justify-between gap-4">
               <span
@@ -72,26 +81,28 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                   %
                 </span>
               </span>
-              <div className="flex flex-col items-end gap-2 pb-0.5">
-                <span
-                  data-testid="today-count"
-                  className="text-body tabular-nums"
-                >
-                  {stats.done} / {stats.total}{" "}
-                  <span className="text-dim">{t.todayScreen.done}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => app.openSheet({ kind: "streak" })}
-                  className="flex h-7 items-center gap-1.5 font-mono text-meta tracking-eyebrow text-muted hover:text-text"
-                >
-                  <span data-testid="today-streak">{app.streak}</span>{" "}
-                  {t.todayScreen.streakSuffix}
-                  <span aria-hidden="true" className="text-ghost">
-                    ›
+              <span className="flex shrink-0 items-end gap-3">
+                <div className="flex flex-col items-end gap-2 pb-0.5">
+                  <span
+                    data-testid="today-count"
+                    className="text-body tabular-nums"
+                  >
+                    {stats.done} / {stats.total}{" "}
+                    <span className="text-dim">{t.todayScreen.done}</span>
                   </span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => app.openSheet({ kind: "streak" })}
+                    className="flex h-7 items-center gap-1.5 font-mono text-meta tracking-eyebrow whitespace-nowrap text-muted hover:text-text"
+                  >
+                    <StreakNumber streak={app.streak} />{" "}
+                    {t.todayScreen.streakSuffix}
+                    <span aria-hidden="true" className="text-ghost">
+                      ›
+                    </span>
+                  </button>
+                </div>
+              </span>
             </div>
             <div className="flex flex-col gap-2.5">
               <ProgressBar
