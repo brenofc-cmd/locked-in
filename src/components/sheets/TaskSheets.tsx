@@ -28,9 +28,9 @@ const WEEKDAYS: Day[] = ["MON", "TUE", "WED", "THU", "FRI"];
 type Repeat = keyof typeof t.taskSheet.repeatModes;
 const REPEAT_MODES: Repeat[] = ["daily", "weekdays", "custom"];
 
-const monoLabel = "font-mono text-[10.5px] tracking-[.16em] text-dim";
+const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "rounded-xl border border-white/10 bg-bg text-text outline-none focus:border-white/30";
+  "rounded-xl border border-line-strong bg-bg text-text outline-none focus:border-line-bold";
 
 function repeatOf(days: Day[]): Repeat {
   if (days.length === 7) return "daily";
@@ -236,27 +236,27 @@ export function TaskFormSheet({
     const routineId = editing.routineId;
     return (
       <div className="flex flex-col gap-2 animate-[li-fade-up_.2s_ease]">
-        <span className="pb-2 font-mono text-[11px] tracking-[.18em] text-muted">
+        <span className="pb-2 font-mono text-meta tracking-eyebrow text-muted">
           {t.taskSheet.applyTo}
         </span>
         <button
           type="button"
           onClick={() => run(() => app.updateToday(editing.id, input()))}
-          className="h-14 rounded-[14px] border border-white/10 bg-raised text-base"
+          className="h-14 rounded-2xl border border-line-strong bg-raised text-base"
         >
           {t.taskSheet.todayOnly}
         </button>
         <button
           type="button"
           onClick={() => run(() => app.updateRoutine(routineId, input()))}
-          className="h-14 rounded-[14px] bg-text text-base font-semibold text-bg"
+          className="h-14 rounded-2xl bg-text text-base font-semibold text-bg"
         >
           {t.taskSheet.todayAndFuture}
         </button>
         <button
           type="button"
           onClick={() => setConfirm(false)}
-          className="h-12 text-sm text-dim"
+          className="h-12 text-body text-dim"
         >
           {t.taskSheet.cancel}
         </button>
@@ -282,14 +282,14 @@ export function TaskFormSheet({
       }}
     >
       <div className="flex min-h-8 items-center justify-between">
-        <span className="font-mono text-[11px] tracking-[.18em] text-muted">
+        <span className="font-mono text-meta tracking-eyebrow text-muted">
           {source ? t.taskSheet.editTask : t.taskSheet.addTask}
         </span>
         {source && (
           <button
             type="button"
             onClick={remove}
-            className="h-9 rounded-lg px-2.5 text-sm text-danger"
+            className="h-9 rounded-lg px-2.5 text-body text-danger"
           >
             {t.taskSheet.delete}
           </button>
@@ -305,7 +305,7 @@ export function TaskFormSheet({
         placeholder={t.taskSheet.namePlaceholder}
         aria-label={t.taskSheet.nameAria}
         enterKeyHint="done"
-        className="h-14 rounded-[14px] border border-white/12 bg-bg px-4 text-[17px] outline-none focus:border-white/30"
+        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
       />
       {!source && (
         <div
@@ -323,7 +323,7 @@ export function TaskFormSheet({
                 aria-checked={on}
                 onClick={() => setRepeat(w === "Repeat")}
                 className={cx(
-                  "h-11 flex-1 rounded-xl border text-sm",
+                  "h-11 flex-1 rounded-xl border text-body",
                   chipTone(on),
                 )}
               >
@@ -351,7 +351,7 @@ export function TaskFormSheet({
                 aria-checked={repeatMode === r}
                 onClick={() => setRepeatMode(r)}
                 className={cx(
-                  "h-11 flex-1 rounded-xl border text-sm",
+                  "h-11 flex-1 rounded-xl border text-body",
                   chipTone(repeatMode === r),
                 )}
               >
@@ -377,7 +377,7 @@ export function TaskFormSheet({
                       )
                     }
                     className={cx(
-                      "h-12 rounded-xl border p-0 text-[15px] font-semibold active:scale-[.92]",
+                      "h-12 rounded-xl border p-0 text-body font-semibold active:scale-[.92]",
                       chipTone(on),
                     )}
                   >
@@ -393,10 +393,10 @@ export function TaskFormSheet({
         type="button"
         onClick={() => setMore((m) => !m)}
         aria-expanded={more}
-        className="flex h-12 items-center justify-between border-t border-white/6 text-sm text-muted"
+        className="flex h-12 items-center justify-between border-t border-line text-body text-muted"
       >
         <span>{t.taskSheet.moreOptions}</span>
-        <span className="min-w-0 truncate pl-3 text-xs text-dim">
+        <span className="min-w-0 truncate pl-3 text-small text-dim">
           {moreSummary}{" "}
           <span
             aria-hidden="true"
@@ -430,7 +430,7 @@ export function TaskFormSheet({
               className="flex flex-col gap-2 text-left"
             >
               <span className={monoLabel}>{t.taskSheet.reminder}</span>
-              <span className="flex h-[46px] w-full items-center justify-between rounded-xl border border-white/10 px-3 text-sm">
+              <span className="flex h-[46px] w-full items-center justify-between rounded-xl border border-line-strong px-3 text-body">
                 {reminder ? t.taskSheet.on : t.taskSheet.off}
                 <SwitchTrack on={reminder} compact />
               </span>
@@ -451,7 +451,7 @@ export function TaskFormSheet({
                   aria-checked={category === c}
                   onClick={() => setCategory(c)}
                   className={cx(
-                    "h-[38px] rounded-[10px] border px-[13px] text-[13.5px]",
+                    "h-[38px] rounded-xl border px-3 text-small",
                     chipTone(category === c),
                   )}
                 >
@@ -467,11 +467,13 @@ export function TaskFormSheet({
             onClick={() => setVisible((v) => !v)}
             className="flex min-h-[52px] items-center justify-between text-left"
           >
-            <span className="flex flex-col gap-[3px]">
-              <span className="text-[14.5px]">
+            <span className="flex flex-col gap-1">
+              <span className="text-body">
                 {t.taskSheet.visibleTo(app.partner.name)}
               </span>
-              <span className="text-xs text-dim">{t.taskSheet.hiddenNote}</span>
+              <span className="text-num-heros text-dim">
+                {t.taskSheet.hiddenNote}
+              </span>
             </span>
             <SwitchTrack on={visible} />
           </button>
@@ -483,9 +485,11 @@ export function TaskFormSheet({
             onClick={() => setNonNegotiable((v) => !v)}
             className="flex min-h-[52px] items-center justify-between text-left"
           >
-            <span className="flex flex-col gap-[3px]">
-              <span className="text-[14.5px]">{t.nonNegotiable.switch}</span>
-              <span className="text-xs text-dim">{t.nonNegotiable.note}</span>
+            <span className="flex flex-col gap-1">
+              <span className="text-body">{t.nonNegotiable.switch}</span>
+              <span className="text-num-heros text-dim">
+                {t.nonNegotiable.note}
+              </span>
             </span>
             <SwitchTrack on={nonNegotiable} />
           </button>
@@ -524,7 +528,7 @@ export function TaskFormSheet({
         </div>
       )}
       {error && (
-        <p role="alert" className="-mt-2 text-[13px] text-danger">
+        <p role="alert" className="-mt-2 text-small text-danger">
           {error}
         </p>
       )}
@@ -532,7 +536,7 @@ export function TaskFormSheet({
         type="submit"
         aria-disabled={!valid}
         className={cx(
-          "h-14 rounded-2xl font-mono text-[12.5px] font-semibold tracking-[.28em] transition-all duration-200 active:scale-[.97]",
+          "h-14 rounded-2xl font-mono text-small font-semibold tracking-brand transition-all duration-200 active:scale-[.97]",
           valid ? "bg-accent text-bg" : "bg-selected text-ghost",
         )}
       >
@@ -570,10 +574,10 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
     .join(" · ");
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <span className="text-[19px] font-medium">{task.name}</span>
-        <span className="font-mono text-[10.5px] tracking-[.1em] text-dim">
+        <span className="text-title font-medium">{task.name}</span>
+        <span className="font-mono text-meta tracking-meta text-dim">
           {meta}
         </span>
       </div>
@@ -586,19 +590,21 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
                 key={r}
                 type="button"
                 onClick={() => app.skipTask(task.id, r)}
-                className="h-12 rounded-xl border border-white/10 bg-raised text-sm active:scale-[.96]"
+                className="h-12 rounded-xl border border-line-strong bg-raised text-body active:scale-[.96]"
               >
                 {r}
               </button>
             ))}
           </div>
-          <span className="text-xs text-dim">{t.taskSheet.skipNote}</span>
+          <span className="text-num-heros text-dim">
+            {t.taskSheet.skipNote}
+          </span>
         </div>
       ) : (
         <button
           type="button"
           onClick={() => app.unskipTask(task.id)}
-          className="h-[52px] rounded-[14px] border border-white/10 bg-raised text-[15px]"
+          className="h-[52px] rounded-2xl border border-line-strong bg-raised text-body"
         >
           {t.taskSheet.unskip(
             task.skip.replace(t.tasks.skippedWith(""), "").toLowerCase(),
@@ -609,12 +615,12 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
         <div
           role="group"
           aria-labelledby="top3-full"
-          className="flex flex-col gap-2 rounded-2xl border border-white/10 p-4"
+          className="flex flex-col gap-2 rounded-2xl border border-line-strong p-4"
         >
           <span id="top3-full" className={monoLabel}>
             {t.top3.fullTitle}
           </span>
-          <span className="text-[13px] text-dim">{t.top3.fullHint}</span>
+          <span className="text-small text-dim">{t.top3.fullHint}</span>
           {topThree(app.tasks).map((p) => (
             <button
               key={p.id}
@@ -623,9 +629,9 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
               onClick={() =>
                 void prioritize(replacePriority(ids, p.id, task.id))
               }
-              className="flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-raised px-3 text-left text-sm"
+              className="flex h-12 items-center gap-3 rounded-xl border border-line-strong bg-raised px-3 text-left text-body"
             >
-              <span className="font-mono text-[12px] text-accent">
+              <span className="font-mono text-small text-accent">
                 {p.priority}
               </span>
               <span className="min-w-0 flex-1 truncate">{p.name}</span>
@@ -642,11 +648,11 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
                 ? void prioritize(removePriority(ids, task.id))
                 : mark()
             }
-            className="flex h-[54px] items-center justify-between border-t border-white/6 text-[15.5px]"
+            className="flex h-[54px] items-center justify-between border-t border-line text-body"
           >
             <span>{task.priority !== null ? t.top3.unmark : t.top3.mark}</span>
             {task.priority !== null && (
-              <span className="font-mono text-[11px] tracking-[.14em] text-accent">
+              <span className="font-mono text-meta tracking-eyebrow text-accent">
                 {task.priority}
               </span>
             )}
@@ -655,10 +661,10 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "edit", taskId: task.id })}
-          className="flex h-[54px] items-center justify-between border-t border-white/6 text-[15.5px]"
+          className="flex h-[54px] items-center justify-between border-t border-line text-body"
         >
           <span>{t.taskSheet.edit}</span>
-          <span aria-hidden="true" className="text-faint">
+          <span aria-hidden="true" className="text-ghost">
             ›
           </span>
         </button>
@@ -668,7 +674,7 @@ export function TaskOptionsSheet({ task }: { task: Task }) {
             app.closeSheet();
             void app.deleteTask(task.id);
           }}
-          className="flex h-[54px] items-center border-t border-white/6 text-[15.5px] text-danger"
+          className="flex h-[54px] items-center border-t border-line text-body text-danger"
         >
           {task.once ? t.taskSheet.delete : t.taskSheet.removeFromRoutine}
         </button>

@@ -41,14 +41,14 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "mobile-390",
-      testIgnore: /stage\d|v2-|issue-|ia\.spec/,
+      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "desktop-1440",
-      testIgnore: /stage\d|v2-|issue-|ia\.spec/,
+      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: desk,
@@ -58,28 +58,28 @@ export default defineConfig({
     {
       name: "focus-390",
       grep: /@focus/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec/,
+      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "focus-1440",
       grep: /@focus/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec/,
+      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: desk,
     },
     {
       name: "mobile-375",
       grep: /@layout/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec/,
+      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
       dependencies: ["setup"],
       use: { ...phone(375, 812), ...state("layout") },
     },
     {
       name: "mobile-430",
       grep: /@layout/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec/,
+      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
       dependencies: ["setup"],
       use: { ...phone(430, 932), ...state("layout") },
     },
@@ -228,6 +228,22 @@ export default defineConfig({
       name: "v2p10-390",
       testMatch: /v2-phase10\.spec\.ts/,
       dependencies: ["v2p9-390"],
+      use: phone(390, 844),
+    },
+    // Final design pass: behaviour the design promises (motion / reduced
+    // motion, Focus first view, Rook, axe at 390 + 1440).
+    {
+      name: "design-390",
+      testMatch: /design\.spec\.ts/,
+      dependencies: ["v2p10-390"],
+      use: { ...phone(390, 844), channel: "chromium" },
+    },
+    // The visual review matrix (LI_SHOTS=<dir>, skipped otherwise).
+    // Run alone: npx playwright test --project=visual --no-deps
+    {
+      name: "visual",
+      testMatch: /visual\.spec\.ts/,
+      dependencies: ["design-390"],
       use: phone(390, 844),
     },
   ],

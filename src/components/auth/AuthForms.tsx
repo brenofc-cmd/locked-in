@@ -14,9 +14,9 @@ import { MIN_PASSWORD } from "@/lib/auth-errors";
 
 // Field and button styles from the v2 "Sign in" moment. Copy: t.auth.
 const FIELD =
-  "h-[52px] rounded-xl border border-white/10 bg-field px-4 text-[15px] text-text outline-none placeholder:text-dim focus:border-white/28";
+  "h-[52px] rounded-xl border border-line-strong bg-field px-4 text-body text-text outline-none placeholder:text-dim focus:border-line-bold";
 const PRIMARY =
-  "h-[52px] rounded-xl bg-text text-[14.5px] font-semibold text-bg active:scale-[.98] disabled:opacity-60";
+  "h-[52px] rounded-xl bg-text text-body font-semibold text-bg active:scale-[.98] disabled:opacity-60";
 
 function Field(props: {
   name: string;
@@ -50,7 +50,7 @@ function FormError({ message }: { message?: string }) {
     <p
       role="alert"
       aria-live="polite"
-      className="min-h-5 text-[13px] text-danger"
+      className="min-h-5 text-small text-danger"
     >
       {message}
     </p>
@@ -59,7 +59,7 @@ function FormError({ message }: { message?: string }) {
 
 function Footer({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-3.5 text-[13px] text-dim">{children}</div>
+    <div className="flex flex-col gap-3.5 text-small text-dim">{children}</div>
   );
 }
 
@@ -82,10 +82,10 @@ function Sent({
 }) {
   return (
     <div className="flex flex-col gap-4" role="status">
-      <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
+      <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
         {title}
       </h1>
-      <p className="text-[15px] leading-[1.5]">
+      <p className="text-body leading-[1.5]">
         {t.auth.sentLinkBefore} <span className="font-medium">{email}</span>
         {t.auth.sentLinkAfter}
       </p>
@@ -257,7 +257,7 @@ export function ForgotPasswordForm() {
         className="flex flex-col gap-2.5"
         aria-label={t.auth.resetPasswordLabel}
       >
-        <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
+        <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.auth.resetPasswordTitle}
         </h1>
         <Field
@@ -289,7 +289,7 @@ export function ResetPasswordForm() {
       className="flex flex-col gap-2.5"
       aria-label={t.auth.setNewPasswordLabel}
     >
-      <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
+      <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
         {t.auth.newPasswordTitle}
       </h1>
       <Field

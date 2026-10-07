@@ -34,12 +34,12 @@ export function FactRows({ lines }: { lines: FactLine[] }) {
         <div
           key={r.testId}
           data-testid={r.testId}
-          className="flex items-baseline justify-between gap-3 border-t border-white/6 py-3.5"
+          className="flex items-baseline justify-between gap-3 border-t border-line py-3.5"
         >
-          <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {r.k}
           </span>
-          <span className="text-right text-[15px] tabular-nums">{r.v}</span>
+          <span className="text-right text-body tabular-nums">{r.v}</span>
         </div>
       ))}
     </>
@@ -78,21 +78,21 @@ export function ReflectionForm({
     <form
       aria-label={R.reflection}
       data-testid={`reflection-${kind}`}
-      className="flex flex-col gap-3 border-t border-white/8 pt-5"
+      className="flex flex-col gap-3 border-t border-line pt-5"
       onSubmit={(e) => {
         e.preventDefault();
         void save();
       }}
     >
       <span className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-[11px] tracking-[.16em] text-muted">
+        <span className="font-mono text-meta tracking-eyebrow text-muted">
           {R.reflection}
         </span>
-        <span className="text-xs text-dim">{R.optional}</span>
+        <span className="text-small text-dim">{R.optional}</span>
       </span>
       {REFLECTION_FIELDS.map((f) => (
         <label key={f} className="flex flex-col gap-1.5">
-          <span className="text-[13.5px] text-muted">{text[f]}</span>
+          <span className="text-small text-muted">{text[f]}</span>
           <textarea
             value={value[f]}
             onChange={(e) => {
@@ -102,12 +102,12 @@ export function ReflectionForm({
             maxLength={REFLECTION_MAX}
             rows={2}
             data-testid={`reflection-${f}`}
-            className="min-h-[64px] resize-y rounded-xl border border-white/12 bg-bg px-3.5 py-2.5 text-[15px] outline-none focus:border-white/30"
+            className="min-h-[64px] resize-y rounded-xl border border-line-strong bg-bg px-3.5 py-2.5 text-body outline-none focus:border-line-bold"
           />
         </label>
       ))}
       {state === "error" && (
-        <p role="alert" className="m-0 text-[13px] text-danger">
+        <p role="alert" className="m-0 text-small text-danger">
           {R.saveError}
         </p>
       )}
@@ -116,8 +116,8 @@ export function ReflectionForm({
         aria-disabled={!dirty || state === "saving"}
         data-testid="reflection-save"
         className={cx(
-          "h-12 rounded-xl border font-mono text-[11.5px] tracking-[.22em]",
-          dirty ? "border-white/25 text-text" : "border-white/8 text-dim",
+          "h-12 rounded-xl border font-mono text-meta tracking-eyebrow",
+          dirty ? "border-line-bold text-text" : "border-line text-dim",
         )}
       >
         {state === "saving"
@@ -143,15 +143,15 @@ export function ReflectionView({
   return (
     <div
       data-testid={`reflection-view-${kind}`}
-      className="flex flex-col gap-2.5 border-t border-white/8 pt-3"
+      className="flex flex-col gap-2.5 border-t border-line pt-3"
     >
-      <span className="font-mono text-[10.5px] tracking-[.16em] text-dim">
+      <span className="font-mono text-meta tracking-eyebrow text-dim">
         {R.reflection}
       </span>
       {REFLECTION_FIELDS.filter((f) => reflection[f]).map((f) => (
         <div key={f} className="flex flex-col gap-0.5">
-          <span className="text-xs text-dim">{text[f]}</span>
-          <span className="text-[14px] break-words whitespace-pre-wrap text-muted">
+          <span className="text-small text-dim">{text[f]}</span>
+          <span className="text-body break-words whitespace-pre-wrap text-muted">
             {reflection[f]}
           </span>
         </div>

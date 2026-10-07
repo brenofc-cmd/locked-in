@@ -6,11 +6,11 @@ import { useState } from "react";
 import { DuelDetailed } from "@/components/duel/Duel";
 import { MonthRow } from "@/components/monthly/Monthly";
 import { useApp } from "@/components/app-state";
+import { RookDuo } from "@/components/brand/Rook";
 import {
   CheckinPicker,
   CommitmentHistory,
   CommitmentsSection,
-  PartnerCheckinLine,
   PartnerDayLine,
 } from "@/components/partner/Accountability";
 import { ActivityItem } from "@/components/today/ActivityItem";
@@ -47,15 +47,16 @@ export function PartnerScreen() {
   if (!app.hasPartner) {
     return (
       <div className="flex max-w-[420px] flex-col gap-5 pt-10 animate-[li-fade-up_.4s_ease]">
-        <h1 className="font-mono text-[11px] font-normal tracking-[.16em] text-dim">
+        <RookDuo size={72} />
+        <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.partnerScreen.noPartner}
         </h1>
-        <p className="text-[26px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty">
+        <p className="text-heading leading-[1.3] font-medium tracking-display text-pretty">
           {t.partnerScreen.pitch}
         </p>
         <Link
           href="/duo"
-          className="flex h-[52px] items-center self-start rounded-[14px] bg-accent px-[22px] font-mono text-xs font-semibold tracking-[.22em] text-bg"
+          className="flex h-[52px] items-center self-start rounded-2xl bg-accent px-6 font-mono text-small font-semibold tracking-eyebrow text-bg"
         >
           {t.partnerScreen.invite}
         </Link>
@@ -85,7 +86,7 @@ export function PartnerScreen() {
         <div className="flex items-center gap-4">
           <Avatar
             initial={partner.initial}
-            className="relative size-[48px] text-[18px] transition-shadow duration-700"
+            className="relative size-[48px] text-lead transition-shadow duration-700"
             style={{
               boxShadow: pv.flashing
                 ? "0 0 0 1px color-mix(in oklab,var(--color-accent) 50%,transparent),0 0 40px color-mix(in oklab,var(--color-accent) 8%,transparent)"
@@ -93,10 +94,10 @@ export function PartnerScreen() {
             }}
           />
           <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <h1 className="m-0 truncate text-[25px] leading-none font-semibold tracking-[.02em] max-[384px]:text-[23px] desk:text-[38px]">
+            <h1 className="m-0 truncate text-heading leading-none font-semibold tracking-meta max-[384px]:text-title desk:text-display">
               {partner.name.toUpperCase()}
             </h1>
-            <span className="flex items-center gap-2 text-[13.5px] text-muted">
+            <span className="flex items-center gap-2 text-small text-muted">
               <StatusDot live={pv.live} pulse={pv.pulse} />
               <span className="truncate" data-testid="partner-status">
                 {pv.statusLine}
@@ -106,13 +107,13 @@ export function PartnerScreen() {
           <span className="flex shrink-0 flex-col items-end gap-1">
             <span
               data-testid="partner-pct"
-              className="text-[34px] leading-none font-medium tracking-[-0.04em] tabular-nums desk:text-[44px]"
+              className="text-number leading-none font-medium tracking-number tabular-nums desk:text-num-l"
             >
               <span className="sr-only">{t.partnerScreen.today} </span>
               {pv.pct}
-              <span className="text-[16px] text-quiet desk:text-[20px]">%</span>
+              <span className="text-lead text-dim desk:text-title">%</span>
             </span>
-            <span className="text-[12.5px] text-muted tabular-nums">
+            <span className="text-small text-muted tabular-nums">
               {t.partnerScreen.doneCount(pv.done, pv.total)}
             </span>
           </span>
@@ -123,10 +124,7 @@ export function PartnerScreen() {
           tone="text"
           className="overflow-hidden"
         />
-        <div className="flex flex-col gap-1.5">
-          <PartnerCheckinLine />
-          <PartnerDayLine />
-        </div>
+        <PartnerDayLine />
       </header>
 
       <DuelDetailed />
@@ -147,12 +145,12 @@ export function PartnerScreen() {
           {app.partnerTasks.map((x) => (
             <div
               key={x.id}
-              className="flex min-h-[52px] items-center gap-3.5 border-b border-white/5 py-1"
+              className="flex min-h-[52px] items-center gap-3.5 border-b border-line py-1"
             >
               <MiniCheck done={x.done} light />
               <span
                 className={cx(
-                  "flex-1 text-[14.5px]",
+                  "flex-1 text-body",
                   x.done ? "text-muted" : "text-text",
                 )}
               >
@@ -161,9 +159,7 @@ export function PartnerScreen() {
                   {x.done ? t.partnerScreen.srDone : t.partnerScreen.srNotDone}
                 </span>
               </span>
-              <span className="font-mono text-[11px] text-dim">
-                {x.at ?? ""}
-              </span>
+              <span className="font-mono text-meta text-dim">{x.at ?? ""}</span>
               {x.done &&
                 (() => {
                   const eventId = app.eventForTask(x.id);
@@ -178,12 +174,12 @@ export function PartnerScreen() {
             </div>
           ))}
           {app.partnerTasks.length === 0 && pv.total === 0 && (
-            <span className="py-3.5 text-[13.5px] text-dim">
+            <span className="py-3.5 text-small text-dim">
               {t.partnerScreen.nothingScheduled}
             </span>
           )}
           {pv.total > app.partnerTasks.length && (
-            <span className="py-3.5 text-[13px] text-dim">
+            <span className="py-3.5 text-small text-dim">
               {t.partnerScreen.privateCount(pv.total - app.partnerTasks.length)}
             </span>
           )}
@@ -192,12 +188,12 @@ export function PartnerScreen() {
           aria-label={t.partnerScreen.activityAria}
           className="flex flex-col"
         >
-          <div className="flex items-center gap-[9px] border-b border-white/9 pb-2">
+          <div className="flex items-center gap-2 border-b border-line-strong pb-2">
             <span
               aria-hidden="true"
               className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
             />
-            <h2 className="font-mono text-[11px] font-normal tracking-[.2em]">
+            <h2 className="font-mono text-meta font-normal tracking-eyebrow">
               {t.partnerScreen.activity}
             </h2>
           </div>
@@ -214,7 +210,7 @@ export function PartnerScreen() {
               type="button"
               aria-expanded={allActivity}
               onClick={() => setAllActivity((v) => !v)}
-              className="flex min-h-11 items-center border-t border-white/5 text-left text-[13px] text-muted underline-offset-[3px] hover:text-text hover:underline"
+              className="flex min-h-11 items-center border-t border-line text-left text-small text-muted underline-offset-[3px] hover:text-text hover:underline"
             >
               {allActivity
                 ? t.partnerScreen.activityLess
@@ -226,7 +222,7 @@ export function PartnerScreen() {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
         <section
           aria-label={t.partnerScreen.thisWeekAria}
-          className="flex flex-col gap-[18px]"
+          className="flex flex-col gap-5"
         >
           <SectionHeader
             as="h2"
@@ -254,7 +250,7 @@ export function PartnerScreen() {
             data-testid="week-leader"
             className="flex items-center justify-between gap-3"
           >
-            <span className="font-mono text-xs tracking-[.2em]">
+            <span className="font-mono text-small tracking-eyebrow">
               {lead.who === "me"
                 ? t.partnerScreen.youAhead
                 : lead.who === "partner"
@@ -266,7 +262,7 @@ export function PartnerScreen() {
             {lead.margin && (
               <span
                 className={cx(
-                  "text-[22px] font-medium",
+                  "text-title font-medium",
                   lead.who === "me" ? "text-accent" : "text-muted",
                 )}
               >
@@ -291,17 +287,17 @@ export function PartnerScreen() {
             />
           </div>
           {/* The rule is one tap away, like the duel's (less text on DUPLA). */}
-          <details className="group border-t border-white/5">
-            <summary className="flex h-11 cursor-pointer list-none items-center justify-between font-mono text-[10.5px] tracking-[.14em] text-dim hover:text-text [&::-webkit-details-marker]:hidden">
+          <details className="group border-t border-line">
+            <summary className="flex h-11 cursor-pointer list-none items-center justify-between font-mono text-meta tracking-eyebrow text-dim hover:text-text [&::-webkit-details-marker]:hidden">
               {t.duel.rulesTitle}
               <span
                 aria-hidden="true"
-                className="text-faint transition-transform group-open:rotate-90"
+                className="text-ghost transition-transform group-open:rotate-90"
               >
                 ›
               </span>
             </summary>
-            <p className="m-0 pb-1 text-[12.5px] leading-[1.5] text-muted">
+            <p className="m-0 pb-1 text-small leading-[1.5] text-muted">
               {t.partnerScreen.rule}
             </p>
           </details>
@@ -310,7 +306,7 @@ export function PartnerScreen() {
             onClick={() =>
               app.openOverlay({ kind: "weekly", weekStart: week.start })
             }
-            className="h-11 self-start text-[13px] text-muted underline underline-offset-[3px]"
+            className="h-11 self-start text-small text-muted underline underline-offset-[3px]"
           >
             {t.partnerScreen.reviewWeek}
           </button>
@@ -318,7 +314,7 @@ export function PartnerScreen() {
 
         <section
           aria-label={t.partnerScreen.headToHeadAria}
-          className="flex flex-col gap-[18px]"
+          className="flex flex-col gap-5"
         >
           <SectionHeader
             as="h2"
@@ -328,13 +324,13 @@ export function PartnerScreen() {
           <div className="flex items-end justify-between gap-3">
             <span
               data-testid="h2h-score"
-              className="text-[56px] leading-[.85] font-medium tracking-[-0.05em] tabular-nums desk:text-[72px]"
+              className="text-num-xl leading-[.85] font-medium tracking-number tabular-nums desk:text-num-2xl"
             >
               {score.me}
-              <span className="px-2.5 text-off">—</span>
+              <span className="px-2.5 text-ghost">—</span>
               <span className="text-dim">{score.partner}</span>
             </span>
-            <span className="text-right font-mono text-[10.5px] leading-[1.8] tracking-[.14em] text-dim">
+            <span className="text-right font-mono text-meta leading-[1.8] tracking-eyebrow text-dim">
               {t.partnerScreen.youVs(partner.name.toUpperCase())}
               {score.draws > 0 && (
                 <span data-testid="h2h-draws" className="block">
@@ -366,12 +362,12 @@ export function PartnerScreen() {
                           : t.partnerScreen.noContest,
                   )}
                   className={cx(
-                    "flex h-[30px] w-full items-center justify-center rounded-md font-mono text-[10px] font-semibold",
+                    "flex h-[30px] w-full items-center justify-center rounded-lg font-mono text-meta font-semibold",
                     w.result === "me"
                       ? "bg-accent text-bg"
                       : w.result === "partner"
-                        ? "bg-[#2e2e32] text-muted"
-                        : "border border-white/8 text-quiet",
+                        ? "bg-off text-muted"
+                        : "border border-line text-dim",
                   )}
                 >
                   {w.result === "me"
@@ -382,7 +378,7 @@ export function PartnerScreen() {
                         ? "="
                         : "·"}
                 </div>
-                <span className="font-mono text-[9.5px] text-dim">
+                <span className="font-mono text-meta text-dim">
                   {t.partnerScreen.weekShort(w.week)}
                 </span>
               </div>
@@ -396,22 +392,22 @@ export function PartnerScreen() {
                 onClick={() =>
                   app.openOverlay({ kind: "weekly", weekStart: w.weekStart })
                 }
-                className="grid min-h-12 grid-cols-[80px_1fr_auto] items-center gap-2.5 border-t border-white/5 p-0 text-left text-sm"
+                className="grid min-h-12 grid-cols-[80px_1fr_auto] items-center gap-2.5 border-t border-line p-0 text-left text-body"
               >
-                <span className="font-mono text-[11px] text-muted">
+                <span className="font-mono text-meta text-muted">
                   {t.partnerScreen.weekLabel(w.week)}
                 </span>
                 <span className="tabular-nums">
                   {t.partnerScreen.youShort} {w.me === null ? "—" : `${w.me}%`}{" "}
                   · {partner.name} {w.partner === null ? "—" : `${w.partner}%`}
                 </span>
-                <span aria-hidden="true" className="text-faint">
+                <span aria-hidden="true" className="text-ghost">
                   ›
                 </span>
               </button>
             ))}
             {history.length === 0 && (
-              <span className="border-t border-white/5 py-3.5 text-[13.5px] text-dim">
+              <span className="border-t border-line py-3.5 text-small text-dim">
                 {t.partnerScreen.firstResult}
               </span>
             )}
@@ -440,7 +436,7 @@ function WeekBar({
       <div className="flex items-baseline justify-between">
         <span
           className={cx(
-            "text-[13px] font-semibold tracking-[.14em]",
+            "text-small font-semibold tracking-eyebrow",
             !me && "text-muted",
           )}
         >
@@ -448,16 +444,16 @@ function WeekBar({
         </span>
         <span
           className={cx(
-            "text-[34px] leading-none font-medium tracking-[-0.04em] tabular-nums",
+            "text-number leading-none font-medium tracking-number tabular-nums",
             !me && "text-muted",
           )}
         >
           <span data-testid={testId}>{value === null ? "—" : `${value}%`}</span>
         </span>
       </div>
-      <div className="h-1.5 rounded-[3px] bg-white/6">
+      <div className="h-1.5 rounded-sm bg-white/6">
         <div
-          className={cx("h-full rounded-[3px]", me ? "bg-accent" : "bg-ghost")}
+          className={cx("h-full rounded-sm", me ? "bg-accent" : "bg-ghost")}
           style={{ width: `${value ?? 0}%` }}
         />
       </div>
@@ -475,8 +471,8 @@ function CompareRow({
   them: string;
 }) {
   return (
-    <div className="grid min-h-11 grid-cols-3 items-center border-t border-white/5 text-sm tabular-nums">
-      <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+    <div className="grid min-h-11 grid-cols-3 items-center border-t border-line text-body tabular-nums">
+      <span className="font-mono text-meta tracking-eyebrow text-dim">
         {label}
       </span>
       <span className="text-right">{me}</span>

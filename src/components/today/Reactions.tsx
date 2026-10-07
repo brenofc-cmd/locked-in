@@ -34,9 +34,13 @@ export function ReactButton({
           : t.reactButton.reactTo(name)
       }
       data-testid="react-button"
+      // Unreacted: a quiet text action (no outline on every row); reacted:
+      // the chosen reaction as a small pill. 44 px tall either way.
       className={cx(
-        "h-9 min-w-11 shrink-0 rounded-full border px-2.5 text-xs",
-        mine ? "border-accent-line text-text" : "border-white/9 text-muted",
+        "h-11 min-w-11 shrink-0 rounded-full px-3 text-small transition-colors duration-150 active:scale-[.96]",
+        mine
+          ? "border border-accent-line text-text"
+          : "text-dim hover:bg-white/5 hover:text-text",
       )}
     >
       {mine ? reactionLabel(mine) : t.reactButton.react}
@@ -54,7 +58,7 @@ export function ReceivedReaction({ eventId }: { eventId: string }) {
   return (
     <span
       data-testid="received-reaction"
-      className="shrink-0 rounded-full border border-white/9 px-2.5 py-1 text-xs text-muted"
+      className="shrink-0 rounded-full border border-line-strong px-2.5 py-1 text-small text-muted"
     >
       {reactionLabel(theirs)} <span className="text-dim">{partner.name}</span>
     </span>

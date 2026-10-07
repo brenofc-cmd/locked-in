@@ -15,6 +15,7 @@ import {
   makeDuo,
   resetTasks,
   signInUI,
+  trackWrites,
   users,
   type Api,
   type TestUser,
@@ -469,11 +470,15 @@ test("10: DAR UM TOQUE — one push candidate, no second nudge", async ({
   });
   if (error || !data?.[0]) throw new Error(`commitment: ${error?.message}`);
   const b = await open(browser, users.b, "/partner");
+  const writes = trackWrites(b.page);
   const item = b.page
     .getByTestId("partner-commitment")
     .filter({ hasText: "[e2e] Ler 30 min" });
   await item.getByTestId("nudge-button").click();
   await expect(item.getByTestId("nudge-button")).toBeDisabled();
+  // The button is disabled while sending: wait for the nudge to be stored
+  // before the scheduler looks for it.
+  await writes.idle();
 
   await enqueue(A, new Date().toISOString());
   await enqueue(A, new Date(Date.now() + 60_000).toISOString());

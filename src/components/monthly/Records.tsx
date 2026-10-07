@@ -8,6 +8,7 @@
  */
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
+import { cx } from "@/components/ui";
 import { Disclosure } from "@/components/monthly/Monthly";
 import { dateLabel } from "@/lib/local-date";
 import { monthTitle } from "@/lib/monthly";
@@ -35,21 +36,23 @@ function RecordRow({
   testId: string;
 }) {
   return (
+    // A personal best reads as an achievement: the number first, then
+    // what it is and when it happened (not a label / value table row).
+    // dt stays first in the markup; `order` puts the number on top.
     <div
       data-testid={testId}
-      className="flex items-baseline justify-between gap-3 border-t border-white/7 py-2.5"
+      className="flex min-w-0 flex-col gap-1.5 border-t border-line pt-3"
     >
-      <dt className="font-mono text-[10.5px] tracking-[.14em] text-muted">
-        {label}
-      </dt>
-      <dd className="m-0 flex items-baseline gap-2 text-right">
-        <span className="text-[15px] font-medium tabular-nums">{value}</span>
-        {when && (
-          <span className="font-mono text-[10.5px] tracking-[.08em] text-dim">
-            {when}
-          </span>
+      <dt className="order-2 eyebrow text-muted">{label}</dt>
+      <dd
+        className={cx(
+          "order-1 m-0 text-title font-medium tracking-display tabular-nums",
+          value === R.none && "text-ghost",
         )}
+      >
+        {value}
       </dd>
+      {when && <dd className="order-3 m-0 text-small text-dim">{when}</dd>}
     </div>
   );
 }
@@ -62,10 +65,10 @@ export function RecordsSection() {
       data-testid="records"
       className="flex flex-col"
     >
-      <h2 className="m-0 border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+      <h2 className="m-0 border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted">
         {R.title}
       </h2>
-      <dl className="m-0 flex flex-col">
+      <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-5 pt-1 desk:grid-cols-4">
         <RecordRow
           label={R.longestStreak}
           value={R.days(longestStreak)}
@@ -119,26 +122,42 @@ export function RecordsSection() {
 }
 
 function MilestoneLine({ m }: { m: Milestone }) {
+  // Three states: locked (far), near (≥ 70 %), reached — said in words too.
+  const near = !m.reached && m.current / m.target >= 0.7;
   return (
     <li
       data-testid="milestone"
       data-key={m.key}
       data-reached={m.reached}
       aria-label={milestoneAria(m)}
-      className="flex flex-col gap-1.5 border-t border-white/7 py-2.5"
+      className="flex flex-col gap-1.5 border-t border-line py-2.5"
     >
       <span className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-[11px] tracking-[.14em]">
+        <span
+          className={cx(
+            "font-mono text-meta tracking-eyebrow",
+            m.reached || near ? "text-text" : "text-muted",
+          )}
+        >
+          {m.reached && (
+            <span aria-hidden="true" className="mr-1.5 text-accent">
+              ◆
+            </span>
+          )}
           {milestoneTitle(m)}
         </span>
         <span
           className={
             m.reached
-              ? "font-mono text-[10.5px] tracking-[.14em] text-accent"
-              : "font-mono text-[11px] text-muted tabular-nums"
+              ? "font-mono text-meta tracking-eyebrow text-accent"
+              : "font-mono text-meta text-muted tabular-nums"
           }
         >
-          {m.reached ? R.reached : milestoneProgress(m)}
+          {m.reached
+            ? R.reached
+            : near
+              ? `${milestoneProgress(m)} · ${R.near}`
+              : milestoneProgress(m)}
         </span>
       </span>
       {!m.reached && (
@@ -152,7 +171,10 @@ function MilestoneLine({ m }: { m: Milestone }) {
           className="block h-[3px] overflow-hidden rounded-full bg-white/8"
         >
           <span
-            className="block h-full bg-white/50"
+            className={cx(
+              "block h-full",
+              near ? "bg-accent-line" : "bg-white/40",
+            )}
             style={{ width: `${(100 * m.current) / m.target}%` }}
           />
         </span>
@@ -171,22 +193,22 @@ export function MilestonesSection() {
       data-testid="milestones"
       className="flex flex-col"
     >
-      <h2 className="m-0 flex items-baseline justify-between border-b border-white/9 pb-2 font-normal">
-        <span className="font-mono text-[11px] tracking-[.16em] text-muted">
+      <h2 className="m-0 flex items-baseline justify-between border-b border-line-strong pb-2 font-normal">
+        <span className="font-mono text-meta tracking-eyebrow text-muted">
           {R.milestonesTitle}
         </span>
         <span
           data-testid="milestones-count"
-          className="font-mono text-[11px] text-dim tabular-nums"
+          className="font-mono text-meta text-dim tabular-nums"
         >
           {R.reachedCount(reached, milestones.length)}
         </span>
       </h2>
       {next.length === 0 ? (
-        <span className="py-2.5 text-[13px] text-dim">{R.allReached}</span>
+        <span className="py-2.5 text-small text-dim">{R.allReached}</span>
       ) : (
         <>
-          <span className="pt-3 font-mono text-[10px] tracking-[.16em] text-dim">
+          <span className="pt-3 font-mono text-meta tracking-eyebrow text-dim">
             {R.next}
           </span>
           <ul

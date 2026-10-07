@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { FocusGoalSelect } from "@/components/focus/FocusPicker";
 import { StatusDot, cx } from "@/components/ui";
 import { formatClock } from "@/lib/format";
@@ -25,17 +26,27 @@ export function FocusOverlay() {
         role="dialog"
         aria-modal="true"
         aria-label={t.focusUi.sessionAria}
-        className="absolute inset-0 z-50 flex flex-col bg-focus animate-[li-fade-in_.7s_ease]"
+        className="absolute inset-0 z-50 flex flex-col bg-stage animate-[li-fade-in_.7s_ease]"
       >
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-7 pt-6 text-center">
-          <span className="flex items-center gap-2.5 font-mono text-[11px] tracking-[.34em] text-accent">
+        <div className="flex flex-1 flex-col items-center justify-center gap-5 px-7 pt-6 text-center">
+          {/* Rook locks in with the session (wings in, a lean, the Core
+              active) and then stays almost still: an occasional blink only
+              (none with reduced motion). The timer dominates. */}
+          <Rook
+            pose="focused"
+            core={focus.paused ? "idle" : "active"}
+            act="lock"
+            idle={!focus.paused}
+            size={52}
+          />
+          <span className="flex items-center gap-2.5 font-mono text-meta tracking-brand text-accent">
             <span
               aria-hidden="true"
               className="size-1.5 rounded-full bg-accent animate-[li-pulse_2.4s_ease-out_infinite]"
             />
             LOCKED IN
           </span>
-          <span className="text-[17px] font-medium tracking-[.14em] desk:text-[22px]">
+          <span className="text-lead font-medium tracking-eyebrow desk:text-title">
             {focus.task.toUpperCase()}
           </span>
           <div className="w-full max-w-[280px] text-left">
@@ -73,7 +84,7 @@ export function FocusOverlay() {
               aria-label={t.focusUi.remaining(formatClock(focus.left))}
               data-testid="focus-clock"
               className={cx(
-                "text-[76px] leading-none font-light tracking-[-0.045em] tabular-nums transition-opacity duration-700 desk:text-[min(168px,17dvh)]",
+                "text-num-2xl leading-none font-light tracking-number tabular-nums transition-opacity duration-700 desk:text-[min(168px,17dvh)]",
                 focus.paused &&
                   "animate-[li-breathe_2.6s_ease-in-out_infinite]",
               )}
@@ -81,7 +92,7 @@ export function FocusOverlay() {
             >
               {formatClock(focus.left)}
             </span>
-            <span className="font-mono text-[10px] tracking-[.24em] text-quiet">
+            <span className="font-mono text-meta tracking-brand text-dim">
               {focus.paused
                 ? t.focusUi.paused
                 : t.focusUi.currentSession(Math.round(focus.total / 60))}
@@ -89,10 +100,10 @@ export function FocusOverlay() {
           </div>
           {app.hasPartner && (
             <div className="flex flex-col items-center gap-2">
-              <span className="font-mono text-[10px] tracking-[.2em] text-quiet">
+              <span className="font-mono text-meta tracking-eyebrow text-dim">
                 {t.focusUi.partner}
               </span>
-              <span className="flex items-center gap-[7px] text-[13px] text-muted">
+              <span className="flex items-center gap-2 text-small text-muted">
                 <StatusDot live={pv.live} pulse={pv.pulse} size={6} />
                 {pv.focusWord}
               </span>
@@ -103,7 +114,7 @@ export function FocusOverlay() {
           <button
             type="button"
             onClick={app.togglePause}
-            className="h-12 min-w-24 px-5 font-mono text-[11px] tracking-[.24em] text-quiet hover:text-text"
+            className="h-12 min-w-24 px-5 font-mono text-meta tracking-brand text-dim hover:text-text"
           >
             {focus.paused ? t.focusUi.resume : t.focusUi.pause}
           </button>
@@ -111,7 +122,7 @@ export function FocusOverlay() {
             type="button"
             onClick={app.endFocus}
             aria-label={t.focusUi.endAria}
-            className="h-12 min-w-24 px-5 font-mono text-[11px] tracking-[.24em] text-quiet hover:text-text"
+            className="h-12 min-w-24 px-5 font-mono text-meta tracking-brand text-dim hover:text-text"
           >
             {t.focusUi.end}
           </button>
@@ -129,48 +140,50 @@ export function FocusOverlay() {
       role="dialog"
       aria-modal="true"
       aria-label={t.focusUi.completeAria}
-      className="absolute inset-0 z-50 overflow-y-auto bg-focus animate-[li-fade-in_.5s_ease]"
+      className="absolute inset-0 z-50 overflow-y-auto bg-stage animate-[li-fade-in_.5s_ease]"
     >
       <div className="mx-auto flex min-h-full max-w-[460px] flex-col justify-center gap-7 px-6 pt-12 pb-8 desk:px-8 desk:py-16">
         <div className="flex flex-col items-center gap-3 text-center">
+          {/* Done: the wings relax, a nod, the Core pulses once. */}
+          <Rook pose="proud" core="proof" act="ack" size={64} />
           <span
             data-testid="focus-minutes"
-            className="text-[72px] leading-none font-light tracking-[-0.045em] tabular-nums desk:text-[112px]"
+            className="text-num-2xl leading-none font-light tracking-number tabular-nums desk:text-num-hero"
           >
             {minutes}
           </span>
-          <span className="font-mono text-xs tracking-[.3em] text-accent">
+          <span className="font-mono text-small tracking-brand text-accent">
             {t.focusUi.minComplete}
           </span>
-          <span className="text-sm text-dim">
+          <span className="text-body text-dim">
             {focus.task} · {focus.from} – {focus.to}
           </span>
           {goalTitle && (
             <span
               data-testid="focus-goal-proof"
-              className="font-mono text-[10.5px] tracking-[.14em] text-quiet"
+              className="font-mono text-meta tracking-eyebrow text-dim"
             >
               {t.goalPicker.tag(goalTitle)}
             </span>
           )}
         </div>
         <label className="flex flex-col gap-2.5">
-          <span className="text-sm text-muted">
+          <span className="text-body text-muted">
             {t.focusUi.accomplished}{" "}
-            <span className="text-quiet">{t.focusUi.optional}</span>
+            <span className="text-dim">{t.focusUi.optional}</span>
           </span>
           <textarea
             value={focus.note}
             onChange={(e) => app.setFocusNote(e.target.value)}
             rows={3}
             placeholder={t.focusUi.notePlaceholder}
-            className="resize-none rounded-xl border border-white/10 bg-field p-3.5 text-base leading-[1.5] outline-none focus:border-white/25"
+            className="resize-none rounded-xl border border-line-strong bg-field p-3.5 text-base leading-[1.5] outline-none focus:border-line-bold"
           />
         </label>
         <button
           type="button"
           onClick={app.completeFocus}
-          className="h-[58px] rounded-2xl bg-accent font-mono text-[13px] font-semibold tracking-[.3em] text-bg active:scale-[.97]"
+          className="h-[58px] rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
         >
           {t.focusUi.done}
         </button>

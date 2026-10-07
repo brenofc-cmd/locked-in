@@ -78,9 +78,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <MobileHeader pathname={pathname} />
       <main
         ref={mainRef}
-        className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
+        // scroll-padding keeps a focused row clear of the sticky action bar
+        // (WCAG 2.4.11) on phones.
+        className="min-h-0 min-w-0 flex-1 scroll-pb-28 overflow-x-hidden overflow-y-auto desk:scroll-pb-0"
       >
-        <div className="mx-auto max-w-[1120px] px-[18px] pt-5 pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-[52px] wide:pt-11 wide:pb-24">
+        <div className="mx-auto max-w-[1120px] px-5 pt-5 pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-12 wide:pt-11 wide:pb-24">
           {settings.onboarded ? children : null}
         </div>
       </main>
@@ -98,10 +100,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function DesktopSidebar({ pathname }: { pathname: string }) {
   return (
-    <aside className="hidden w-[228px] shrink-0 flex-col gap-[26px] overflow-y-auto border-r border-white/6 px-3 pt-6 pb-4 desk:flex">
+    <aside className="hidden w-[228px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-line px-3 pt-6 pb-4 desk:flex">
       <Link href="/today" className="flex items-center gap-2.5 px-2.5">
         <LogoMark size="md" />
-        <span className="font-mono text-xs font-semibold tracking-[.24em]">
+        <span className="font-mono text-small font-semibold tracking-brand">
           LOCKED IN
         </span>
       </Link>
@@ -115,7 +117,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
                 href={n.href}
                 aria-current={here ? "page" : on ? "true" : undefined}
                 className={cx(
-                  "flex h-[38px] items-center gap-3 rounded-[9px] px-2.5 text-sm hover:text-text",
+                  "flex h-[38px] items-center gap-3 rounded-xl px-2.5 text-body hover:text-text",
                   on ? "bg-chip text-text" : "text-muted",
                 )}
               >
@@ -138,7 +140,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
                           href={p.href}
                           aria-current={sub ? "page" : undefined}
                           className={cx(
-                            "flex h-[32px] items-center rounded-lg px-2.5 text-[13px] hover:text-text",
+                            "flex h-[32px] items-center rounded-lg px-2.5 text-small hover:text-text",
                             sub ? "text-text" : "text-dim",
                           )}
                         >
@@ -153,7 +155,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
           );
         })}
       </nav>
-      <div className="mt-auto border-t border-white/6 pt-3">
+      <div className="mt-auto border-t border-line pt-3">
         <ProfileMenu key={pathname} pathname={pathname} variant="sidebar" />
       </div>
     </aside>
@@ -164,14 +166,14 @@ function MobileHeader({ pathname }: { pathname: string }) {
   const { hasPartner, partner } = useApp();
   const pv = usePartnerView();
   return (
-    <div className="flex h-[52px] shrink-0 items-center justify-between bg-bg px-[18px] desk:hidden">
+    <div className="flex h-[52px] shrink-0 items-center justify-between bg-bg px-5 desk:hidden">
       <Link
         href="/today"
-        className="flex items-center gap-[9px]"
+        className="flex items-center gap-2"
         aria-label={t.shell.homeAria}
       >
         <LogoMark />
-        <span className="font-mono text-[11.5px] font-semibold tracking-[.24em]">
+        <span className="font-mono text-meta font-semibold tracking-brand">
           LOCKED IN
         </span>
       </Link>
@@ -187,7 +189,7 @@ function MobileHeader({ pathname }: { pathname: string }) {
               pv.total,
               pv.seen,
             )}
-            className="flex h-9 items-center gap-2 rounded-full border border-white/8 px-3 text-[12.5px] text-muted"
+            className="flex h-9 items-center gap-2 rounded-full border border-line px-3 text-small text-muted"
           >
             <StatusDot live={pv.live} pulse={pv.pulse} />
             {partner.name}
@@ -204,7 +206,7 @@ function BottomNav({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label={t.shell.tabsNav}
-      className="flex shrink-0 border-t border-white/6 bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] desk:hidden"
+      className="flex shrink-0 border-t border-line bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] max-[359px]:px-0 desk:hidden"
     >
       {TABS.map(({ href, label, Icon }) => {
         const on = isActive(pathname, href);
@@ -217,19 +219,21 @@ function BottomNav({ pathname }: { pathname: string }) {
               under(pathname, href) ? "page" : on ? "true" : undefined
             }
             className={cx(
-              "flex h-[58px] flex-1 flex-col items-center justify-center gap-[5px] transition-[color,transform] duration-200 active:scale-[.92]",
-              on ? "text-text" : "text-quiet",
+              "flex h-[58px] min-w-0 flex-1 flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 active:scale-[.94]",
+              on ? "text-text" : "text-dim",
             )}
           >
             <span
               className={cx(
-                "flex h-7 items-center justify-center rounded-[10px] px-3.5 transition-colors duration-200",
+                "flex h-7 items-center justify-center rounded-xl px-3.5 transition-colors duration-200",
+                // FOCO keeps its green icon as identity, but only the
+                // current tab gets a filled pill (one "you are here").
                 isFocus
                   ? on
                     ? "bg-accent text-bg"
-                    : "bg-accent-tab text-accent"
+                    : "text-accent"
                   : on
-                    ? "bg-white/8"
+                    ? "bg-selected"
                     : "bg-transparent",
               )}
             >
@@ -237,7 +241,8 @@ function BottomNav({ pathname }: { pathname: string }) {
             </span>
             <span
               className={cx(
-                "text-[10px] tracking-[.08em]",
+                // 320 px: PLANEJAR / PROGRESSO must not touch.
+                "text-meta tracking-normal max-[359px]:tracking-tighter",
                 on ? "font-semibold" : "font-medium",
               )}
             >

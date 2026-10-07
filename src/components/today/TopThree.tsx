@@ -20,7 +20,7 @@ export function TopThree() {
       <div className="flex items-center justify-between">
         <h2
           id="top3-title"
-          className="font-mono text-[11px] font-normal tracking-[.18em]"
+          className="font-mono text-meta font-normal tracking-eyebrow"
         >
           {t.top3.title}
         </h2>
@@ -29,19 +29,25 @@ export function TopThree() {
           onClick={() => app.openSheet({ kind: "priorities" })}
           aria-label={top.length ? t.top3.editAria : undefined}
           className={cx(
-            "flex h-10 items-center font-mono text-[11px] tracking-[.14em]",
+            "flex h-10 items-center font-mono text-meta tracking-eyebrow",
             top.length ? "text-dim hover:text-text" : "text-accent",
           )}
         >
           {top.length ? t.top3.edit : t.top3.define}
         </button>
       </div>
+      {top.length === 0 && (
+        // No empty header: say what the section is for (recognition).
+        <p className="m-0 border-t border-line pt-3 text-small text-dim">
+          {t.top3.empty}
+        </p>
+      )}
       {top.length > 0 && (
         <ol className="flex flex-col">
           {top.map((task) => {
             const skipped = task.skip !== null;
             return (
-              <li key={task.id} className="border-t border-white/6">
+              <li key={task.id} className="border-t border-line">
                 <button
                   type="button"
                   role="checkbox"
@@ -55,34 +61,37 @@ export function TopThree() {
                 >
                   <span
                     aria-hidden="true"
-                    className="w-4 shrink-0 font-mono text-[12px] text-accent tabular-nums"
+                    className="w-4 shrink-0 font-mono text-small text-accent tabular-nums"
                   >
                     {task.priority}
                   </span>
                   <span
                     aria-hidden="true"
                     className={cx(
-                      "flex size-[22px] shrink-0 items-center justify-center rounded-[7px] border-[1.5px]",
-                      skipped ? "border-dashed border-white/10" : "",
+                      "flex size-[22px] shrink-0 items-center justify-center rounded-lg border-[1.5px]",
+                      skipped ? "border-dashed border-line-strong" : "",
                       task.done
-                        ? "border-accent bg-accent"
-                        : !skipped && "border-white/24",
+                        ? "border-accent-line bg-accent-strong"
+                        : !skipped && "border-line-bold",
                     )}
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16">
-                      <CheckPath drawn={task.done} />
+                      <CheckPath
+                        drawn={task.done}
+                        color="var(--color-accent)"
+                      />
                     </svg>
                   </span>
                   <span
                     className={cx(
-                      "min-w-0 flex-1 truncate text-[15px]",
-                      task.done || skipped ? "text-quiet" : "text-text",
+                      "min-w-0 flex-1 truncate text-body",
+                      task.done || skipped ? "text-dim" : "text-text",
                       task.done && "line-through decoration-white/25",
                     )}
                   >
                     {task.name}
                   </span>
-                  <span className="shrink-0 font-mono text-[10.5px] tracking-[.08em] text-dim">
+                  <span className="shrink-0 font-mono text-meta tracking-meta text-dim">
                     {skipped ? (
                       <span id={`top3-${task.id}-skip`}>{task.skip}</span>
                     ) : task.done ? (

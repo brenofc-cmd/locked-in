@@ -7,7 +7,7 @@
  * public title, status, generic proof kind and proof time.
  */
 import { t } from "@/i18n/pt-BR";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { ReactButton, ReceivedReaction } from "@/components/today/Reactions";
@@ -31,17 +31,17 @@ import { focusLabel, standardMet } from "@/lib/progress";
 const A = t.accountability;
 
 const MARK: Record<CommitmentStatus, string> = {
-  active: "border border-white/25",
+  active: "border border-line-bold",
   proven: "bg-accent",
   missed: "border border-danger/60",
-  cancelled: "border border-white/10",
+  cancelled: "border border-line-strong",
 };
 
 function StatusMark({ status }: { status: CommitmentStatus }) {
   return (
     <span
       aria-hidden="true"
-      className={cx("mt-[5px] size-2.5 shrink-0 rounded-full", MARK[status])}
+      className={cx("mt-1 size-2.5 shrink-0 rounded-full", MARK[status])}
     />
   );
 }
@@ -56,7 +56,7 @@ function StatusWord({
     <span
       data-testid="commitment-status"
       className={cx(
-        "font-mono text-[10.5px] tracking-[.14em]",
+        "font-mono text-meta tracking-eyebrow",
         c.status === "proven"
           ? "text-accent"
           : c.status === "missed"
@@ -83,46 +83,52 @@ export function PartnerDayLine() {
   const met =
     std !== null &&
     standardMet(app.partnerCounts.total, app.partnerCounts.done, std);
+  const state = acc.partnerCheckin;
+  // The partner's day as four plain facts (label over value), not a line
+  // of caps: readable at a glance, no colour needed to understand it.
   return (
-    <div
+    <dl
       data-testid="partner-day-line"
-      className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] tracking-[.14em] text-dim"
+      className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 desk:grid-cols-4"
     >
-      <span>
-        {A.focusToday}{" "}
-        <span className="text-text" data-testid="partner-focus-today">
+      <Fact label={A.factCheckin} testId="partner-checkin">
+        {state ? A.checkinStates[state] : A.factNone}
+      </Fact>
+      <Fact label={A.focusToday}>
+        <span data-testid="partner-focus-today">
           {focusLabel(acc.partnerFocusSeconds)}
         </span>
-      </span>
+      </Fact>
       {std !== null && (
-        <span>
-          {A.standardToday} {std}%{" "}
-          <span className={met ? "text-accent" : "text-text"}>
-            {met ? A.standardMet : A.standardOpen}
+        <Fact label={`${A.standardToday} ${std}%`}>
+          <span className={met ? "text-accent" : undefined}>
+            {met ? A.factMet : A.factOpen}
           </span>
-        </span>
+        </Fact>
       )}
-      <span data-testid="partner-commitment-summary">
-        {s.total ? A.summary(s.proven, s.total) : A.summaryNone}
-      </span>
-    </div>
+      <Fact label={A.factCommitments}>
+        <span data-testid="partner-commitment-summary">
+          {s.total ? A.summary(s.proven, s.total) : A.factNone}
+        </span>
+      </Fact>
+    </dl>
   );
 }
 
-/** "CHECK-IN · PRECISO DE COBRANÇA" under the partner's name. */
-export function PartnerCheckinLine() {
-  const { accountability, partner } = useApp();
-  const state = accountability.partnerCheckin;
+function Fact({
+  label,
+  testId,
+  children,
+}: {
+  label: string;
+  testId?: string;
+  children: ReactNode;
+}) {
   return (
-    <span
-      data-testid="partner-checkin"
-      className="font-mono text-[10.5px] tracking-[.14em] text-dim"
-    >
-      {A.checkinPartner(partner.name.toUpperCase())} ·{" "}
-      <span className={state ? "text-text" : undefined}>
-        {state ? A.checkinStates[state] : A.checkinNone}
-      </span>
-    </span>
+    <div data-testid={testId} className="flex min-w-0 flex-col gap-1">
+      <dt className="eyebrow text-dim">{label}</dt>
+      <dd className="m-0 truncate text-small text-text">{children}</dd>
+    </div>
   );
 }
 
@@ -148,7 +154,7 @@ export function CheckinPicker() {
             disabled={accountability.busy.includes("checkin")}
             onClick={() => current !== s && void accountability.checkin(s)}
             className={cx(
-              "min-h-11 rounded-xl border px-1.5 font-mono text-[10.5px] leading-tight tracking-[.12em]",
+              "min-h-11 rounded-xl border px-1.5 font-mono text-meta leading-tight tracking-meta",
               chipTone(current === s),
             )}
           >
@@ -196,9 +202,9 @@ function PartnerActions({ c }: { c: Commitment }) {
       disabled={block !== null || acc.busy.includes(c.id)}
       onClick={() => void acc.nudge(c)}
       className={cx(
-        "min-h-9 shrink-0 rounded-full border px-3 font-mono text-[10px] tracking-[.14em]",
+        "min-h-9 shrink-0 rounded-full border px-3 font-mono text-meta tracking-eyebrow",
         block
-          ? "border-white/6 text-quiet"
+          ? "border-line text-dim"
           : "border-accent-line text-text active:scale-[.97]",
       )}
     >
@@ -212,7 +218,7 @@ function MyActions({ c }: { c: Commitment }) {
   const acc = app.accountability;
   const busy = acc.busy.includes(c.id);
   const small =
-    "min-h-9 shrink-0 rounded-full border px-3 font-mono text-[10px] tracking-[.14em] disabled:opacity-50";
+    "min-h-9 shrink-0 rounded-full border px-3 font-mono text-meta tracking-eyebrow disabled:opacity-50";
   const eventId =
     c.status === "proven"
       ? (app.feed.find(
@@ -240,7 +246,7 @@ function MyActions({ c }: { c: Commitment }) {
           aria-label={A.undoAria(c.title)}
           disabled={busy}
           onClick={() => void acc.declare(c, false)}
-          className={cx(small, "border-white/9 text-muted")}
+          className={cx(small, "border-line-strong text-muted")}
         >
           {A.undo}
         </button>
@@ -252,7 +258,7 @@ function MyActions({ c }: { c: Commitment }) {
           aria-label={A.cancelAria(c.title)}
           disabled={busy}
           onClick={() => void acc.cancel(c)}
-          className={cx(small, "border-white/6 text-dim")}
+          className={cx(small, "border-line text-dim")}
         >
           {A.cancel}
         </button>
@@ -270,23 +276,23 @@ function CommitmentItem({ c, mine }: { c: Commitment; mine: boolean }) {
     <div
       data-testid={mine ? "my-commitment" : "partner-commitment"}
       data-status={view.status}
-      className="flex min-h-[60px] items-start gap-3 border-b border-white/5 py-2.5"
+      className="flex min-h-[60px] items-start gap-3 border-b border-line py-2.5"
     >
       <StatusMark status={view.status} />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-[14.5px] leading-[1.35] text-pretty">
+        <span className="text-body leading-[1.35] text-pretty">
           {view.title}
         </span>
         <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <StatusWord c={view} />
-          <span className="font-mono text-[10.5px] tracking-[.12em] text-quiet">
+          <span className="font-mono text-meta tracking-meta text-dim">
             {kindLine(c)}
           </span>
         </span>
         {proof && (
           <span
             data-testid="commitment-proof"
-            className="text-[12.5px] text-muted"
+            className="text-small text-muted"
           >
             {proof}
           </span>
@@ -327,10 +333,10 @@ export function CommitmentsSection() {
           }
         />
         {!acc.loaded && !acc.error && (
-          <span className="py-3.5 text-[13.5px] text-dim">{A.loading}</span>
+          <span className="py-3.5 text-small text-dim">{A.loading}</span>
         )}
         {acc.error && !acc.loaded && (
-          <span className="flex items-center gap-3 py-3.5 text-[13.5px] text-dim">
+          <span className="flex items-center gap-3 py-3.5 text-small text-dim">
             {A.loadError}
             <button
               type="button"
@@ -346,7 +352,7 @@ export function CommitmentsSection() {
             <CommitmentItem key={c.id} c={c} mine={false} />
           ))}
         {acc.loaded && acc.theirs.length === 0 && (
-          <span className="py-3.5 text-[13.5px] text-dim">
+          <span className="py-3.5 text-small text-dim">
             {A.nonePartner(app.partner.name)}
           </span>
         )}
@@ -366,14 +372,14 @@ export function CommitmentsSection() {
             <CommitmentItem key={c.id} c={c} mine />
           ))}
         {acc.loaded && mineCount === 0 && (
-          <span className="py-3.5 text-[13.5px] text-dim">{A.noneMine}</span>
+          <span className="py-3.5 text-small text-dim">{A.noneMine}</span>
         )}
         <button
           type="button"
           data-testid="new-commitment"
           aria-label={A.newCommitmentAria}
           onClick={() => app.openSheet({ kind: "commitment" })}
-          className="mt-3 h-12 self-start rounded-xl border border-white/10 px-4 font-mono text-[11px] tracking-[.18em] text-text active:scale-[.98]"
+          className="mt-3 h-12 self-start rounded-xl border border-line-strong px-4 font-mono text-meta tracking-eyebrow text-text active:scale-[.98]"
         >
           {A.newCommitment}
         </button>
@@ -400,13 +406,13 @@ export function CommitmentHistory() {
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((o) => !o)}
-          className="flex min-h-11 w-full items-center justify-between border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.2em]"
+          className="flex min-h-11 w-full items-center justify-between border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow"
         >
           {A.history}
           <span
             aria-hidden="true"
             className={cx(
-              "text-faint transition-transform duration-200",
+              "text-ghost transition-transform duration-200",
               open && "rotate-90",
             )}
           >
@@ -418,9 +424,9 @@ export function CommitmentHistory() {
         {days.map((d) => (
           <div
             key={d.date}
-            className="flex flex-col border-b border-white/5 py-2.5"
+            className="flex flex-col border-b border-line py-2.5"
           >
-            <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+            <span className="font-mono text-meta tracking-eyebrow text-dim">
               {dateLabel(d.date)}
             </span>
             {d.items.map((c) => {
@@ -433,12 +439,12 @@ export function CommitmentHistory() {
                   className="flex min-h-10 items-center gap-3"
                 >
                   <StatusMark status={view.status} />
-                  <span className="w-14 shrink-0 text-[12.5px] text-dim">
+                  <span className="w-14 shrink-0 text-small text-dim">
                     {c.ownerId === me.id
                       ? A.who.me
                       : A.who.partner(app.partner.name)}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[13.5px]">
+                  <span className="min-w-0 flex-1 truncate text-small">
                     {view.title}
                   </span>
                   <StatusWord c={view} />
@@ -448,9 +454,7 @@ export function CommitmentHistory() {
           </div>
         ))}
         {days.length === 0 && (
-          <span className="py-3.5 text-[13.5px] text-dim">
-            {A.historyEmpty}
-          </span>
+          <span className="py-3.5 text-small text-dim">{A.historyEmpty}</span>
         )}
       </div>
     </section>

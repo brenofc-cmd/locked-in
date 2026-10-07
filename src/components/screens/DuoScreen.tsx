@@ -121,12 +121,10 @@ export function DuoScreen() {
   }
 
   return (
-    <div className="flex max-w-[620px] flex-col gap-[30px] animate-[li-fade-up_.4s_ease]">
+    <div className="flex max-w-[620px] flex-col gap-8 animate-[li-fade-up_.4s_ease]">
       <header className="flex flex-col gap-2.5">
-        <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          {t.duoScreen.title}
-        </h1>
-        <span className="text-[14.5px] text-muted" data-testid="duo-state">
+        <h1 className="page-title">{t.duoScreen.title}</h1>
+        <span className="text-body text-muted" data-testid="duo-state">
           {state === "complete"
             ? t.duoScreen.stateComplete(app.partner.name)
             : state === "waiting"
@@ -136,34 +134,34 @@ export function DuoScreen() {
       </header>
 
       <div className="flex flex-col">
-        <div className="flex min-h-[62px] items-center gap-3.5 border-b border-white/5">
+        <div className="flex min-h-[62px] items-center gap-3.5 border-b border-line">
           <Avatar
             initial={app.userName.charAt(0).toUpperCase()}
             me
             className="size-9"
           />
-          <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <span className="text-[15px]">{app.userName}</span>
-            <span className="truncate text-xs text-dim">{me.email}</span>
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-body">{app.userName}</span>
+            <span className="truncate text-small text-dim">{me.email}</span>
           </span>
-          <span className="font-mono text-[10.5px] text-dim">
+          <span className="font-mono text-meta text-dim">
             {t.duoScreen.you}
           </span>
         </div>
         {state === "complete" ? (
-          <div className="flex min-h-[62px] items-center gap-3.5 border-b border-white/5 animate-[li-rise_.4s_ease]">
+          <div className="flex min-h-[62px] items-center gap-3.5 border-b border-line animate-[li-rise_.4s_ease]">
             <Avatar initial={app.partner.initial} className="size-9" />
-            <span className="flex flex-1 flex-col gap-[3px]">
-              <span className="text-[15px]" data-testid="duo-partner-name">
+            <span className="flex flex-1 flex-col gap-1">
+              <span className="text-body" data-testid="duo-partner-name">
                 {app.partner.name}
               </span>
-              <span className="text-xs text-dim" data-testid="duo-since">
+              <span className="text-num-heros text-dim" data-testid="duo-since">
                 {t.duoScreen.together(since(duo?.partner?.joinedAt ?? ""))}
               </span>
             </span>
             <span
               className={cx(
-                "flex items-center gap-[7px] font-mono text-[10.5px] tracking-[.1em]",
+                "flex items-center gap-2 font-mono text-meta tracking-meta",
                 pv.live ? "text-accent" : "text-dim",
               )}
             >
@@ -172,12 +170,12 @@ export function DuoScreen() {
             </span>
           </div>
         ) : (
-          <div className="flex min-h-[62px] items-center gap-3.5 border-b border-white/5">
+          <div className="flex min-h-[62px] items-center gap-3.5 border-b border-line">
             <span
               aria-hidden="true"
-              className="size-9 rounded-full border border-dashed border-white/20"
+              className="size-9 rounded-full border border-dashed border-line-bold"
             />
-            <span className="text-sm text-dim">
+            <span className="text-body text-dim">
               {state === "waiting"
                 ? t.duoScreen.waitingJoin
                 : t.duoScreen.noPartner}
@@ -191,7 +189,7 @@ export function DuoScreen() {
           type="button"
           onClick={create}
           disabled={pending}
-          className="h-14 rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.24em] text-bg active:scale-[.97] disabled:opacity-60"
+          className="h-14 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97] disabled:opacity-60"
         >
           {pending ? t.duoScreen.creating : t.duoScreen.createDuo}
         </button>
@@ -202,17 +200,17 @@ export function DuoScreen() {
           <button
             type="button"
             onClick={share}
-            className="h-14 rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.24em] text-bg active:scale-[.97]"
+            className="h-14 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
           >
             {t.duoScreen.shareInvite}
           </button>
           <div className="flex min-h-[52px] items-center justify-between gap-3">
             <span className="flex flex-col gap-1">
-              <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+              <span className="font-mono text-meta tracking-eyebrow text-dim">
                 {t.duoScreen.orShareCode}
               </span>
               <span
-                className="font-mono text-[22px] tracking-[.12em]"
+                className="font-mono text-title tracking-meta"
                 data-testid="invite-code"
               >
                 {inviteCode}
@@ -221,7 +219,7 @@ export function DuoScreen() {
             <button
               type="button"
               onClick={copyCode}
-              className="h-11 rounded-xl border border-white/12 px-4 text-[13.5px]"
+              className="h-11 rounded-xl border border-line-strong px-4 text-small"
             >
               {copied ? t.duoScreen.copied : t.duoScreen.copyCode}
             </button>
@@ -233,7 +231,7 @@ export function DuoScreen() {
         <form className="flex flex-col gap-2.5" onSubmit={join}>
           <label
             htmlFor="join-code"
-            className="font-mono text-[10.5px] tracking-[.14em] text-dim"
+            className="font-mono text-meta tracking-eyebrow text-dim"
           >
             {t.duoScreen.joinWithCode}
           </label>
@@ -249,18 +247,18 @@ export function DuoScreen() {
               maxLength={16}
               aria-invalid={joinError ? true : undefined}
               aria-describedby={joinError ? "join-error" : undefined}
-              className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-bg px-3.5 font-mono text-base tracking-[.1em] uppercase outline-none focus:border-white/30"
+              className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-bg px-3.5 font-mono text-base tracking-meta uppercase outline-none focus:border-line-bold"
             />
             <button
               type="submit"
               disabled={pending || !code.trim()}
-              className="h-12 rounded-xl border border-white/12 px-[18px] text-sm disabled:opacity-60"
+              className="h-12 rounded-xl border border-line-strong px-5 text-body disabled:opacity-60"
             >
               {t.duoScreen.join}
             </button>
           </div>
           {joinError && (
-            <p id="join-error" role="alert" className="text-[13px] text-danger">
+            <p id="join-error" role="alert" className="text-small text-danger">
               {joinError}
             </p>
           )}
@@ -268,11 +266,11 @@ export function DuoScreen() {
       )}
 
       {state === "complete" && (
-        <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
-          <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+        <div className="flex flex-col gap-1 border-b border-line pb-4">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.duoScreen.duoCode}
           </span>
-          <span className="font-mono text-base tracking-[.12em]">
+          <span className="font-mono text-base tracking-meta">
             {inviteCode}
           </span>
         </div>
@@ -283,7 +281,7 @@ export function DuoScreen() {
           ref={leaveButton}
           type="button"
           onClick={() => setConfirmLeave(true)}
-          className="h-11 self-start rounded-xl border border-danger/30 px-[18px] text-sm text-danger"
+          className="h-11 self-start rounded-xl border border-danger/30 px-5 text-body text-danger"
         >
           {state === "waiting" ? t.duoScreen.cancelDuo : t.duoScreen.leaveDuo}
         </button>
@@ -296,15 +294,12 @@ export function DuoScreen() {
           onKeyDown={(e) => {
             if (e.key === "Escape" && !pending) keepDuo();
           }}
-          className="flex flex-col gap-3.5 rounded-2xl border border-danger/30 p-[18px]"
+          className="flex flex-col gap-3.5 rounded-2xl border border-danger/30 p-5"
         >
-          <span id="leave-title" className="text-[15px] font-medium">
+          <span id="leave-title" className="text-body font-medium">
             {state === "waiting" ? t.duoScreen.cancelQ : t.duoScreen.endQ}
           </span>
-          <span
-            id="leave-desc"
-            className="text-[13.5px] leading-[1.5] text-muted"
-          >
+          <span id="leave-desc" className="text-small leading-[1.5] text-muted">
             {t.duoScreen.leaveDesc}
           </span>
           <div className="flex flex-wrap gap-2">
@@ -312,7 +307,7 @@ export function DuoScreen() {
               type="button"
               onClick={leave}
               disabled={pending}
-              className="h-11 rounded-xl bg-danger px-[18px] text-sm font-medium text-bg disabled:opacity-60"
+              className="h-11 rounded-xl bg-danger px-5 text-body font-medium text-bg disabled:opacity-60"
             >
               {pending ? t.duoScreen.ending : t.duoScreen.endBoth}
             </button>
@@ -322,7 +317,7 @@ export function DuoScreen() {
               disabled={pending}
               // The safe choice gets focus when the confirmation opens.
               autoFocus
-              className="h-11 rounded-xl border border-white/12 px-[18px] text-sm"
+              className="h-11 rounded-xl border border-line-strong px-5 text-body"
             >
               {t.duoScreen.keep}
             </button>
@@ -330,7 +325,7 @@ export function DuoScreen() {
         </div>
       )}
 
-      <span className="text-[12.5px] text-dim">{t.duoScreen.footnote}</span>
+      <span className="text-small text-dim">{t.duoScreen.footnote}</span>
     </div>
   );
 }

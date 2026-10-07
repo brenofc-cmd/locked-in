@@ -16,6 +16,7 @@ import {
   setVisionArchived,
 } from "@/app/(app)/goals-actions";
 import { useApp } from "@/components/app-state";
+import { Rook } from "@/components/brand/Rook";
 import { useResumeValue } from "@/components/resume/use-resume";
 import { useSession } from "@/components/session";
 import { Sheet } from "@/components/sheets/Sheet";
@@ -56,11 +57,11 @@ import {
   saveGoalDraft,
 } from "@/lib/resume-state";
 
-const monoLabel = "font-mono text-[10.5px] tracking-[.16em] text-dim";
+const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "rounded-xl border border-white/10 bg-bg text-text outline-none focus:border-white/30";
+  "rounded-xl border border-line-strong bg-bg text-text outline-none focus:border-line-bold";
 const h2 =
-  "border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted";
+  "border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted";
 
 type SheetState =
   | { kind: "vision"; item?: Vision }
@@ -160,13 +161,11 @@ export function GoalsScreen({
 
   return (
     <div className="flex flex-col gap-7 animate-[li-fade-up_.4s_ease] desk:gap-10">
-      <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-        {t.goals.title}
-      </h1>
+      <h1 className="page-title">{t.goals.title}</h1>
       <div
         role="radiogroup"
         aria-label={t.goals.sectionsAria}
-        className="flex self-start rounded-xl border border-white/8 p-1"
+        className="flex self-start rounded-xl border border-line p-1"
       >
         {SECTIONS.map((s) => (
           <button
@@ -176,7 +175,7 @@ export function GoalsScreen({
             aria-checked={section === s}
             onClick={() => pick(s)}
             className={cx(
-              "h-9 rounded-lg px-4 font-mono text-[11px] tracking-[.14em]",
+              "h-9 rounded-lg px-4 font-mono text-meta tracking-eyebrow",
               section === s ? "bg-selected text-text" : "text-dim",
             )}
           >
@@ -306,18 +305,21 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="h-11 self-start rounded-xl border border-white/12 px-4 text-sm"
+      className="h-11 self-start rounded-xl border border-line-strong px-4 text-body"
     >
       {label}
     </button>
   );
 }
 
-function Empty({ text }: { text: string }) {
+function Empty({ text, rook = false }: { text: string; rook?: boolean }) {
   return (
-    <p className="text-[22px] leading-[1.3] font-medium tracking-[-0.02em] text-pretty text-muted">
-      {text}
-    </p>
+    <div className="flex items-center gap-4">
+      {rook && <Rook pose="ready" size={64} />}
+      <p className="m-0 text-title leading-[1.3] font-medium tracking-display text-pretty text-muted">
+        {text}
+      </p>
+    </div>
   );
 }
 
@@ -379,8 +381,8 @@ function FeatureToggle({
       title={featured ? t.goals.featured : t.goals.featureShort}
       onClick={() => onToggle(!featured)}
       className={cx(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg text-[13px]",
-        featured ? "text-accent" : "text-faint hover:text-text",
+        "flex size-9 shrink-0 items-center justify-center rounded-lg text-small",
+        featured ? "text-accent" : "text-ghost hover:text-text",
       )}
     >
       <span aria-hidden="true">{featured ? "◆" : "◇"}</span>
@@ -390,7 +392,7 @@ function FeatureToggle({
 
 function FeaturedLabel() {
   return (
-    <span className="font-mono text-[10px] tracking-[.16em] text-accent">
+    <span className="font-mono text-meta tracking-eyebrow text-accent">
       {t.goals.featured}
     </span>
   );
@@ -405,7 +407,7 @@ function Collapsed({
 }) {
   return (
     <details className="group flex flex-col">
-      <summary className="flex h-11 cursor-pointer list-none items-center justify-between font-mono text-[11px] tracking-[.16em] text-dim hover:text-text">
+      <summary className="flex h-11 cursor-pointer list-none items-center justify-between font-mono text-meta tracking-eyebrow text-dim hover:text-text">
         {summary}
         <span
           aria-hidden="true"
@@ -443,12 +445,12 @@ function VisionSection({
       className="flex flex-col gap-4"
     >
       <AddButton label={t.goals.addVision} onClick={onAdd} />
-      {active.length === 0 && <Empty text={t.goals.empty.vision} />}
+      {active.length === 0 && <Empty text={t.goals.empty.vision} rook />}
       <ul className="flex flex-col gap-3">
         {active.map((v) => (
           <li
             key={v.id}
-            className="flex items-start gap-2 rounded-2xl border border-white/7 bg-card p-4"
+            className="flex items-start gap-2 rounded-2xl border border-line bg-card p-4"
           >
             <button
               type="button"
@@ -456,11 +458,11 @@ function VisionSection({
               className="flex min-w-0 flex-1 flex-col gap-1.5 text-left"
             >
               {v.featured && <FeaturedLabel />}
-              <span className="text-[17px] leading-[1.35] font-medium">
+              <span className="text-lead leading-[1.35] font-medium">
                 {v.title}
               </span>
               {v.description && (
-                <span className="text-[14px] leading-[1.5] whitespace-pre-wrap text-muted">
+                <span className="text-body leading-[1.5] whitespace-pre-wrap text-muted">
                   {v.description}
                 </span>
               )}
@@ -486,7 +488,7 @@ function VisionSection({
               key={v.id}
               type="button"
               onClick={() => onOpen(v)}
-              className="min-h-[46px] border-b border-white/5 text-left text-sm text-muted"
+              className="min-h-[46px] border-b border-line text-left text-body text-muted"
             >
               {v.title}
             </button>
@@ -578,7 +580,7 @@ function VisionForm({
         if (!pending) void save();
       }}
     >
-      <span className="font-mono text-[11px] tracking-[.18em] text-muted">
+      <span className="font-mono text-meta tracking-eyebrow text-muted">
         {item ? t.goals.editVision : t.goals.newVision}
       </span>
       <input
@@ -590,7 +592,7 @@ function VisionForm({
         maxLength={TITLE_MAX}
         placeholder={t.goals.fields.visionPlaceholder}
         aria-label={t.goals.fields.title}
-        className="h-14 rounded-[14px] border border-white/12 bg-bg px-4 text-[17px] outline-none focus:border-white/30"
+        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
       />
       <textarea
         value={description}
@@ -654,7 +656,7 @@ function GoalsSection({
               {group.goals.map((g) => (
                 <li
                   key={g.id}
-                  className="flex items-center gap-2 border-b border-white/6"
+                  className="flex items-center gap-2 border-b border-line"
                 >
                   <GoalRow
                     goal={g}
@@ -682,7 +684,7 @@ function GoalsSection({
       {achieved.length > 0 && (
         <Collapsed summary={t.goals.achievedSection(achieved.length)}>
           {achieved.map((g) => (
-            <div key={g.id} className="border-b border-white/5">
+            <div key={g.id} className="border-b border-line">
               <GoalRow
                 goal={g}
                 visions={data.visions}
@@ -696,7 +698,7 @@ function GoalsSection({
       {archived.length > 0 && (
         <Collapsed summary={t.goals.archivedSection(archived.length)}>
           {archived.map((g) => (
-            <div key={g.id} className="border-b border-white/5">
+            <div key={g.id} className="border-b border-line">
               <GoalRow
                 goal={g}
                 visions={data.visions}
@@ -748,7 +750,7 @@ function GoalRow({
       <Link
         href={`/goals/${goal.id}`}
         aria-label={t.proof.rowLink(goal.title)}
-        className="-mt-1 flex min-h-10 items-center gap-2 pb-2 font-mono text-[10.5px] tracking-[.1em] text-dim hover:text-text"
+        className="-mt-1 flex min-h-10 items-center gap-2 pb-2 font-mono text-meta tracking-meta text-dim hover:text-text"
       >
         <span className="text-muted">{t.proof.rowCta}</span>
         {proof && (
@@ -781,13 +783,13 @@ function GoalRowButton({
     >
       {goal.featured && goal.status === "active" && <FeaturedLabel />}
       {vision && (
-        <span className="truncate font-mono text-[10px] tracking-[.14em] text-dim">
+        <span className="truncate font-mono text-meta tracking-eyebrow text-dim">
           {vision.title.toUpperCase()}
         </span>
       )}
       <span
         className={cx(
-          "text-[15px]",
+          "text-body",
           goal.status !== "active" && "text-muted",
           goal.status === "achieved" && "line-through decoration-white/25",
         )}
@@ -795,7 +797,7 @@ function GoalRowButton({
         {goal.title}
       </span>
       {meta && (
-        <span className="font-mono text-[10.5px] tracking-[.08em] text-dim tabular-nums">
+        <span className="font-mono text-meta tracking-meta text-dim tabular-nums">
           {meta}
         </span>
       )}
@@ -907,7 +909,7 @@ function GoalForm({
         if (!pending) void save();
       }}
     >
-      <span className="font-mono text-[11px] tracking-[.18em] text-muted">
+      <span className="font-mono text-meta tracking-eyebrow text-muted">
         {item ? t.goals.editGoal : t.goals.newGoal}
       </span>
       <input
@@ -919,7 +921,7 @@ function GoalForm({
         maxLength={TITLE_MAX}
         placeholder={t.goals.fields.goalPlaceholder}
         aria-label={t.goals.fields.title}
-        className="h-14 rounded-[14px] border border-white/12 bg-bg px-4 text-[17px] outline-none focus:border-white/30"
+        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
       />
       <div className="flex flex-col gap-2">
         <span id="goal-type" className={monoLabel}>
@@ -938,7 +940,7 @@ function GoalForm({
               aria-checked={type === gt}
               onClick={() => setType(gt)}
               className={cx(
-                "h-[38px] rounded-[10px] border px-[13px] font-mono text-[11px] tracking-[.1em]",
+                "h-[38px] rounded-xl border px-3 font-mono text-meta tracking-meta",
                 chipTone(type === gt),
               )}
             >
@@ -999,7 +1001,7 @@ function GoalForm({
             <button
               type="button"
               onClick={() => void status("achieved")}
-              className="h-12 rounded-2xl border border-white/12 font-mono text-[11.5px] font-semibold tracking-[.2em]"
+              className="h-12 rounded-2xl border border-line-strong font-mono text-meta font-semibold tracking-eyebrow"
             >
               {t.goals.achieve}
             </button>
@@ -1070,15 +1072,15 @@ function Milestones({
               });
             }}
             className={cx(
-              "flex size-6 shrink-0 items-center justify-center rounded-md border text-[12px]",
-              m.done ? "border-accent bg-accent text-bg" : "border-white/20",
+              "flex size-6 shrink-0 items-center justify-center rounded-lg border text-small",
+              m.done ? "border-accent bg-accent text-bg" : "border-line-bold",
             )}
           >
             {m.done ? "✓" : ""}
           </button>
           <span
             className={cx(
-              "flex-1 text-[14.5px]",
+              "flex-1 text-body",
               m.done && "text-muted line-through",
             )}
           >
@@ -1116,14 +1118,14 @@ function Milestones({
           maxLength={TITLE_MAX}
           placeholder={t.goals.fields.milestonePlaceholder}
           aria-label={t.goals.fields.milestonePlaceholder}
-          className={cx(field, "h-11 min-w-0 flex-1 px-3 text-[15px]")}
+          className={cx(field, "h-11 min-w-0 flex-1 px-3 text-body")}
         />
         <button
           type="button"
           disabled={!title.trim()}
           onClick={() => void add()}
           aria-label={t.goals.fields.addMilestone}
-          className="h-11 rounded-xl border border-white/12 px-4 text-sm disabled:opacity-40"
+          className="h-11 rounded-xl border border-line-strong px-4 text-body disabled:opacity-40"
         >
           +
         </button>
@@ -1155,19 +1157,19 @@ function MirrorSection({
       aria-label={t.goals.sections.mirror}
       className="flex flex-col gap-5"
     >
-      <p className="text-[14.5px] text-muted">{t.goals.mirrorSub}</p>
+      <p className="text-body text-muted">{t.goals.mirrorSub}</p>
       <AddButton label={t.goals.addMirror} onClick={onAdd} />
       {active.length === 0 && <Empty text={t.goals.empty.mirror} />}
       <ul className="flex flex-col gap-4">
         {active.map((m) => (
           <li
             key={m.id}
-            className="flex items-start gap-2 border-l-2 border-white/25 pl-4"
+            className="flex items-start gap-2 border-l-2 border-line-bold pl-4"
           >
             <button
               type="button"
               onClick={() => onOpen(m)}
-              className="flex min-w-0 flex-1 flex-col gap-1.5 text-left text-[19px] leading-[1.4] font-medium tracking-[-0.01em] text-pretty"
+              className="flex min-w-0 flex-1 flex-col gap-1.5 text-left text-title leading-[1.4] font-medium tracking-display text-pretty"
             >
               {m.featured && <FeaturedLabel />}
               {m.text}
@@ -1188,7 +1190,7 @@ function MirrorSection({
               key={m.id}
               type="button"
               onClick={() => onOpen(m)}
-              className="min-h-[46px] border-b border-white/5 text-left text-sm text-muted"
+              className="min-h-[46px] border-b border-line text-left text-body text-muted"
             >
               {m.text}
             </button>
@@ -1266,7 +1268,7 @@ function MirrorForm({
       }}
     >
       <label className="flex flex-col gap-2">
-        <span className="font-mono text-[11px] tracking-[.18em] text-muted">
+        <span className="font-mono text-meta tracking-eyebrow text-muted">
           {t.goals.fields.mirror}
         </span>
         <textarea
@@ -1278,7 +1280,7 @@ function MirrorForm({
           maxLength={MIRROR_MAX}
           rows={3}
           placeholder={t.goals.fields.mirrorPlaceholder}
-          className={cx(field, "px-3.5 py-3 text-[17px]")}
+          className={cx(field, "px-3.5 py-3 text-lead")}
         />
       </label>
       <FormFooter error={error} pending={pending} valid={!!text.trim()} />
@@ -1321,7 +1323,7 @@ function FormFooter({
   return (
     <>
       {error && (
-        <p role="alert" className="-mt-1 text-[13px] text-danger">
+        <p role="alert" className="-mt-1 text-small text-danger">
           {error}
         </p>
       )}
@@ -1329,7 +1331,7 @@ function FormFooter({
         type="submit"
         aria-disabled={!valid || pending}
         className={cx(
-          "h-14 rounded-2xl font-mono text-[12.5px] font-semibold tracking-[.28em] transition-all duration-200 active:scale-[.97]",
+          "h-14 rounded-2xl font-mono text-small font-semibold tracking-brand transition-all duration-200 active:scale-[.97]",
           valid && !pending ? "bg-accent text-bg" : "bg-selected text-ghost",
         )}
       >
@@ -1353,7 +1355,7 @@ function SecondaryButton({
       type="button"
       onClick={onClick}
       className={cx(
-        "h-11 rounded-xl border border-white/10 px-4 text-sm",
+        "h-11 rounded-xl border border-line-strong px-4 text-body",
         danger ? "text-danger" : "text-muted",
       )}
     >
@@ -1381,14 +1383,14 @@ function ConfirmDelete({
           await onConfirm();
           setPending(false);
         }}
-        className="h-14 rounded-[14px] bg-danger font-mono text-[12.5px] font-semibold tracking-[.2em] text-bg disabled:opacity-60"
+        className="h-14 rounded-2xl bg-danger font-mono text-small font-semibold tracking-eyebrow text-bg disabled:opacity-60"
       >
         {t.goals.confirmDeleteYes}
       </button>
       <button
         type="button"
         onClick={onCancel}
-        className="h-12 text-sm text-dim"
+        className="h-12 text-body text-dim"
       >
         {t.goals.cancel}
       </button>

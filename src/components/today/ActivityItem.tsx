@@ -28,16 +28,16 @@ export function ActivityItem({ event }: { event: FeedEvent }) {
   return (
     <div
       data-testid="activity-item"
-      className="flex min-h-12 items-center gap-3 border-t border-white/5 py-1.5 animate-[li-enter_.55s_cubic-bezier(.2,.8,.2,1)]"
+      className="flex min-h-12 items-center gap-3 border-t border-line py-1.5 animate-[li-enter_.55s_cubic-bezier(.2,.8,.2,1)]"
     >
-      <span className="w-[38px] shrink-0 font-mono text-[11.5px] text-dim tabular-nums">
+      <span className="w-[38px] shrink-0 font-mono text-meta text-dim tabular-nums">
         {event.t}
       </span>
       <span
         aria-hidden="true"
         className={cx("size-1.5 shrink-0 rounded-full", DOT[event.kind])}
       />
-      <span className="flex-1 text-[13.5px] leading-[1.4] text-muted">
+      <span className="flex-1 text-small leading-[1.4] text-muted">
         <span className="font-medium text-text">{name}</span> {event.text}
       </span>
       {done && real && event.who === "partner" && (

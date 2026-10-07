@@ -15,10 +15,10 @@ import {
 } from "@/lib/accountability";
 
 const A = t.accountability;
-const heading = "font-mono text-[11px] tracking-[.18em] text-muted";
-const label = "font-mono text-[10.5px] tracking-[.16em] text-dim";
+const heading = "font-mono text-meta tracking-eyebrow text-muted";
+const label = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "h-12 w-full min-w-0 rounded-xl border border-white/10 bg-field px-3.5 text-[15px] outline-none focus:border-white/30";
+  "h-12 w-full min-w-0 rounded-xl border border-line-strong bg-field px-3.5 text-body outline-none focus:border-line-bold";
 
 /**
  * NOVO COMPROMISSO (V2 Phase 6). The title is public (the partner sees it);
@@ -67,7 +67,7 @@ export function CommitmentSheet() {
           onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
           className={field}
         />
-        <span className="text-[12px] text-dim">{A.titleHint}</span>
+        <span className="text-small text-dim">{A.titleHint}</span>
       </label>
       <div className="flex flex-col gap-2">
         <span className={label} id="commitment-kind">
@@ -87,7 +87,7 @@ export function CommitmentSheet() {
               data-testid={`commitment-kind-${k}`}
               onClick={() => setDraft((d) => ({ ...d, kind: k }))}
               className={cx(
-                "h-[46px] rounded-xl border text-[14.5px]",
+                "h-[46px] rounded-xl border text-body",
                 chipTone(draft.kind === k),
               )}
             >
@@ -95,7 +95,7 @@ export function CommitmentSheet() {
             </button>
           ))}
         </div>
-        <span className="text-[12.5px] leading-[1.45] text-dim">
+        <span className="text-small leading-[1.45] text-dim">
           {A.kindHelp[draft.kind]}
         </span>
       </div>
@@ -118,9 +118,9 @@ export function CommitmentSheet() {
               ))}
             </select>
           ) : (
-            <span className="text-[13.5px] text-dim">{A.taskNone}</span>
+            <span className="text-small text-dim">{A.taskNone}</span>
           )}
-          <span className="text-[12px] text-dim">{A.taskPrivateNote}</span>
+          <span className="text-small text-dim">{A.taskPrivateNote}</span>
         </label>
       )}
       {draft.kind === "focus" && (
@@ -146,7 +146,7 @@ export function CommitmentSheet() {
         </label>
       )}
       {error && (
-        <p role="alert" className="text-[13px] text-danger">
+        <p role="alert" className="text-small text-danger">
           {error}
         </p>
       )}
@@ -154,7 +154,7 @@ export function CommitmentSheet() {
         type="submit"
         disabled={busy}
         data-testid="commitment-submit"
-        className="h-14 rounded-2xl bg-text font-mono text-[12.5px] font-semibold tracking-[.22em] text-bg disabled:opacity-50"
+        className="h-14 rounded-2xl bg-text font-mono text-small font-semibold tracking-eyebrow text-bg disabled:opacity-50"
       >
         {busy ? A.creating : A.create}
       </button>

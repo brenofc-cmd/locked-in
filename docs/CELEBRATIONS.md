@@ -52,12 +52,18 @@ numbers to change. Nothing runs on a timer otherwise (e2e: 70 s without a reques
 
 ## On screen
 
-- A small card at the top, over the current screen: no route, no modal (`role="status"`, nothing
-  behind it is blocked), never in Resume State, never during onboarding.
-- **≈2 s**, then it closes by itself; pointing at it or focusing it holds it (WCAG 2.2.1); OK closes
-  it. Closing marks it seen (here at once, and in the database for every device).
-- Motion: a 0.35 s fade only with `motion-safe`; with `prefers-reduced-motion` it simply appears
-  (and the global reduced-motion rule stays).
+- At the top, over the current screen: no route, no modal (`role="status"`, nothing behind it is
+  blocked), never in Resume State, never during onboarding.
+- **Staged by rarity** (final design pass, ADR-103, `momentFor()`; choreography in
+  [MOTION.md](MOTION.md)): a **card** with Rook (Perfect Day, 10 h focus, 5 / 10 Perfect Days) or a
+  **stage** with Rook and the Ring (7 / 30 / 100-day streak, 50 / 100 h focus, 30 Perfect Days, the
+  month) — `data-size="card|stage"`. Each kind plays its own short story (`STORIES`, ADR-106).
+- **≈2 s** (card) / **4.2 s** (stage), then it closes by itself; pointing at it or focusing it holds
+  it (WCAG 2.2.1); OK / CONTINUAR closes it. Closing marks it seen (here at once, and in the database
+  for every device).
+- Motion only with `motion-safe` (fade / Ring drawing / Rook landing); with `prefers-reduced-motion`
+  the final frame simply appears (and the global reduced-motion rule stays). No confetti, trophy or
+  sound.
 - Copy (`t.celebrations`): DIA PERFEITO · "As 4 tarefas de hoje estão feitas." / the milestone title
   · MARCO CONQUISTADO / CAMPEÃO DE <MÊS> or MÊS ENCERRADO · EMPATE · "<MÊS> · 8 — 5".
 

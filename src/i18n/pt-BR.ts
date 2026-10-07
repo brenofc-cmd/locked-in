@@ -418,6 +418,11 @@ export const t = {
     summary: (proven: number, total: number) =>
       `${proven} de ${total} ${plural(total, "compromisso cumprido", "compromissos cumpridos")}`,
     summaryNone: "Sem compromissos hoje",
+    factCheckin: "CHECK-IN",
+    factCommitments: "COMPROMISSOS",
+    factNone: "Nenhum ainda",
+    factMet: "Batido",
+    factOpen: "Em aberto",
     focusToday: "FOCO HOJE",
     standardToday: "PADRÃO",
     standardMet: "BATIDO",
@@ -582,6 +587,7 @@ export const t = {
   },
 
   moments: {
+    facts: "OS FATOS DO DIA",
     reviewTodayAria: "Revisão do dia",
     day: (n: number) => `DIA ${n}`,
     today: "HOJE",
@@ -1070,6 +1076,9 @@ export const t = {
     aria: "Conquista",
     close: "Fechar",
     ok: "OK",
+    continue: "CONTINUAR",
+    signature: "SEM HYPE. SÓ PROVA.",
+    hundred: "100 DIAS DE PROVA.",
     perfectDay: "DIA PERFEITO",
     perfectDayLine: (n: number) =>
       n === 1
@@ -1700,6 +1709,7 @@ export const t = {
     milestonesAria: "Marcos",
     next: "PRÓXIMO MARCO",
     seeAll: "VER TODOS OS MARCOS",
+    near: "QUASE",
     reached: "CONQUISTADO",
     reachedCount: (n: number, total: number) => `${n} de ${total} conquistados`,
     allReached: "Todos os marcos conquistados.",

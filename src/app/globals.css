@@ -1,49 +1,137 @@
 @import "tailwindcss";
 
 /*
- * LOCKED IN tokens, taken from the approved Claude Design
- * (design-reference/export/Locked In v3.dc.html). See docs/DESIGN_REFERENCE.md.
+ * LOCKED IN design tokens — the single source for colour, type, radius,
+ * line and motion values (docs/DESIGN_SYSTEM.md). Components use these
+ * utilities; arbitrary values are the exception, never the rule.
+ * Origin: the approved Claude Design (docs/DESIGN_REFERENCE.md), consolidated
+ * in the final V2 design pass (docs/FINAL_DESIGN_RESEARCH.md).
  */
 @theme {
   /* 780px: sidebar layout. 1180px: two-column Today / Focus. */
   --breakpoint-desk: 48.75rem;
   --breakpoint-wide: 73.75rem;
 
-  --color-page: #050506;
-  --color-bg: #0a0a0b;
-  --color-overlay: #070708;
-  --color-focus: #060607;
-  --color-card: #111113;
-  --color-sheet: #121214;
-  --color-chip: #151517;
-  --color-raised: #18181b;
-  --color-selected: #1a1a1d;
-  --color-avatar: #1c1c1f;
-  --color-field: #0e0e10;
+  /* Surfaces — deep graphite, lighter = closer (no big shadows). */
+  --color-page: #08080a;
+  --color-bg: #0c0c0e;
+  --color-overlay: #0a0a0c;
+  --color-stage: #09090b;
+  --color-card: #131316;
+  --color-sheet: #151518;
+  --color-chip: #18181b;
+  --color-raised: #1b1b1f;
+  --color-selected: #1f1f23;
+  --color-avatar: #222226;
+  --color-field: #111114;
 
-  --color-text: #ecebe6;
-  --color-muted: #a09f99;
-  --color-dim: #8d8c86;
-  --color-quiet: #83827d;
-  --color-ghost: #5e5d59;
-  --color-faint: #55544f;
-  --color-off: #3a3a3d;
+  /* Text — three readable levels (all ≥ 4.5 : 1 on every surface). */
+  --color-text: #eceae4;
+  --color-muted: #a6a59f;
+  --color-dim: #8e8d87;
+  /* Non-text only: disabled labels, decorative strokes, empty tracks. */
+  --color-ghost: #64635e;
+  --color-faint: #4a4a4e;
+  --color-off: #333337;
 
+  /* Lines — hairline divider, outline, emphasis. */
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.12);
+  --color-line-bold: rgb(255 255 255 / 0.24);
+
+  /* Meaning. Green = proof (done, progress, the primary action, the brand). */
   --color-accent: #c6e07b;
-  --color-danger: #e0715f;
-  --color-missed: #b8695c;
+  --color-streak: #e6b45e;
+  --color-focus: #9fb3d1;
+  --color-danger: #e5765f;
+  --color-missed: #c27463;
 
-  --color-accent-wash: color-mix(in oklab, #c6e07b 5%, #0a0a0b);
-  --color-accent-soft: color-mix(in oklab, #c6e07b 8%, #0a0a0b);
-  --color-accent-swipe: color-mix(in oklab, #c6e07b 9%, #0a0a0b);
-  --color-accent-strong: color-mix(in oklab, #c6e07b 24%, #0a0a0b);
+  --color-accent-wash: color-mix(in oklab, #c6e07b 5%, #0c0c0e);
+  --color-accent-soft: color-mix(in oklab, #c6e07b 8%, #0c0c0e);
+  --color-accent-swipe: color-mix(in oklab, #c6e07b 9%, #0c0c0e);
+  --color-accent-strong: color-mix(in oklab, #c6e07b 24%, #0c0c0e);
   --color-accent-tab: color-mix(in oklab, #c6e07b 14%, transparent);
   --color-accent-line: color-mix(in oklab, #c6e07b 60%, transparent);
+  --color-streak-soft: color-mix(in oklab, #e6b45e 10%, #0c0c0e);
+
+  /* Type scale (rem: follows the user's font size). */
+  --text-meta: 0.6875rem; /* 11 — eyebrows, meta, mono labels */
+  --text-meta--line-height: 1.35;
+  --text-small: 0.8125rem; /* 13 — secondary lines, notes */
+  --text-small--line-height: 1.45;
+  --text-body: 0.9375rem; /* 15 — rows, body copy */
+  --text-body--line-height: 1.45;
+  --text-lead: 1.0625rem; /* 17 — row titles that lead, sheet titles */
+  --text-lead--line-height: 1.35;
+  --text-title: 1.375rem; /* 22 — section-level titles */
+  --text-title--line-height: 1.2;
+  --text-heading: 1.625rem; /* 26 — page title (phone) */
+  --text-heading--line-height: 1.1;
+  --text-number: 2rem; /* 32 — stat numbers */
+  --text-number--line-height: 1;
+  --text-display: 2.375rem; /* 38 — page title (desktop) */
+  --text-display--line-height: 1.05;
+  --text-num-l: 2.75rem; /* 44 */
+  --text-num-l--line-height: 1;
+  --text-num-xl: 4rem; /* 64 — hero number (phone) */
+  --text-num-xl--line-height: 0.85;
+  --text-num-2xl: 4.75rem; /* 76 — focus timer (phone) */
+  --text-num-2xl--line-height: 0.9;
+  --text-num-3xl: 6rem; /* 96 */
+  --text-num-3xl--line-height: 0.85;
+  --text-num-hero: 7rem; /* 112 — hero number (wide) */
+  --text-num-hero--line-height: 0.82;
+
+  /* Letter spacing: four roles. */
+  --tracking-meta: 0.08em; /* mono numbers / meta */
+  --tracking-eyebrow: 0.16em; /* mono caps labels */
+  --tracking-brand: 0.24em; /* the wordmark and rare stamps */
+  --tracking-display: -0.025em; /* titles */
+  --tracking-number: -0.05em; /* big numbers */
+
+  /* Radius: six steps + full. */
+  --radius-xs: 2px; /* bars, ticks */
+  --radius-sm: 4px; /* tiny marks, checkbox in rows */
+  --radius-lg: 8px; /* small controls, chips */
+  --radius-xl: 12px; /* buttons, fields, rows */
+  --radius-2xl: 16px; /* cards, toasts */
+  --radius-3xl: 24px; /* sheets, large surfaces */
+
+  /* Motion (docs/MOTION.md). */
+  --ease-out-quick: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
 }
 
 @theme inline {
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* One page-title style for every screen (docs/DESIGN_SYSTEM.md → Typography). */
+@utility page-title {
+  margin: 0;
+  font-size: var(--text-heading);
+  line-height: var(--text-heading--line-height);
+  font-weight: 600;
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+  @media (width < 24rem) {
+    font-size: var(--text-title);
+  }
+  @media (width >= 48.75rem) {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+  }
+}
+
+/* Mono caps label above a group: the only place caps are used for UI text. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 /* Element defaults live in the base layer so Tailwind utilities can override them. */
@@ -73,7 +161,7 @@
 
   input::placeholder,
   textarea::placeholder {
-    color: #5e5d59;
+    color: var(--color-dim);
   }
 
   :focus-visible {
@@ -161,6 +249,75 @@
       0 0 56px color-mix(in oklab, var(--color-accent) 12%, transparent);
   }
 }
+/* Progress moved: the bar brightens and swells for a beat (transform only). */
+@keyframes li-bar-pulse {
+  0% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+  30% {
+    opacity: 0.9;
+    transform: scaleY(2.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+/* A number that just changed lands in place (score, totals). */
+@keyframes li-settle {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Celebrations (docs/MOTION.md): the Ring draws itself closed… */
+@keyframes li-ring-draw {
+  from {
+    stroke-dashoffset: var(--ring);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* …Rook lands and settles… */
+@keyframes li-rook-land {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* …and a rare moment's stage opens (no zoom past 4 %, no bounce). */
+@keyframes li-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Perfect Day: the screen quiets for a beat behind the moment. */
+@keyframes li-dim {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 @keyframes li-breathe {
   0%,
   100% {
@@ -171,12 +328,174 @@
   }
 }
 
+/*
+ * Rook's one-shot actions (docs/MOTION.md → Rook). Individual `rotate`,
+ * `translate` and `scale` compose with each part's pose transform, so an
+ * action never fights the pose. Nothing here loops except the Focus idle
+ * blink, and all of it is motion-safe; `lock` keeps its end state (with
+ * reduced motion that end state simply appears).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-act="ack"] [data-part="proof-core"] {
+    animation: rook-core 0.65s var(--ease-out-quick);
+  }
+  [data-act="ack"] [data-part="eyes"] {
+    animation:
+      rook-blink 0.65s ease,
+      rook-nod 0.65s var(--ease-settle);
+  }
+  [data-act="ack"]
+    :is([data-part="head"], [data-part="crest"], [data-part="beak"]) {
+    animation: rook-nod 0.65s var(--ease-settle);
+  }
+  [data-act="ack"] [data-part="wing-left"] {
+    animation: rook-wing-left 0.65s var(--ease-settle);
+  }
+  [data-act="ack"] [data-part="wing-right"] {
+    animation: rook-wing-right 0.65s var(--ease-settle);
+  }
+  [data-act="tap"] [data-part="wing-right"] {
+    animation: rook-tap 0.52s ease-in-out;
+  }
+  [data-act="tap"] [data-part="eyes"] {
+    animation: rook-look 0.52s var(--ease-settle);
+  }
+  [data-idle] [data-part="eyes"] {
+    animation: rook-idle-blink 7s ease-in-out infinite 2s;
+  }
+}
+[data-act="lock"] [data-part="wing-left"] {
+  animation: rook-lock-left 0.6s var(--ease-settle) forwards;
+}
+[data-act="lock"] [data-part="wing-right"] {
+  animation: rook-lock-right 0.6s var(--ease-settle) forwards;
+}
+[data-act="lock"] [data-part="posture"] {
+  animation: rook-lean 0.6s var(--ease-settle) forwards;
+}
+[data-core="milestone"] [data-part="proof-core"] {
+  filter: drop-shadow(0 0 5px rgb(0 230 118 / 0.55));
+}
+@keyframes rook-core {
+  0% {
+    scale: 1;
+    filter: brightness(1);
+  }
+  30% {
+    scale: 1.14;
+    filter: brightness(1.7) drop-shadow(0 0 5px rgb(0 230 118 / 0.6));
+  }
+  100% {
+    scale: 1;
+    filter: brightness(1);
+  }
+}
+@keyframes rook-blink {
+  0%,
+  16%,
+  34%,
+  100% {
+    scale: 1 1;
+  }
+  25% {
+    scale: 1 0.12;
+  }
+}
+@keyframes rook-nod {
+  0%,
+  30%,
+  100% {
+    translate: 0 0;
+  }
+  52% {
+    translate: 0 2.5px;
+  }
+  76% {
+    translate: 0 -0.5px;
+  }
+}
+@keyframes rook-wing-left {
+  0%,
+  25%,
+  100% {
+    rotate: 0deg;
+  }
+  50% {
+    rotate: 10deg;
+  }
+}
+@keyframes rook-wing-right {
+  0%,
+  25%,
+  100% {
+    rotate: 0deg;
+  }
+  50% {
+    rotate: -10deg;
+  }
+}
+@keyframes rook-tap {
+  0%,
+  40%,
+  80%,
+  100% {
+    rotate: 0deg;
+  }
+  20%,
+  60% {
+    rotate: -16deg;
+  }
+}
+@keyframes rook-look {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40%,
+  70% {
+    translate: -2px -1px;
+  }
+}
+@keyframes rook-idle-blink {
+  0%,
+  94%,
+  100% {
+    scale: 1 1;
+  }
+  97% {
+    scale: 1 0.12;
+  }
+}
+@keyframes rook-lock-left {
+  to {
+    rotate: -12deg;
+  }
+}
+@keyframes rook-lock-right {
+  to {
+    rotate: 12deg;
+  }
+}
+@keyframes rook-lean {
+  to {
+    translate: 0 1.5px;
+    scale: 1.02;
+  }
+}
+
+/*
+ * Reduced motion (docs/MOTION.md): no movement — keyframes jump to their end
+ * state and transforms change instantly — but colour and opacity still
+ * transition, so feedback stays (a check still fills, a row still dims).
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property:
+      color, background-color, border-color, outline-color, opacity, fill,
+      stroke, box-shadow !important;
   }
 }

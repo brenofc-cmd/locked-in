@@ -93,10 +93,10 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
     <section
       aria-label={t.morning.aria}
       data-testid="morning"
-      className="flex flex-col gap-5 rounded-2xl border border-white/8 bg-card p-5 animate-[li-fade-up_.4s_ease] desk:p-6"
+      className="flex flex-col gap-5 rounded-2xl border border-line bg-card p-5 animate-[li-fade-up_.4s_ease] desk:p-6"
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="font-mono text-[11px] tracking-[.14em] text-dim tabular-nums">
+        <span className="font-mono text-meta tracking-eyebrow text-dim tabular-nums">
           {t.morning.eyebrow(
             localTimeHM(now, me.timezone),
             weekdayName(app.today),
@@ -106,33 +106,33 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
           type="button"
           onClick={onClose}
           aria-label={t.morning.close}
-          className="-mr-2 flex size-10 items-center justify-center rounded-lg text-lg text-dim hover:text-text"
+          className="-mr-2 flex size-10 items-center justify-center rounded-lg text-lead text-dim hover:text-text"
         >
           <span aria-hidden="true">×</span>
         </button>
       </div>
 
-      <p className="m-0 font-mono text-[11px] leading-[1.9] tracking-[.14em] text-muted">
+      <p className="m-0 font-mono text-meta leading-[1.9] tracking-eyebrow text-muted">
         {facts.join(" · ")}
       </p>
 
       {lines.length > 0 && (
         <div className="flex flex-col gap-2.5">
-          <h2 className="m-0 font-mono text-[11px] font-normal tracking-[.2em] text-accent">
+          <h2 className="m-0 font-mono text-meta font-normal tracking-eyebrow text-accent">
             {t.northStar.title}
           </h2>
           {lines.map((l) => (
             <p key={l.k} className="m-0 flex flex-col gap-0.5">
-              <span className="font-mono text-[10px] tracking-[.16em] text-dim">
+              <span className="font-mono text-meta tracking-eyebrow text-dim">
                 {l.k}
               </span>
-              <span className="line-clamp-2 text-[15.5px] leading-[1.4] text-pretty">
+              <span className="line-clamp-2 text-body leading-[1.4] text-pretty">
                 {l.v}
               </span>
               {"extra" in l && l.extra && (
                 <span
                   data-testid="morning-goal-proof"
-                  className="font-mono text-[10px] tracking-[.14em] text-muted tabular-nums"
+                  className="font-mono text-meta tracking-eyebrow text-muted tabular-nums"
                 >
                   {l.extra}
                 </span>
@@ -142,20 +142,20 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
         </div>
       )}
 
-      <div className="flex flex-col gap-2 border-t border-white/6 pt-4">
+      <div className="flex flex-col gap-2 border-t border-line pt-4">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="font-mono text-[10px] tracking-[.16em] text-dim">
+          <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.morning.today}
           </span>
           {top.length > 0 ? (
-            <span className="font-mono text-[11px] tracking-[.1em] text-muted tabular-nums">
+            <span className="font-mono text-meta tracking-meta text-muted tabular-nums">
               {t.top3.title} · {top.filter((x) => x.done).length} / {top.length}
             </span>
           ) : app.tasks.length > 0 ? (
             <button
               type="button"
               onClick={() => app.openSheet({ kind: "priorities" })}
-              className="flex h-9 items-center font-mono text-[11px] tracking-[.14em] text-accent"
+              className="flex h-9 items-center font-mono text-meta tracking-eyebrow text-accent"
             >
               {t.top3.define}
             </button>
@@ -163,10 +163,10 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
         </div>
         {next && (
           <div className="flex items-baseline justify-between gap-3">
-            <span className="font-mono text-[10px] tracking-[.16em] text-dim">
+            <span className="font-mono text-meta tracking-eyebrow text-dim">
               {t.morning.next}
             </span>
-            <span className="min-w-0 truncate text-right font-mono text-[11.5px] tracking-[.08em]">
+            <span className="min-w-0 truncate text-right font-mono text-meta tracking-meta">
               {eventSummary(next)} ·{" "}
               {[countdown(next.date, app.today), next.time]
                 .filter(Boolean)
@@ -176,10 +176,10 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
         )}
         {app.hasPartner && (
           <div className="flex items-baseline justify-between gap-3">
-            <span className="font-mono text-[10px] tracking-[.16em] text-dim">
+            <span className="font-mono text-meta tracking-eyebrow text-dim">
               {app.partner.name.toUpperCase()}
             </span>
-            <span className="font-mono text-[11px] tracking-[.1em] text-muted">
+            <span className="font-mono text-meta tracking-meta text-muted">
               {pv.label}
             </span>
           </div>
@@ -190,7 +190,7 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          className="h-12 flex-1 rounded-xl bg-text px-5 font-mono text-[12px] font-semibold tracking-[.24em] text-bg active:scale-[.97]"
+          className="h-12 flex-1 rounded-xl bg-text px-5 font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
         >
           {t.morning.start}
         </button>
@@ -199,13 +199,13 @@ function Morning({ star, onClose }: { star: NorthStar; onClose: () => void }) {
           role="switch"
           aria-checked={auto}
           onClick={() => void toggleAuto()}
-          className="flex h-11 items-center gap-2 text-[12.5px] text-dim"
+          className="flex h-11 items-center gap-2 text-small text-dim"
         >
           <span
             aria-hidden="true"
             className={cx(
-              "flex size-4 items-center justify-center rounded-[4px] border-[1.5px]",
-              auto ? "border-text bg-text" : "border-white/20",
+              "flex size-4 items-center justify-center rounded-sm border-[1.5px]",
+              auto ? "border-text bg-text" : "border-line-bold",
             )}
           />
           {t.morning.autoShow}

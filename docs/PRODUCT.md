@@ -27,6 +27,8 @@ serious tool where **one trusted person** sees whether you actually showed up to
 2. **Open → Understand → Act.** The user understands their state and can do the main action in about
    **3 seconds**.
 3. **Proof over hype.** Numbers, times and completed tasks. No streak confetti, no motivational copy.
+   Expression is reserved for proof: the rarer the achievement, the bigger the moment (Rook and the
+   Ring — docs/MOTION.md); every ordinary day is calm.
 4. **Two people, not a network.** Private to the duo. No public profiles, no followers.
 5. **Honest scoring.** The day is judged on the percentage of scheduled tasks completed. A skipped
    task stays in the total and does not count as completed (ADR-022). Unchecking withdraws the feed
@@ -145,3 +147,9 @@ never in your quiet hours, never late for something that already started, and wi
 detalhes" nothing personal on the lock screen. Signing out takes the device out, so a shared phone
 never shows someone else's reminders. Tapping opens the right screen. Offline, the app says so
 instead of breaking. Details: docs/WEB_PUSH.md.
+
+## Design (final V2 pass)
+
+Direction **Expressive Discipline** — calm base, expressive proof. System: docs/DESIGN_SYSTEM.md;
+motion: docs/MOTION.md; mascot ROOK, the proof keeper: docs/ROOK.md; research and audit:
+docs/FINAL_DESIGN_RESEARCH.md.

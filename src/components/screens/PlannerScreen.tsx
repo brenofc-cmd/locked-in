@@ -45,14 +45,12 @@ export function PlannerScreen() {
   return (
     <div className="flex flex-col gap-7 animate-[li-fade-up_.4s_ease] desk:gap-10">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="m-0 text-[25px] font-semibold tracking-[-0.025em] max-[384px]:text-[23px] desk:text-[38px]">
-          {t.planner.title}
-        </h1>
+        <h1 className="page-title">{t.planner.title}</h1>
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "planner" })}
           aria-label={t.planner.addAria}
-          className="h-11 rounded-xl border border-white/12 px-4 text-sm"
+          className="h-11 rounded-xl border border-line-strong px-4 text-body"
         >
           {t.planner.add}
         </button>
@@ -60,7 +58,7 @@ export function PlannerScreen() {
       <div
         role="radiogroup"
         aria-label={t.planner.viewsAria}
-        className="flex self-start rounded-xl border border-white/8 p-1"
+        className="flex self-start rounded-xl border border-line p-1"
       >
         {VIEWS.map((v) => (
           <button
@@ -70,7 +68,7 @@ export function PlannerScreen() {
             aria-checked={view === v}
             onClick={() => pick(v)}
             className={cx(
-              "h-9 rounded-lg px-4 font-mono text-[11px] tracking-[.14em]",
+              "h-9 rounded-lg px-4 font-mono text-meta tracking-eyebrow",
               view === v ? "bg-selected text-text" : "text-dim",
             )}
           >
@@ -98,10 +96,10 @@ export function EventRow({
     <button
       type="button"
       onClick={() => app.openSheet({ kind: "planner", event })}
-      className="grid min-h-[58px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-white/6 py-2 text-left"
+      className="grid min-h-[58px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line py-2 text-left"
     >
       <span className="flex min-w-0 flex-col gap-1">
-        <span className="flex items-center gap-2 font-mono text-[10.5px] tracking-[.14em] text-dim">
+        <span className="flex items-center gap-2 font-mono text-meta tracking-eyebrow text-dim">
           {!event.mine && (
             <span className="text-muted">{app.partner.name.toUpperCase()}</span>
           )}
@@ -116,9 +114,9 @@ export function EventRow({
             </>
           )}
         </span>
-        <span className="truncate text-[15px]">{event.title}</span>
+        <span className="truncate text-body">{event.title}</span>
       </span>
-      <span className="font-mono text-[11px] tracking-[.08em] text-muted tabular-nums">
+      <span className="font-mono text-meta tracking-meta text-muted tabular-nums">
         {when}
       </span>
     </button>
@@ -129,7 +127,7 @@ function Upcoming() {
   const app = useApp();
   const groups = groupUpcoming(app.plannerEvents, app.today);
   if (groups.length === 0)
-    return <p className="text-[14.5px] text-dim">{t.planner.empty}</p>;
+    return <p className="text-body text-dim">{t.planner.empty}</p>;
   return (
     <div className="flex flex-col gap-7">
       {groups.map((g) => (
@@ -138,7 +136,7 @@ function Upcoming() {
           aria-label={t.planner.groups[g.group]}
           className="flex flex-col"
         >
-          <h2 className="border-b border-white/9 pb-2 font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+          <h2 className="border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted">
             {t.planner.groups[g.group]}
           </h2>
           {g.events.map((e) => (
@@ -198,7 +196,7 @@ function Calendar() {
         <div className="flex items-center justify-between gap-2">
           <h2
             data-testid="planner-month"
-            className="font-mono text-[11px] font-normal tracking-[.16em] text-muted"
+            className="font-mono text-meta font-normal tracking-eyebrow text-muted"
           >
             {title}
           </h2>
@@ -226,7 +224,7 @@ function Calendar() {
             <span
               key={i}
               aria-hidden="true"
-              className="pb-1 text-center font-mono text-[10px] text-faint"
+              className="pb-1 text-center font-mono text-meta text-dim"
             >
               {d}
             </span>
@@ -242,11 +240,11 @@ function Calendar() {
                 aria-pressed={c.date === day}
                 onClick={() => setSelected(c.date)}
                 className={cx(
-                  "flex h-[46px] flex-col items-center justify-center gap-[5px] rounded-[10px] border p-0 text-[12.5px] tabular-nums",
+                  "flex h-[46px] flex-col items-center justify-center gap-1 rounded-xl border p-0 text-small tabular-nums",
                   c.date === day
-                    ? "border-white/30 bg-white/5"
+                    ? "border-line-bold bg-white/5"
                     : c.today
-                      ? "border-white/15"
+                      ? "border-line-strong"
                       : "border-transparent",
                   c.past ? "text-dim" : "text-text",
                 )}
@@ -255,7 +253,7 @@ function Calendar() {
                 <span
                   aria-hidden="true"
                   className={cx(
-                    "flex h-1.5 items-center gap-[3px]",
+                    "flex h-1.5 items-center gap-1",
                     c.count === 0 && "invisible",
                   )}
                 >
@@ -275,14 +273,14 @@ function Calendar() {
         </div>
       </section>
       <section aria-label={dateLabel(day)} className="flex flex-col">
-        <div className="flex items-center justify-between border-b border-white/9 pb-2">
-          <h2 className="font-mono text-[11px] font-normal tracking-[.16em] text-muted">
+        <div className="flex items-center justify-between border-b border-line-strong pb-2">
+          <h2 className="font-mono text-meta font-normal tracking-eyebrow text-muted">
             {dateLabel(day)}
           </h2>
           <button
             type="button"
             onClick={() => app.openSheet({ kind: "planner", date: day })}
-            className="h-9 px-1 text-[12.5px] text-dim hover:text-text"
+            className="h-9 px-1 text-small text-dim hover:text-text"
           >
             {t.planner.add}
           </button>
@@ -291,7 +289,7 @@ function Calendar() {
           <EventRow key={e.id} event={e} showDate={false} />
         ))}
         {dayEvents.length === 0 && (
-          <span className="py-3.5 text-[13.5px] text-dim">
+          <span className="py-3.5 text-small text-dim">
             {t.planner.emptyDay}
           </span>
         )}

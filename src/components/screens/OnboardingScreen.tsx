@@ -8,6 +8,7 @@ import { completeOnboarding } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { LogoMark, MiniCheck, chipTone, cx } from "@/components/ui";
+import { Rook } from "@/components/brand/Rook";
 import { NETWORK_ERROR } from "@/lib/invite-code";
 import { onboardingStart, type OnboardingStep } from "@/lib/onboarding";
 import {
@@ -175,7 +176,7 @@ export function OnboardingScreen() {
             <button
               type="button"
               onClick={() => setStep((s) => (s - 1) as OnboardingStep)}
-              className="h-11 px-1 text-sm text-dim"
+              className="h-11 px-1 text-body text-dim"
             >
               {t.onboarding.back}
             </button>
@@ -183,12 +184,17 @@ export function OnboardingScreen() {
         </div>
 
         {step === 0 && (
-          <div className="flex flex-col gap-[22px] animate-[li-rise_.4s_ease]">
-            <LogoMark size="lg" />
-            <h1 className="text-[40px] leading-none font-semibold tracking-[.04em]">
+          <div className="flex flex-col gap-6 animate-[li-rise_.4s_ease]">
+            <span className="flex items-end justify-between">
+              <LogoMark size="lg" />
+              <span className="motion-safe:animate-[li-rook-land_.7s_var(--ease-settle)_.25s_both]">
+                <Rook pose="ready" size={112} />
+              </span>
+            </span>
+            <h1 className="text-display leading-none font-semibold tracking-meta">
               LOCKED IN
             </h1>
-            <span className="font-mono text-[13px] leading-[1.8] tracking-[.28em] text-dim">
+            <span className="font-mono text-small leading-[1.8] tracking-brand text-dim">
               {t.app.taglineLines[0]}
               <br />
               {t.app.taglineLines[1]}
@@ -196,10 +202,10 @@ export function OnboardingScreen() {
           </div>
         )}
         {step === 1 && (
-          <div className="flex flex-col gap-[18px] animate-[li-rise_.4s_ease]">
+          <div className="flex flex-col gap-5 animate-[li-rise_.4s_ease]">
             <label
               htmlFor="ob-name"
-              className="font-mono text-[11px] tracking-[.18em] text-dim"
+              className="font-mono text-meta tracking-eyebrow text-dim"
             >
               {t.onboarding.yourName}
             </label>
@@ -210,16 +216,14 @@ export function OnboardingScreen() {
               onKeyDown={(e) => e.key === "Enter" && void next()}
               maxLength={40}
               autoComplete="given-name"
-              className="h-[60px] rounded-[14px] border border-white/12 bg-field px-[18px] text-[22px] outline-none focus:border-white/30"
+              className="h-[60px] rounded-2xl border border-line-strong bg-field px-5 text-title outline-none focus:border-line-bold"
             />
-            <span className="text-[13px] text-dim">
-              {t.onboarding.nameHint}
-            </span>
+            <span className="text-small text-dim">{t.onboarding.nameHint}</span>
           </div>
         )}
         {step === 2 && (
-          <div className="flex flex-col gap-[18px] animate-[li-rise_.4s_ease]">
-            <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.02em]">
+          <div className="flex flex-col gap-5 animate-[li-rise_.4s_ease]">
+            <h1 className="text-heading leading-[1.2] font-semibold tracking-display">
               {t.onboarding.buildLines[0]}
               <br />
               {t.onboarding.buildLines[1]}
@@ -227,7 +231,7 @@ export function OnboardingScreen() {
             <div
               role="radiogroup"
               aria-label={t.onboarding.howToStart}
-              className="flex flex-col gap-[18px]"
+              className="flex flex-col gap-5"
             >
               {PATHS.map((p) => {
                 const on = path === p.id;
@@ -239,23 +243,21 @@ export function OnboardingScreen() {
                     aria-checked={on}
                     onClick={() => setPath(p.id)}
                     className={cx(
-                      "flex min-h-[76px] items-center justify-between gap-3 rounded-2xl border px-[18px] text-left transition-all duration-150",
+                      "flex min-h-[76px] items-center justify-between gap-3 rounded-2xl border px-5 text-left transition-all duration-150",
                       on
                         ? "border-accent-line bg-accent-soft"
-                        : "border-white/9",
+                        : "border-line-strong",
                     )}
                   >
-                    <span className="flex flex-col gap-[5px]">
-                      <span className="text-[16.5px] font-medium">
-                        {p.label}
-                      </span>
-                      <span className="text-[13px] text-dim">{p.sub}</span>
+                    <span className="flex flex-col gap-1">
+                      <span className="text-lead font-medium">{p.label}</span>
+                      <span className="text-small text-dim">{p.sub}</span>
                     </span>
                     <span
                       aria-hidden="true"
                       className={cx(
                         "flex size-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px]",
-                        on ? "border-accent" : "border-white/20",
+                        on ? "border-accent" : "border-line-bold",
                       )}
                     >
                       <span
@@ -271,7 +273,7 @@ export function OnboardingScreen() {
         )}
         {step === 3 && (
           <div className="flex flex-col gap-4 animate-[li-rise_.4s_ease]">
-            <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.02em]">
+            <h1 className="text-heading leading-[1.2] font-semibold tracking-display">
               {path === "template"
                 ? t.onboarding.pickItems
                 : t.onboarding.addItems}
@@ -290,7 +292,7 @@ export function OnboardingScreen() {
                     aria-checked={tpl === tplName}
                     onClick={() => pickTemplate(tplName)}
                     className={cx(
-                      "h-10 rounded-[10px] border px-3.5 text-sm",
+                      "h-10 rounded-xl border px-3.5 text-body",
                       chipTone(tpl === tplName),
                     )}
                   >
@@ -303,7 +305,7 @@ export function OnboardingScreen() {
               {items.map((it, i) => (
                 <div
                   key={it.name + i}
-                  className="flex min-h-[54px] items-center gap-3 border-b border-white/6"
+                  className="flex min-h-[54px] items-center gap-3 border-b border-line"
                 >
                   <button
                     type="button"
@@ -321,7 +323,7 @@ export function OnboardingScreen() {
                   </button>
                   <span
                     className={cx(
-                      "text-[15.5px]",
+                      "text-body",
                       it.on ? "text-text" : "text-dim",
                     )}
                   >
@@ -341,26 +343,26 @@ export function OnboardingScreen() {
                   }}
                   placeholder={t.onboarding.addOwn}
                   aria-label={t.onboarding.addItemAria}
-                  className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 text-base outline-none"
+                  className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 text-base outline-none"
                 />
                 <button
                   type="button"
                   onClick={addDraft}
                   aria-label={t.onboarding.addAria}
-                  className="size-12 rounded-xl border border-white/12 text-[22px]"
+                  className="size-12 rounded-xl border border-line-strong text-title"
                 >
                   +
                 </button>
               </div>
             </div>
-            <span className="text-[13px] text-dim">
+            <span className="text-small text-dim">
               {t.onboarding.repeatsDaily}
             </span>
           </div>
         )}
         {step === 4 && (
-          <div className="flex flex-col gap-[18px] animate-[li-rise_.4s_ease]">
-            <h1 className="text-[26px] leading-[1.2] font-semibold tracking-[-0.02em]">
+          <div className="flex flex-col gap-5 animate-[li-rise_.4s_ease]">
+            <h1 className="text-heading leading-[1.2] font-semibold tracking-display">
               {
                 (duo?.partner
                   ? t.onboarding.duoReadyLines
@@ -377,16 +379,16 @@ export function OnboardingScreen() {
               {t.onboarding.pitch}
             </span>
             {duo?.partner ? (
-              <span className="text-[15px]" data-testid="onboarding-partner">
+              <span className="text-body" data-testid="onboarding-partner">
                 {t.onboarding.partnerReady(duo.partner.displayName)}
               </span>
             ) : duo ? (
-              <div className="flex flex-col gap-1 border-y border-white/7 py-4">
-                <span className="font-mono text-[10.5px] tracking-[.14em] text-dim">
+              <div className="flex flex-col gap-1 border-y border-line py-4">
+                <span className="font-mono text-meta tracking-eyebrow text-dim">
                   {t.onboarding.yourCode}
                 </span>
                 <span
-                  className="font-mono text-2xl tracking-[.12em]"
+                  className="font-mono text-title tracking-meta"
                   data-testid="onboarding-code"
                 >
                   {duo.inviteCode}
@@ -398,7 +400,7 @@ export function OnboardingScreen() {
                   type="button"
                   onClick={create}
                   disabled={duoPending}
-                  className="h-[52px] rounded-2xl bg-accent font-mono text-[12.5px] font-semibold tracking-[.24em] text-bg disabled:opacity-60"
+                  className="h-[52px] rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg disabled:opacity-60"
                 >
                   {duoPending
                     ? t.onboarding.creating
@@ -414,12 +416,12 @@ export function OnboardingScreen() {
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={16}
-                    className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-field px-3.5 font-mono text-base tracking-[.1em] uppercase outline-none focus:border-white/30"
+                    className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 font-mono text-base tracking-meta uppercase outline-none focus:border-line-bold"
                   />
                   <button
                     type="submit"
                     disabled={duoPending || !code.trim()}
-                    className="h-12 rounded-xl border border-white/12 px-[18px] text-sm disabled:opacity-60"
+                    className="h-12 rounded-xl border border-line-strong px-5 text-body disabled:opacity-60"
                   >
                     {t.onboarding.join}
                   </button>
@@ -427,7 +429,7 @@ export function OnboardingScreen() {
               </div>
             )}
             {duoError && (
-              <p role="alert" className="text-[13px] text-danger">
+              <p role="alert" className="text-small text-danger">
                 {duoError}
               </p>
             )}
@@ -441,7 +443,7 @@ export function OnboardingScreen() {
               onClick={() => void next()}
               aria-disabled={ctaDisabled}
               className={cx(
-                "h-[58px] rounded-2xl font-mono text-[12.5px] font-semibold tracking-[.26em] transition-all duration-200 active:scale-[.97]",
+                "h-[58px] rounded-2xl font-mono text-small font-semibold tracking-brand transition-all duration-200 active:scale-[.97]",
                 ctaDisabled ? "bg-selected text-ghost" : "bg-text text-bg",
               )}
             >
@@ -453,7 +455,7 @@ export function OnboardingScreen() {
               type="button"
               onClick={() => void finish()}
               disabled={busy}
-              className="h-12 text-sm text-muted"
+              className="h-12 text-body text-muted"
             >
               {t.onboarding.later}
             </button>

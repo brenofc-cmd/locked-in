@@ -196,7 +196,7 @@ export function useTasks(initial: TasksData, timeZone: string, fx: Effects) {
       const task = tasksRef.current.find((t) => t.id === id);
       if (!task || task.done === done) return;
       setPop(id);
-      setTimeout(() => setPop((p) => (p === id ? null : p)), 180);
+      setTimeout(() => setPop((p) => (p === id ? null : p)), 420); // the bright beat of the check (docs/MOTION.md)
       if (done) {
         setFlash(id);
         setTimeout(() => setFlash((f) => (f === id ? null : f)), 700);
