@@ -230,6 +230,14 @@ export default defineConfig({
       dependencies: ["v2p9-390"],
       use: phone(390, 844),
     },
+    // Final design pass: the visual review matrix (LI_SHOTS=<dir>, skipped
+    // otherwise). Run alone: npx playwright test --project=visual --no-deps
+    {
+      name: "visual",
+      testMatch: /visual\.spec\.ts/,
+      dependencies: ["v2p10-390"],
+      use: phone(390, 844),
+    },
   ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
