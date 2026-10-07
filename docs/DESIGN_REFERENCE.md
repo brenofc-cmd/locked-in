@@ -1,6 +1,8 @@
 # Design Reference
 
-The approved visual source of truth for LOCKED IN. **Do not redesign.** Stage 2 converts this
+The approved visual source of truth for LOCKED IN's **layout and IA**. Since the final V2 design pass
+(2026-10-07, ADR-100) the literal values (colours, sizes, radii, letter spacing) are superseded by
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) and its tokens. **Do not redesign** without an explicit instruction. Stage 2 converts this
 into real React/Tailwind components; everything below is what that conversion must match.
 
 ## Where the reference lives

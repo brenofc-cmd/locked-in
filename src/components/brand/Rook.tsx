@@ -148,14 +148,15 @@ const POSES: Record<RookPose, Pose> = {
   },
 };
 
-/** Palette of the character sheet; green = the app's LOCKED green. */
+/** Character palette from the approved reference, independent of UI accents. */
 export const ROOK_COLORS = {
   graphite: "#0d0f12",
   charcoal: "#1f2429",
   slate: "#3a4148",
   light: "#a7afb7",
   sclera: "#f3f1ea",
-  green: "#c6e07b",
+  green: "#00e676",
+  mint: "#7cffb3",
 };
 const C = ROOK_COLORS;
 
@@ -180,12 +181,12 @@ function Eye({
   pose: Pose;
   id: string;
 }) {
-  const y = 55;
+  const y = 57;
   if (pose.eyes === "happy")
     return (
       <path
         d={`M${x - 9} ${y + 3}Q${x} ${y - 9} ${x + 9} ${y + 3}`}
-        stroke={C.sclera}
+        stroke={C.graphite}
         strokeWidth="4.2"
         strokeLinecap="round"
         fill="none"
@@ -193,27 +194,60 @@ function Eye({
     );
   // The inner corner is the one towards the beak.
   const [inner, outer] = pose.eyes === "half" ? [15, 15] : pose.lid;
-  const innerX = x + side * 16;
-  const outerX = x - side * 16;
-  const top = y - 17;
+  const top = y - 20;
+  // The white itself follows the brow: no circular eye peeking above a lid.
+  const outline = `M${x - side * 14} ${top + outer}
+    Q${x - side * 11} ${top + outer - 2} ${x + side * 15} ${top + inner + 5}
+    C${x + side * 19} ${y + 22} ${x - side * 19} ${y + 24} ${x - side * 17} ${y - 1}
+    Q${x - side * 17} ${top + outer + 3} ${x - side * 14} ${top + outer}Z`;
   return (
     <g>
       <clipPath id={id}>
-        <ellipse cx={x} cy={y} rx="14" ry="15.5" />
+        <path d={outline} />
       </clipPath>
-      <ellipse cx={x} cy={y} rx="14" ry="15.5" fill={C.sclera} />
+      <path d={outline} fill={C.sclera} stroke={C.graphite} strokeWidth="1.2" />
       <g clipPath={`url(#${id})`}>
         <g {...move("0 0", `translate(${pose.look[0]}px, ${pose.look[1]}px)`)}>
-          <circle cx={x + side * 2} cy={y + 2} r="10" fill={C.green} />
-          <circle cx={x + side * 2} cy={y + 0.6} r="8.2" fill="#08090b" />
-          <circle cx={x + side * 2 - 2.8} cy={y - 3.4} r="2.6" fill="#fff" />
-          <circle cx={x + side * 2 + 2.6} cy={y + 3} r="1.1" fill="#fff" />
+          <ellipse
+            cx={x + side * 3}
+            cy={y + 1.5}
+            rx="10.5"
+            ry="13"
+            fill={C.green}
+          />
+          <ellipse
+            cx={x + side * 3}
+            cy={y - 1}
+            rx="8.3"
+            ry="10.7"
+            fill="#08090b"
+          />
+          <ellipse
+            cx={x + side * 3 + 3}
+            cy={y - 6}
+            rx="2.5"
+            ry="3.2"
+            fill="#fff"
+          />
         </g>
         <path
-          d={`M${innerX} ${top - 8}L${outerX} ${top - 8}L${outerX} ${top + outer}L${innerX} ${top + inner}Z`}
-          fill={C.graphite}
+          d={`M${x - side * 16} ${top + outer + 1}Q${x - side * 11} ${top + outer - 2} ${x + side * 16} ${top + inner + 5}`}
+          fill="none"
+          stroke={C.graphite}
+          strokeWidth="5"
         />
       </g>
+    </g>
+  );
+}
+
+/** One layered wing, mirrored by its parent, with a stable shoulder pivot. */
+function Wing({ fill }: { fill: string }) {
+  return (
+    <g fill={fill} stroke={C.graphite} strokeWidth=".8" strokeLinejoin="round">
+      <path d="M32 71C17 71 10 87 15 101Q18 104 24 98Q23 106 29 104C40 97 42 79 32 71Z" />
+      <path d="M29 76C20 81 14 92 13 98Q19 100 26 92Q21 104 27 102C35 98 38 87 35 80Z" />
+      <path d="M31 71C21 71 16 80 14 88Q19 92 26 86Q21 96 27 95C35 92 39 77 31 71Z" />
     </g>
   );
 }
@@ -235,6 +269,9 @@ export function Rook({
   const body = `rb${uid}`;
   const glow = `rg${uid}`;
   const rim = `rr${uid}`;
+  const feather = `rf${uid}`;
+  const head =
+    "M60 28C85 28 101 44 103 64L107 71Q103 77 96 78C82 84 38 84 24 78Q17 77 13 71L19 64C21 43 36 28 60 28Z";
   return (
     <svg
       viewBox="0 0 120 120"
@@ -242,79 +279,112 @@ export function Rook({
       height={size}
       className={cx("shrink-0 overflow-visible", className)}
       data-rook={pose}
+      focusable="false"
       {...(label
         ? { role: "img", "aria-label": label }
         : { "aria-hidden": true, focusable: false })}
     >
       <defs>
-        <radialGradient id={body} cx="38%" cy="30%" r="75%">
-          <stop offset="0" stopColor={C.charcoal} />
-          <stop offset=".6" stopColor="#14171b" />
+        <radialGradient id={body} cx="35%" cy="18%" r="85%">
+          <stop offset="0" stopColor={C.slate} />
+          <stop offset=".6" stopColor={C.charcoal} />
           <stop offset="1" stopColor={C.graphite} />
         </radialGradient>
-        <linearGradient id={rim} x1="0" y1="0" x2="1" y2="1">
-          <stop offset=".35" stopColor={C.green} stopOpacity="0" />
-          <stop offset="1" stopColor={C.green} stopOpacity=".55" />
+        <linearGradient id={feather} x1="0" y1="0" x2="1" y2="1">
+          <stop stopColor={C.slate} />
+          <stop offset="1" stopColor={C.graphite} />
+        </linearGradient>
+        <linearGradient id={rim} x1="0%" y1="0%" x2="100%" y2="80%">
+          <stop stopColor={C.mint} stopOpacity=".8" />
+          <stop offset=".45" stopColor={C.light} stopOpacity=".15" />
+          <stop offset="1" stopColor={C.mint} stopOpacity=".3" />
         </linearGradient>
         <filter id={glow} x="-100%" y="-50%" width="300%" height="200%">
           <feGaussianBlur stdDeviation="3" />
         </filter>
       </defs>
       <g
+        data-part="posture"
         {...move("60px 110px", `translateY(${p.drop}px) rotate(${p.tilt}deg)`)}
       >
-        {/* wings (behind the body edge) */}
-        <g {...move("33px 62px", `rotate(${p.wings}deg)`)}>
-          <path
-            d="M33 58C17 62 9 78 11 97c3.5-1.2 6-3.4 7.6-6.3.4 3.8 2.2 6.8 5 8.5 1.2-3.4 1.8-6.4 1.9-9 1.6 2.8 3.6 4.7 6.4 5.6C34 83 35 70 33 58z"
-            fill="#262b31"
-          />
-        </g>
-        <g {...move("87px 62px", `rotate(${-p.wings}deg)`)}>
-          <path
-            d="M87 58c16 4 24 20 22 39-3.5-1.2-6-3.4-7.6-6.3-.4 3.8-2.2 6.8-5 8.5-1.2-3.4-1.8-6.4-1.9-9-1.6 2.8-3.6 4.7-6.4 5.6C86 83 85 70 87 58z"
-            fill="#262b31"
-          />
-        </g>
-        {/* body */}
-        <path
-          d="M60 21c25 0 40 21 40 45 0 24-16 40-40 40S20 90 20 66c0-24 15-45 40-45z"
-          fill={`url(#${body})`}
-        />
-        <path
-          d="M60 21c25 0 40 21 40 45 0 24-16 40-40 40S20 90 20 66c0-24 15-45 40-45z"
-          fill="none"
-          stroke={`url(#${rim})`}
-          strokeWidth="1.4"
-        />
         {/* feet */}
-        <g fill="#8b9299">
-          <path d="M40 108.5c0-3.4 3.8-5.5 8.5-5.5s8.5 2.1 8.5 5.5c0 1.7-1.2 2.5-3 2.5H43c-1.8 0-3-.8-3-2.5z" />
-          <path d="M63 108.5c0-3.4 3.8-5.5 8.5-5.5s8.5 2.1 8.5 5.5c0 1.7-1.2 2.5-3 2.5H66c-1.8 0-3-.8-3-2.5z" />
+        <g data-part="feet" fill={C.light} stroke={C.graphite} strokeWidth=".8">
+          <path d="M33 113Q34 104 44 104Q54 104 55 113ZM65 113Q66 104 76 104Q86 104 87 113Z" />
+          <path
+            d="M40 107Q38 109 38 113M48 107Q51 109 51 113M72 107Q69 109 69 113M80 107Q82 109 82 113"
+            fill="none"
+          />
         </g>
-        {/* crest: three feathers growing from the head */}
-        <g fill="#191c21">
-          <path d="M50 30c-9-5-13.5-14-12.5-25 8 4.5 13.5 12 16 22z" />
-          <path d="M55.5 28c-3-10-1.4-20 5.5-28 4 10 3.4 19.5-.5 28z" />
-          <path d="M61.5 29c2.4-9.5 8.4-16 17.5-19-.8 9.6-6 16.6-13.5 21z" />
+        <g data-part="body">
+          <path
+            d="M31 65Q60 56 89 65C99 88 89 109 60 109S21 88 31 65Z"
+            fill={`url(#${body})`}
+            stroke={`url(#${rim})`}
+            strokeWidth=".8"
+          />
+          <path
+            d="M37 76Q60 82 83 76Q78 100 60 104Q42 100 37 76Z"
+            fill={C.slate}
+            opacity=".35"
+          />
+        </g>
+        <g
+          data-part="wing-left"
+          {...move("32px 74px", `rotate(${p.wings}deg)`)}
+        >
+          <Wing fill={`url(#${feather})`} />
+        </g>
+        <g
+          data-part="wing-right"
+          {...move("88px 74px", `rotate(${-p.wings}deg)`)}
+        >
+          <g transform="translate(120 0) scale(-1 1)">
+            <Wing fill={`url(#${feather})`} />
+          </g>
+        </g>
+        <g data-part="head">
+          <path
+            d={head}
+            fill={`url(#${body})`}
+            stroke={`url(#${rim})`}
+            strokeWidth=".9"
+          />
+        </g>
+        {/* Three distinct feathers: short left, upright right, tall swept centre. */}
+        <g
+          data-part="crest"
+          fill={`url(#${feather})`}
+          stroke={`url(#${rim})`}
+          strokeWidth=".8"
+          strokeLinejoin="round"
+        >
+          <path d="M57 36C42 32 32 24 34 18C44 16 56 24 61 35Z" />
+          <path d="M63 37C64 27 68 18 75 14C81 24 77 33 68 39Z" />
+          <path d="M63 38C51 29 43 15 46 4C63 7 71 21 63 38Z" />
+          <path
+            d="M46 4Q57 21 63 38Q49 28 46 4"
+            fill={C.graphite}
+            stroke="none"
+            opacity=".5"
+          />
         </g>
         {/* eyes */}
-        <Eye cx={44.5} side={1} pose={p} id={`re1${uid}`} />
-        <Eye cx={75.5} side={-1} pose={p} id={`re2${uid}`} />
+        <g data-part="eyes">
+          <Eye cx={40.5} side={1} pose={p} id={`re1${uid}`} />
+          <Eye cx={79.5} side={-1} pose={p} id={`re2${uid}`} />
+        </g>
         {/* beak */}
         {p.beak === "closed" ? (
-          <g>
+          <g data-part="beak">
             <path
-              d="M52.5 64c2.4-1.8 5-2.6 7.5-2.6s5.1.8 7.5 2.6l-6.3 10.4c-.6 1-1.8 1-2.4 0z"
+              d="M52 68Q54 61 60 61Q66 61 68 68Q66 75 60 78Q54 75 52 68Z"
               fill={C.light}
             />
-            <path
-              d="M55.4 68.6h9.2l-3.4 5.8c-.6 1-1.8 1-2.4 0z"
-              fill="#727a82"
-            />
+            <path d="M52 68L68 68Q66 75 60 78Q55 74 52 68Z" fill="#727a82" />
+            <path d="M52 68Q54 61 60 61L62 70Z" fill={C.sclera} opacity=".65" />
           </g>
         ) : (
-          <g>
+          <g data-part="beak">
             <path
               d="M52.5 62.5c2.4-1.8 5-2.6 7.5-2.6s5.1.8 7.5 2.6l-3 4.4h-9z"
               fill={C.light}
@@ -336,37 +406,39 @@ export function Rook({
           </g>
         )}
         {/* proof core */}
-        <rect
-          x="54"
-          y="79"
-          width="12"
-          height="22"
-          rx="6"
-          fill="#07080a"
-          stroke={C.slate}
-          strokeWidth="1"
-        />
-        <rect
-          x="55.5"
-          y="81"
-          width="9"
-          height="18"
-          rx="4.5"
-          fill={C.green}
-          filter={`url(#${glow})`}
-          opacity={p.core * 0.9}
-          className="transition-opacity duration-300"
-        />
-        <rect
-          x="57.3"
-          y="83"
-          width="5.4"
-          height="14"
-          rx="2.7"
-          fill={C.green}
-          opacity={0.55 + p.core * 0.45}
-          className="transition-opacity duration-300"
-        />
+        <g data-part="proof-core">
+          <rect
+            x="54"
+            y="83"
+            width="12"
+            height="21"
+            rx="6"
+            fill="#07080a"
+            stroke={C.green}
+            strokeWidth="1"
+          />
+          <rect
+            x="55.5"
+            y="84"
+            width="9"
+            height="18"
+            rx="4.5"
+            fill={C.green}
+            filter={`url(#${glow})`}
+            opacity={p.core * 0.9}
+            className="transition-opacity duration-300 motion-reduce:transition-none"
+          />
+          <rect
+            x="57.3"
+            y="86.5"
+            width="5.4"
+            height="14"
+            rx="2.7"
+            fill={C.mint}
+            opacity={0.55 + p.core * 0.45}
+            className="transition-opacity duration-300 motion-reduce:transition-none"
+          />
+        </g>
         {p.extra === "heart" && (
           <path
             d="M101 26c-2.6-3.4-8-1.6-8 2.6 0 3.2 3.6 5.8 8 9 4.4-3.2 8-5.8 8-9 0-4.2-5.4-6-8-2.6z"

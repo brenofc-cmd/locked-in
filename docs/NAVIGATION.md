@@ -24,7 +24,8 @@ spacing to bordered cards; collapse only what is history or detail.
 
 ## Bottom navigation (mobile)
 
-`HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO` — FOCO keeps the accent pill.
+`HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO` — only the current tab has a filled pill (ADR-101);
+FOCO keeps its green icon as identity and its pill turns green only when it is the current tab.
 
 Active tab (`aria-current="page"`):
 
@@ -71,9 +72,10 @@ ESTA SEMANA ("2 prioridades · 1 / 2 feitas" or "Planeje sua semana") → `/plan
 week's priorities, docs/WEEKLY_PLANNING.md); `/plan/week` is under the PLANEJAR tab (`/plan/…`) and is
 not a restorable route.
 
-**PROGRESSO** — VISÃO GERAL (%, streak, focus, perfect days: first viewport) → METAS (goal proof) →
-DUELOS (V2 Phase 8: the current month — details and previous months collapsed —, then the last 7) →
-RECORDES and MARCOS (compact rows; all milestones collapsed) → HISTÓRICO (chart, calendar, weekly
+**PROGRESSO** — big signals first (final design pass): VISÃO GERAL (%, streak, focus, perfect days:
+first viewport) → the trend chart → METAS (goal proof) → DUELOS (V2 Phase 8: the current month —
+details and previous months collapsed —, then the last 7) → RECORDES (personal-best tiles) and
+MARCOS (locked / QUASE / CONQUISTADO; all milestones collapsed) → HISTÓRICO (calendar, weekly
 reviews, insights / habits). Today, Focus and Plan gained nothing in Phase 8. V2 Phase 9: Today
 gains only the "◇ NÃO NEGOCIÁVEL" line of a flagged task and the ≈2 s celebration card (no route);
 the Day / Weekly Reviews gain facts and reflections (a past day in the calendar shows its

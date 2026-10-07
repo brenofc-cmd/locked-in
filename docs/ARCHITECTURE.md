@@ -276,6 +276,21 @@ Server-side: `pg_cron` (every minute) → `private.push_tick()` (SQL: enqueue du
 Notificações push (`src/components/push/`, `src/lib/push.ts`, `src/app/(app)/push-actions.ts`), the
 sign-out form deletes the device row. Details: docs/WEB_PUSH.md, ADR-092…099.
 
+## Design system and motion (final V2 design pass)
+
+- Tokens: `src/app/globals.css` `@theme` (colour, 13-step rem type scale, tracking roles, radii, line
+  roles, easings) + the `page-title` / `eyebrow` utilities; keyframes `li-*` in the same file
+  (ADR-100, docs/DESIGN_SYSTEM.md).
+- Mascot: `src/components/brand/Rook.tsx` — pure SVG, poses = part transforms + eye / beak swaps,
+  `useId` for gradient / clip ids, decorative by default (ADR-102, docs/ROOK.md).
+- Motion: CSS only (no animation library): transitions on transform / opacity, `motion-safe:`
+  keyframes, a global reduced-motion rule that keeps colour / opacity feedback (ADR-104,
+  docs/MOTION.md). `ProgressPulse` (client) glows the bar when progress goes up; the task check's
+  bright beat is the `pop` state of `useTasks` (420 ms).
+- Celebrations: `momentFor()` in `Celebration.tsx` stages each row by rarity (ADR-103).
+- Coverage: `tests/e2e/design.spec.ts` (project `design-390`), `tests/unit/rook.test.tsx`,
+  `tests/e2e/visual.spec.ts` (LI_SHOTS matrix).
+
 ## Mobile-first strategy
 
 - Design baseline is 390×844; must work at 375 and 430. Layout switches to sidebar at ≥ 780px and to

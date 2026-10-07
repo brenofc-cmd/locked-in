@@ -25,7 +25,8 @@ The user must understand their state and take the main action in about 3 seconds
 ## Development rules
 
 - Mobile-first.
-- Preserve the approved design (`design-reference/export/Locked In v3.dc.html`; behaviour in v2).
+- Preserve the approved design: layout / IA from `design-reference/export/Locked In v3.dc.html`
+  (behaviour in v2); visual values from `docs/DESIGN_SYSTEM.md` (final V2 design pass).
 - Never redesign without explicit instruction.
 - Never edit anything in `design-reference/`.
 - TypeScript strict.
@@ -77,7 +78,7 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 → v2p10-390 (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 → v2p10-390 → design-390 → visual (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
@@ -257,3 +258,12 @@ routing changed; run the pgTAP suite when a migration changed.
   today's briefing mark; partner and connection are real).
 - Breakpoints: `desk:` = 780px (sidebar), `wide:` = 1180px (two columns). Do not change them without
   checking `design-reference/`.
+- Final design pass (docs/DESIGN_SYSTEM.md, MOTION.md, ROOK.md, ADR-100…104): use the tokens /
+  utilities from `globals.css` (`text-meta`…`text-num-hero`, `rounded-xs`…`3xl`, `border-line*`,
+  `tracking-*`, `page-title`, `eyebrow`) — no arbitrary px, radius, opacity or hex. Text greys are
+  `text` / `muted` / `dim` only (`ghost` / `faint` / `off` never for text). Green = proof (done,
+  progress, the one primary action, the brand). Caps only for eyebrows / meta. Motion: transform /
+  opacity, `motion-safe:` keyframes, never looping, never blocking; reduced motion must keep every
+  state readable. Rook (`src/components/brand/Rook.tsx`): decorative (`aria-hidden`), at most one per
+  screen, never on rows / cards / nav / beside the running timer. Celebrations keep the Phase 9
+  contract (once, non-modal, held while read); staging only via `momentFor()`.

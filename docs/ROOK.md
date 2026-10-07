@@ -37,20 +37,22 @@ Rook speaks rarely, in very short lines. Spirit: "Feito." · "Prova registrada."
 ## Visual grammar
 
 The approved character sheet ("ROOK — The Proof Keeper", supplied by the owner on 2026-10-07) is the
-reference; `Rook.tsx` is an original vector rebuild of it (no raster, no third-party asset).
+reference at `public/brand/rook/rook-reference.png`; `Rook.tsx` is an original inline SVG rebuild
+of it. The PNG is visual reference only: it is never imported, embedded or rendered by Rook.
 
-- **View**: front-facing, compact, a slightly egg-shaped body that is head and body at once.
-- **Shape language**: one rounded body + three pointed crest feathers + two side wings with three
-  feather tips + two rounded grey feet + a small downward beak. Few parts, flat fills, one soft
-  radial light on the body and a green rim light on the right edge.
+- **View**: front-facing and compact, with a broad head above a smaller rounded body.
+- **Shape language**: a wide head with cheek tufts + a rounded chest + three asymmetrical crest
+  feathers (tall centre swept left) + two layered side wings + two grey feet with toe seams + a
+  small faceted grey beak. Simple paths, ellipses and rounded rectangles; soft vector gradients
+  give the charcoal volume and mint rim light from the reference.
 - **Signature features** (from the sheet): the iconic silhouette with the **three-feather crest**;
-  **expressive eyes** — large white eyes, dark pupils with a green iris ring and two highlights,
+  **expressive eyes** — large white eyes, dark pupils with an emerald iris ring and white highlights,
   under a straight graphite lid that dips towards the beak (focused, confident; never angry);
   the **proof core** — a vertical lock-inspired pill on the chest that glows with proof; **the
   wings**, rounded and minimal.
-- **Proportions** (120-unit grid): body 80 × 85 (x 20–100, y 21–106), eyes 28 × 31 each centred
-  at x 44.5 / 75.5, y 55; beak 15 wide; proof core 12 × 22 at the centre of the chest; crest up to
-  y 0; feet on y 111.
+- **Proportions** (120-unit grid): head x 13–107, y 28–82; chest y 65–109; eyes centred at
+  x 40.5 / 79.5, y 57, with white contours that follow the brows; beak 16 wide; proof core
+  12 × 21 at x 54, y 83; crest up to y 4; feet on y 113.
 - **Expressions**: only the eyes (open with a lid of variable depth, closed "happy" arcs, half
   lids) and the beak (closed / open) change; everything else is posture.
 
@@ -59,15 +61,16 @@ reference; `Rook.tsx` is an original vector rebuild of it (no raster, no third-p
 | Role               | Colour                                      |
 | ------------------ | ------------------------------------------- |
 | Graphite (lids)    | `#0d0f12`                                   |
-| Charcoal (body)    | `#1f2429` → `#14171b` → `#0d0f12` radial    |
-| Wings              | `#262b31`                                   |
-| Slate (core slot)  | `#3a4148`                                   |
-| Light grey (beak)  | `#a7afb7` + shade `#727a82`; feet `#8b9299` |
+| Head / body        | `#3a4148` → `#1f2429` → `#0d0f12` radial     |
+| Wings / crest      | `#3a4148` → `#0d0f12` linear                 |
+| Core slot          | `#07080a` with emerald outline              |
+| Light grey (beak / feet) | `#a7afb7` + beak shade `#727a82`       |
 | Eyes               | sclera `#f3f1ea`, pupil `#08090b`           |
-| Green (iris, core) | LOCKED green `#c6e07b` (the app accent)     |
+| Emerald (iris, glow) | `#00e676`                                |
+| Mint (core, rim)    | `#7cffb3`                                  |
 
-The sheet shows Emerald `#00e676` / Mint `#7cffb3`; the app keeps one green so Rook belongs to the
-same interface. Switching is one constant (`ROOK_COLORS.green`).
+Rook uses the approved sheet's Emerald / Mint palette. The interface accent is independent;
+the character colours live in `ROOK_COLORS`.
 
 ## Poses
 
@@ -87,7 +90,10 @@ same interface. Switching is one constant (`ROOK_COLORS.green`).
 ## Motion
 
 - Between poses: CSS transitions on the part transforms (wings, irises, the whole bird), 300 ms,
-  `--ease-settle`; eye shapes swap. Reduced motion makes it instant.
+  `--ease-settle`; eye shapes swap. Core opacity also transitions. Reduced motion makes both instant.
+- Stable SVG groups expose `data-part`: `posture`, `feet`, `body`, `wing-left`, `wing-right`,
+  `head`, `crest`, `eyes`, `beak`, `proof-core`. Wings pivot at their shoulders; the crest and
+  head can be animated independently without tracing or replacing an image.
 - Rook never loops. He moves once at a moment (settles, nods, lifts the wing) and stays still.
 - Focus: Rook may appear only at the start (READY → FOCUSED) and at the end (a nod); never beside
   the running timer.
