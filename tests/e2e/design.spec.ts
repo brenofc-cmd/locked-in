@@ -173,7 +173,7 @@ test("5: Rook is decorative and scarce", async ({ browser }) => {
   await a.context.close();
 });
 
-test("6: Focus start — Rook locks in, then leaves the timer alone (and never shows with reduced motion)", async ({
+test("6: Focus — Rook locks in and stays almost still (blink only with motion); done: a nod", async ({
   browser,
 }) => {
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
@@ -183,20 +183,53 @@ test("6: Focus start — Rook locks in, then leaves the timer alone (and never s
       name: t.focusUi.sessionAria,
     });
     await expect(session.getByTestId("focus-clock")).toBeVisible();
-    const cameo = session.locator("svg[data-rook]");
-    const opacity = () =>
-      cameo
-        .locator("xpath=..")
-        .evaluate((el) => Number(getComputedStyle(el).opacity));
-    if (reducedMotion === "reduce") expect(await opacity()).toBe(0);
-    await expect.poll(opacity, { timeout: 5_000 }).toBe(0);
+    const rook = session.locator("svg[data-rook='focused']");
+    await expect(rook).toHaveAttribute("data-act", "lock");
+    await expect(rook).toHaveAttribute("data-core", "active");
+    // The wings came in towards the Core (lock end state, either way).
+    await expect
+      .poll(() =>
+        rook
+          .locator("[data-part='wing-left']")
+          .evaluate((el) => getComputedStyle(el).rotate),
+      )
+      .toBe("-12deg");
+    // Idle: an occasional blink only — no loop at all with reduced motion.
+    const eyes = await rook
+      .locator("[data-part='eyes']")
+      .evaluate((el) => getComputedStyle(el).animationName);
+    expect(eyes).toBe(reducedMotion === "reduce" ? "none" : "rook-idle-blink");
     await session.getByRole("button", { name: t.focusUi.endAria }).click();
     const done = a.page.getByRole("dialog", { name: t.focusUi.completeAria });
-    await expect(done.locator("svg[data-rook='proud']")).toBeVisible();
+    const proud = done.locator("svg[data-rook='proud']");
+    await expect(proud).toBeVisible();
+    await expect(proud).toHaveAttribute("data-act", "ack");
     await done.getByRole("button", { name: t.focusUi.done }).click();
     await expect(done).toHaveCount(0);
     await a.context.close();
   }
+});
+
+test("6b: Today — Rook acknowledges each task proved, nothing on load", async ({
+  browser,
+}) => {
+  const a = await open(browser, "/today");
+  const rook = a.page.locator("main svg[data-rook]");
+  await expect(rook).toHaveCount(1);
+  await expect(rook).not.toHaveAttribute("data-act");
+  await checkbox(a.page, "Morning Run").click();
+  await expect(rook).toHaveAttribute("data-act", "ack");
+  expect(
+    await rook
+      .locator("[data-part='proof-core']")
+      .evaluate((el) => getComputedStyle(el).animationName),
+  ).toBe("rook-core");
+  await checkbox(a.page, "Morning Run").click();
+  await expect(checkbox(a.page, "Morning Run")).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await a.context.close();
 });
 
 test("7: axe — no serious / critical issue on the main screens at 390 and 1440", async ({
