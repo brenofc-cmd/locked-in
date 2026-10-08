@@ -320,7 +320,7 @@ export function CommitmentsSection() {
   return (
     <section
       aria-label={A.commitmentsAria}
-      className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12"
+      className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-8 desk:gap-12"
     >
       <div className="flex flex-col" data-testid="partner-commitments">
         <SectionHeader

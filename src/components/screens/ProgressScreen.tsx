@@ -86,7 +86,7 @@ export function ProgressScreen() {
         </p>
         <Link
           href="/today"
-          className="flex h-[52px] items-center self-start rounded-2xl bg-accent px-6 font-mono text-small font-semibold tracking-eyebrow text-bg"
+          className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
         >
           {t.progressScreen.goToday}
         </Link>
@@ -97,6 +97,11 @@ export function ProgressScreen() {
   const tot = totals(days, rangeFrom(range, today), today);
   const bars = chartBars(days, range, today);
   const showValues = bars.length <= 13;
+  // V3 (audit F6): with fewer than 3 recorded days the full-height chart is
+  // mostly empty track — keep every bar (each is still a fact) but shorter,
+  // and say why it looks empty. Nothing is invented.
+  const recorded = bars.filter((b) => b.pct !== null).length;
+  const early = recorded < 3;
   const rangeLong = RANGES.find((r) => r.k === range)?.long ?? "";
   const weeks = weeksWithData(completedWeeks(app.progress.weeks)).slice(0, 4);
   const habits = rankHabits(app.progress.habits);
@@ -108,7 +113,9 @@ export function ProgressScreen() {
 
   return (
     <div className="flex flex-col gap-8 animate-[li-fade-up_.4s_ease] desk:gap-12">
-      <header className="flex items-center justify-between gap-3">
+      {/* Wraps under 360 px: the title and the four ranges do not fit on one
+          line at 320 (the picker used to stick out of the screen). */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="page-title">{t.progressScreen.title}</h1>
         <div
           role="radiogroup"
@@ -207,7 +214,8 @@ export function ProgressScreen() {
         <div
           role="list"
           className={cx(
-            "flex h-[170px] items-end border-b border-line",
+            "flex items-end border-b border-line",
+            early ? "h-24" : "h-[170px]",
             bars.length > 20 ? "gap-1" : "gap-1.5 desk:gap-2",
           )}
         >
@@ -283,6 +291,15 @@ export function ProgressScreen() {
         </div>
       </section>
 
+      {early && (
+        <p
+          data-testid="chart-early"
+          className="-mt-5 text-small leading-[1.5] text-dim"
+        >
+          {t.progressScreen.chartEarly(recorded)}
+        </p>
+      )}
+
       <GoalProgress range={range} />
       <MonthSummary />
       <DuelHistory />
@@ -293,7 +310,7 @@ export function ProgressScreen() {
         {t.progressScreen.history}
       </h2>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-8 desk:gap-12">
         <Calendar onOpen={(date) => app.openSheet({ kind: "day", date })} />
         <section
           aria-label={t.progressScreen.weeklyAria}

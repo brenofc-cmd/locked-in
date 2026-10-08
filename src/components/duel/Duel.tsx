@@ -84,7 +84,8 @@ function Headline({ duel, name }: { duel: Duel; name: string }) {
       {score && (
         <div
           data-testid="duel-score"
-          className="flex items-center justify-between gap-3"
+          // Names stay next to the score on wide screens (not 1000 px apart).
+          className="mx-auto flex w-full max-w-md items-center justify-between gap-3"
         >
           <span className="sr-only">{score}</span>
           <span aria-hidden="true" className="eyebrow text-muted">
@@ -188,16 +189,19 @@ export function DuelDetailed() {
       />
       <Headline duel={duel} name={partner.name} />
       <div role="table" aria-label={t.duel.aria} className="flex flex-col">
+        {/* Phones (V3, audit F4): each category is two lines — name and
+            winner, then both values — instead of four squeezed columns that
+            wrapped at 320 px. From `desk` it is the four-column table. */}
         <div
           role="row"
-          className="grid grid-cols-[1.1fr_1fr_1fr_.9fr] gap-2 pb-1.5 font-mono text-meta tracking-eyebrow text-dim"
+          className="grid grid-cols-2 gap-2 pb-1.5 font-mono text-meta tracking-eyebrow text-dim desk:grid-cols-[1.1fr_1fr_1fr_.9fr]"
         >
-          <span role="columnheader" />
+          <span role="columnheader" className="hidden desk:block" />
           <span role="columnheader">{t.duel.you}</span>
           <span role="columnheader" className="truncate">
             {name}
           </span>
-          <span role="columnheader" className="text-right" />
+          <span role="columnheader" className="hidden text-right desk:block" />
         </div>
         {DUEL_CATEGORIES.map((key) => {
           const outcome =
@@ -208,7 +212,7 @@ export function DuelDetailed() {
               key={key}
               role="row"
               data-testid={`duel-row-${key}`}
-              className="grid grid-cols-[1.1fr_1fr_1fr_.9fr] items-baseline gap-2 border-t border-line py-2.5"
+              className="grid grid-cols-2 items-baseline gap-x-2 gap-y-1.5 border-t border-line py-2.5 desk:grid-cols-[1.1fr_1fr_1fr_.9fr] desk:gap-y-0"
             >
               <span
                 role="rowheader"
@@ -216,10 +220,16 @@ export function DuelDetailed() {
               >
                 {t.duel.categories[key]}
               </span>
-              <span role="cell" className="text-small tabular-nums">
+              <span
+                role="cell"
+                className="order-1 text-body tabular-nums desk:order-none desk:text-small"
+              >
                 {categoryValue(key, duel.me)}
               </span>
-              <span role="cell" className="text-small tabular-nums">
+              <span
+                role="cell"
+                className="order-1 text-body text-muted tabular-nums desk:order-none desk:text-small desk:text-text"
+              >
                 {categoryValue(key, duel.partner)}
               </span>
               <span role="cell" className="min-w-0 text-right">

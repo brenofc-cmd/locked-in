@@ -95,7 +95,7 @@ export function FocusSheet() {
       <button
         type="button"
         onClick={startFocus}
-        className="h-[58px] rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
+        className="h-[58px] rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand"
       >
         {t.miscSheets.startFocus}
       </button>

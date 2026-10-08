@@ -13,7 +13,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/today"
-        className="flex h-[52px] items-center self-start rounded-2xl bg-accent px-6 font-mono text-small font-semibold tracking-eyebrow text-bg"
+        className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
       >
         {t.notFound.cta}
       </Link>

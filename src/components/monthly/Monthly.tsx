@@ -195,7 +195,7 @@ function MonthHead({ month, name }: { month: Month; name: string }) {
         </span>
         <span
           data-testid="month-score"
-          className="font-mono text-small text-muted tabular-nums"
+          className="shrink-0 font-mono text-small whitespace-nowrap text-muted tabular-nums"
         >
           {monthScore(month)}
         </span>

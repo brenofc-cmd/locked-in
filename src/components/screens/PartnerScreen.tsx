@@ -56,7 +56,7 @@ export function PartnerScreen() {
         </p>
         <Link
           href="/duo"
-          className="flex h-[52px] items-center self-start rounded-2xl bg-accent px-6 font-mono text-small font-semibold tracking-eyebrow text-bg"
+          className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
         >
           {t.partnerScreen.invite}
         </Link>
@@ -76,6 +76,9 @@ export function PartnerScreen() {
   const score = headToHead(results);
   const strip = [...results].reverse();
   const history = weeksWithData(results).slice(0, 3);
+  // V3 (audit F5): before any contested week the score is a fact of nothing,
+  // so the block leads with the sentence and shrinks the score and strip.
+  const contested = results.some((w) => w.result !== "ineligible");
   const myInitial = app.userName.charAt(0).toUpperCase();
 
   return (
@@ -99,7 +102,9 @@ export function PartnerScreen() {
             </h1>
             <span className="flex items-center gap-2 text-small text-muted">
               <StatusDot live={pv.live} pulse={pv.pulse} />
-              <span className="truncate" data-testid="partner-status">
+              {/* Two lines before an ellipsis: "Visto por último ontem às
+                  15:13" must stay readable at 320 px. */}
+              <span className="line-clamp-2" data-testid="partner-status">
                 {pv.statusLine}
               </span>
             </span>
@@ -132,7 +137,7 @@ export function PartnerScreen() {
       <CommitmentsSection />
       <CheckinPicker />
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-8 desk:gap-12">
         <section
           aria-label={t.partnerScreen.partnerTodayAria(partner.name)}
           className="flex flex-col"
@@ -219,7 +224,7 @@ export function PartnerScreen() {
           )}
         </section>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 desk:gap-12">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-8 desk:gap-12">
         <section
           aria-label={t.partnerScreen.thisWeekAria}
           className="flex flex-col gap-5"
@@ -321,10 +326,20 @@ export function PartnerScreen() {
             label={t.partnerScreen.headToHead}
             right={t.partnerScreen.lastWeeks(results.length)}
           />
+          {!contested && history.length === 0 && (
+            <p className="m-0 text-small leading-[1.5] text-muted">
+              {t.partnerScreen.firstResult}
+            </p>
+          )}
           <div className="flex items-end justify-between gap-3">
             <span
               data-testid="h2h-score"
-              className="text-num-xl leading-[.85] font-medium tracking-number tabular-nums desk:text-num-2xl"
+              className={cx(
+                "leading-[.85] font-medium tracking-number tabular-nums",
+                contested
+                  ? "text-num-xl desk:text-num-2xl"
+                  : "text-number text-dim",
+              )}
             >
               {score.me}
               <span className="px-2.5 text-ghost">—</span>
@@ -350,7 +365,10 @@ export function PartnerScreen() {
                 key={w.weekStart}
                 className="flex flex-col items-center gap-1.5"
               >
+                {/* A labelled graphic (role=img): a bare div may not carry
+                    aria-label, and the empty strip has no text inside. */}
                 <div
+                  role="img"
                   aria-label={t.partnerScreen.weekAria(
                     w.week,
                     w.result === "me"
@@ -362,7 +380,8 @@ export function PartnerScreen() {
                           : t.partnerScreen.noContest,
                   )}
                   className={cx(
-                    "flex h-[30px] w-full items-center justify-center rounded-lg font-mono text-meta font-semibold",
+                    "flex w-full items-center justify-center font-mono text-meta font-semibold",
+                    contested ? "h-[30px] rounded-lg" : "h-1.5 rounded-xs",
                     w.result === "me"
                       ? "bg-accent text-bg"
                       : w.result === "partner"
@@ -370,17 +389,21 @@ export function PartnerScreen() {
                         : "border border-line text-dim",
                   )}
                 >
-                  {w.result === "me"
-                    ? myInitial
-                    : w.result === "partner"
-                      ? partner.initial
-                      : w.result === "draw"
-                        ? "="
-                        : "·"}
+                  {!contested
+                    ? null
+                    : w.result === "me"
+                      ? myInitial
+                      : w.result === "partner"
+                        ? partner.initial
+                        : w.result === "draw"
+                          ? "="
+                          : "·"}
                 </div>
-                <span className="font-mono text-meta text-dim">
-                  {t.partnerScreen.weekShort(w.week)}
-                </span>
+                {contested && (
+                  <span className="font-mono text-meta text-dim">
+                    {t.partnerScreen.weekShort(w.week)}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -406,7 +429,7 @@ export function PartnerScreen() {
                 </span>
               </button>
             ))}
-            {history.length === 0 && (
+            {history.length === 0 && contested && (
               <span className="border-t border-line py-3.5 text-small text-dim">
                 {t.partnerScreen.firstResult}
               </span>

@@ -82,19 +82,34 @@ export function Avatar({
   );
 }
 
+/** Above this many steps a segment is too thin to read: one continuous bar. */
+const MAX_STEPS = 24;
+
 export function ProgressBar({
   pct,
   label,
   tone = "accent",
   marker,
+  steps,
   className,
 }: {
   pct: number;
   label: string;
   tone?: "accent" | "text" | "partner";
   marker?: number;
+  /**
+   * Today's bar (V3): one segment per task, `done` of `total` filled — the
+   * day reads as pieces of proof, not an abstract percentage.
+   */
+  steps?: { done: number; total: number };
   className?: string;
 }) {
+  const fill = cx(
+    tone === "accent" && "bg-accent",
+    tone === "text" && "bg-text",
+    tone === "partner" && "bg-ghost",
+  );
+  const segmented = steps && steps.total > 1 && steps.total <= MAX_STEPS;
   return (
     <div
       role="progressbar"
@@ -102,22 +117,41 @@ export function ProgressBar({
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cx("relative h-1 rounded-sm bg-white/6", className)}
+      className={cx(
+        "relative rounded-sm",
+        segmented ? "flex h-1.5 gap-[3px]" : "h-1 bg-white/6",
+        className,
+      )}
     >
-      <div
-        className={cx(
-          "h-full rounded-sm transition-[width] duration-700 ease-[var(--ease-out-quick)]",
-          tone === "accent" && "bg-accent",
-          tone === "text" && "bg-text",
-          tone === "partner" && "bg-ghost",
-        )}
-        style={{ width: `${pct}%` }}
-      />
+      {segmented ? (
+        // <i>, not <span>: the pulse is the bar's only `span` (design.spec).
+        Array.from({ length: steps.total }, (_, i) => (
+          <i
+            key={i}
+            aria-hidden="true"
+            className={cx(
+              "h-full flex-1 rounded-xs transition-colors duration-300",
+              i < steps.done ? fill : "bg-white/7",
+            )}
+          />
+        ))
+      ) : (
+        <div
+          className={cx(
+            "h-full rounded-sm transition-[width] duration-700 ease-[var(--ease-out-quick)]",
+            fill,
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      )}
       {tone === "accent" && <ProgressPulse pct={pct} />}
       {marker !== undefined && (
         <span
           aria-hidden="true"
-          className="absolute -top-[3px] h-2.5 w-[1.5px] bg-[rgba(236,235,230,0.35)]"
+          className={cx(
+            "absolute w-[1.5px] bg-marker",
+            segmented ? "-top-1 h-3.5" : "-top-[3px] h-2.5",
+          )}
           style={{ left: `${marker}%` }}
         />
       )}

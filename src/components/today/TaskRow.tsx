@@ -22,11 +22,14 @@ export function TaskRow({
   task,
   popping,
   flashing,
+  next = false,
   onToggle,
   onOptions,
 }: {
   task: Task;
   popping: boolean;
+  /** V3: the task Today points at (lib/today → nextTaskId). */
+  next?: boolean;
   flashing: boolean;
   onToggle: () => void;
   onOptions: () => void;
@@ -168,7 +171,9 @@ export function TaskRow({
                   ? "border-accent-line bg-accent-strong"
                   : skipped
                     ? "border-line-strong"
-                    : "border-line-bold",
+                    : next
+                      ? "border-accent-line"
+                      : "border-line-bold",
             )}
           >
             <svg width="16" height="16" viewBox="0 0 16 16">
@@ -189,6 +194,17 @@ export function TaskRow({
           </span>
 
           <span className="flex min-w-0 flex-1 flex-col gap-1">
+            {next && (
+              // A visual pointer only: the list order is unchanged, and row
+              // descriptions stay what they announce today (v2-phase9).
+              <span
+                aria-hidden="true"
+                data-testid="task-next"
+                className="font-mono text-meta tracking-eyebrow text-accent"
+              >
+                {t.taskRow.next}
+              </span>
+            )}
             <span className="flex min-w-0 items-baseline gap-2">
               {task.priority !== null && (
                 // Top 3 rank, discreet: the task is listed once (V2 Phase 4).
@@ -202,7 +218,7 @@ export function TaskRow({
               )}
               <span
                 className={cx(
-                  "text-lead decoration-[rgba(236,235,230,0.25)] transition-colors duration-300 desk:text-base",
+                  "text-lead decoration-strike transition-colors duration-300 desk:text-base",
                   muted ? "text-dim" : "text-text",
                   task.done && "line-through",
                 )}

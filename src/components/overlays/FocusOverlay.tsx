@@ -110,11 +110,18 @@ export function FocusOverlay() {
             </div>
           )}
         </div>
-        <div className="flex justify-center gap-3 pt-2 pb-[calc(32px+env(safe-area-inset-bottom))]">
+        {/* V3: the two controls are real buttons in thumb reach (they were
+            faint text); quiet outlines, so the timer still leads. */}
+        <div className="mx-auto flex w-full max-w-md gap-2.5 px-5 pt-2 pb-[calc(24px+env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={app.togglePause}
-            className="h-12 min-w-24 px-5 font-mono text-meta tracking-brand text-dim hover:text-text"
+            className={cx(
+              "h-14 flex-1 rounded-2xl border font-mono text-meta tracking-brand transition-[color,border-color,transform] duration-150 active:scale-[.97]",
+              focus.paused
+                ? "border-accent-line text-accent"
+                : "border-line-strong text-muted hover:text-text",
+            )}
           >
             {focus.paused ? t.focusUi.resume : t.focusUi.pause}
           </button>
@@ -122,7 +129,7 @@ export function FocusOverlay() {
             type="button"
             onClick={app.endFocus}
             aria-label={t.focusUi.endAria}
-            className="h-12 min-w-24 px-5 font-mono text-meta tracking-brand text-dim hover:text-text"
+            className="h-14 flex-1 rounded-2xl border border-line-strong font-mono text-meta tracking-brand text-muted transition-[color,transform] duration-150 hover:text-text active:scale-[.97]"
           >
             {t.focusUi.end}
           </button>
@@ -183,7 +190,7 @@ export function FocusOverlay() {
         <button
           type="button"
           onClick={app.completeFocus}
-          className="h-[58px] rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
+          className="btn-primary h-[58px] rounded-2xl font-mono text-small font-semibold tracking-brand"
         >
           {t.focusUi.done}
         </button>
