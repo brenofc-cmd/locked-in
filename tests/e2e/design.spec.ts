@@ -14,6 +14,7 @@ import {
   seedDesignDay,
   seedPartnerDay,
   signInUI,
+  trackWrites,
   users,
   type Api,
 } from "./support";
@@ -113,6 +114,7 @@ test("1: completing a task — instant state, a bright beat, then a quiet done; 
   browser,
 }) => {
   const a = await open(browser, "/today");
+  const writes = trackWrites(a.page);
   const name = "Morning Run";
   await checkbox(a.page, name).click();
   // Immediate: the state is the checkbox's, not the animation's.
@@ -129,6 +131,9 @@ test("1: completing a task — instant state, a bright beat, then a quiet done; 
   await checkbox(a.page, name).click();
   await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "false");
   expect(a.errors).toEqual([]);
+  // The undo must reach the database before the page goes: a lost write
+  // leaves the task done on DEV and the next test's click undoes it.
+  await writes.idle();
   await a.context.close();
 });
 
@@ -136,6 +141,7 @@ test("2: the same with reduced motion — same states, no movement", async ({
   browser,
 }) => {
   const a = await open(browser, "/today", { reducedMotion: "reduce" });
+  const writes = trackWrites(a.page);
   const name = "Morning Run";
   await complete(a.page, name);
   await expect.poll(() => bg(a.page, name)).not.toBe(ACCENT);
@@ -145,6 +151,7 @@ test("2: the same with reduced motion — same states, no movement", async ({
   ).toBe("none");
   await checkbox(a.page, name).click();
   await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "false");
+  await writes.idle();
   await a.context.close();
 });
 
@@ -234,6 +241,7 @@ test("6b: Today — Rook acknowledges each task proved, nothing on load", async 
   browser,
 }) => {
   const a = await open(browser, "/today");
+  const writes = trackWrites(a.page);
   const rook = a.page.locator("main svg[data-rook]");
   await expect(rook).toHaveCount(1);
   await expect(rook).not.toHaveAttribute("data-act");
@@ -249,6 +257,7 @@ test("6b: Today — Rook acknowledges each task proved, nothing on load", async 
     "aria-checked",
     "false",
   );
+  await writes.idle();
   await a.context.close();
 });
 
@@ -310,4 +319,90 @@ test("7: axe — no serious / critical issue on the main screens at 390 and 1440
     await a.context.close();
   }
   expect(report).toEqual([]);
+});
+
+test("8: 320 / 360 — nothing sticks out of the screen, even where <main> clips it; tab labels never touch", async ({
+  browser,
+}) => {
+  test.setTimeout(180_000);
+  const report: string[] = [];
+  for (const width of [320, 360]) {
+    const a = await open(browser, "/today", {
+      viewport: { width, height: 740 },
+    });
+    for (const path of [
+      "/today",
+      "/partner",
+      "/focus",
+      "/plan",
+      "/plan/week",
+      "/progress",
+      "/settings",
+    ]) {
+      await a.page.goto(path);
+      await a.page.waitForLoadState("load");
+      await a.page.waitForTimeout(600);
+      // <main> has overflow-x: hidden, so documentElement.scrollWidth never
+      // sees a block wider than the screen (a 300 px grid column at 320 px
+      // did exactly that): measure the boxes themselves.
+      const wide = await a.page.evaluate(() => {
+        const main = document.querySelector("main")!;
+        const edge = main.getBoundingClientRect().right + 0.5;
+        return [...main.querySelectorAll<HTMLElement>("*")]
+          .filter((el) => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && r.height > 0 && r.right > edge;
+          })
+          .slice(0, 3)
+          .map((el) => `${el.tagName}.${el.className}`.slice(0, 80));
+      });
+      for (const w of wide) report.push(`${width} ${path} ${w}`);
+    }
+    const labels = await a.page
+      .getByRole("navigation", { name: t.shell.tabsNav })
+      .getByRole("link")
+      .evaluateAll((links) =>
+        links.map((l) => {
+          const r = l.querySelector("span:last-child")!.getBoundingClientRect();
+          return { left: r.left, right: r.right };
+        }),
+      );
+    labels.forEach((r, i) => {
+      if (r.left < 0 || r.right > width)
+        report.push(`${width} tab ${i} off screen`);
+      if (i > 0 && r.left - labels[i - 1].right < 2)
+        report.push(`${width} tabs ${i - 1}/${i} touch`);
+    });
+    await a.context.close();
+  }
+  expect(report).toEqual([]);
+});
+
+test("9: Today points at one next task, and the pointer moves on when it is proved", async ({
+  browser,
+}) => {
+  const a = await open(browser, "/today");
+  const writes = trackWrites(a.page);
+  const tasks = a.page.getByRole("region", { name: t.todayScreen.tasksAria });
+  const next = tasks.getByTestId("task-next");
+  // The design day: Morning Run is the first open task (no Top 3 set).
+  await expect(next).toHaveCount(1);
+  await expect(
+    checkbox(a.page, "Morning Run").getByTestId("task-next"),
+  ).toHaveCount(1);
+  await complete(a.page, "Morning Run");
+  await expect(next).toHaveCount(1);
+  await expect(
+    checkbox(a.page, "Morning Run").getByTestId("task-next"),
+  ).toHaveCount(0);
+  await checkbox(a.page, "Morning Run").click();
+  await expect(checkbox(a.page, "Morning Run")).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await expect(
+    checkbox(a.page, "Morning Run").getByTestId("task-next"),
+  ).toHaveCount(1);
+  await writes.idle();
+  await a.context.close();
 });
