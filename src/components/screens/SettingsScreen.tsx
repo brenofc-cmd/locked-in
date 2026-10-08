@@ -256,7 +256,7 @@ export function SettingsScreen() {
           <input type="hidden" name="push_endpoint" defaultValue="" />
           <button
             type="submit"
-            className="h-11 rounded-xl border border-line-strong px-5 text-body"
+            className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
           >
             {t.settings.signOut}
           </button>
@@ -343,12 +343,12 @@ function Profile() {
             maxLength={40}
             autoComplete="given-name"
             onChange={(e) => setName(e.target.value)}
-            className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
+            className="h-[54px] min-w-0 flex-1 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
           />
           <button
             type="submit"
             disabled={!dirtyName || pending}
-            className="h-12 rounded-xl border border-line-strong px-4 text-body disabled:opacity-50"
+            className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-50"
           >
             {pending ? t.settings.saving : t.settings.save}
           </button>
@@ -380,7 +380,7 @@ function Profile() {
               }
             });
           }}
-          className="h-12 min-w-0 rounded-xl border border-line-strong bg-field px-3 text-body text-text outline-none"
+          className="h-[54px] min-w-0 rounded-xl border-[1.5px] border-line-strong bg-field px-3 text-body text-text outline-none"
         >
           {zones.map((z) => (
             <option key={z} value={z}>
@@ -506,7 +506,7 @@ function PushSettings({
             type="button"
             disabled={busy !== null}
             onClick={() => void enable()}
-            className="h-11 shrink-0 rounded-xl border border-line-strong px-4 text-body disabled:opacity-50"
+            className="h-12 shrink-0 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-50"
           >
             {busy === "enable" ? t.push.enabling : t.push.enable}
           </button>
@@ -516,7 +516,7 @@ function PushSettings({
             type="button"
             disabled={busy !== null}
             onClick={() => void disable()}
-            className="h-11 shrink-0 rounded-xl border border-line-strong px-4 text-body disabled:opacity-50"
+            className="h-12 shrink-0 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-50"
           >
             {busy === "disable" ? t.push.disabling : t.push.disable}
           </button>
@@ -584,7 +584,7 @@ function BrowserNotifications() {
             const res = await Notification.requestPermission();
             setPerm(res);
           }}
-          className="h-11 shrink-0 rounded-xl border border-line-strong px-4 text-body"
+          className="h-12 shrink-0 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
         >
           {t.settings.allow}
         </button>

@@ -209,3 +209,28 @@ export function categoryValue(key: DuelCategory, side: DuelSide): string {
   if (key === "focus") return t.duel.focus(side.focusSeconds);
   return t.duel.standard[standardState(side)];
 }
+
+/**
+ * V3 — my share of a category for the duel's bar (0..1), from the same
+ * numbers the category shows; null when neither side has anything to
+ * compare (the bar then stays even). Presentation only: never a rule.
+ */
+export function categoryShare(
+  key: DuelCategory,
+  me: DuelSide,
+  partner: DuelSide,
+): number | null {
+  const value = (side: DuelSide) =>
+    key === "execution"
+      ? side.planned
+        ? side.completed / side.planned
+        : 0
+      : key === "focus"
+        ? side.focusSeconds
+        : standardState(side) === "met"
+          ? 1
+          : 0;
+  const a = value(me);
+  const b = value(partner);
+  return a + b > 0 ? a / (a + b) : null;
+}

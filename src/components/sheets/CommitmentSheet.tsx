@@ -18,7 +18,7 @@ const A = t.accountability;
 const heading = "font-mono text-meta tracking-eyebrow text-muted";
 const label = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "h-12 w-full min-w-0 rounded-xl border border-line-strong bg-field px-3.5 text-body outline-none focus:border-line-bold";
+  "h-[54px] w-full min-w-0 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold";
 
 /**
  * NOVO COMPROMISSO (V2 Phase 6). The title is public (the partner sees it);

@@ -14,9 +14,10 @@ type Gesture = {
 };
 
 /**
- * A task on Today. Tap (or Space/Enter) toggles. Swipe right past 80px
+ * A task on Today (V3): the check on the right edge toggles (Space/Enter
+ * too); the rest of the row opens the options. Swipe right past 80px
  * completes / undoes, swipe left opens options, long-press / right-click
- * opens options. Mirrors the design's row exactly.
+ * opens options.
  */
 export function TaskRow({
   task,
@@ -127,8 +128,8 @@ export function TaskRow({
           onOptions();
         }}
         className={cx(
-          "relative flex touch-pan-y items-center select-none",
-          flashing ? "bg-accent-soft" : "bg-bg",
+          "relative flex touch-pan-y items-center gap-1.5 select-none",
+          flashing ? "bg-accent-wash" : "bg-bg",
         )}
         style={{
           transform: `translateX(${dx}px)`,
@@ -137,6 +138,79 @@ export function TaskRow({
             : "transform .34s cubic-bezier(.2,.9,.25,1), background .6s ease",
         }}
       >
+        {/* V3: the row's text opens the options; the check sits on the
+            right edge (thumb side) with a 52 px target. */}
+        <button
+          type="button"
+          onClick={() => {
+            if (suppressClick.current) return;
+            onOptions();
+          }}
+          aria-label={t.taskRow.optionsFor(task.name)}
+          className="flex min-h-[66px] min-w-0 flex-1 items-center gap-4 py-2.5 text-left"
+        >
+          <span className="hidden w-[42px] shrink-0 font-mono text-small text-dim tabular-nums desk:block">
+            {task.time || "—"}
+          </span>
+
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            {next && (
+              // A visual pointer only: the list order is unchanged, and row
+              // descriptions stay what they announce today (v2-phase9).
+              <span
+                aria-hidden="true"
+                data-testid="task-next"
+                className="font-mono text-tab tracking-eyebrow text-accent"
+              >
+                {t.taskRow.next}
+              </span>
+            )}
+            <span className="flex min-w-0 items-baseline gap-2">
+              {task.priority !== null && (
+                // Top 3 rank, discreet: the task is listed once (V2 Phase 4).
+                <span
+                  aria-hidden="true"
+                  data-testid="task-rank"
+                  className="shrink-0 font-mono text-meta text-accent tabular-nums"
+                >
+                  {task.priority}
+                </span>
+              )}
+              <span
+                className={cx(
+                  "text-lead font-medium [overflow-wrap:anywhere] decoration-strike transition-colors duration-300",
+                  muted ? "text-dim" : "text-text",
+                  task.done && "line-through",
+                )}
+              >
+                {task.name}
+              </span>
+            </span>
+            <TaskMeta task={task} />
+          </span>
+        </button>
+
+        <span className="flex shrink-0 items-center gap-1.5 font-mono text-tab tracking-meta text-dim">
+          {task.unsynced && (
+            <span
+              title={t.taskRow.willSync}
+              aria-label={t.taskRow.willSync}
+              className="size-2 rounded-full border-[1.5px] border-dim"
+            />
+          )}
+          {skipped ? (
+            <span id={`${task.id}-skip`} className="max-w-28 truncate">
+              {task.skip}
+            </span>
+          ) : task.done ? (
+            // The completion time is detail: desktop only (it has the room).
+            <span className="hidden desk:inline">
+              {t.taskRow.done}
+              {task.doneAt}
+            </span>
+          ) : null}
+        </span>
+
         <button
           type="button"
           role="checkbox"
@@ -156,24 +230,24 @@ export function TaskRow({
             if (!task.done) tick();
             onToggle();
           }}
-          className="flex min-h-16 min-w-0 flex-1 items-center gap-3.5 py-2 pl-0.5 text-left desk:min-h-[66px] desk:gap-4"
+          className="-mr-2.5 flex size-[52px] shrink-0 items-center justify-center"
         >
           <span
             aria-hidden="true"
             className={cx(
-              "flex size-[34px] shrink-0 items-center justify-center rounded-xl border-[1.5px] transition-[background-color,border-color,scale] duration-200 ease-[var(--ease-spring)] desk:size-[30px]",
+              "flex size-8 items-center justify-center rounded-[11px] border-[1.5px] transition-[background-color,border-color,scale] duration-200 ease-[var(--ease-spring)]",
               skipped ? "border-dashed" : "border-solid",
-              // Completing: a bright beat of green, then it settles to a
+              // Completing: a bright beat of lime, then it settles to a
               // quiet done state so open work stays the loudest thing.
               task.done && popping
-                ? "scale-[.92] border-accent bg-accent"
+                ? "scale-[.9] border-accent bg-accent"
                 : task.done
-                  ? "border-accent-line bg-accent-strong"
+                  ? "border-accent-done bg-accent-strong"
                   : skipped
-                    ? "border-line-strong"
+                    ? "border-ghost"
                     : next
-                      ? "border-accent-line"
-                      : "border-line-bold",
+                      ? "border-accent"
+                      : "border-line-check",
             )}
           >
             <svg width="16" height="16" viewBox="0 0 16 16">
@@ -183,95 +257,6 @@ export function TaskRow({
               />
             </svg>
           </span>
-
-          <span
-            className={cx(
-              "hidden w-[42px] shrink-0 font-mono text-small tabular-nums desk:block",
-              "text-dim",
-            )}
-          >
-            {task.time || "—"}
-          </span>
-
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
-            {next && (
-              // A visual pointer only: the list order is unchanged, and row
-              // descriptions stay what they announce today (v2-phase9).
-              <span
-                aria-hidden="true"
-                data-testid="task-next"
-                className="font-mono text-meta tracking-eyebrow text-accent"
-              >
-                {t.taskRow.next}
-              </span>
-            )}
-            <span className="flex min-w-0 items-baseline gap-2">
-              {task.priority !== null && (
-                // Top 3 rank, discreet: the task is listed once (V2 Phase 4).
-                <span
-                  aria-hidden="true"
-                  data-testid="task-rank"
-                  className="shrink-0 font-mono text-meta text-accent tabular-nums"
-                >
-                  {task.priority}
-                </span>
-              )}
-              <span
-                className={cx(
-                  "text-lead decoration-strike transition-colors duration-300 desk:text-base",
-                  muted ? "text-dim" : "text-text",
-                  task.done && "line-through",
-                )}
-              >
-                {task.name}
-              </span>
-            </span>
-            <TaskMeta task={task} />
-          </span>
-
-          <span
-            className={cx(
-              "flex shrink-0 items-center gap-1.5 font-mono text-meta tracking-meta",
-              skipped ? "text-dim" : task.done ? "text-dim" : "text-dim",
-            )}
-          >
-            {task.unsynced && (
-              <span
-                title={t.taskRow.willSync}
-                aria-label={t.taskRow.willSync}
-                className="size-[7px] rounded-full border-[1.5px] border-dim"
-              />
-            )}
-            {skipped ? (
-              <span id={`${task.id}-skip`}>{task.skip}</span>
-            ) : task.done ? (
-              // The completion time is detail: desktop only (it has the room).
-              <span className="hidden desk:inline">
-                {t.taskRow.done}
-                {task.doneAt}
-              </span>
-            ) : null}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onOptions}
-          aria-label={t.taskRow.optionsFor(task.name)}
-          className="flex h-11 w-9 shrink-0 items-center justify-center gap-1 rounded-lg hover:bg-white/4"
-        >
-          <span
-            aria-hidden="true"
-            className="size-[3px] rounded-full bg-ghost"
-          />
-          <span
-            aria-hidden="true"
-            className="size-[3px] rounded-full bg-ghost"
-          />
-          <span
-            aria-hidden="true"
-            className="size-[3px] rounded-full bg-ghost"
-          />
         </button>
       </div>
     </div>

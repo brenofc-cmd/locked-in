@@ -2,6 +2,7 @@
 
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
+import { cx } from "@/components/ui";
 import { useApp } from "@/components/app-state";
 import { countdown, eventSummary, groupUpcoming } from "@/lib/planner";
 import { planRow, planWeeks, prioritiesOf } from "@/lib/weekly-plan";
@@ -66,19 +67,28 @@ export function PlanScreen({ goal }: { goal: string }) {
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 animate-[li-fade-up_.4s_ease]">
       <h1 className="page-title">{t.plan.title}</h1>
-      <nav aria-label={t.plan.navAria} className="flex flex-col">
+      <nav
+        aria-label={t.plan.navAria}
+        className="flex flex-col border-t border-line-strong"
+      >
         {rows.map((r) => (
           <Link
             key={r.href}
             href={r.href}
             data-testid={r.testid}
-            className="flex min-h-[68px] items-center justify-between gap-3 border-b border-line py-3 hover:bg-white/[.02]"
+            className="flex min-h-[76px] items-center justify-between gap-3 border-b border-line py-2.5 hover:bg-white/[.02]"
           >
             <span className="flex min-w-0 flex-col gap-1">
-              <span className="font-mono text-meta tracking-eyebrow text-dim">
+              <span
+                className={cx(
+                  "font-mono text-tab tracking-eyebrow",
+                  // V3: this week leads the hub.
+                  r.testid === "plan-week" ? "text-accent" : "text-dim",
+                )}
+              >
                 {r.label}
               </span>
-              <span className="truncate text-body">{r.value}</span>
+              <span className="truncate text-lead font-medium">{r.value}</span>
             </span>
             <span className="flex shrink-0 items-center gap-2.5 font-mono text-meta tracking-meta text-dim tabular-nums">
               {r.meta}

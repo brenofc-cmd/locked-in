@@ -5,6 +5,7 @@ import {
   test,
   type Browser,
   type BrowserContext,
+  type Locator,
   type Page,
 } from "@playwright/test";
 import {
@@ -33,7 +34,7 @@ test.describe.configure({ mode: "serial", timeout: 60_000 });
 
 let A: Api;
 let B: Api;
-const ACCENT = "rgb(198, 224, 123)";
+const ACCENT = "rgb(197, 242, 119)";
 
 type Opened = { context: BrowserContext; page: Page; errors: string[] };
 
@@ -67,6 +68,15 @@ const checkbox = (page: Page, name: string) =>
     .getByRole("region", { name: t.todayScreen.tasksAria })
     .getByRole("checkbox", { name, exact: true });
 /**
+ * Click a row's check with the row centred first: on a phone the pinned
+ * LOCK IN bar and the floating tab bar (V3) cover the bottom ~180 px, and a
+ * check scrolled just into view would sit under them (as a thumb would not).
+ */
+async function tap(row: Locator) {
+  await row.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await row.click();
+}
+/**
  * Complete a task once hydrated. A click before hydration is lost or replayed
  * during hydration (the bar then mounts at the new value: no glow), so wait
  * until React owns the row (it attaches its props to the node), then click.
@@ -82,9 +92,14 @@ async function complete(page: Page, name: string) {
       { timeout: 15_000 },
     )
     .toBe(true);
-  await row.click();
+  await tap(row);
   await expect(row).toHaveAttribute("aria-checked", "true");
 }
+/** V3: the row's text (it opens the options); the check is apart from it. */
+const rowText = (page: Page, name: string) =>
+  page
+    .getByRole("region", { name: t.todayScreen.tasksAria })
+    .getByRole("button", { name: t.taskRow.optionsFor(name), exact: true });
 const box = (page: Page, name: string) =>
   checkbox(page, name).locator("span[aria-hidden='true']").first();
 const bg = (page: Page, name: string) =>
@@ -116,7 +131,7 @@ test("1: completing a task — instant state, a bright beat, then a quiet done; 
   const a = await open(browser, "/today");
   const writes = trackWrites(a.page);
   const name = "Morning Run";
-  await checkbox(a.page, name).click();
+  await tap(checkbox(a.page, name));
   // Immediate: the state is the checkbox's, not the animation's.
   await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "true");
   await expect.poll(() => bg(a.page, name), { intervals: [20] }).toBe(ACCENT);
@@ -128,7 +143,7 @@ test("1: completing a task — instant state, a bright beat, then a quiet done; 
     await pulse(a.page).evaluate((el) => getComputedStyle(el).animationName),
   ).toBe("li-bar-pulse");
   // Undo: back to open, and the bar never glows when it goes down.
-  await checkbox(a.page, name).click();
+  await tap(checkbox(a.page, name));
   await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "false");
   expect(a.errors).toEqual([]);
   // The undo must reach the database before the page goes: a lost write
@@ -149,7 +164,7 @@ test("2: the same with reduced motion — same states, no movement", async ({
   expect(
     await pulse(a.page).evaluate((el) => getComputedStyle(el).animationName),
   ).toBe("none");
-  await checkbox(a.page, name).click();
+  await tap(checkbox(a.page, name));
   await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "false");
   await writes.idle();
   await a.context.close();
@@ -252,7 +267,7 @@ test("6b: Today — Rook acknowledges each task proved, nothing on load", async 
       .locator("[data-part='proof-core']")
       .evaluate((el) => getComputedStyle(el).animationName),
   ).toBe("rook-core");
-  await checkbox(a.page, "Morning Run").click();
+  await tap(checkbox(a.page, "Morning Run"));
   await expect(checkbox(a.page, "Morning Run")).toHaveAttribute(
     "aria-checked",
     "false",
@@ -388,20 +403,20 @@ test("9: Today points at one next task, and the pointer moves on when it is prov
   // The design day: Morning Run is the first open task (no Top 3 set).
   await expect(next).toHaveCount(1);
   await expect(
-    checkbox(a.page, "Morning Run").getByTestId("task-next"),
+    rowText(a.page, "Morning Run").getByTestId("task-next"),
   ).toHaveCount(1);
   await complete(a.page, "Morning Run");
   await expect(next).toHaveCount(1);
   await expect(
-    checkbox(a.page, "Morning Run").getByTestId("task-next"),
+    rowText(a.page, "Morning Run").getByTestId("task-next"),
   ).toHaveCount(0);
-  await checkbox(a.page, "Morning Run").click();
+  await tap(checkbox(a.page, "Morning Run"));
   await expect(checkbox(a.page, "Morning Run")).toHaveAttribute(
     "aria-checked",
     "false",
   );
   await expect(
-    checkbox(a.page, "Morning Run").getByTestId("task-next"),
+    rowText(a.page, "Morning Run").getByTestId("task-next"),
   ).toHaveCount(1);
   await writes.idle();
   await a.context.close();

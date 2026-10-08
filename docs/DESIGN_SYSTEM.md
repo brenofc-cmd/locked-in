@@ -2,7 +2,9 @@
 
 The system behind every screen after the final V2 design pass (2026-10-07), evolved by the V3 mobile
 pass (2026-10-08, ADR-107: [DESIGN_DIRECTION_V3.md](DESIGN_DIRECTION_V3.md),
-[DESIGN_VERIFICATION_V3.md](DESIGN_VERIFICATION_V3.md)). Research and audit:
+[DESIGN_VERIFICATION_V3.md](DESIGN_VERIFICATION_V3.md)) and re-skinned the same day as **Obsidian
+Energy** from the owner's Claude Design handoff "LOCKED IN V3" (ADR-108,
+[DESIGN_OBSIDIAN_V3.md](DESIGN_OBSIDIAN_V3.md)). Research and audit:
 [FINAL_DESIGN_RESEARCH.md](FINAL_DESIGN_RESEARCH.md). Motion: [MOTION.md](MOTION.md). Mascot:
 [ROOK.md](ROOK.md). Tokens live in one place — `src/app/globals.css` (`@theme`) — and components use
 their utilities; an arbitrary value (`text-[13px]`, `rounded-[10px]`, `border-white/9`, `#1b1b1e`) is a
@@ -14,65 +16,78 @@ The IA and layout still come from the approved Claude Design (`design-reference/
 ## Brand
 
 **LOCKED IN — Sem hype. Só prova.** Focus, execution, consistency, accountability, progress. The
-interface is **Expressive Discipline**: calm and quiet for everyday use, expressive only when the user
-has proved something. Dark, premium, focused, tactile, disciplined, alive — never cyberpunk, neon
+interface is **Expressive Discipline** in the **Obsidian Energy** skin (V3): warm charcoal, proof
+lime, condensed type for the numbers; FOCO changes room to an ink stage with a serif timer. Calm and
+quiet for everyday use, expressive only when the user has proved something. Signature: the **Proof
+Pill** — the vertical pill in the mark and in Rook's chest is the app's unit (one per commitment:
+empty, pointed at, dashed when skipped, filled when proved). Dark, premium, focused, tactile, disciplined, alive — never cyberpunk, neon
 gamer, fintech, admin dashboard or a game full of coins.
 
 ## Colour
 
-| Token                        | Value                  | Role                                                                    |
-| ---------------------------- | ---------------------- | ----------------------------------------------------------------------- |
-| `page`                       | `#08080a`              | Behind the app (desktop margins)                                        |
-| `bg`                         | `#0c0c0e`              | App background — deep graphite, not pure black                          |
-| `overlay` / `stage`          | `#0a0a0c` / `#09090b`  | Full-screen moments (reviews / focus)                                   |
-| `card`                       | `#131316`              | Surface (cards, morning)                                                |
-| `sheet`                      | `#151518`              | Sheets                                                                  |
-| `chip` / `raised`            | `#18181b` / `#1b1b1f`  | Chips, toasts, celebrations (elevated)                                  |
-| `selected`                   | `#1f1f23`              | Selected control, active tab pill                                       |
-| `field`                      | `#111114`              | Inputs                                                                  |
-| `text`                       | `#eceae4`              | Primary text — off-white (no glare)                                     |
-| `muted`                      | `#a6a59f`              | Secondary text (≥ 6.9 : 1)                                              |
-| `dim`                        | `#8e8d87`              | Meta / tertiary text (≥ 5.1 : 1 on every surface)                       |
-| `ghost`                      | `#64635e`              | Non-text: chevrons, disabled labels, empty values (≥ 3 : 1 on `bg`)     |
-| `faint` / `off`              | `#4a4a4e` / `#333337`  | Decorative only: strokes, empty tracks — never text                     |
-| `line` / `-strong` / `-bold` | white 7 / 12 / 24 %    | Hairline divider / outline of a control / emphasis                      |
-| `accent`                     | `#c6e07b`              | **LOCKED green = proof**: done, progress, the primary action, the brand |
-| `accent-deep`                | accent 58 % on black   | The primary button's edge (V3) — never a fill                           |
-| `strike` / `marker`          | text 25 % / 35 %       | Line-through on done work / the standard's tick on a bar                |
-| `rook-glow`                  | `rgb(0 230 118 / .55)` | Rook's emerald glow only (ROOK.md palette), never UI                    |
-| `streak`                     | `#e6b45e`              | Streak / celebration warmth (amber)                                     |
-| `focus`                      | `#9fb3d1`              | Focus time (a discreet cool tone)                                       |
-| `danger`                     | `#e5765f`              | Destructive, failed day (as fact)                                       |
-| `missed`                     | `#c27463`              | Missed day in the calendar                                              |
+| Token                             | Value                             | Role                                                             |
+| --------------------------------- | --------------------------------- | ---------------------------------------------------------------- |
+| `page`                            | `#0a0c0d`                         | Behind the app                                                   |
+| `bg`                              | `#101315`                         | App background — warm charcoal, not pure black                   |
+| `overlay`                         | `#0b0d0e`                         | Full-screen moments (reviews, milestones)                        |
+| `card`                            | `#1b2022`                         | Surface: duel, records, invite code, floating nav                |
+| `sheet`                           | `#191e20`                         | Sheets, profile menu                                             |
+| `chip` / `selected` / `raised`    | `#1f2527` / `#242a2d` / `#2a3134` | Segmented controls / disabled primary / toast, active tab pill   |
+| `avatar`                          | `#2c3336`                         | The partner's avatar                                             |
+| `field`                           | `#111416`                         | Inputs                                                           |
+| `text`                            | `#f5f3ec`                         | Primary text (17.4 : 1)                                          |
+| `muted`                           | `#a9ada6`                         | Secondary text (8.4 : 1)                                         |
+| `dim`                             | `#868b85`                         | Meta / tertiary on `bg` (5.4 : 1) — use `muted` on `chip` and up |
+| `ghost`                           | `#5a5e5b`                         | Non-text only: chevrons, empty values, skipped outline           |
+| `faint` / `off`                   | `#474b49` / `#333a3d`             | Decorative only; `off` = a switch's off track                    |
+| `line` / `-strong` / `-bold`      | ivory 7 / 12 / 24 %               | Hairline / control outline / emphasis                            |
+| `line-check`                      | ivory 32 %                        | An open checkbox                                                 |
+| `accent`                          | `#c5f277`                         | **Lime = proof**: done, progress, the primary action, the brand  |
+| `accent-deep`                     | `#7e9c45`                         | The primary button's 4 px edge — never a fill                    |
+| `accent-strong` / `accent-done`   | `#3b482d` / `#9dbe5f`             | A done checkbox: quiet fill / its border (the check stays lime)  |
+| `accent-dim` / `accent-met`       | `#5d7036` / `#2c3523`             | A met (not perfect) chart bar / calendar day                     |
+| `accent-wash`                     | `#1c2419`                         | Selection, the row's flash after completing                      |
+| `streak`                          | `#f2be6e`                         | Streak, milestones, pending (amber)                              |
+| `focus`                           | `#9db7e0`                         | Focus time, shared events                                        |
+| `danger` / `missed`               | `#ee8b6e` / `#c98370`             | Destructive, error / a day below the standard (always dashed)    |
+| `partner`                         | `#e6e1d3` at 45 %                 | The partner's bar                                                |
+| `stage` / `stage-field`           | `#1c201d` / `#232825`             | The FOCO ink stage / its fields                                  |
+| `stage-text` / `-soft` / `-muted` | `#f4f1e8` / `#c9c5b9` / `#a8a497` | Ivory text on the stage                                          |
+| `strike` / `marker`               | ivory 30 % / 35 %                 | Line-through on done work / the standard's tick                  |
+| `rook-glow`                       | `rgb(0 230 118 / .55)`            | Rook's emerald glow only (ROOK.md palette), never UI             |
 
-Rules: green is never decoration — it is not the colour of every button, icon or label. Done work is a
-quiet green (`accent-strong` fill + `accent` check); open work stays the loudest thing. No colour
-carries meaning alone (presence has words, milestones say QUASE / CONQUISTADO, the duel prints the
-leader).
+Rules: lime is never decoration — it is not the colour of every button, icon or label. Done work is
+quiet (`accent-strong` fill, `accent-done` border, lime check); open work stays the loudest thing. No
+colour carries meaning alone (presence has words, milestones say QUASE / CONQUISTADO, the duel prints
+the leader, a missed day is dashed).
 
 ## Typography
 
-Geist (sans) and Geist Mono. Thirteen sizes in `rem`, so the user's font size is respected:
+**Archivo** (interface and numbers, with its width axis), **JetBrains Mono** (eyebrows, meta, states,
+primary button labels — short caps only) and **Newsreader** (FOCO stage only: the timer, the task in
+italics, minutes done). Loaded with `next/font/google` in `src/app/layout.tsx`
+(`--font-sans` / `--font-mono` / `--font-stage`). Sizes in `rem`:
 
 | Utility                        | Size                    | Use                                                        |
 | ------------------------------ | ----------------------- | ---------------------------------------------------------- |
-| `text-tab`                     | 10                      | Tab labels under 360 px only (the iOS tab-label size)      |
+| `text-tab`                     | 10.5                    | Condensed tab labels, PRÓXIMA / PULADA marks               |
 | `text-meta`                    | 11                      | Mono eyebrows, meta, timestamps, labels                    |
 | `text-small`                   | 13                      | Secondary lines, notes, facts                              |
 | `text-body`                    | 15                      | Rows, body copy (inputs stay `text-base` 16 → no iOS zoom) |
-| `text-lead`                    | 17                      | Task names on phones, sheet titles                         |
+| `text-lead`                    | 17                      | Task names, plan rows, sheet titles                        |
 | `text-title`                   | 22                      | Section-level titles, record values                        |
-| `text-heading`                 | 26                      | Page title on phones                                       |
+| `text-heading`                 | 26                      | Statements                                                 |
 | `text-number`                  | 32                      | Stat numbers                                               |
 | `text-display`                 | 38                      | Page title on desktop                                      |
 | `text-num-l` … `text-num-hero` | 44 / 64 / 76 / 96 / 112 | Scores, hero %, timers                                     |
+| `text-num-today`               | 108                     | Today's % on a phone (64 under 360 px)                     |
 
-- `page-title` utility = the one page title (26 → 22 under 384 px → 38 from 780 px).
-- `eyebrow` utility = mono 11 px caps with `tracking-eyebrow`. **Caps only for eyebrows / meta**,
-  never paragraphs.
-- Tracking roles: `tracking-meta` (.08em), `tracking-eyebrow` (.16em), `tracking-brand` (.24em,
-  the wordmark and stamps), `tracking-display` (−.025em), `tracking-number` (−.05em).
-- Numbers that change (focus, streak, duel, progress, timers) use `tabular-nums`.
+- `page-title` = Archivo 700 at 88 % width, 31 px (28 under 360 px, 38 from 780 px).
+- `num` = Archivo 800 at 68 % width, −.02em, tabular — every big number (Today's %, scores, stats,
+  streak). `cond` = 88 % width for statements and sheet titles.
+- `eyebrow` = mono 11 px caps, `tracking-eyebrow`. **Caps only for eyebrows / meta / tabs**.
+- Tracking roles: `tracking-meta` (.08em), `tracking-eyebrow` (.16em), `tracking-brand` (.24em).
+- Numbers that change (focus, streak, duel, progress, timers) are tabular.
 
 ## Spacing
 
@@ -82,14 +97,14 @@ Vertical rhythm between sections: 32 px phone, 48 px desktop (`gap-8 desk:gap-12
 
 ## Radius
 
-`rounded-xs` 2 (bars) · `-sm` 4 (ticks, tiny marks) · `-lg` 8 (chips, small controls) · `-xl` 12
-(buttons, fields, checkboxes) · `-2xl` 16 (cards, toasts, celebrations) · `-3xl` 24 (sheets) ·
-`-full` (pills, avatars, dots).
+`rounded-xs` 2 (bars) · `-sm` 4 (ticks) · `-lg` 8 (chips) · 11 px (checkbox) · `-xl` 12 (fields) ·
+14 px (secondary buttons) · `-2xl` 16 (primary buttons, cards) · 22 px (floating nav) · `-3xl` 24
+(sheets, the duel card) · `-full` (Proof Pills, avatars, dots).
 
 ## Surfaces
 
-Elevation by lighter graphite, not by shadow: `bg` → `card` → `sheet` → `raised`. Shadows only on
-things that float over content (toasts, celebrations, sheets). **A card exists only when grouping
+Elevation by lighter charcoal, not by shadow: `bg` → `card` → `sheet` → `raised`. Shadows only on
+things that float over content (the tab bar, sheets, toasts, dialogs). **A card exists only when grouping
 helps** (the morning card, a celebration); otherwise sections are typography + a hairline.
 
 ## Icons
@@ -99,49 +114,58 @@ One family: 1.6 px strokes, round caps and joins, 22 px boxes (`src/components/i
 
 ## Buttons
 
-| Kind    | Look                                              | Use                                     |
-| ------- | ------------------------------------------------- | --------------------------------------- |
-| Primary | `btn-primary`, 52–62 px, mono caps, `rounded-2xl` | One per context (LOCK IN, CONCLUIR)     |
-| Light   | `bg-text text-bg`                                 | Closing a moment (reviews)              |
-| Outline | `border-line-strong`, 44 px, `rounded-xl`         | Secondary actions                       |
-| Text    | no border, `text-dim` → `text-text`, 44 px tall   | Tertiary (Reagir, Ver toda a atividade) |
+| Kind    | Look                                                       | Use                                     |
+| ------- | ---------------------------------------------------------- | --------------------------------------- |
+| Primary | `btn-primary`, 56–58 px, mono 700 caps .2em, `rounded-2xl` | One per context (LOCK IN, PRONTO)       |
+| Light   | `bg-text text-bg` / `bg-stage-text` on the stage           | Closing a moment, RETOMAR               |
+| Outline | `border-line-bold`, 48 px, 14 px radius, 15 px semibold    | Secondary actions                       |
+| Text    | no border, `text-muted` → `text-text`, 44 px tall          | Tertiary (Reagir, Ver toda a atividade) |
 
-States: rest · hover (desktop: text brightens) · **pressed** (`active:scale-[.96–.98]`, phones feel the
-tap) · focus (2 px accent outline, 2 px offset) · disabled (`opacity-60` or `ghost` text) · pending
-(inline label "Salvando…", never a big spinner). Targets ≥ 44 px for primary actions, never under 24.
+States: rest · hover (desktop: text brightens) · **pressed** (the primary sinks 3 px onto its edge in
+100 ms; others `active:scale-[.96–.98]`) · focus (2 px lime outline, 2 px offset) · disabled
+(`opacity-60` or `bg-selected text-ghost`) · pending (inline "Salvando…", never a big spinner).
+Targets ≥ 44 px; primaries 56–58 px.
 
 ## Rows
 
-A row is the unit of the app (tasks, partner tasks, activity, plan hub, settings): min 52 px (tasks
-64 px), hairline below, primary text left, meta right in mono. One tap does the main thing; options
-live behind `···` / long-press / swipe.
+A row is the unit of the app: min 52 px (tasks 66 px), hairline below. **Task rows (V3)**: the text
+(PRÓXIMA eyebrow, rank, name, meta) is one button that opens the options; the **check sits on the
+right edge** (thumb side) — a 32 px box with an 11 px radius inside a 52 px target. Open: ivory 32 %
+outline; PRÓXIMA: lime outline; skipped: dashed `ghost`; completing: a lime beat (scale .9, spring),
+then the quiet done state. Swipe, long-press and right-click still work.
 
 ## Forms
 
-Fields: `bg-field`, `border-line-strong`, `rounded-xl`, 52 px, 16 px text, focus → `border-line-bold`.
+Fields: `bg-field`, 1.5 px `border-line-strong`, `rounded-xl`, 54 px, 16 px text, focus →
+`border-line-bold`.
 Labels above, hints in `text-small text-dim`, errors in words (what happened + what to do), never raw
 server messages.
 
-**Depth is reserved for the primary button** (V3): `btn-primary` = proof green on a 4 px
+**Depth is reserved for the primary button** (V3): `btn-primary` = proof lime on a 4 px
 `accent-deep` edge; pressed, it sinks 3 px onto the edge (transform + shadow, 100 ms). Every primary
 button in the app uses the utility — never hand-rolled `bg-accent text-bg`. A disabled primary
 (`aria-disabled`) drops to `bg-selected text-ghost` with no edge.
 
-## Today's pointer and bar (V3)
+## Today: Proof Pills, PRÓXIMA and LOCK IN (V3)
 
 - **PRÓXIMA**: Today marks one open task in place — the best-ranked open Top 3 task, else the first
-  open task in list order (`nextTaskId` in `src/lib/today.ts`; never done or skipped). A mono
-  `accent` eyebrow above the name and an `accent-line` checkbox border; the row is not duplicated and
-  the list order does not change. Visual only (`aria-hidden`), so row descriptions stay as they were.
-- **Day bar**: one segment per task (`ProgressBar steps`, 3 px gaps, `rounded-xs`) up to 24 tasks; a
-  continuous bar above that. The standard's tick and the one-glow pulse stay.
+  open task in list order (`nextTaskId` in `src/lib/today.ts`; never done or skipped): a lime mono
+  eyebrow above the name and a lime checkbox outline. Visual only (`aria-hidden`).
+- **Proof Pills** (`ProgressBar pills`, `dayPills()` in `src/lib/today.ts`): one 34 px pill per task in
+  list order — filled (done), lime outline (PRÓXIMA), ivory outline (open), dashed (skipped); up to 24,
+  a continuous bar above that. The progress glow stays (`--pulse-peak` / `--pulse-scale` soften it).
+  Beside it: the next line and `PADRÃO n%`.
+- **LOCK IN** (pinned above the tab bar on a phone, until `wide`): names the PRÓXIMA task under the
+  label and opens the duration sheet already on it (only when no task was picked by hand).
 
 ## Navigation
 
-Phone: five tabs (HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO), 58 px, safe-area padding; **one filled
-pill for the current tab**; FOCO keeps its green icon as identity (filled only when current). Desktop:
-the sidebar (dimmed chrome, bright content). Headers: the same `page-title` everywhere; the mobile top
-bar is the wordmark + partner chip + profile. See [NAVIGATION.md](NAVIGATION.md).
+Phone: a **floating tab bar** (V3) — 64 px, 10 px from the sides, 26 px above the safe area, 22 px
+radius, `card` with a hairline and the one floating shadow; centred at 672 px on tablets. Five tabs
+(HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO), condensed caps (10.5 px at 82 % width — PROGRESSO fits
+320 px); the current tab = a filled `raised` pill + weight 800; FOCO keeps its lime icon. It hides
+under the FOCO stage and full-screen moments. Content scrolls under it (`main` pads 112 px + safe area,
+`scroll-padding-bottom` 200 px). Desktop: the sidebar. See [NAVIGATION.md](NAVIGATION.md).
 
 ## States
 
@@ -159,21 +183,23 @@ bar is the wordmark + partner chip + profile. See [NAVIGATION.md](NAVIGATION.md)
 
 ## Charts
 
-Bars without grid lines or legends; values on the bars only when they fit (≤ 7); today's bar is never
-judged before the day closes; each bar is a list item with an accessible name. Calendar: dots +
-shapes + words in the legend (standard met / perfect / missed), never colour alone.
+Bars without grid lines; values on the bars only when they fit (≤ 7); 100 % lime, met `accent-dim`,
+below the standard a dashed `missed` outline; today's bar is a dashed outline until the day closes;
+each bar is a list item with an accessible name. Calendar (V3 heat): perfect = lime tile, met =
+`accent-met` tile, missed = dashed outline, with a legend in words — never colour alone.
 
 ## Responsive
 
 Mobile-first; first-class at 320 / 360 / 375 / 390 / 430. Auto-fit grids use
 `minmax(min(300px,100%),1fr)` — a fixed 300 px minimum overflowed 320 px screens while `<main>`'s
 `overflow-x: hidden` hid it (test 8 in `design.spec.ts` now measures every box). Today's LOCK IN bar
-stays pinned until `wide`, where the aside sits beside the tasks. The daily duel on phones is two
-lines per category (name + winner, then both values); a table from `desk`. Breakpoints: `desk` 780 px (sidebar), `wide` 1180 px
+stays pinned until `wide`, where the aside sits beside the tasks. The daily duel (V3) is a card: both
+avatars with the score between them, the leader in a sentence, then per category the name and leader,
+a share bar (`categoryShare`, lime vs the partner's ivory) and both values. Breakpoints: `desk` 780 px (sidebar), `wide` 1180 px
 (two columns). Desktop uses width with intent (max 1120 px content, a side rail) — never a stretched
 phone, never a 4-column dashboard. Tablets below `desk` keep a phone measure (content `max-w-2xl`,
-672 px, centred; top bar and tabs stay full width) instead of rows stretched edge to edge. Verified at 320 → 1920 with no horizontal scroll. Sticky action
-bars (Today, Focus) respect the safe area; `main` has `scroll-padding-bottom` so focus never hides
+672 px, centred; the top bar stays full width, the tab bar is centred) instead of rows stretched edge to edge. Verified at 320 → 1920 with no horizontal scroll. Sticky action
+bars (Today, Focus) float above the tab bar and respect the safe area; `main` has `scroll-padding-bottom` so focus never hides
 under them.
 
 ## Accessibility
@@ -186,11 +212,9 @@ art `aria-hidden`, animation never the only carrier of information, reduced moti
 
 ## App icon
 
-Candidates compared at 16 / 32 / 64 / 192 / 512 px (Rook character sheet, `ROOK_SHEET`):
-**A** the current square mark (legible everywhere); **B** Rook's head (excellent at 192–512, illegible
-at 16–32); **C** the square mark with the proof core inside (legible from 16 px, ties the mark to
-Rook). Recommendation: C for favicon / small icons and B as a possible large PWA icon — **not
-applied**; the current icon stays until the owner chooses.
+V3 (applied, from the owner's handoff): the rounded lime square holding one Proof Pill on `bg`
+(`scripts/generate-icons.mjs` → `public/icons`; `LogoMark` in `src/components/ui.tsx`). Legible from
+16 px and tied to Rook's Proof Core.
 
 ## Visual regression
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  dayPills,
   groupBySection,
   nextTaskId,
   nextLine,
@@ -165,5 +166,40 @@ describe("nextTaskId (V3)", () => {
     expect(nextTaskId(skipped)).not.toBe(firstOpen);
     const allDone = today.map((t) => ({ ...t, done: true }));
     expect(nextTaskId(allDone)).toBeNull();
+  });
+});
+
+describe("dayPills (V3)", () => {
+  it("one pill per task in list order: done, skip, next, open", () => {
+    const order = groupBySection(today).flatMap((s) => s.tasks);
+    const open = order.filter((t) => !t.done);
+    const skipId = open[1].id;
+    const tasks = today.map((t) =>
+      t.id === skipId
+        ? { ...t, skip: "PULADA", status: "skipped" as const }
+        : t,
+    );
+    const next = nextTaskId(tasks);
+    const pills = dayPills(tasks, next);
+    expect(pills).toHaveLength(today.length);
+    order.forEach((t, i) => {
+      const want = t.done
+        ? "done"
+        : t.id === skipId
+          ? "skip"
+          : t.id === next
+            ? "next"
+            : "open";
+      expect(pills[i]).toBe(want);
+    });
+    expect(pills.filter((p) => p === "next")).toHaveLength(1);
+    expect(pills.filter((p) => p === "done")).toHaveLength(
+      todayStats(tasks, 70).done,
+    );
+  });
+
+  it("no next pill when nothing is open", () => {
+    const all = today.map((t) => ({ ...t, done: true }));
+    expect(dayPills(all, nextTaskId(all))).not.toContain("next");
   });
 });

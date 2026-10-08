@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  categoryShare,
   categoryValue,
   consistencyOutcome,
   decideDuel,
@@ -452,5 +453,36 @@ describe("category values", () => {
       categoryValue("consistency", side({ planned: 5, completed: 3 })),
     ).toBe("não bateu");
     expect(categoryValue("consistency", side())).toBe("sem tarefas");
+  });
+});
+
+describe("categoryShare (V3 duel bar)", () => {
+  it("splits each category by the numbers it shows", () => {
+    expect(
+      categoryShare(
+        "execution",
+        side({ planned: 4, completed: 4 }),
+        side({ planned: 2, completed: 1 }),
+      ),
+    ).toBeCloseTo(1 / 1.5);
+    expect(
+      categoryShare(
+        "focus",
+        side({ focusSeconds: 300 }),
+        side({ focusSeconds: 900 }),
+      ),
+    ).toBeCloseTo(0.25);
+    expect(
+      categoryShare(
+        "consistency",
+        side({ planned: 5, completed: 5 }),
+        side({ planned: 5, completed: 0 }),
+      ),
+    ).toBe(1);
+  });
+
+  it("is null when neither side has anything (an even bar)", () => {
+    expect(categoryShare("focus", side(), side())).toBeNull();
+    expect(categoryShare("execution", side(), side())).toBeNull();
   });
 });

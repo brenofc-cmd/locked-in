@@ -46,7 +46,7 @@ function RecordRow({
       <dt className="order-2 eyebrow text-muted">{label}</dt>
       <dd
         className={cx(
-          "order-1 m-0 text-title font-medium tracking-display tabular-nums",
+          "order-1 m-0 text-title num [font-stretch:72%]",
           value === R.none && "text-ghost",
         )}
       >

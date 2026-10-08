@@ -96,3 +96,25 @@ export function nextTaskId(tasks: Task[]): string | null {
   }
   return null;
 }
+
+/** One Proof Pill per task (V3): empty, pointed at (PRÓXIMA), skipped, proved. */
+export type Pill = "done" | "skip" | "next" | "open";
+
+/**
+ * V3 — Today's bar as Proof Pills, in the order the list shows. Pure
+ * presentation over the same tasks as `todayStats` (skipped stays a pill,
+ * as it stays in the denominator).
+ */
+export function dayPills(tasks: Task[], nextId: string | null): Pill[] {
+  return groupBySection(tasks).flatMap((s) =>
+    s.tasks.map((task): Pill =>
+      task.done
+        ? "done"
+        : task.skip !== null
+          ? "skip"
+          : task.id === nextId
+            ? "next"
+            : "open",
+    ),
+  );
+}

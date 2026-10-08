@@ -189,7 +189,7 @@ export function DuoScreen() {
           type="button"
           onClick={create}
           disabled={pending}
-          className="h-14 rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand disabled:opacity-60"
+          className="h-[58px] rounded-2xl btn-primary font-mono text-small font-bold tracking-[0.2em] disabled:opacity-60"
         >
           {pending ? t.duoScreen.creating : t.duoScreen.createDuo}
         </button>
@@ -200,7 +200,7 @@ export function DuoScreen() {
           <button
             type="button"
             onClick={share}
-            className="h-14 rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand"
+            className="h-[58px] rounded-2xl btn-primary font-mono text-small font-bold tracking-[0.2em]"
           >
             {t.duoScreen.shareInvite}
           </button>
@@ -219,7 +219,7 @@ export function DuoScreen() {
             <button
               type="button"
               onClick={copyCode}
-              className="h-11 rounded-xl border border-line-strong px-4 text-small"
+              className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
             >
               {copied ? t.duoScreen.copied : t.duoScreen.copyCode}
             </button>
@@ -247,12 +247,12 @@ export function DuoScreen() {
               maxLength={16}
               aria-invalid={joinError ? true : undefined}
               aria-describedby={joinError ? "join-error" : undefined}
-              className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-bg px-3.5 font-mono text-base tracking-meta uppercase outline-none focus:border-line-bold"
+              className="h-12 min-w-0 flex-1 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 font-mono text-base tracking-meta uppercase outline-none focus:border-line-bold"
             />
             <button
               type="submit"
               disabled={pending || !code.trim()}
-              className="h-12 rounded-xl border border-line-strong px-5 text-body disabled:opacity-60"
+              className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-60"
             >
               {t.duoScreen.join}
             </button>
@@ -317,7 +317,7 @@ export function DuoScreen() {
               disabled={pending}
               // The safe choice gets focus when the confirmation opens.
               autoFocus
-              className="h-11 rounded-xl border border-line-strong px-5 text-body"
+              className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
             >
               {t.duoScreen.keep}
             </button>

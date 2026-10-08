@@ -59,7 +59,7 @@ import {
 
 const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "rounded-xl border border-line-strong bg-bg text-text outline-none focus:border-line-bold";
+  "rounded-xl border-[1.5px] border-line-strong bg-field text-text outline-none focus:border-line-bold";
 const h2 =
   "border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted";
 
@@ -305,7 +305,7 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="h-11 self-start rounded-xl border border-line-strong px-4 text-body"
+      className="h-12 self-start rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
     >
       {label}
     </button>
@@ -316,7 +316,7 @@ function Empty({ text, rook = false }: { text: string; rook?: boolean }) {
   return (
     <div className="flex items-center gap-4">
       {rook && <Rook pose="ready" size={64} />}
-      <p className="m-0 text-title leading-[1.3] font-medium tracking-display text-pretty text-muted">
+      <p className="m-0 text-title leading-[1.3] cond font-bold text-pretty text-muted">
         {text}
       </p>
     </div>
@@ -592,7 +592,7 @@ function VisionForm({
         maxLength={TITLE_MAX}
         placeholder={t.goals.fields.visionPlaceholder}
         aria-label={t.goals.fields.title}
-        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
+        className="h-[54px] rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
       />
       <textarea
         value={description}
@@ -921,7 +921,7 @@ function GoalForm({
         maxLength={TITLE_MAX}
         placeholder={t.goals.fields.goalPlaceholder}
         aria-label={t.goals.fields.title}
-        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
+        className="h-[54px] rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
       />
       <div className="flex flex-col gap-2">
         <span id="goal-type" className={monoLabel}>
@@ -1125,7 +1125,7 @@ function Milestones({
           disabled={!title.trim()}
           onClick={() => void add()}
           aria-label={t.goals.fields.addMilestone}
-          className="h-11 rounded-xl border border-line-strong px-4 text-body disabled:opacity-40"
+          className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-40"
         >
           +
         </button>
@@ -1169,7 +1169,7 @@ function MirrorSection({
             <button
               type="button"
               onClick={() => onOpen(m)}
-              className="flex min-w-0 flex-1 flex-col gap-1.5 text-left text-title leading-[1.4] font-medium tracking-display text-pretty"
+              className="flex min-w-0 flex-1 flex-col gap-1.5 text-left text-title leading-[1.4] cond font-bold text-pretty"
             >
               {m.featured && <FeaturedLabel />}
               {m.text}
@@ -1355,7 +1355,7 @@ function SecondaryButton({
       type="button"
       onClick={onClick}
       className={cx(
-        "h-11 rounded-xl border border-line-strong px-4 text-body",
+        "h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold",
         danger ? "text-danger" : "text-muted",
       )}
     >

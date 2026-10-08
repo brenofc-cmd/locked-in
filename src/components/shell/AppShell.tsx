@@ -78,13 +78,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       <MobileHeader pathname={pathname} />
       <main
         ref={mainRef}
-        // scroll-padding keeps a focused row clear of the sticky action bar
-        // (WCAG 2.4.11) on phones and up to `wide`, where it is pinned.
-        className="min-h-0 min-w-0 flex-1 scroll-pb-28 overflow-x-hidden overflow-y-auto wide:scroll-pb-0"
+        // scroll-padding keeps a focused row clear of the floating nav and
+        // the pinned action bar above it (WCAG 2.4.11, V3: 200 px on a
+        // phone), and of the sticky bar up to `wide`.
+        className="min-h-0 min-w-0 flex-1 scroll-pb-[200px] overflow-x-hidden overflow-y-auto desk:scroll-pb-28 wide:scroll-pb-0"
       >
         {/* Tablets (below `desk`) keep a phone-like measure instead of
             stretching rows edge to edge; desktop gets the full 1120. */}
-        <div className="mx-auto max-w-2xl px-5 pt-5 desk:max-w-[1120px] pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-12 wide:pt-11 wide:pb-24">
+        {/* The bottom padding on a phone clears the floating nav (V3). */}
+        <div className="mx-auto max-w-2xl px-5 pt-3 pb-[calc(112px+env(safe-area-inset-bottom))] desk:max-w-[1120px] desk:px-8 desk:pt-9 desk:pb-20 wide:px-12 wide:pt-11 wide:pb-24">
           {settings.onboarded ? children : null}
         </div>
       </main>
@@ -105,7 +107,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
     <aside className="hidden w-[228px] shrink-0 flex-col gap-6 overflow-y-auto border-r border-line px-3 pt-6 pb-4 desk:flex">
       <Link href="/today" className="flex items-center gap-2.5 px-2.5">
         <LogoMark size="md" />
-        <span className="font-mono text-small font-semibold tracking-brand">
+        <span className="font-mono text-meta font-semibold tracking-brand">
           LOCKED IN
         </span>
       </Link>
@@ -119,8 +121,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
                 href={n.href}
                 aria-current={here ? "page" : on ? "true" : undefined}
                 className={cx(
-                  "flex h-[38px] items-center gap-3 rounded-xl px-2.5 text-body hover:text-text",
-                  on ? "bg-chip text-text" : "text-muted",
+                  "flex h-10 items-center gap-3 rounded-xl px-2.5 text-body hover:text-text",
+                  on ? "bg-raised font-semibold text-text" : "text-muted",
                 )}
               >
                 <span className="flex-1">{n.label}</span>
@@ -171,15 +173,16 @@ function MobileHeader({ pathname }: { pathname: string }) {
     <div className="flex h-[52px] shrink-0 items-center justify-between bg-bg px-5 desk:hidden">
       <Link
         href="/today"
-        className="flex items-center gap-2"
+        className="flex h-11 items-center gap-[9px]"
         aria-label={t.shell.homeAria}
       >
         <LogoMark />
-        <span className="font-mono text-meta font-semibold tracking-brand">
+        {/* Under 360 px the chip and avatar need the room (V3). */}
+        <span className="font-mono text-meta font-semibold tracking-brand whitespace-nowrap max-[359px]:hidden">
           LOCKED IN
         </span>
       </Link>
-      <div className="flex items-center gap-2.5">
+      <div className="flex min-w-0 items-center gap-2">
         {hasPartner && (
           <Link
             href="/partner"
@@ -191,10 +194,10 @@ function MobileHeader({ pathname }: { pathname: string }) {
               pv.total,
               pv.seen,
             )}
-            className="flex h-9 items-center gap-2 rounded-full border border-line px-3 text-small text-muted"
+            className="flex h-9 min-w-0 items-center gap-2 rounded-full border border-line-strong px-3 text-small whitespace-nowrap text-muted"
           >
             <StatusDot live={pv.live} pulse={pv.pulse} />
-            {partner.name}
+            <span className="truncate">{partner.name}</span>
             <span className="text-text tabular-nums">{pv.pct}%</span>
           </Link>
         )}
@@ -205,10 +208,13 @@ function MobileHeader({ pathname }: { pathname: string }) {
 }
 
 function BottomNav({ pathname }: { pathname: string }) {
+  // V3: a floating bar over the content (10 px from the sides, 26 px above
+  // the safe area). Active = a filled pill + weight 800; FOCO keeps its lime
+  // icon as identity. Condensed caps (82 %) fit PROGRESSO at 320 px.
   return (
     <nav
       aria-label={t.shell.tabsNav}
-      className="flex shrink-0 border-t border-line bg-bg px-1.5 pt-1 pb-[env(safe-area-inset-bottom)] max-[359px]:px-0 desk:hidden"
+      className="absolute inset-x-2.5 bottom-[calc(26px+env(safe-area-inset-bottom))] z-[6] mx-auto flex h-16 max-w-[652px] gap-0.5 rounded-[22px] border border-line bg-card p-[5px] shadow-[0_14px_34px_rgb(0_0_0/0.5)] desk:hidden"
     >
       {TABS.map(({ href, label, Icon }) => {
         const on = isActive(pathname, href);
@@ -221,33 +227,16 @@ function BottomNav({ pathname }: { pathname: string }) {
               under(pathname, href) ? "page" : on ? "true" : undefined
             }
             className={cx(
-              "flex h-[58px] min-w-0 flex-1 flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 active:scale-[.94]",
-              on ? "text-text" : "text-dim",
+              "flex min-w-0 flex-1 flex-col items-center justify-center gap-[3px] rounded-[17px] transition-[background-color,color,transform] duration-200 active:scale-[.94]",
+              on && "bg-raised",
+              isFocus ? "text-accent" : on ? "text-text" : "text-dim",
             )}
           >
+            <Icon />
             <span
               className={cx(
-                "flex h-7 items-center justify-center rounded-xl px-3.5 transition-colors duration-200",
-                // FOCO keeps its green icon as identity, but only the
-                // current tab gets a filled pill (one "you are here").
-                isFocus
-                  ? on
-                    ? "bg-accent text-bg"
-                    : "text-accent"
-                  : on
-                    ? "bg-selected"
-                    : "bg-transparent",
-              )}
-            >
-              <Icon />
-            </span>
-            <span
-              className={cx(
-                // Under 360 px five caps labels do not fit at 11 px
-                // (PROGRESSO reached the screen edge, audit F7): 10 px,
-                // the iOS tab-label size, with normal tracking.
-                "text-meta tracking-normal max-[359px]:text-tab",
-                on ? "font-semibold" : "font-medium",
+                "text-tab tracking-[0.04em] [font-stretch:82%]",
+                on ? "font-extrabold" : "font-semibold",
               )}
             >
               {label.toUpperCase()}

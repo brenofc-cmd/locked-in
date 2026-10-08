@@ -87,15 +87,25 @@ export function ReactSheet({
 }
 
 export function FocusSheet() {
-  const { startFocus } = useApp();
+  const { startFocus, focus } = useApp();
   return (
     <div className="flex flex-col gap-5">
+      {/* V3: the sheet opens on the PRÓXIMA task; the list stays below to
+          pick another activity. */}
+      <div className="flex flex-col gap-1">
+        <span className="font-mono text-meta tracking-[0.2em] text-accent">
+          LOCK IN
+        </span>
+        <span className="cond text-2xl leading-[1.15] font-bold">
+          {focus.task}
+        </span>
+      </div>
       <span className={heading}>{t.miscSheets.focusQuestion}</span>
       <FocusPicker compact />
       <button
         type="button"
         onClick={startFocus}
-        className="h-[58px] rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand"
+        className="h-[58px] rounded-2xl btn-primary font-mono text-small font-bold tracking-[0.2em]"
       >
         {t.miscSheets.startFocus}
       </button>
@@ -122,7 +132,7 @@ export function StreakSheet() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-baseline gap-2.5">
-        <span className="text-num-xl leading-[.9] font-medium tracking-number">
+        <span className="num text-[5.5rem] leading-[.8] [font-stretch:66%] text-streak">
           {streak}
         </span>
         <span className="font-mono text-small tracking-eyebrow text-muted">
@@ -242,10 +252,7 @@ export function DaySheet({ date }: { date: string }) {
                 : summary}
           </span>
         </span>
-        <span
-          data-testid="day-pct"
-          className="text-num-l leading-[.85] font-medium tracking-number tabular-nums"
-        >
+        <span data-testid="day-pct" className="text-num-l leading-[.85] num">
           {pct === null ? "—" : `${pct}%`}
         </span>
       </div>
@@ -418,7 +425,7 @@ export function TemplateSheet() {
             placeholder={t.miscSheets.addOwn}
             aria-label={t.miscSheets.addItemAria}
             maxLength={80}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 text-body outline-none"
+            className="h-[54px] min-w-0 flex-1 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-body outline-none"
           />
           <button
             type="button"
@@ -491,7 +498,7 @@ export function ChallengeSheet() {
   }
 
   const field =
-    "h-12 w-full min-w-0 rounded-xl border border-line-strong bg-field px-3.5 text-body outline-none focus:border-line-bold";
+    "h-[54px] w-full min-w-0 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold";
   const label = "font-mono text-meta tracking-eyebrow text-dim";
 
   return (

@@ -32,7 +32,7 @@ export function TodayRook({
   const rises = useRises(done);
   return (
     <Rook
-      size={44}
+      size={58}
       pose={perfect ? "proud" : done === 0 ? "ready" : "neutral"}
       core={standardMet ? "proof" : done === 0 ? "off" : "idle"}
       act={rises > 0 ? "ack" : undefined}

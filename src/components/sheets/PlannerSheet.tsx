@@ -30,7 +30,7 @@ import {
 
 const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "rounded-xl border border-line-strong bg-bg text-text outline-none focus:border-line-bold";
+  "rounded-xl border-[1.5px] border-line-strong bg-field text-text outline-none focus:border-line-bold";
 
 const reminderLabel = (r: Reminder) =>
   t.planner.reminders[
@@ -256,7 +256,7 @@ function PlannerForm({ event, date }: { event?: PlannerEvent; date?: string }) {
         placeholder={t.planner.fields.titlePlaceholder}
         aria-label={t.planner.fields.title}
         enterKeyHint="done"
-        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
+        className="h-[54px] rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
       />
       <input
         value={form.subject}

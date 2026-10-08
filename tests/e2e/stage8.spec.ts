@@ -796,9 +796,9 @@ test("installable: manifest, icons and app metadata, no session needed", async (
     short_name: "LOCKED IN",
     display: "standalone",
     start_url: "/", // V2 Phase 1: "/" restores the last route (ADR-055)
-    // Graphite of the final design pass (ADR-100).
-    background_color: "#0c0c0e",
-    theme_color: "#0c0c0e",
+    // Obsidian Energy charcoal (Design System V3, ADR-108).
+    background_color: "#101315",
+    theme_color: "#101315",
   });
   for (const icon of m.icons as { src: string; sizes: string }[]) {
     const r = await request.get(icon.src);
@@ -819,7 +819,7 @@ test("installable: manifest, icons and app metadata, no session needed", async (
   );
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
     "content",
-    "#0c0c0e",
+    "#101315",
   );
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
     "href",

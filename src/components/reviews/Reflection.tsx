@@ -102,7 +102,7 @@ export function ReflectionForm({
             maxLength={REFLECTION_MAX}
             rows={2}
             data-testid={`reflection-${f}`}
-            className="min-h-[64px] resize-y rounded-xl border border-line-strong bg-bg px-3.5 py-2.5 text-body outline-none focus:border-line-bold"
+            className="min-h-[64px] resize-y rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 py-2.5 text-body outline-none focus:border-line-bold"
           />
         </label>
       ))}

@@ -44,13 +44,15 @@ const sectionLabel =
   "m-0 font-mono text-meta font-normal tracking-eyebrow text-dim";
 
 function barColor(b: Bar, standard: number, range: Range) {
-  if (b.pct === null) return "bg-white/6";
-  // Today is still open: never judged (red) before the day closes.
-  if (b.current && range === "7" && b.pct < standard) return "bg-off";
-  if (b.pct < standard)
-    return "bg-[color-mix(in_oklab,var(--color-danger)_55%,var(--color-chip))]";
+  if (b.pct === null) return "bg-line";
+  // Today is still open: never judged before the day closes (V3: a dashed
+  // outline, not a colour).
+  if (b.current && range === "7" && b.pct < 100)
+    return "border-[1.5px] border-dashed border-line-bold";
+  // Below the standard: an outline in the missed colour — never colour alone.
+  if (b.pct < standard) return "border-[1.5px] border-dashed border-missed";
   if (b.pct === 100 || (b.current && range !== "7")) return "bg-accent";
-  return "bg-off";
+  return "bg-accent-dim";
 }
 
 /** Bar height: 40–100 % fills the chart (the design's scale); low values stay visible. */
@@ -81,12 +83,12 @@ export function ProgressScreen() {
         <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.progressScreen.title}
         </h1>
-        <p className="text-heading leading-[1.3] font-medium tracking-display text-pretty">
+        <p className="text-heading leading-[1.3] cond font-bold text-pretty">
           {t.progressScreen.empty}
         </p>
         <Link
           href="/today"
-          className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
+          className="flex h-14 items-center self-start rounded-2xl btn-primary px-[26px] font-mono text-small font-bold tracking-[0.2em]"
         >
           {t.progressScreen.goToday}
         </Link>
@@ -120,7 +122,7 @@ export function ProgressScreen() {
         <div
           role="radiogroup"
           aria-label={t.progressScreen.rangeAria}
-          className="flex gap-0.5 rounded-xl border border-line p-1"
+          className="flex gap-1 rounded-[14px] border border-line bg-chip p-[3px]"
         >
           {RANGES.map((r) => (
             <button
@@ -131,8 +133,10 @@ export function ProgressScreen() {
               aria-label={r.long}
               onClick={() => setRange(r.k)}
               className={cx(
-                "h-9 rounded-lg px-3 font-mono text-meta tracking-meta",
-                range === r.k ? "bg-selected text-text" : "text-dim",
+                "h-9 rounded-[11px] px-3 font-mono text-meta tracking-meta",
+                range === r.k
+                  ? "bg-raised font-semibold text-text"
+                  : "text-muted",
               )}
             >
               <span className="desk:hidden">{r.short}</span>
@@ -156,11 +160,13 @@ export function ProgressScreen() {
         <div className="flex flex-col gap-2.5">
           <span
             data-testid="progress-pct"
-            className="text-num-xl leading-[.82] font-medium tracking-number tabular-nums desk:text-num-3xl wide:text-num-hero"
+            className="num text-num-today max-[359px]:text-num-3xl wide:text-num-hero"
           >
             {tot.pct ?? "—"}
             {tot.pct !== null && (
-              <span className="text-heading text-dim desk:text-display">%</span>
+              <span className="text-[2.375rem] font-semibold tracking-normal text-dim">
+                %
+              </span>
             )}
           </span>
           <span className="font-mono text-meta tracking-eyebrow text-dim">
@@ -178,7 +184,7 @@ export function ProgressScreen() {
           >
             <span
               data-testid="progress-streak"
-              className="text-number leading-none font-medium tracking-display desk:text-display"
+              className="num text-number leading-none text-streak desk:text-display"
             >
               {app.streak}{" "}
               <span className="text-small tracking-normal text-muted">
@@ -193,11 +199,13 @@ export function ProgressScreen() {
             value={focusLabel(tot.focusSeconds)}
             label={t.progressScreen.focus}
             testId="progress-focus"
+            tone="text-focus"
           />
           <Stat
             value={String(tot.perfectDays)}
             label={t.progressScreen.perfectDays}
             testId="progress-perfect"
+            tone="text-accent"
           />
         </div>
       </section>
@@ -247,7 +255,7 @@ export function ProgressScreen() {
               <div
                 aria-hidden="true"
                 className={cx(
-                  "rounded-t-sm transition-[height] duration-500 ease-[cubic-bezier(.2,.8,.2,1)]",
+                  "rounded-md transition-[height] duration-500 ease-[var(--ease-out-quick)]",
                   barColor(b, app.standard, range),
                 )}
                 style={{ height: `${barHeight(b.pct)}%` }}
@@ -510,16 +518,19 @@ function Stat({
   value,
   label,
   testId,
+  tone,
 }: {
   value: string;
   label: string;
   testId?: string;
+  /** V3: each signal keeps its colour (focus blue, proof lime). */
+  tone?: string;
 }) {
   return (
     <div className="flex flex-col gap-2 border-t border-line-strong pt-3.5">
       <span
         data-testid={testId}
-        className="text-number leading-none font-medium tracking-display desk:text-display"
+        className={cx("num text-number leading-none desk:text-display", tone)}
       >
         {value}
       </span>
@@ -613,7 +624,7 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-[5px]">
         {DAY_LETTERS.map((d, i) => (
           <span
             key={i}
@@ -648,48 +659,45 @@ function Calendar({ onOpen }: { onOpen: (date: string) => void }) {
                     )
                   : STATE_LABEL[c.state]
               }${c.pct !== null && closed ? `, ${c.pct}%` : ""}`}
+              // V3 heat: perfect = lime tile, met = deep green tile, below
+              // the standard = a dashed outline (never colour alone).
               className={cx(
-                "flex h-[46px] flex-col items-center justify-center gap-1 rounded-xl p-0 text-small tabular-nums disabled:cursor-default",
-                c.state === "today"
-                  ? "border border-line-bold"
-                  : "border border-transparent",
-                c.state === "future" ? "text-ghost" : "text-text",
+                "flex aspect-square max-h-[52px] w-full items-center justify-center rounded-[10px] border-[1.5px] p-0 text-small font-semibold tabular-nums disabled:cursor-default",
+                shown === "perfect"
+                  ? "border-accent bg-accent text-bg"
+                  : shown === "met"
+                    ? "border-accent-met bg-accent-met text-text"
+                    : shown === "missed"
+                      ? "border-dashed border-missed text-text"
+                      : c.state === "today"
+                        ? "border-line-bold text-text"
+                        : "border-transparent",
+                c.state === "future"
+                  ? "text-ghost"
+                  : shown !== "perfect" && shown !== "met" && "text-muted",
               )}
             >
               <span>{c.dayNumber}</span>
-              <span
-                aria-hidden="true"
-                className={cx(
-                  "size-1.5 rounded-full",
-                  (shown === "met" || shown === "perfect") && "bg-accent",
-                  shown === "perfect" &&
-                    "shadow-[0_0_0_2px_var(--color-bg),0_0_0_3px_var(--color-accent)]",
-                  shown === "missed" && "border-[1.5px] border-missed",
-                )}
-              />
             </button>
           );
         })}
       </div>
-      <div className="flex flex-wrap gap-4 text-meta text-dim">
+      <div className="flex flex-wrap gap-3.5 text-small text-muted">
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="size-3 rounded-[4px] bg-accent" />
+          {t.progressScreen.legendPerfect}
+        </span>
         <span className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className="size-1.5 rounded-full bg-accent"
+            className="size-3 rounded-[4px] bg-accent-met"
           />
           {t.progressScreen.legendMet}
         </span>
         <span className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className="size-1.5 rounded-full bg-accent shadow-[0_0_0_2px_var(--color-bg),0_0_0_3px_var(--color-accent)]"
-          />
-          {t.progressScreen.legendPerfect}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="size-1.5 rounded-full border-[1.5px] border-missed"
+            className="size-3 rounded-[4px] border-[1.5px] border-dashed border-missed"
           />
           {t.progressScreen.legendMissed}
         </span>

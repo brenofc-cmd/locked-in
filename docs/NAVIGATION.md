@@ -24,10 +24,10 @@ spacing to bordered cards; collapse only what is history or detail.
 
 ## Bottom navigation (mobile)
 
-`HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO` — only the current tab has a filled pill (ADR-101);
-FOCO keeps its green icon as identity and its pill turns green only when it is the current tab.
-Labels stay caps; under 360 px they drop to 10 px (`text-tab`, the iOS tab-label size) so PROGRESSO
-no longer reaches the screen edge (V3, test 8 in `design.spec.ts`).
+`HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO` — a floating bar since ADR-108 (10 px from the sides,
+26 px above the safe area, centred at 672 px on tablets). Only the current tab has a filled pill
+(ADR-101); FOCO keeps its lime icon as identity. Labels are condensed caps (10.5 px at 82 % width), so
+PROGRESSO fits 320 px (test 8 in `design.spec.ts`).
 
 Active tab (`aria-current="page"`):
 

@@ -158,7 +158,7 @@ export function GoalDetailScreen({
           </button>
           <Link
             href={`/focus?goal=${goal.id}`}
-            className="flex h-12 items-center justify-center rounded-xl btn-primary font-mono text-meta font-semibold tracking-eyebrow"
+            className="flex h-12 items-center justify-center rounded-xl btn-primary font-mono text-meta font-bold tracking-[0.2em]"
           >
             {t.proof.startFocus}
           </Link>

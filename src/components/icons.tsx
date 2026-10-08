@@ -94,12 +94,11 @@ export function PlanIcon() {
 
 /** The ring-with-dot glyph inside the LOCK IN buttons. */
 export function LockGlyph() {
+  // V3: one Proof Pill, outlined in the button's ink.
   return (
     <span
       aria-hidden="true"
-      className="flex size-[13px] items-center justify-center rounded-full border-2 border-bg"
-    >
-      <span className="size-[3px] rounded-full bg-bg" />
-    </span>
+      className="h-[15px] w-2 shrink-0 rounded-[4px] border-2 border-bg"
+    />
   );
 }
