@@ -719,6 +719,22 @@ export const t = {
     installD: "Abre como um app, direto da tela inicial.",
   },
 
+  /** Account: password while signed in (Ajustes → SENHA). */
+  account: {
+    password: "SENHA",
+    passwordHelp: "Troque a senha que você usa para entrar no LOCKED IN.",
+    newPassword: "Nova senha",
+    confirmPassword: "Confirmar nova senha",
+    savePassword: "Trocar senha",
+    passwordSaved: "Senha alterada.",
+    sub: "CONTA",
+    orLink: "Prefiro receber um link por e-mail",
+    linkSent: (email: string) => `Link enviado para ${email}.`,
+    sending: "Enviando…",
+    reauth:
+      "Por segurança, entre de novo ou use o link por e-mail para trocar a senha.",
+  },
+
   /** V2 Phase 10: Web Push on this device (docs/WEB_PUSH.md). */
   push: {
     heading: "NOTIFICAÇÕES PUSH",

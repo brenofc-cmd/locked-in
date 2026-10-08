@@ -11,7 +11,12 @@ import {
 } from "react";
 
 const noSubscribe = () => () => {};
-import { updateSetting, updateTimezone } from "@/app/(app)/settings-actions";
+import {
+  changePassword,
+  sendPasswordLink,
+  updateSetting,
+  updateTimezone,
+} from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { Rook } from "@/components/brand/Rook";
 import { useSession } from "@/components/session";
@@ -92,6 +97,7 @@ export function SettingsScreen() {
       <h1 className="page-title">{t.settings.title}</h1>
 
       <Profile />
+      <PasswordSection />
 
       <section aria-labelledby="standard-h" className="flex flex-col gap-3">
         <h2 id="standard-h" className={heading}>
@@ -392,6 +398,119 @@ function Profile() {
           {t.settings.timezoneNote}
         </span>
       </div>
+    </section>
+  );
+}
+
+/**
+ * Change the password while signed in: new + confirm, or a link to the
+ * account's e-mail (the same flow as "Esqueci a senha").
+ */
+function PasswordSection() {
+  const app = useApp();
+  const { me } = useSession();
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const [sending, startLink] = useTransition();
+  const field =
+    "h-[54px] min-w-0 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold";
+
+  return (
+    <section aria-labelledby="password-h" className="flex flex-col gap-3">
+      <h2 id="password-h" className={heading}>
+        {t.account.password}
+      </h2>
+      <p className="m-0 text-small leading-[1.5] text-dim">
+        {t.account.passwordHelp}
+      </p>
+      <form
+        className="flex flex-col gap-2.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setError(null);
+          start(async () => {
+            const res = await changePassword(password, confirm).catch(
+              () => null,
+            );
+            if (!res?.ok) {
+              setError(res && !res.ok ? res.error : t.errors.network);
+              return;
+            }
+            setPassword("");
+            setConfirm("");
+            app.toast({ text: t.account.passwordSaved, sub: t.account.sub });
+          });
+        }}
+      >
+        <label className="flex flex-col gap-2">
+          <span className="text-small text-dim">{t.account.newPassword}</span>
+          <input
+            type="password"
+            name="new-password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "password-error" : undefined}
+            className={field}
+          />
+        </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-small text-dim">
+            {t.account.confirmPassword}
+          </span>
+          <input
+            type="password"
+            name="confirm-password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "password-error" : undefined}
+            className={field}
+          />
+        </label>
+        {error && (
+          <span
+            id="password-error"
+            role="alert"
+            className="text-small text-danger"
+          >
+            {error}
+          </span>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={pending || !password || !confirm}
+            className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-50"
+          >
+            {pending ? t.settings.saving : t.account.savePassword}
+          </button>
+          <button
+            type="button"
+            disabled={sending}
+            onClick={() =>
+              startLink(async () => {
+                const res = await sendPasswordLink().catch(() => null);
+                app.toast({
+                  text: res?.ok
+                    ? t.account.linkSent(me.email)
+                    : res && !res.ok
+                      ? res.error
+                      : t.errors.network,
+                  sub: t.account.sub,
+                });
+              })
+            }
+            className="h-11 text-small text-muted underline underline-offset-[3px] hover:text-text disabled:opacity-50"
+          >
+            {sending ? t.account.sending : t.account.orLink}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }
