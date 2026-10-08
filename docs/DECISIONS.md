@@ -673,3 +673,22 @@ draw. Stages stay 4.2 s. The ordinary day's streak moment is a ring around the n
 Phase 9 contract (once, non-modal, held while read) and every rule are unchanged.
 Reason: Rare = special without making the same animation bigger.
 Status: Accepted.
+
+# ADR-107 — V3 mobile pass: Expressive Discipline evolved
+
+Decision: Of three directions prototyped on HOJE / DUPLA / FOCO at 390 px (A — Expressive Discipline
+evolved, B — Tactile Discipline, C — Focused Premium; docs/DESIGN_DIRECTION_V3.md), A is applied
+with one idea from B. Today points at **one next task** in place (`nextTaskId`, Top 3 first, then
+list order; a visual PRÓXIMA label, not a duplicate row) and its bar has **one segment per task**
+(≤ 24; a continuous bar above). The primary action is the only element with depth (`btn-primary`:
+a darker green edge it sinks onto when pressed); every primary button uses it. FOCO's Pausar /
+Encerrar are real 56 px buttons. Phones read the daily duel as two lines per category. An empty
+head-to-head leads with its sentence and shrinks. A sparse trend chart is shorter and says why. LOCK
+IN stays pinned on Today until the aside sits beside the tasks (`wide`). Tab labels drop to 10 px
+under 360 px. No rule, query, migration, auth, RLS, API, streak, duel, focus or realtime logic
+changed.
+Reason: The audit found a consistent base, so a new identity would have cost recognition for no
+gain; the gaps were "what do I do next", tactile feedback on the one action, and layouts that only
+worked at 390. B's cards and C's hidden controls conflict with "dark, serious, minimal" and with
+visible controls.
+Status: Accepted (owner authorised the visual redesign, 2026-10-08).

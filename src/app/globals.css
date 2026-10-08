@@ -53,10 +53,19 @@
   --color-accent-tab: color-mix(in oklab, #c6e07b 14%, transparent);
   --color-accent-line: color-mix(in oklab, #c6e07b 60%, transparent);
   --color-streak-soft: color-mix(in oklab, #e6b45e 10%, #0c0c0e);
+  /* The primary button's edge: the green pressed into the page (V3). */
+  --color-accent-deep: color-mix(in oklab, #c6e07b 58%, #000);
+
+  /* Small marks that used to be inline values (audit F8). */
+  --color-strike: rgb(236 234 228 / 0.25); /* line-through on done work */
+  --color-marker: rgb(236 234 228 / 0.35); /* the standard's tick on a bar */
+  --color-rook-glow: rgb(0 230 118 / 0.55); /* Rook's emerald (ROOK.md) */
 
   /* Type scale (rem: follows the user's font size). */
   --text-meta: 0.6875rem; /* 11 — eyebrows, meta, mono labels */
   --text-meta--line-height: 1.35;
+  --text-tab: 0.625rem; /* 10 — tab labels under 360 px only (iOS tab size) */
+  --text-tab--line-height: 1.2;
   --text-small: 0.8125rem; /* 13 — secondary lines, notes */
   --text-small--line-height: 1.45;
   --text-body: 0.9375rem; /* 15 — rows, body copy */
@@ -132,6 +141,25 @@
   line-height: var(--text-meta--line-height);
   letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
+}
+
+/*
+ * The one primary action of a context (LOCK IN, CONCLUIR): solid proof green
+ * standing on a darker edge, so it reads as the thing to press; pressing
+ * sinks it onto the edge (transform + shadow only, 100 ms). Reserved for the
+ * primary button — nothing else in the app has depth (docs/DESIGN_SYSTEM.md).
+ */
+@utility btn-primary {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  box-shadow: 0 4px 0 var(--color-accent-deep);
+  transition:
+    transform 100ms var(--ease-out-quick),
+    box-shadow 100ms var(--ease-out-quick);
+  &:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--color-accent-deep);
+  }
 }
 
 /* Element defaults live in the base layer so Tailwind utilities can override them. */
@@ -374,7 +402,7 @@
   animation: rook-lean 0.6s var(--ease-settle) forwards;
 }
 [data-core="milestone"] [data-part="proof-core"] {
-  filter: drop-shadow(0 0 5px rgb(0 230 118 / 0.55));
+  filter: drop-shadow(0 0 5px var(--color-rook-glow));
 }
 @keyframes rook-core {
   0% {
@@ -383,7 +411,7 @@
   }
   30% {
     scale: 1.14;
-    filter: brightness(1.7) drop-shadow(0 0 5px rgb(0 230 118 / 0.6));
+    filter: brightness(1.7) drop-shadow(0 0 5px var(--color-rook-glow));
   }
   100% {
     scale: 1;

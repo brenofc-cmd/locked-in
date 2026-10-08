@@ -36,7 +36,7 @@ export function ChallengesScreen() {
         </p>
         <Link
           href="/duo"
-          className="flex h-[52px] items-center self-start rounded-2xl bg-accent px-6 font-mono text-small font-semibold tracking-eyebrow text-bg"
+          className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
         >
           {t.challengesScreen.invitePartner}
         </Link>
@@ -92,7 +92,7 @@ export function ChallengesScreen() {
       )}
 
       {active.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-3.5">
           {active.map((c) => (
             <ChallengeCard key={c.id} c={c} onDelete={remove} />
           ))}
@@ -107,7 +107,7 @@ export function ChallengesScreen() {
           <h2 className="border-b border-line-strong pb-2 font-mono text-meta font-normal tracking-eyebrow text-muted">
             {t.challengesScreen.completed}
           </h2>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-3.5">
             {done.map((c) => (
               <ChallengeCard key={c.id} c={c} onDelete={remove} />
             ))}

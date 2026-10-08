@@ -536,8 +536,8 @@ export function TaskFormSheet({
         type="submit"
         aria-disabled={!valid}
         className={cx(
-          "h-14 rounded-2xl font-mono text-small font-semibold tracking-brand transition-all duration-200 active:scale-[.97]",
-          valid ? "bg-accent text-bg" : "bg-selected text-ghost",
+          "h-14 rounded-2xl font-mono text-small font-semibold tracking-brand",
+          valid ? "btn-primary" : "bg-selected text-ghost",
         )}
       >
         {source ? t.taskSheet.save : t.taskSheet.add}

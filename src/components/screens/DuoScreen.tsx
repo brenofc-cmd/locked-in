@@ -189,7 +189,7 @@ export function DuoScreen() {
           type="button"
           onClick={create}
           disabled={pending}
-          className="h-14 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97] disabled:opacity-60"
+          className="h-14 rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand disabled:opacity-60"
         >
           {pending ? t.duoScreen.creating : t.duoScreen.createDuo}
         </button>
@@ -200,7 +200,7 @@ export function DuoScreen() {
           <button
             type="button"
             onClick={share}
-            className="h-14 rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg active:scale-[.97]"
+            className="h-14 rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand"
           >
             {t.duoScreen.shareInvite}
           </button>

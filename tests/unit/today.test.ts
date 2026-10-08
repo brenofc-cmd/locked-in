@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   groupBySection,
+  nextTaskId,
   nextLine,
   routinesOn,
   scheduleLabel,
@@ -135,5 +136,34 @@ describe("today stats", () => {
     );
     expect(scheduleLabel([...DAYS_ALL])).toBe("TODOS OS DIAS");
     expect(scheduleLabel(["MON", "WED"])).toBe("SEG QUA");
+  });
+});
+
+describe("nextTaskId (V3)", () => {
+  it("points at the first open task in list order", () => {
+    const first = groupBySection(today)
+      .flatMap((s) => s.tasks)
+      .find((t) => !t.done);
+    expect(nextTaskId(today)).toBe(first?.id);
+  });
+
+  it("prefers the best-ranked open Top 3 task", () => {
+    const open = today.filter((t) => !t.done);
+    const tasks = today.map((t) =>
+      t.id === open[2].id
+        ? { ...t, priority: 1 }
+        : t.id === open[1].id
+          ? { ...t, priority: 2 }
+          : t,
+    );
+    expect(nextTaskId(tasks)).toBe(open[2].id);
+  });
+
+  it("never points at a done or skipped task, and is null when nothing is open", () => {
+    const firstOpen = nextTaskId(today)!;
+    const skipped = today.map((t) => (t.id === firstOpen ? skip(t) : t));
+    expect(nextTaskId(skipped)).not.toBe(firstOpen);
+    const allDone = today.map((t) => ({ ...t, done: true }));
+    expect(nextTaskId(allDone)).toBeNull();
   });
 });

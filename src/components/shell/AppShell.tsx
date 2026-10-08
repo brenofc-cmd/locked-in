@@ -79,10 +79,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main
         ref={mainRef}
         // scroll-padding keeps a focused row clear of the sticky action bar
-        // (WCAG 2.4.11) on phones.
-        className="min-h-0 min-w-0 flex-1 scroll-pb-28 overflow-x-hidden overflow-y-auto desk:scroll-pb-0"
+        // (WCAG 2.4.11) on phones and up to `wide`, where it is pinned.
+        className="min-h-0 min-w-0 flex-1 scroll-pb-28 overflow-x-hidden overflow-y-auto wide:scroll-pb-0"
       >
-        <div className="mx-auto max-w-[1120px] px-5 pt-5 pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-12 wide:pt-11 wide:pb-24">
+        {/* Tablets (below `desk`) keep a phone-like measure instead of
+            stretching rows edge to edge; desktop gets the full 1120. */}
+        <div className="mx-auto max-w-2xl px-5 pt-5 desk:max-w-[1120px] pb-7 desk:px-8 desk:pt-9 desk:pb-20 wide:px-12 wide:pt-11 wide:pb-24">
           {settings.onboarded ? children : null}
         </div>
       </main>
@@ -241,8 +243,10 @@ function BottomNav({ pathname }: { pathname: string }) {
             </span>
             <span
               className={cx(
-                // 320 px: PLANEJAR / PROGRESSO must not touch.
-                "text-meta tracking-normal max-[359px]:tracking-tighter",
+                // Under 360 px five caps labels do not fit at 11 px
+                // (PROGRESSO reached the screen edge, audit F7): 10 px,
+                // the iOS tab-label size, with normal tracking.
+                "text-meta tracking-normal max-[359px]:text-tab",
                 on ? "font-semibold" : "font-medium",
               )}
             >

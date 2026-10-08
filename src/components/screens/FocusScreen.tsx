@@ -34,7 +34,7 @@ export function FocusScreen({ goalId = null }: { goalId?: string | null }) {
           <button
             type="button"
             onClick={app.startFocus}
-            className="h-[62px] w-full rounded-2xl bg-accent font-mono text-body font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97]"
+            className="btn-primary h-[62px] w-full rounded-2xl font-mono text-body font-semibold tracking-brand"
           >
             LOCK IN
           </button>

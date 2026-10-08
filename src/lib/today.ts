@@ -77,3 +77,22 @@ export function scheduleLabel(days: Day[]): string {
     return t.today.weekdays;
   return days.map(dayLabel).join(" ");
 }
+
+/**
+ * V3 — the one task Today points at: the best-ranked open Top 3 task, else
+ * the first open task in the order the list shows (section, then time).
+ * Skipped and done tasks are never next; null when nothing is open. Pure
+ * presentation: it changes no rule, no order and no data.
+ */
+export function nextTaskId(tasks: Task[]): string | null {
+  const open = (t: Task) => !t.done && t.skip === null;
+  const ranked = tasks
+    .filter((t) => open(t) && t.priority !== null)
+    .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+  if (ranked.length) return ranked[0].id;
+  for (const section of groupBySection(tasks)) {
+    const first = section.tasks.find(open);
+    if (first) return first.id;
+  }
+  return null;
+}

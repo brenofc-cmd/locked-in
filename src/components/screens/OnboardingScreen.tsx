@@ -400,7 +400,7 @@ export function OnboardingScreen() {
                   type="button"
                   onClick={create}
                   disabled={duoPending}
-                  className="h-[52px] rounded-2xl bg-accent font-mono text-small font-semibold tracking-brand text-bg disabled:opacity-60"
+                  className="h-[52px] rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand disabled:opacity-60"
                 >
                   {duoPending
                     ? t.onboarding.creating

@@ -237,6 +237,8 @@ export const t = {
     options: "OPÇÕES",
     willSync: "Será sincronizada",
     done: "FEITA ",
+    /** V3: the one open task to do next (Top 3 first, then list order). */
+    next: "PRÓXIMA",
     optionsFor: (name: string) => `Opções de ${name}`,
   },
 
@@ -511,6 +513,11 @@ export const t = {
     focus: "FOCO",
     perfectDays: "DIAS PERFEITOS",
     chartAria: "Gráfico de conclusão",
+    /** V3: a short chart while the window has fewer than 3 recorded days. */
+    chartEarly: (n: number) =>
+      n === 1
+        ? "1 dia registrado nesta janela. O gráfico ganha forma a cada dia fechado."
+        : `${n} dias registrados nesta janela. O gráfico ganha forma a cada dia fechado.`,
     last7: "ÚLTIMOS 7 DIAS",
     completion: (range: string) => `CONCLUSÃO · ${range}`,
     weeklyAria: "Revisões semanais",
