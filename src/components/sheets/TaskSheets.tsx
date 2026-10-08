@@ -30,7 +30,7 @@ const REPEAT_MODES: Repeat[] = ["daily", "weekdays", "custom"];
 
 const monoLabel = "font-mono text-meta tracking-eyebrow text-dim";
 const field =
-  "rounded-xl border border-line-strong bg-bg text-text outline-none focus:border-line-bold";
+  "rounded-xl border-[1.5px] border-line-strong bg-field text-text outline-none focus:border-line-bold";
 
 function repeatOf(days: Day[]): Repeat {
   if (days.length === 7) return "daily";
@@ -305,7 +305,7 @@ export function TaskFormSheet({
         placeholder={t.taskSheet.namePlaceholder}
         aria-label={t.taskSheet.nameAria}
         enterKeyHint="done"
-        className="h-14 rounded-2xl border border-line-strong bg-bg px-4 text-lead outline-none focus:border-line-bold"
+        className="h-[54px] rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold"
       />
       {!source && (
         <div

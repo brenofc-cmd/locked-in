@@ -31,12 +31,12 @@ export function ChallengesScreen() {
         <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.challengesScreen.title}
         </h1>
-        <p className="text-heading leading-[1.3] font-medium tracking-display text-pretty">
+        <p className="text-heading leading-[1.3] cond font-bold text-pretty">
           {t.challengesScreen.needsPartner}
         </p>
         <Link
           href="/duo"
-          className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
+          className="flex h-14 items-center self-start rounded-2xl btn-primary px-[26px] font-mono text-small font-bold tracking-[0.2em]"
         >
           {t.challengesScreen.invitePartner}
         </Link>
@@ -63,7 +63,7 @@ export function ChallengesScreen() {
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "challenge" })}
-          className="h-11 rounded-xl border border-line-strong px-4 text-body"
+          className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
         >
           {t.challengesScreen.newChallenge}
         </button>

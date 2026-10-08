@@ -12,59 +12,74 @@
   --breakpoint-desk: 48.75rem;
   --breakpoint-wide: 73.75rem;
 
-  /* Surfaces — deep graphite, lighter = closer (no big shadows). */
-  --color-page: #08080a;
-  --color-bg: #0c0c0e;
-  --color-overlay: #0a0a0c;
-  --color-stage: #09090b;
-  --color-card: #131316;
-  --color-sheet: #151518;
-  --color-chip: #18181b;
-  --color-raised: #1b1b1f;
-  --color-selected: #1f1f23;
-  --color-avatar: #222226;
-  --color-field: #111114;
+  /* Surfaces — Obsidian Energy (Design System V3): warm charcoal; lighter =
+     closer, never a big shadow. */
+  --color-page: #0a0c0d;
+  --color-bg: #101315;
+  --color-overlay: #0b0d0e;
+  --color-card: #1b2022;
+  --color-sheet: #191e20;
+  --color-chip: #1f2527;
+  --color-raised: #2a3134;
+  --color-selected: #242a2d;
+  --color-avatar: #2c3336;
+  --color-field: #111416;
+  /* The Focus stage: an ink room with ivory text and a serif timer (V3). */
+  --color-stage: #1c201d;
+  --color-stage-field: #232825;
+  --color-stage-text: #f4f1e8;
+  --color-stage-soft: #c9c5b9;
+  --color-stage-muted: #a8a497;
 
   /* Text — three readable levels (all ≥ 4.5 : 1 on every surface). */
-  --color-text: #eceae4;
-  --color-muted: #a6a59f;
-  --color-dim: #8e8d87;
+  --color-text: #f5f3ec;
+  --color-muted: #a9ada6;
+  --color-dim: #868b85;
   /* Non-text only: disabled labels, decorative strokes, empty tracks. */
-  --color-ghost: #64635e;
-  --color-faint: #4a4a4e;
-  --color-off: #333337;
+  --color-ghost: #5a5e5b;
+  --color-faint: #474b49;
+  --color-off: #333a3d;
 
   /* Lines — hairline divider, outline, emphasis. */
-  --color-line: rgb(255 255 255 / 0.07);
-  --color-line-strong: rgb(255 255 255 / 0.12);
-  --color-line-bold: rgb(255 255 255 / 0.24);
+  --color-line: rgb(245 243 236 / 0.07);
+  --color-line-strong: rgb(245 243 236 / 0.12);
+  --color-line-bold: rgb(245 243 236 / 0.24);
+  /* An open checkbox: the one outline that must read at a glance (V3). */
+  --color-line-check: rgb(245 243 236 / 0.32);
 
-  /* Meaning. Green = proof (done, progress, the primary action, the brand). */
-  --color-accent: #c6e07b;
-  --color-streak: #e6b45e;
-  --color-focus: #9fb3d1;
-  --color-danger: #e5765f;
-  --color-missed: #c27463;
+  /* Meaning. Lime = proof (done, progress, the primary action, the brand). */
+  --color-accent: #c5f277;
+  --color-streak: #f2be6e;
+  --color-focus: #9db7e0;
+  --color-danger: #ee8b6e;
+  --color-missed: #c98370;
+  /* The partner's bar: warm ivory at 45 % (V3 duel). */
+  --color-partner: rgb(230 225 211 / 0.45);
 
-  --color-accent-wash: color-mix(in oklab, #c6e07b 5%, #0c0c0e);
-  --color-accent-soft: color-mix(in oklab, #c6e07b 8%, #0c0c0e);
-  --color-accent-swipe: color-mix(in oklab, #c6e07b 9%, #0c0c0e);
-  --color-accent-strong: color-mix(in oklab, #c6e07b 24%, #0c0c0e);
-  --color-accent-tab: color-mix(in oklab, #c6e07b 14%, transparent);
-  --color-accent-line: color-mix(in oklab, #c6e07b 60%, transparent);
-  --color-streak-soft: color-mix(in oklab, #e6b45e 10%, #0c0c0e);
-  /* The primary button's edge: the green pressed into the page (V3). */
-  --color-accent-deep: color-mix(in oklab, #c6e07b 58%, #000);
+  --color-accent-wash: #1c2419;
+  --color-accent-soft: color-mix(in oklab, #c5f277 9%, #101315);
+  --color-accent-swipe: color-mix(in oklab, #c5f277 10%, #101315);
+  /* Done checkbox fill: quiet green once the proof has settled. */
+  --color-accent-strong: #3b482d;
+  --color-accent-done: #9dbe5f;
+  --color-accent-dim: #5d7036;
+  /* A day that met the standard in the calendar heat (V3). */
+  --color-accent-met: #2c3523;
+  --color-accent-tab: color-mix(in oklab, #c5f277 14%, transparent);
+  --color-accent-line: rgb(197 242 119 / 0.6);
+  --color-streak-soft: color-mix(in oklab, #f2be6e 10%, #101315);
+  /* The primary button's edge: the lime pressed into the page. */
+  --color-accent-deep: #7e9c45;
 
   /* Small marks that used to be inline values (audit F8). */
-  --color-strike: rgb(236 234 228 / 0.25); /* line-through on done work */
-  --color-marker: rgb(236 234 228 / 0.35); /* the standard's tick on a bar */
+  --color-strike: rgb(245 243 236 / 0.3); /* line-through on done work */
+  --color-marker: rgb(245 243 236 / 0.35); /* the standard's tick on a bar */
   --color-rook-glow: rgb(0 230 118 / 0.55); /* Rook's emerald (ROOK.md) */
 
   /* Type scale (rem: follows the user's font size). */
   --text-meta: 0.6875rem; /* 11 — eyebrows, meta, mono labels */
   --text-meta--line-height: 1.35;
-  --text-tab: 0.625rem; /* 10 — tab labels under 360 px only (iOS tab size) */
+  --text-tab: 0.65625rem; /* 10.5 — condensed tab labels and short mono marks (V3) */
   --text-tab--line-height: 1.2;
   --text-small: 0.8125rem; /* 13 — secondary lines, notes */
   --text-small--line-height: 1.45;
@@ -89,6 +104,8 @@
   --text-num-3xl: 6rem; /* 96 */
   --text-num-3xl--line-height: 0.85;
   --text-num-hero: 7rem; /* 112 — hero number (wide) */
+  --text-num-today: 6.75rem; /* 108 — Today's % on a phone (V3 num-hero) */
+  --text-num-today--line-height: 0.76;
   --text-num-hero--line-height: 0.82;
 
   /* Letter spacing: four roles. */
@@ -113,25 +130,42 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  /* Focus stage only: the timer, the task in italics, minutes done. */
+  --font-stage: var(--font-newsreader), Georgia, serif;
 }
 
-/* One page-title style for every screen (docs/DESIGN_SYSTEM.md → Typography). */
+/* One page-title style for every screen (docs/DESIGN_SYSTEM.md → Typography).
+   V3: Archivo 700 at 88 % width, 31 px on a phone. */
 @utility page-title {
   margin: 0;
-  font-size: var(--text-heading);
-  line-height: var(--text-heading--line-height);
-  font-weight: 600;
-  letter-spacing: var(--tracking-display);
+  font-size: 1.9375rem;
+  line-height: 1.05;
+  font-weight: 700;
+  font-stretch: 88%;
+  letter-spacing: -0.015em;
   text-wrap: balance;
-  @media (width < 24rem) {
-    font-size: var(--text-title);
+  @media (width < 22.5rem) {
+    font-size: 1.75rem;
   }
   @media (width >= 48.75rem) {
     font-size: var(--text-display);
     line-height: var(--text-display--line-height);
   }
+}
+
+/* Condensed Archivo for titles and statements (88 %) — V3. */
+@utility cond {
+  font-stretch: 88%;
+}
+
+/* Big numbers: Archivo 800, condensed, tabular (V3 num-hero / score / stat). */
+@utility num {
+  font-weight: 800;
+  font-stretch: 68%;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Mono caps label above a group: the only place caps are used for UI text. */
@@ -202,7 +236,7 @@
     height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1f1f22;
+    background: var(--color-raised);
     border-radius: 8px;
   }
 }
@@ -284,8 +318,8 @@
     transform: scaleY(1);
   }
   30% {
-    opacity: 0.9;
-    transform: scaleY(2.4);
+    opacity: var(--pulse-peak, 0.9);
+    transform: scaleY(var(--pulse-scale, 2.4));
   }
   100% {
     opacity: 0;

@@ -268,6 +268,8 @@ export const t = {
     done: "feitas",
     streakSuffix: "DIAS DE SEQUÊNCIA",
     completionLabel: "Conclusão de hoje",
+    /** V3: the Daily Standard beside the Proof Pills. */
+    standardTag: (pct: number) => `PADRÃO ${pct}%`,
     standardMet: "PADRÃO ATINGIDO.",
     tasksAria: "Tarefas de hoje",
     noRoutine: "NENHUMA ROTINA AINDA",
@@ -1593,6 +1595,10 @@ export const t = {
     live: "AO VIVO",
     final: "RESULTADO FINAL",
     you: "VOCÊ",
+    /** V3 scoreboard: the names under the avatars; the table's headers. */
+    youName: "Você",
+    category: "CATEGORIA",
+    leader: "NA FRENTE",
     youAhead: "VOCÊ ESTÁ NA FRENTE",
     ahead: (name: string) => `${name.toUpperCase()} ESTÁ NA FRENTE`,
     tie: "EMPATE",

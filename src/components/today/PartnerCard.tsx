@@ -53,9 +53,7 @@ export function PartnerCard() {
           </span>
         </span>
         <span className="flex flex-col items-end gap-1">
-          <span className="text-number leading-none font-medium tracking-number tabular-nums">
-            {pv.pct}%
-          </span>
+          <span className="text-number leading-none num">{pv.pct}%</span>
           <span className="font-mono text-meta text-dim">
             {pv.done} / {pv.total}
           </span>

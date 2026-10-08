@@ -692,3 +692,22 @@ gain; the gaps were "what do I do next", tactile feedback on the one action, and
 worked at 390. B's cards and C's hidden controls conflict with "dark, serious, minimal" and with
 visible controls.
 Status: Accepted (owner authorised the visual redesign, 2026-10-08).
+
+# ADR-108 — Obsidian Energy: the owner's Claude Design handoff applied
+
+Decision: The visual system is replaced by the owner's Claude Design project "LOCKED IN V3"
+(Design System V3 + the interactive prototype, imported from the exported zip): warm charcoal
+surfaces, lime proof (`#c5f277`), Archivo (width axis) + JetBrains Mono, Newsreader only on the FOCO
+stage. Token names stay (`bg`, `card`, `accent`…), so components keep their classes; new tokens cover
+the stage, the done checkbox, the partner's bar and the calendar heat. Applied: Proof Pills on Today,
+the check on the right edge of task rows (the text opens the options), a floating tab bar, LOCK IN
+naming the PRÓXIMA task and opening the sheet on it, the duel as an avatar scoreboard with share bars,
+the ink FOCO stage, the V3 calendar heat and chart, the new mark and app icons, and the button / field
+/ switch standards on every screen. Copy that tests and screen readers depend on (greeting, counts,
+headings, button names) is unchanged.
+Not applied (behaviour, not visuals): a confirmation before Encerrar, a profile menu as a sheet, the
+reordered PLANEJAR hub and new copy in the prototype. No rule, query, migration, auth, RLS, API,
+streak, duel, focus persistence or realtime logic changed; `categoryShare` and `dayPills` are pure
+presentation helpers with unit tests.
+Reason: Owner's explicit instruction to apply this design to every screen without breaking anything.
+Status: Accepted (2026-10-08). Evidence: docs/DESIGN_OBSIDIAN_V3.md.

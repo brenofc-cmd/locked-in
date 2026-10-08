@@ -4,22 +4,23 @@
  */
 import type { CSSProperties, ReactNode } from "react";
 import { ProgressPulse } from "@/components/progress-pulse";
+import type { Pill } from "@/lib/today";
 
 export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }
 
-/** The square-in-square LOCKED IN mark. */
+/** The LOCKED IN mark (V3): a rounded square holding one Proof Pill. */
 export function LogoMark({ size = "sm" }: { size?: "sm" | "md" | "lg" }) {
   const outer = {
-    sm: "size-[14px] border-2 rounded-sm",
-    md: "size-[15px] border-2 rounded-sm",
-    lg: "size-7 border-[2.5px] rounded-lg",
+    sm: "size-[18px] border-2 rounded-md",
+    md: "size-[22px] border-[2.5px] rounded-[7px]",
+    lg: "size-7 border-[2.5px] rounded-[9px]",
   }[size];
   const inner = {
-    sm: "size-1 rounded-xs",
-    md: "size-[5px] rounded-xs",
-    lg: "size-2 rounded-xs",
+    sm: "h-[9px] w-1 rounded-xs",
+    md: "h-[11px] w-[5px] rounded-[3px]",
+    lg: "h-[13px] w-1.5 rounded-[3px]",
   }[size];
   return (
     <span
@@ -82,15 +83,15 @@ export function Avatar({
   );
 }
 
-/** Above this many steps a segment is too thin to read: one continuous bar. */
-const MAX_STEPS = 24;
+/** Above this many pills one is too thin to read: one continuous bar. */
+const MAX_PILLS = 24;
 
 export function ProgressBar({
   pct,
   label,
   tone = "accent",
   marker,
-  steps,
+  pills,
   className,
 }: {
   pct: number;
@@ -98,18 +99,18 @@ export function ProgressBar({
   tone?: "accent" | "text" | "partner";
   marker?: number;
   /**
-   * Today's bar (V3): one segment per task, `done` of `total` filled — the
-   * day reads as pieces of proof, not an abstract percentage.
+   * Today's bar (V3 "Pílulas de Prova"): the day as pieces of proof, one
+   * pill per task, in list order — not an abstract percentage.
    */
-  steps?: { done: number; total: number };
+  pills?: readonly Pill[];
   className?: string;
 }) {
   const fill = cx(
     tone === "accent" && "bg-accent",
     tone === "text" && "bg-text",
-    tone === "partner" && "bg-ghost",
+    tone === "partner" && "bg-partner",
   );
-  const segmented = steps && steps.total > 1 && steps.total <= MAX_STEPS;
+  const pilled = pills && pills.length > 1 && pills.length <= MAX_PILLS;
   return (
     <div
       role="progressbar"
@@ -118,20 +119,25 @@ export function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={100}
       className={cx(
-        "relative rounded-sm",
-        segmented ? "flex h-1.5 gap-[3px]" : "h-1 bg-white/6",
+        "relative",
+        pilled
+          ? "flex h-[34px] justify-between gap-[5px] [--pulse-peak:0.22] [--pulse-scale:1.06]"
+          : "h-1.5 rounded-sm bg-line",
         className,
       )}
     >
-      {segmented ? (
+      {pilled ? (
         // <i>, not <span>: the pulse is the bar's only `span` (design.spec).
-        Array.from({ length: steps.total }, (_, i) => (
+        pills.map((p, i) => (
           <i
             key={i}
             aria-hidden="true"
             className={cx(
-              "h-full flex-1 rounded-xs transition-colors duration-300",
-              i < steps.done ? fill : "bg-white/7",
+              "h-full max-w-6 flex-1 rounded-full desk:max-w-none border-[1.5px] transition-[background-color,border-color] duration-300",
+              p === "done" && "border-accent bg-accent",
+              p === "next" && "border-accent",
+              p === "open" && "border-line-bold",
+              p === "skip" && "border-dashed border-line-bold",
             )}
           />
         ))
@@ -144,14 +150,12 @@ export function ProgressBar({
           style={{ width: `${pct}%` }}
         />
       )}
-      {tone === "accent" && <ProgressPulse pct={pct} />}
-      {marker !== undefined && (
+      {tone === "accent" && !pilled && <ProgressPulse pct={pct} />}
+      {tone === "accent" && pilled && <ProgressPulse pct={pct} pill />}
+      {marker !== undefined && !pilled && (
         <span
           aria-hidden="true"
-          className={cx(
-            "absolute w-[1.5px] bg-marker",
-            segmented ? "-top-1 h-3.5" : "-top-[3px] h-2.5",
-          )}
+          className="absolute -top-[3px] h-3 w-[1.5px] bg-marker"
           style={{ left: `${marker}%` }}
         />
       )}
@@ -185,7 +189,7 @@ export function SectionHeader({
   );
 }
 
-/** Pill switch (44×26 in settings, 36×22 compact). */
+/** Pill switch (V3: 46×28 in settings, 36×22 compact). */
 export function SwitchTrack({
   on,
   compact = false,
@@ -198,15 +202,15 @@ export function SwitchTrack({
       aria-hidden="true"
       className={cx(
         "relative shrink-0 transition-colors duration-200",
-        compact ? "h-[22px] w-9 rounded-xl" : "h-[26px] w-11 rounded-xl",
+        compact ? "h-[22px] w-9 rounded-xl" : "h-7 w-[46px] rounded-[14px]",
         on ? "bg-accent" : "bg-off",
       )}
     >
       <span
         className={cx(
           "absolute top-[3px] rounded-full transition-[left] duration-200",
-          compact ? "size-4" : "size-5",
-          on ? "bg-bg" : "bg-dim",
+          compact ? "size-4" : "size-[22px]",
+          on ? "bg-bg" : "bg-muted",
         )}
         style={{ left: on ? (compact ? 17 : 21) : 3 }}
       />
@@ -217,7 +221,7 @@ export function SwitchTrack({
 /** Selected / unselected look used by chips, durations and options. */
 export function chipTone(on: boolean) {
   return on
-    ? "border-accent-line bg-accent-soft text-text"
+    ? "border-accent-line bg-accent-wash text-text"
     : "border-line-strong bg-transparent text-muted";
 }
 
@@ -259,7 +263,9 @@ export function MiniCheck({
   radius?: number;
   light?: boolean;
 }) {
-  const fill = light ? "var(--color-text)" : "var(--color-accent)";
+  const fill = light ? "var(--color-text)" : "var(--color-accent-strong)";
+  const edge = light ? "var(--color-text)" : "var(--color-accent-done)";
+  const mark = light ? "var(--color-bg)" : "var(--color-accent)";
   return (
     <span
       aria-hidden="true"
@@ -268,7 +274,7 @@ export function MiniCheck({
         width: size,
         height: size,
         borderRadius: radius,
-        border: `1.5px solid ${done ? fill : "rgba(255,255,255,0.2)"}`,
+        border: `1.5px solid ${done ? edge : "var(--color-line-check)"}`,
         background: done ? fill : "transparent",
       }}
     >
@@ -276,7 +282,7 @@ export function MiniCheck({
         <path
           d="M3.5 8.5l3 3 6-7"
           fill="none"
-          stroke="var(--color-bg)"
+          stroke={mark}
           strokeWidth={2.4}
           strokeLinecap="round"
           strokeLinejoin="round"

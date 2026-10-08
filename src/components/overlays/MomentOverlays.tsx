@@ -76,7 +76,7 @@ function Frame({
 }
 
 const bigTitle =
-  "m-0 text-num-l leading-none font-semibold tracking-number max-[384px]:text-display desk:text-num-xl";
+  "m-0 text-num-l leading-none num max-[384px]:text-display desk:text-num-xl";
 const lightButton =
   "h-[60px] w-full rounded-2xl bg-text font-mono text-small font-semibold tracking-brand text-bg transition-transform duration-100 active:scale-[.97]";
 
@@ -129,7 +129,7 @@ function ReviewDay() {
           <div className="flex items-baseline justify-between gap-4">
             <span
               data-testid="review-pct"
-              className="text-num-l leading-none font-medium tracking-number tabular-nums"
+              className="text-num-l leading-none num"
             >
               {stats.pct}
               <span className="text-title text-dim">%</span>
@@ -182,7 +182,7 @@ function ReviewDay() {
                   </span>
                   <span
                     data-testid="review-partner-pct"
-                    className="text-title font-medium tracking-display"
+                    className="text-title cond font-bold"
                   >
                     {pv.pct}%
                   </span>
@@ -416,7 +416,7 @@ function WeeklyReview({ start }: { start: string }) {
             </span>
             <span
               data-testid="weekly-me"
-              className="text-num-xl leading-[.8] font-medium tracking-number tabular-nums desk:text-num-3xl"
+              className="text-num-xl leading-[.8] num desk:text-num-3xl"
             >
               {w.mePct === null ? "—" : `${w.mePct}%`}
             </span>
@@ -446,7 +446,7 @@ function WeeklyReview({ start }: { start: string }) {
                 </span>
                 <span
                   data-testid="weekly-partner"
-                  className="text-num-xl leading-[.8] font-medium tracking-number tabular-nums desk:text-num-3xl"
+                  className="text-num-xl leading-[.8] num desk:text-num-3xl"
                 >
                   {w.partnerPct === null ? "—" : `${w.partnerPct}%`}
                 </span>

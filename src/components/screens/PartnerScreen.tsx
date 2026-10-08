@@ -51,12 +51,12 @@ export function PartnerScreen() {
         <h1 className="font-mono text-meta font-normal tracking-eyebrow text-dim">
           {t.partnerScreen.noPartner}
         </h1>
-        <p className="text-heading leading-[1.3] font-medium tracking-display text-pretty">
+        <p className="cond text-[1.6875rem] leading-[1.2] font-bold tracking-[-0.01em] text-pretty">
           {t.partnerScreen.pitch}
         </p>
         <Link
           href="/duo"
-          className="flex h-[52px] items-center self-start rounded-2xl btn-primary px-6 font-mono text-small font-semibold tracking-eyebrow"
+          className="flex h-[58px] items-center self-start rounded-2xl btn-primary px-[26px] font-mono text-small font-bold tracking-[0.2em]"
         >
           {t.partnerScreen.invite}
         </Link>
@@ -97,7 +97,7 @@ export function PartnerScreen() {
             }}
           />
           <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <h1 className="m-0 truncate text-heading leading-none font-semibold tracking-meta max-[384px]:text-title desk:text-display">
+            <h1 className="page-title truncate leading-none">
               {partner.name.toUpperCase()}
             </h1>
             <span className="flex items-center gap-2 text-small text-muted">
@@ -112,7 +112,7 @@ export function PartnerScreen() {
           <span className="flex shrink-0 flex-col items-end gap-1">
             <span
               data-testid="partner-pct"
-              className="text-number leading-none font-medium tracking-number tabular-nums desk:text-num-l"
+              className="num text-num-l leading-none [font-stretch:72%]"
             >
               <span className="sr-only">{t.partnerScreen.today} </span>
               {pv.pct}
@@ -126,7 +126,7 @@ export function PartnerScreen() {
         <ProgressBar
           pct={pv.pct}
           label={t.partnerScreen.completionLabel(partner.name)}
-          tone="text"
+          tone="partner"
           className="overflow-hidden"
         />
         <PartnerDayLine />
@@ -335,7 +335,7 @@ export function PartnerScreen() {
             <span
               data-testid="h2h-score"
               className={cx(
-                "leading-[.85] font-medium tracking-number tabular-nums",
+                "leading-[.85] num",
                 contested
                   ? "text-num-xl desk:text-num-2xl"
                   : "text-number text-dim",
@@ -466,10 +466,7 @@ function WeekBar({
           {who}
         </span>
         <span
-          className={cx(
-            "text-number leading-none font-medium tracking-number tabular-nums",
-            !me && "text-muted",
-          )}
+          className={cx("text-number leading-none num", !me && "text-muted")}
         >
           <span data-testid={testId}>{value === null ? "—" : `${value}%`}</span>
         </span>

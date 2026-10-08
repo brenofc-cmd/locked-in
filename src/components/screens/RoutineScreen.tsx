@@ -68,7 +68,7 @@ export function RoutineScreen() {
         <button
           type="button"
           onClick={() => app.openSheet({ kind: "template" })}
-          className="h-11 rounded-xl border border-line-strong px-4 text-body"
+          className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold"
         >
           {t.routineScreen.useTemplate}
         </button>

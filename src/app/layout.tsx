@@ -1,17 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, JetBrains_Mono, Newsreader } from "next/font/google";
 import { LOCALE, t } from "@/i18n/pt-BR";
 import { ServiceWorkerRegistrar } from "@/components/push/PushRuntime";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Obsidian Energy (Design System V3): Archivo with its width axis for the
+// condensed numbers and titles, JetBrains Mono for labels, Newsreader only
+// on the Focus stage.
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  axes: ["wdth"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["300", "400"],
 });
 
 export const metadata: Metadata = {
@@ -32,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0c0c0e",
+  themeColor: "#101315",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -43,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={LOCALE}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${jetbrainsMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans">
         {children}

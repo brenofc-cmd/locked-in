@@ -139,7 +139,7 @@ export function PrioritiesSheet() {
         type="button"
         onClick={() => void save()}
         aria-disabled={saving}
-        className="h-14 rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand"
+        className="h-[58px] rounded-2xl btn-primary font-mono text-small font-bold tracking-[0.2em]"
       >
         {t.top3.save}
       </button>

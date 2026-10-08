@@ -223,7 +223,7 @@ export function OnboardingScreen() {
         )}
         {step === 2 && (
           <div className="flex flex-col gap-5 animate-[li-rise_.4s_ease]">
-            <h1 className="text-heading leading-[1.2] font-semibold tracking-display">
+            <h1 className="text-heading leading-[1.2] cond font-bold">
               {t.onboarding.buildLines[0]}
               <br />
               {t.onboarding.buildLines[1]}
@@ -273,7 +273,7 @@ export function OnboardingScreen() {
         )}
         {step === 3 && (
           <div className="flex flex-col gap-4 animate-[li-rise_.4s_ease]">
-            <h1 className="text-heading leading-[1.2] font-semibold tracking-display">
+            <h1 className="text-heading leading-[1.2] cond font-bold">
               {path === "template"
                 ? t.onboarding.pickItems
                 : t.onboarding.addItems}
@@ -343,7 +343,7 @@ export function OnboardingScreen() {
                   }}
                   placeholder={t.onboarding.addOwn}
                   aria-label={t.onboarding.addItemAria}
-                  className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 text-base outline-none"
+                  className="h-[54px] min-w-0 flex-1 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none"
                 />
                 <button
                   type="button"
@@ -362,7 +362,7 @@ export function OnboardingScreen() {
         )}
         {step === 4 && (
           <div className="flex flex-col gap-5 animate-[li-rise_.4s_ease]">
-            <h1 className="text-heading leading-[1.2] font-semibold tracking-display">
+            <h1 className="text-heading leading-[1.2] cond font-bold">
               {
                 (duo?.partner
                   ? t.onboarding.duoReadyLines
@@ -400,7 +400,7 @@ export function OnboardingScreen() {
                   type="button"
                   onClick={create}
                   disabled={duoPending}
-                  className="h-[52px] rounded-2xl btn-primary font-mono text-small font-semibold tracking-brand disabled:opacity-60"
+                  className="h-14 rounded-2xl btn-primary font-mono text-small font-bold tracking-[0.2em] disabled:opacity-60"
                 >
                   {duoPending
                     ? t.onboarding.creating
@@ -416,12 +416,12 @@ export function OnboardingScreen() {
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={16}
-                    className="h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-field px-3.5 font-mono text-base tracking-meta uppercase outline-none focus:border-line-bold"
+                    className="h-[54px] min-w-0 flex-1 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 font-mono text-base tracking-meta uppercase outline-none focus:border-line-bold"
                   />
                   <button
                     type="submit"
                     disabled={duoPending || !code.trim()}
-                    className="h-12 rounded-xl border border-line-strong px-5 text-body disabled:opacity-60"
+                    className="h-12 rounded-[14px] border border-line-bold px-[18px] text-body font-semibold disabled:opacity-60"
                   >
                     {t.onboarding.join}
                   </button>

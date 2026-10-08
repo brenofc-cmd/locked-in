@@ -24,7 +24,7 @@ import {
 
 const W = t.weeklyPlan;
 const field =
-  "h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-bg px-3.5 text-base outline-none focus:border-line-bold";
+  "h-12 min-w-0 flex-1 rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base outline-none focus:border-line-bold";
 
 export function WeekPlanScreen({
   initialWeek,
@@ -68,7 +68,7 @@ export function WeekPlanScreen({
             <span className="font-mono text-meta tracking-eyebrow">
               {k === "current" ? W.current : W.next}
             </span>
-            <span className="font-mono text-meta tracking-meta text-dim">
+            <span className="font-mono text-meta tracking-meta text-muted">
               {weekRangeLabel(weeks[k])}
             </span>
           </button>

@@ -12,11 +12,12 @@ import {
 } from "@/app/(auth)/actions";
 import { MIN_PASSWORD } from "@/lib/auth-errors";
 
-// Field and button styles from the v2 "Sign in" moment. Copy: t.auth.
+// Field and button styles (Design System V3: the tactile lime primary,
+// 54 px fields on the field surface). Copy: t.auth.
 const FIELD =
-  "h-[52px] rounded-xl border border-line-strong bg-field px-4 text-body text-text outline-none placeholder:text-dim focus:border-line-bold";
+  "h-[54px] rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-base text-text outline-none placeholder:text-dim focus:border-line-bold";
 const PRIMARY =
-  "h-[52px] rounded-xl bg-text text-body font-semibold text-bg active:scale-[.98] disabled:opacity-60";
+  "btn-primary mt-1.5 h-[58px] rounded-2xl font-mono text-small font-bold tracking-[0.2em] disabled:opacity-60";
 
 function Field(props: {
   name: string;

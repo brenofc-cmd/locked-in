@@ -30,7 +30,7 @@ export function FocusGoalSelect({ compact = false }: { compact?: boolean }) {
         aria-label={t.goalPicker.focusAria}
         disabled={focus.phase === "complete"}
         className={cx(
-          "min-w-0 rounded-xl border border-line-strong bg-bg px-3 text-base text-text outline-none [color-scheme:dark] focus:border-line-bold",
+          "min-w-0 rounded-xl border-[1.5px] border-line-strong bg-field px-3 text-base text-text outline-none [color-scheme:dark] focus:border-line-bold",
           compact ? "h-11" : "h-12",
         )}
       >
@@ -92,8 +92,8 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               aria-checked={on}
               onClick={() => setFocusTask(label, taskId, goalOf(taskId))}
               className={cx(
-                "flex items-center justify-between border-b border-line px-0.5 text-left",
-                compact ? "h-[54px] text-base" : "h-14 text-lead",
+                "flex items-center justify-between border-b border-line px-0.5 text-left font-medium",
+                compact ? "h-[54px] text-base" : "min-h-[58px] text-lead",
                 on ? "text-text" : "text-muted",
               )}
             >
@@ -101,12 +101,12 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               <span
                 aria-hidden="true"
                 className={cx(
-                  "flex size-[22px] items-center justify-center rounded-full border-[1.5px]",
-                  on ? "border-accent" : "border-line-bold",
+                  "flex size-6 items-center justify-center rounded-full border-[1.5px]",
+                  on ? "border-accent" : "border-line-check",
                 )}
               >
                 <span
-                  className="size-2.5 rounded-full bg-accent transition-transform duration-200 ease-[cubic-bezier(.3,1.6,.5,1)]"
+                  className="size-3 rounded-full bg-accent transition-transform duration-200 ease-[cubic-bezier(.3,1.6,.5,1)]"
                   style={{ transform: on ? "scale(1)" : "scale(0)" }}
                 />
               </span>
@@ -134,15 +134,15 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
               }
               onClick={() => setFocusDur(d.value)}
               className={cx(
-                "flex flex-col items-center justify-center gap-1 rounded-2xl border p-0 transition-all duration-150 active:scale-[.95]",
+                "flex flex-col items-center justify-center gap-0.5 rounded-2xl border-[1.5px] p-0 transition-all duration-150 active:scale-[.95]",
                 compact ? "h-[68px]" : "h-[76px]",
                 chipTone(on),
               )}
             >
               <span
                 className={cx(
-                  "font-medium tracking-display",
-                  compact ? "text-title" : "text-heading",
+                  "num leading-none [font-stretch:70%]",
+                  compact ? "text-[1.75rem]" : "text-[1.875rem]",
                 )}
               >
                 {d.value === "custom" && focus.custom ? focus.custom : d.n}
@@ -165,7 +165,7 @@ export function FocusPicker({ compact = false }: { compact?: boolean }) {
             onChange={(e) => setFocusCustom(e.target.value)}
             placeholder="45"
             aria-label={t.focusUi.customMinutesAria}
-            className="h-12 w-[110px] rounded-xl border border-line-strong bg-bg px-3.5 text-lead outline-none"
+            className="h-12 w-[110px] rounded-xl border-[1.5px] border-line-strong bg-field px-3.5 text-lead outline-none"
           />
           <span className="font-mono text-meta tracking-eyebrow text-dim">
             {t.focusUi.minutes}
