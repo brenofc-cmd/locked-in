@@ -29,6 +29,12 @@ a light haptic (`navigator.vibrate(8)`) where the platform allows, only from the
 Today's Rook acknowledges (`ack`: Core lights, blink, nod, wings, settle, ~650 ms). No confetti.
 Interaction is never blocked.
 
+## The primary button (V3)
+
+The one element with depth: pressed, `btn-primary` sinks 3 px onto its darker edge (transform + box
+shadow, 100 ms, `--ease-out-quick`); with reduced motion the edge still changes, the move is instant.
+Secondary buttons keep the 150 ms press scale.
+
 ## Navigation
 
 Tabs: colour change + a 150 ms press scale. Screens enter with a 400 ms fade + 10 px rise

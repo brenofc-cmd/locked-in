@@ -26,6 +26,8 @@ spacing to bordered cards; collapse only what is history or detail.
 
 `HOJE · DUPLA · FOCO · PLANEJAR · PROGRESSO` — only the current tab has a filled pill (ADR-101);
 FOCO keeps its green icon as identity and its pill turns green only when it is the current tab.
+Labels stay caps; under 360 px they drop to 10 px (`text-tab`, the iOS tab-label size) so PROGRESSO
+no longer reaches the screen edge (V3, test 8 in `design.spec.ts`).
 
 Active tab (`aria-current="page"`):
 
@@ -54,12 +56,14 @@ return focus to the button; Tab moves through the items; it closes on navigation
 
 ## Screens
 
-**HOJE** — header (date, day, greeting, %, streak, bar, next action) → morning card (once a day) →
-TOP 3 (compact rows) → tasks (dominant; a Top 3 task shows a small rank marker) → context rows:
+**HOJE** — header (date, day, greeting, %, streak, bar — one segment per task since V3 —, next
+action) → morning card (once a day) → TOP 3 (compact rows) → tasks (dominant; a Top 3 task shows a
+small rank marker; V3: one open task carries the PRÓXIMA pointer) → context rows:
 `DUELO · AO VIVO  Você 2 — 1 Ana ›` (→ `/partner#duel`), `PRÓXIMO  event ›` (only the next event),
 `◇ LEMBRE-SE DO PORQUÊ  text ›` (→ `/goals`) → Revisar o dia. On a phone the partner card left Today (the
 header chip and DUPLA cover it, including the partner's running focus clock); it stays on desktop.
-Without a partner the invite card shows on every width. Wide desktop: the context rows and the live feed sit in the aside.
+Without a partner the invite card shows on every width. LOCK IN is pinned at the bottom up to `wide` (V3): between 780 and 1179 px
+the aside falls below the list. Wide desktop: the context rows and the live feed sit in the aside.
 
 **DUPLA** — person (avatar, name, status, check-in, today's % inline) → DUELO DE HOJE → one month row
 (V2 Phase 8: MÊS · AO VIVO · Você 8 — 5 Matheus › → `/progress#month`) → COMPROMISSOS (active first) → CHECK-IN / DAR UM TOQUE as rows → the partner's tasks + ATIVIDADE →
