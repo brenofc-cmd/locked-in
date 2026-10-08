@@ -41,14 +41,16 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "mobile-390",
-      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
+      testIgnore:
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "desktop-1440",
-      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
+      testIgnore:
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: desk,
@@ -58,28 +60,32 @@ export default defineConfig({
     {
       name: "focus-390",
       grep: /@focus/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
+      testIgnore:
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
     {
       name: "focus-1440",
       grep: /@focus/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
+      testIgnore:
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: desk,
     },
     {
       name: "mobile-375",
       grep: /@layout/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
+      testIgnore:
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
       dependencies: ["setup"],
       use: { ...phone(375, 812), ...state("layout") },
     },
     {
       name: "mobile-430",
       grep: /@layout/,
-      testIgnore: /stage\d|v2-|issue-|ia\.spec|design\.spec|visual\.spec/,
+      testIgnore:
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
       dependencies: ["setup"],
       use: { ...phone(430, 932), ...state("layout") },
     },
@@ -238,12 +244,20 @@ export default defineConfig({
       dependencies: ["v2p10-390"],
       use: { ...phone(390, 844), channel: "chromium" },
     },
+    // Account (Ajustes → SENHA): changes a DEV user's password and puts it
+    // back. Serial, after the design checks.
+    {
+      name: "account-390",
+      testMatch: /account\.spec\.ts/,
+      dependencies: ["design-390"],
+      use: { ...phone(390, 844), channel: "chromium" },
+    },
     // The visual review matrix (LI_SHOTS=<dir>, skipped otherwise).
     // Run alone: npx playwright test --project=visual --no-deps
     {
       name: "visual",
       testMatch: /visual\.spec\.ts/,
-      dependencies: ["design-390"],
+      dependencies: ["account-390"],
       use: phone(390, 844),
     },
   ],

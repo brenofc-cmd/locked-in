@@ -711,3 +711,18 @@ streak, duel, focus persistence or realtime logic changed; `categoryShare` and `
 presentation helpers with unit tests.
 Reason: Owner's explicit instruction to apply this design to every screen without breaking anything.
 Status: Accepted (2026-10-08). Evidence: docs/DESIGN_OBSIDIAN_V3.md.
+
+# ADR-109 — Change the password from Ajustes
+
+Decision: Ajustes gets a SENHA section: new password + confirmation, saved with Supabase Auth
+`updateUser` through a Server Action (`changePassword`), and a "link por e-mail" fallback
+(`sendPasswordLink`, the same `/auth/confirm → /reset-password` flow as "Esqueci a senha", to the
+session's own address). Validation is `validatePassword` (8+ characters, both equal); auth errors go
+through `authErrorMessage`; a project that requires a recent sign-in gets a sentence pointing to the
+link. No database change. E2E: `tests/e2e/account.spec.ts` (project `account-390`) changes a DEV
+user's password, signs in with it and puts the original back.
+Not done yet: deleting the account. It needs a SECURITY DEFINER function (`delete_my_account()`,
+end the duo like `leave_duo`, then delete the auth user; every table cascades), which changes the
+reviewed DEFINER set (`stage9_integrity.test.sql`, docs/SECURITY.md) and must be applied to DEV and
+production — waiting for the owner's go-ahead on the database.
+Status: Accepted (2026-10-08).
