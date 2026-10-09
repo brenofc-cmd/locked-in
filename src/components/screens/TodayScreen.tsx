@@ -2,12 +2,16 @@
 
 import { t } from "@/i18n/pt-BR";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { DuelCompact } from "@/components/duel/Duel";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
 import { LockGlyph } from "@/components/icons";
 import { ActivityItem } from "@/components/today/ActivityItem";
-import { MorningCard } from "@/components/today/MorningCard";
+import {
+  MorningRitual,
+  useMorningRitual,
+} from "@/components/today/MorningRitual";
 import { NorthStarCard } from "@/components/today/NorthStarCard";
 import { NoPartnerCard, PartnerCard } from "@/components/today/PartnerCard";
 import { TaskRow } from "@/components/today/TaskRow";
@@ -24,10 +28,11 @@ import {
   nextTaskId,
   routinesOn,
   todayStats,
+  type RitualState,
 } from "@/lib/today";
 
 /**
- * Today = execution (docs/NAVIGATION.md): header → morning card (first open
+ * Today = execution (docs/NAVIGATION.md): header (the Morning Ritual on the first open
  * of the day) → TOP 3 → tasks, then minimal context, one line each — the
  * duel, the next event, the why — after the tasks on a phone and in the side
  * column on a wide screen. The partner is the header chip on a phone and a
@@ -61,6 +66,61 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
     app.openSheet({ kind: "focus" });
   };
   const empty = app.tasks.length === 0 && app.routines.length === 0;
+  const pills = dayPills(app.tasks, next);
+  const ritual = useMorningRitual();
+  /** Times the day was started here: Rook's nod and the numbers' entry. */
+  const [started, setStarted] = useState(0);
+  /** The step the ritual handed over to, lit for a moment in the list. */
+  const [cue, setCue] = useState<string | null>(null);
+  const [go, setGo] = useState(false);
+  const title = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!go) return;
+    const id = setTimeout(() => setGo(false), 2600);
+    return () => clearTimeout(id);
+  }, [go]);
+  useEffect(() => {
+    if (!cue) return;
+    const id = setTimeout(() => setCue(null), 900);
+    return () => clearTimeout(id);
+  }, [cue]);
+
+  /**
+   * V3.2: the ritual hands over to execution. State first, motion after:
+   * it closes at once, Rook acknowledges, the numbers come back, and focus
+   * lands on the first step's check (scrolled into view only when hidden) —
+   * nothing is completed, started or navigated. No tasks → the add sheet.
+   */
+  function startDay(state: RitualState) {
+    ritual.close();
+    setStarted((n) => n + 1);
+    if (state === "empty") {
+      app.openSheet({ kind: "add", repeat: app.routines.length === 0 });
+      return;
+    }
+    if (state === "done" || !next) {
+      requestAnimationFrame(() => title.current?.focus());
+      return;
+    }
+    setCue(next);
+    setGo(true);
+    requestAnimationFrame(() => {
+      const check = document.querySelector<HTMLElement>(
+        '[data-next="true"] [role="checkbox"]',
+      );
+      if (!check) return;
+      check.focus({ preventScroll: true });
+      const box = check.getBoundingClientRect();
+      // The pinned LOCK IN and the tab bar cover the bottom of a phone.
+      if (box.top < 0 || box.bottom > window.innerHeight - 200) {
+        const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        check.scrollIntoView({
+          block: "center",
+          behavior: calm ? "auto" : "smooth",
+        });
+      }
+    });
+  }
   const dayNumber = accountDay(me.createdAt, me.timezone, app.today);
   const feedShort = app.feed.slice(-5);
 
@@ -80,7 +140,12 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
               </div>
               {/* Rook beside the greeting: he reacts to each task proved. */}
               <div className="flex items-end justify-between gap-3">
-                <h1 suppressHydrationWarning className="page-title">
+                <h1
+                  ref={title}
+                  tabIndex={-1}
+                  suppressHydrationWarning
+                  className="page-title focus:outline-none"
+                >
                   {t.todayScreen.greeting(
                     daypartAt(app.now, me.timezone),
                     app.userName.toUpperCase(),
@@ -90,85 +155,115 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                   done={stats.done}
                   standardMet={stats.standardMet}
                   perfect={stats.perfect}
+                  greeting={ritual.open}
+                  started={started}
                 />
               </div>
             </div>
-            <div className="flex items-end justify-between gap-4">
-              <span
-                data-testid="today-pct"
-                aria-label={t.todayScreen.pctAria(stats.pct)}
+            {ritual.open ? (
+              <MorningRitual
+                star={northStar}
+                stats={stats}
+                next={nextTask}
+                pills={pills}
+                onStart={startDay}
+                onClose={ritual.close}
+              />
+            ) : (
+              <div
+                key={started}
                 className={cx(
-                  "num flex items-baseline text-num-today transition-colors duration-[400ms] max-[359px]:text-num-xl wide:text-num-hero",
-                  stats.perfect ? "text-accent" : "text-text",
+                  "flex flex-col gap-5",
+                  started > 0 &&
+                    "motion-safe:animate-[li-fade-up_.4s_var(--ease-out-quick)]",
                 )}
               >
-                {stats.pct}
-                <span className="ml-[3px] text-[2.375rem] font-semibold tracking-normal text-dim">
-                  %
-                </span>
-              </span>
-              <span className="flex min-w-0 items-end gap-3">
-                <div className="flex flex-col items-end gap-1.5 pb-0.5">
+                <div className="flex items-end justify-between gap-4">
                   <span
-                    data-testid="today-count"
-                    className="text-base whitespace-nowrap tabular-nums"
-                  >
-                    {stats.done} / {stats.total}{" "}
-                    <span className="text-dim">{t.todayScreen.done}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => app.openSheet({ kind: "streak" })}
+                    data-testid="today-pct"
+                    aria-label={t.todayScreen.pctAria(stats.pct)}
                     className={cx(
-                      "flex min-h-8 items-center gap-[7px] text-right font-mono text-meta tracking-[0.14em] hover:text-text",
-                      app.streak > 0 ? "text-streak" : "text-dim",
+                      "num flex items-baseline text-num-today transition-colors duration-[400ms] max-[359px]:text-num-xl wide:text-num-hero",
+                      stats.perfect ? "text-accent" : "text-text",
                     )}
                   >
-                    <span
-                      aria-hidden="true"
-                      className={cx(
-                        "h-3 w-1.5 rounded-[3px]",
-                        app.streak > 0 ? "bg-streak" : "bg-dim",
-                      )}
-                    />
-                    <StreakNumber streak={app.streak} />{" "}
-                    {t.todayScreen.streakSuffix}
-                    <span aria-hidden="true" className="text-ghost">
-                      ›
+                    {stats.pct}
+                    <span className="ml-[3px] text-[2.375rem] font-semibold tracking-normal text-dim">
+                      %
                     </span>
-                  </button>
-                </div>
-              </span>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              <ProgressBar
-                pct={stats.pct}
-                label={t.todayScreen.completionLabel}
-                marker={app.standard}
-                pills={dayPills(app.tasks, next)}
-                className="mt-1 overflow-visible"
-              />
-              <div className="flex items-baseline justify-between gap-3">
-                <span
-                  className={cx(
-                    "text-sm",
-                    stats.standardMet ? "text-accent" : "text-muted",
-                  )}
-                >
-                  {nextLine(stats)}
-                </span>
-                {stats.total > 0 && (
-                  <span className="font-mono text-tab tracking-[0.12em] whitespace-nowrap text-dim">
-                    {t.todayScreen.standardTag(app.standard)}
                   </span>
-                )}
+                  <span className="flex min-w-0 items-end gap-3">
+                    <div className="flex flex-col items-end gap-1.5 pb-0.5">
+                      <span
+                        data-testid="today-count"
+                        className="text-base whitespace-nowrap tabular-nums"
+                      >
+                        {stats.done} / {stats.total}{" "}
+                        <span className="text-dim">{t.todayScreen.done}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => app.openSheet({ kind: "streak" })}
+                        className={cx(
+                          "flex min-h-8 items-center gap-[7px] text-right font-mono text-meta tracking-[0.14em] hover:text-text",
+                          app.streak > 0 ? "text-streak" : "text-dim",
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={cx(
+                            "h-3 w-1.5 rounded-[3px]",
+                            app.streak > 0 ? "bg-streak" : "bg-dim",
+                          )}
+                        />
+                        <StreakNumber streak={app.streak} />{" "}
+                        {t.todayScreen.streakSuffix}
+                        <span aria-hidden="true" className="text-ghost">
+                          ›
+                        </span>
+                      </button>
+                    </div>
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2.5">
+                  <ProgressBar
+                    pct={stats.pct}
+                    label={t.todayScreen.completionLabel}
+                    marker={app.standard}
+                    pills={pills}
+                    className="mt-1 overflow-visible"
+                  />
+                  <div className="flex items-baseline justify-between gap-3">
+                    {go ? (
+                      <span
+                        role="status"
+                        className="text-sm text-text motion-safe:animate-[li-fade-in_.3s_ease]"
+                      >
+                        {t.morning.go}
+                      </span>
+                    ) : (
+                      <span
+                        className={cx(
+                          "text-sm",
+                          stats.standardMet ? "text-accent" : "text-muted",
+                        )}
+                      >
+                        {nextLine(stats)}
+                      </span>
+                    )}
+                    {stats.total > 0 && (
+                      <span className="font-mono text-tab tracking-[0.12em] whitespace-nowrap text-dim">
+                        {t.todayScreen.standardTag(app.standard)}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </header>
 
-          <MorningCard star={northStar} />
-
-          {stats.perfect && (
+          {/* The ritual already says the day is done. */}
+          {stats.perfect && !ritual.open && (
             <div className="flex items-center justify-between gap-4 rounded-2xl bg-accent-wash px-5 py-5 motion-safe:animate-[li-glow_1.8s_ease-in-out_1]">
               <span className="flex items-baseline gap-4">
                 <span className="text-heading cond font-bold text-accent">
@@ -187,7 +282,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
             aria-label={t.todayScreen.tasksAria}
             className="flex flex-col gap-8"
           >
-            {empty && (
+            {empty && !ritual.open && (
               <div className="flex flex-col gap-3.5 rounded-2xl border border-dashed border-line-strong p-5">
                 <span className="font-mono text-meta tracking-eyebrow text-dim">
                   {t.todayScreen.noRoutine}
@@ -217,7 +312,7 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
                     key={task.id}
                     task={task}
                     popping={app.pop === task.id}
-                    flashing={app.flash === task.id}
+                    flashing={app.flash === task.id || cue === task.id}
                     next={task.id === next}
                     onToggle={() => app.toggleTask(task.id)}
                     onOptions={() =>

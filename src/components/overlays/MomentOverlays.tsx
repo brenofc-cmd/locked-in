@@ -37,7 +37,7 @@ import {
 import type { Priority } from "@/lib/weekly-plan";
 
 /** Review day and weekly review (full-screen moments). The morning briefing
- *  is an inline card on Today since V2 Phase 4 (MorningCard). */
+ *  is part of Today's header since V3.2 (MorningRitual). */
 export function MomentOverlays() {
   const { overlay } = useApp();
   if (!overlay) return null;

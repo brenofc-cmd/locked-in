@@ -99,7 +99,10 @@ export function TaskRow({
   const leftOpacity = dx > 0 ? Math.min(1, dx / 80) : 0;
 
   return (
-    <div className="relative overflow-hidden border-b border-line">
+    <div
+      data-next={next || undefined}
+      className="relative overflow-hidden border-b border-line"
+    >
       <div aria-hidden="true" className="absolute inset-0 flex justify-between">
         <div
           className={cx(

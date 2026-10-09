@@ -1026,17 +1026,42 @@ export const t = {
     toastSub: "TOP 3",
     done: "FEITA",
   },
+  // V3.2 Morning Ritual (docs/MORNING_RITUAL.md): Today's header opens the day.
   morning: {
     aria: "Resumo do dia",
-    eyebrow: (time: string, weekday: string) => `${time} · ${weekday}`,
-    streak: (n: number) => `${n} ${plural(n, "DIA", "DIAS")} DE SEQUÊNCIA`,
-    standard: (n: number) => `PADRÃO ${n}%`,
-    planned: (n: number) => `${n} ${plural(n, "TAREFA", "TAREFAS")} HOJE`,
-    yesterday: (pct: string) => `ONTEM ${pct}`,
-    next: "PRÓXIMO",
-    today: "HOJE",
-    noTop3: "Nenhuma prioridade escolhida.",
+    lead: {
+      fresh: (n: number) =>
+        n === 1
+          ? "Um compromisso hoje. Comece por ele."
+          : `${n} compromissos hoje. Um passo de cada vez.`,
+      going: (done: number, total: number) =>
+        `Você já cumpriu ${done} de ${total}. Siga daqui.`,
+      perfect: "Tudo o que você planejou para hoje está feito.",
+      clear: "Nada mais em aberto hoje.",
+      empty: "Seu dia ainda não tem compromissos.",
+    },
+    first: "SEU PRIMEIRO PASSO",
+    nextStep: "PRÓXIMO PASSO",
+    dayDone: "DIA CUMPRIDO",
+    plan: "PLANEJAR",
+    step: (i: number, n: number) => `PASSO ${i} DE ${n}`,
+    doneTitle: (n: number) =>
+      `${n} ${plural(n, "compromisso cumprido", "compromissos cumpridos")}.`,
+    clearTitle: (done: number, total: number) =>
+      `${done} de ${total} ${plural(total, "cumprido", "cumpridos")}.`,
+    emptyTitle: "Escolha o que você vai cumprir hoje.",
     start: "COMEÇAR O DIA",
+    resume: "CONTINUAR O DIA",
+    see: "VER MEU DIA",
+    planDay: "PLANEJAR MEU DIA",
+    /** After COMEÇAR / CONTINUAR, for a moment, where the standard line sits. */
+    go: "Pronto. Agora é executar.",
+    standardKey: "META",
+    standard: (n: number) => `PADRÃO ${n}%`,
+    streakKey: "SEQUÊNCIA",
+    streak: (n: number) => `${n} ${plural(n, "DIA", "DIAS")}`,
+    whyKey: "POR QUÊ",
+    next: "PRÓXIMO",
     close: "Fechar resumo",
     autoShow: "Mostrar toda manhã",
     goalWeek: (n: number) => `${n} ${plural(n, "AÇÃO", "AÇÕES")} NESTA SEMANA`,
