@@ -119,6 +119,18 @@ export function dayPills(tasks: Task[], nextId: string | null): Pill[] {
   );
 }
 
+const TRACK_RANK: Record<Pill, number> = { done: 0, next: 1, open: 2, skip: 3 };
+
+/**
+ * V3.3 Proof Track — the same pills in fill order: proof first, then the
+ * PRÓXIMA task, the open ones and the skipped (still in the denominator) at
+ * the end, so the day fills from the left like progress does. Stable within
+ * a kind. Pure presentation: same count, same kinds.
+ */
+export function trackOrder(pills: readonly Pill[]): Pill[] {
+  return [...pills].sort((a, b) => TRACK_RANK[a] - TRACK_RANK[b]);
+}
+
 /**
  * V3.2 Morning Ritual — what the day looks like when it opens: nothing
  * planned, nothing left open (all done or skipped), not begun, or begun.

@@ -4,6 +4,7 @@
  */
 import type { CSSProperties, ReactNode } from "react";
 import { ProgressPulse } from "@/components/progress-pulse";
+import { ProofTrack } from "@/components/proof-track";
 import type { Pill } from "@/lib/today";
 
 export function cx(...parts: (string | false | null | undefined)[]) {
@@ -120,27 +121,13 @@ export function ProgressBar({
       aria-valuemax={100}
       className={cx(
         "relative",
-        pilled
-          ? "flex h-[34px] justify-between gap-[5px] [--pulse-peak:0.22] [--pulse-scale:1.06]"
-          : "h-1.5 rounded-sm bg-line",
+        pilled ? "flex items-center" : "h-1.5 rounded-sm bg-line",
         className,
       )}
     >
       {pilled ? (
-        // <i>, not <span>: the pulse is the bar's only `span` (design.spec).
-        pills.map((p, i) => (
-          <i
-            key={i}
-            aria-hidden="true"
-            className={cx(
-              "h-full max-w-6 flex-1 rounded-full desk:max-w-none border-[1.5px] transition-[background-color,border-color] duration-300",
-              p === "done" && "border-accent bg-accent",
-              p === "next" && "border-accent",
-              p === "open" && "border-line-bold",
-              p === "skip" && "border-dashed border-line-bold",
-            )}
-          />
-        ))
+        // V3.3 Proof Track: the pills as one segmented track, in fill order.
+        <ProofTrack pills={pills} standard={marker} />
       ) : (
         <div
           className={cx(
@@ -151,7 +138,6 @@ export function ProgressBar({
         />
       )}
       {tone === "accent" && !pilled && <ProgressPulse pct={pct} />}
-      {tone === "accent" && pilled && <ProgressPulse pct={pct} pill />}
       {marker !== undefined && !pilled && (
         <span
           aria-hidden="true"
@@ -245,7 +231,8 @@ export function CheckPath({
       style={{
         strokeDasharray: 16,
         strokeDashoffset: drawn ? 0 : 16,
-        transition: "stroke-dashoffset .3s ease .06s, stroke .3s ease",
+        transition:
+          "stroke-dashoffset .28s var(--ease-out-quick) .1s, stroke .3s ease",
       }}
     />
   );

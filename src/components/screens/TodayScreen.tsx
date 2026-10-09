@@ -28,6 +28,7 @@ import {
   nextTaskId,
   routinesOn,
   todayStats,
+  trackOrder,
   type RitualState,
 } from "@/lib/today";
 
@@ -66,7 +67,8 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
     app.openSheet({ kind: "focus" });
   };
   const empty = app.tasks.length === 0 && app.routines.length === 0;
-  const pills = dayPills(app.tasks, next);
+  // V3.3: in fill order — proof from the left (Proof Track).
+  const pills = trackOrder(dayPills(app.tasks, next));
   const ritual = useMorningRitual();
   /** Times the day was started here: Rook's nod and the numbers' entry. */
   const [started, setStarted] = useState(0);
@@ -110,11 +112,14 @@ export function TodayScreen({ northStar }: { northStar: NorthStar }) {
       );
       if (!check) return;
       check.focus({ preventScroll: true });
-      const box = check.getBoundingClientRect();
+      // The row, not the check: the check overhangs its overflow-hidden row,
+      // which would otherwise scroll sideways and clip the name.
+      const row = check.closest<HTMLElement>("[data-next]") ?? check;
+      const box = row.getBoundingClientRect();
       // The pinned LOCK IN and the tab bar cover the bottom of a phone.
       if (box.top < 0 || box.bottom > window.innerHeight - 200) {
         const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-        check.scrollIntoView({
+        row.scrollIntoView({
           block: "center",
           behavior: calm ? "auto" : "smooth",
         });

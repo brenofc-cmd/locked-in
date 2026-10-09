@@ -21,10 +21,13 @@ transitions and SVG stroke drawing); never layout properties.
 
 ## Task completion (the core microinteraction)
 
-Tap → the checkbox is checked at once (`aria-checked`, optimistic write) → the box presses ~8 % and
-flashes full green while the check draws (300 ms) → after ~420 ms it settles to the quiet done state
-(`accent-strong` + green check), the name dims and strikes through → the progress bar's fill grows and
-a single glow passes over it (`li-bar-pulse`, 600 ms, only when progress goes **up**, never on load) →
+Tap → the checkbox is checked at once (`aria-checked`, optimistic write) → the box presses and springs
+back in full lime (`li-check-pop`: 78 % → 110 % → 100 %, 420 ms) while one ring leaves it
+(`li-check-ring`, 500 ms) and the check draws (280 ms, 100 ms in) → after ~420 ms it settles to the
+quiet done state (`accent-strong` + green check); the name dims and its strike **draws** across it
+(per line, 300 ms; retracts on undo) → on the Proof Track (V3.3) the new segment's fill slides in from
+the left (500 ms) and one light passes over every proved segment, left to right (`li-sheen`, 650 ms,
+260 ms in, 45 ms apart; only when proof goes **up**, never on load or undo) →
 a light haptic (`navigator.vibrate(8)`) where the platform allows, only from the user's own tap →
 Today's Rook acknowledges (`ack`: Core lights, blink, nod, wings, settle, ~650 ms). No confetti.
 Interaction is never blocked.

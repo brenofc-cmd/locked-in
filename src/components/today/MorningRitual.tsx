@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { updateSetting } from "@/app/(app)/settings-actions";
 import { useApp } from "@/components/app-state";
 import { useSession } from "@/components/session";
+import { ProofTrack } from "@/components/proof-track";
 import { cx } from "@/components/ui";
 import { usePartnerView } from "@/components/use-partner-view";
 import { localTimeHM } from "@/lib/local-date";
@@ -196,21 +197,10 @@ export function MorningRitual({
 
         {/* The day as Proof Pills — the same pieces Today's bar shows once
             the ritual hands over. Decorative: the lead says the numbers. */}
+        {/* The day as the Proof Track — the same pieces Today's bar shows
+            once the ritual hands over. Decorative: the lead says the numbers. */}
         {pills.length > 1 && pills.length <= 24 && (
-          <div aria-hidden="true" className="flex gap-1.5">
-            {pills.map((p, i) => (
-              <i
-                key={i}
-                className={cx(
-                  "h-2 flex-1 rounded-full border-[1.5px]",
-                  p === "done" && "border-accent bg-accent",
-                  p === "next" && "border-accent",
-                  p === "open" && "border-line-bold",
-                  p === "skip" && "border-dashed border-line-bold",
-                )}
-              />
-            ))}
-          </div>
+          <ProofTrack pills={pills} size="sm" />
         )}
 
         <button

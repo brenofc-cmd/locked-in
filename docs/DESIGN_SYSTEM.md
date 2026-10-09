@@ -151,10 +151,14 @@ button in the app uses the utility — never hand-rolled `bg-accent text-bg`. A 
 - **PRÓXIMA**: Today marks one open task in place — the best-ranked open Top 3 task, else the first
   open task in list order (`nextTaskId` in `src/lib/today.ts`; never done or skipped): a lime mono
   eyebrow above the name and a lime checkbox outline. Visual only (`aria-hidden`).
-- **Proof Pills** (`ProgressBar pills`, `dayPills()` in `src/lib/today.ts`): one 34 px pill per task in
-  list order — filled (done), lime outline (PRÓXIMA), ivory outline (open), dashed (skipped); up to 24,
-  a continuous bar above that. The progress glow stays (`--pulse-peak` / `--pulse-scale` soften it).
-  Beside it: the next line and `PADRÃO n%`.
+- **Proof Track** (V3.3, `ProofTrack` in `src/components/proof-track.tsx`; `dayPills()` +
+  `trackOrder()` in `src/lib/today.ts`): the Proof Pills as one segmented track — a 12 px segment
+  per task, 4 px gaps, full width, in **fill order**: proof (lime), the PRÓXIMA task (lime inner
+  outline), open (`line-strong`), skipped (dashed) last — so the day fills from the left. The Daily
+  Standard is a tick in the gap after the segment that meets it (`marker`, lime once met). Up to 24
+  segments, a continuous bar above that. The Morning Ritual uses the same track at 8 px. Beside it:
+  the next line and `PADRÃO n%`. (Replaced the 34 px pills in list order, whose glow was a rectangle
+  over the first n % of the width — not over the proved pills.)
 - **LOCK IN** (pinned above the tab bar on a phone, until `wide`): names the PRÓXIMA task under the
   label and opens the duration sheet already on it (only when no task was picked by hand).
 

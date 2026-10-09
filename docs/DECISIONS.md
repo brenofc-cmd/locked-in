@@ -744,3 +744,16 @@ is a real user event, so it may get his `ack` (docs/ROOK.md). Still one Rook on 
 Alternatives: a redesigned card below the header (kept the 0 % and a second greeting), a bottom sheet
 or an immersive moment (intrusive for a daily, 3-second routine).
 Status: Accepted (2026-10-09). Owner's explicit instruction (V3.2 Morning Ritual brief).
+
+# ADR-111 — Proof motion: the check and the Proof Track (V3.3)
+
+Decision: Today's bar becomes the **Proof Track** — the Proof Pills as one segmented 12 px track in
+fill order (`trackOrder`: done → PRÓXIMA → open → skipped), with the standard as a tick in the gap
+where it is met; a new proof's fill slides in and one light passes over the proved segments only.
+The old glow covered the first n % of the width, which was not where the proved pills were (they were
+in list order), and the 34 px pills spread apart did not read as progress. The check presses and
+springs back with one ring; the name's strike draws (and retracts on undo). Task rows clip with
+`overflow: clip` (+ 12 px clip margin) instead of `hidden`: focusing the overhanging check scrolled
+the row sideways and cut the start of the name (also on a real phone tap). Motion stays transform /
+opacity, `motion-safe`, never on load; reduced motion keeps every state. No rule, number or data
+changed. Status: Accepted (2026-10-09). Owner's explicit instruction.
