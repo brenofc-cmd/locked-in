@@ -78,7 +78,7 @@ npm run test:e2e       # Playwright, builds and serves on :3100. Needs .env.loca
                        #   setup (seed + sign-in) → 390 + 1440 full suite, 375 + 430 layout,
                        #   @focus tests after them (focus-390 / focus-1440: a running session
                        #   overlays every screen of its user), stage3 → stage4 → stage5 → stage6
-                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 → v2p10-390 → design-390 → visual (serial, shared DEV users; stage5-9 = 2-3
+                       #   → stage7 → stage8 → stage9 → v2-390 → v2-1440 → v2p2-390 → v2p3-390 → v2p4-390 → v2p5-390 → v2p6-390 → v2p7-390 → issue001-390 → ia-390 → v2p8-390 → v2p9-390 → v2p10-390 → design-390 → account-390 → ritual-390 → visual (serial, shared DEV users; stage5-9 = 2-3
                        #   browsers; stage9 needs supabase/dev/test_fixtures.sql applied to DEV)
                        #   (first run: npx playwright install chromium)
 npm run format:check   # Prettier (npm run format to fix)
@@ -188,7 +188,9 @@ routing changed; run the pgTAP suite when a migration changed.
   3 is `daily_tasks.priority_rank` (1..3, unique per owner / day) written through
   `set_my_priorities` — never a second task list, never automatic. The morning card is inline, once
   per user and day via `setMark` — never a modal, a route or Resume State; device marks are always
-  user-scoped (no `li:*` keys).
+  user-scoped (no `li:*` keys). V3.2 (docs/MORNING_RITUAL.md, ADR-110): it is the Morning Ritual in
+  Today's header, in place of the numbers until the user starts; its state is `ritualState()`;
+  starting only closes it and moves focus — never completes, starts focus or writes anything.
 - V2 Phase 5 (docs/GOAL_PROOF.md, ADR-064…068): goal links live in the owner-only
   `daily_task_goals` / `routine_item_goals` (never add `goal_id` to `daily_tasks` / `routine_items` —
   the partner reads those rows) and `focus_sessions.goal_id`. Proof is derived by

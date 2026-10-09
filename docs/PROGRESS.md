@@ -10,7 +10,20 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 # LOCKED IN V2
 
-## Known issues (open)
+## V3.2 MORNING RITUAL — IMPLEMENTED (DEV, 2026-10-09)
+
+Branch `v3-morning-ritual`. UI only: the V2 morning card becomes the Morning Ritual in Today's
+header (docs/MORNING_RITUAL.md, ADR-110). No SQL, migration, API, RLS, auth or dependency change;
+streak, standard, Focus, partner and Top 3 rules untouched.
+
+- Three directions prototyped at 390 px (A Daily Brief · B Morning Ritual · C Ready to Execute); B
+  chosen with C's height economy.
+- States `fresh` / `going` / `done` / `empty` (`ritualState`, unit-tested); no partner row without a
+  partner, no streak row at 0; COMEÇAR O DIA only when there is something to start.
+- Hand-off: closes at once, Rook `ack`, numbers return, "Pronto. Agora é executar.", next row lit and
+  focused; nothing written (asserted against the database).
+- Verified: lint, typecheck, format, unit (423), build; e2e `ritual-390` (7 + captures at 320 / 390
+  / 1440), `v2p4-390` (11), stage8 morning; Today suites at 390 / 1440 / 375 / 430, design-390, ia-390.
 
 - None blocking. (The Phase 9 PRÓXIMA SEMANA wording was fixed in Phase 10 and verified on PROD.)
 

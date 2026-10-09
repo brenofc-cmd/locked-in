@@ -124,7 +124,9 @@ The rarer the event, the more intensity is allowed. No constant glow.
 celebration — may add one for a few seconds):
 
 - **HOJE** — small, beside the greeting: `ready` before the first task, `neutral` after, `proud` on a
-  Perfect Day; `ack` on every task proved; Core `off` → `idle` → `proof` (standard met).
+  Perfect Day; `ack` on every task proved; Core `off` → `idle` → `proof` (standard met). While the
+  Morning Ritual is open (docs/MORNING_RITUAL.md) he hosts it: ~10 % larger, lands, looks up
+  (`watching`, ~650 ms) and stands `ready`; when the user starts the day he `ack`s once.
 - **FOCO** — in the session: `focused` + `lock`, Core `active`, idle blink; complete: `proud` + `ack`.
 - **DUPLA** — the empty state (two Rooks); toasts: nudge sent / received (`tap`), a reaction (`ack`).
 - Onboarding, important empty states (vision, the week), push setup, the day review (`reviewing`),
