@@ -35,6 +35,13 @@ The one element with depth: pressed, `btn-primary` sinks 3 px onto its darker ed
 shadow, 100 ms, `--ease-out-quick`); with reduced motion the edge still changes, the move is instant.
 Secondary buttons keep the 150 ms press scale.
 
+## Morning Ritual (V3.2)
+
+Opening: the ritual fades up (400 ms), its surface settles (`li-settle`, 60 ms later), Rook lands and
+looks up, then stands. Starting: the button presses, the ritual closes at once, Rook `ack`s, the numbers
+fade up, "Pronto. Agora é executar." for 2.6 s, the next row lights once (900 ms) and takes focus. No
+confetti. docs/MORNING_RITUAL.md.
+
 ## Navigation
 
 Tabs: colour change + a 150 ms press scale. Screens enter with a 400 ms fade + 10 px rise

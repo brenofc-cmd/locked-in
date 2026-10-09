@@ -42,7 +42,7 @@ export default defineConfig({
     {
       name: "mobile-390",
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: { ...phone(390, 844), ...state("brendon") },
@@ -50,7 +50,7 @@ export default defineConfig({
     {
       name: "desktop-1440",
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: desk,
@@ -61,7 +61,7 @@ export default defineConfig({
       name: "focus-390",
       grep: /@focus/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
@@ -69,7 +69,7 @@ export default defineConfig({
       name: "focus-1440",
       grep: /@focus/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: desk,
     },
@@ -77,7 +77,7 @@ export default defineConfig({
       name: "mobile-375",
       grep: /@layout/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
       dependencies: ["setup"],
       use: { ...phone(375, 812), ...state("layout") },
     },
@@ -85,7 +85,7 @@ export default defineConfig({
       name: "mobile-430",
       grep: /@layout/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
       dependencies: ["setup"],
       use: { ...phone(430, 932), ...state("layout") },
     },
@@ -252,12 +252,20 @@ export default defineConfig({
       dependencies: ["design-390"],
       use: { ...phone(390, 844), channel: "chromium" },
     },
+    // V3.2 Morning Ritual (Alice / Bruno / Carla): Today's opening of the
+    // day, its states and the hand-off to execution. Serial, after Account.
+    {
+      name: "ritual-390",
+      testMatch: /ritual\.spec\.ts/,
+      dependencies: ["account-390"],
+      use: { ...phone(390, 844), channel: "chromium" },
+    },
     // The visual review matrix (LI_SHOTS=<dir>, skipped otherwise).
     // Run alone: npx playwright test --project=visual --no-deps
     {
       name: "visual",
       testMatch: /visual\.spec\.ts/,
-      dependencies: ["account-390"],
+      dependencies: ["ritual-390"],
       use: phone(390, 844),
     },
   ],

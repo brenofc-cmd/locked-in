@@ -4,6 +4,7 @@ import {
   groupBySection,
   nextTaskId,
   nextLine,
+  ritualState,
   routinesOn,
   scheduleLabel,
   todayStats,
@@ -201,5 +202,39 @@ describe("dayPills (V3)", () => {
   it("no next pill when nothing is open", () => {
     const all = today.map((t) => ({ ...t, done: true }));
     expect(dayPills(all, nextTaskId(all))).not.toContain("next");
+  });
+});
+
+describe("ritualState (V3.2 Morning Ritual)", () => {
+  const state = (tasks: Task[]) =>
+    ritualState(
+      todayStats(tasks, 80),
+      tasks.find((x) => x.id === nextTaskId(tasks)),
+    );
+  const open = (t: Task): Task => ({
+    ...t,
+    status: "pending",
+    done: false,
+    doneAt: null,
+  });
+  const done = (t: Task): Task => ({ ...t, status: "completed", done: true });
+
+  it("no tasks → empty (nothing is invented)", () => {
+    expect(state([])).toBe("empty");
+  });
+  it("nothing done yet → fresh, even with a streak of 0", () => {
+    expect(state(today.map(open))).toBe("fresh");
+  });
+  it("some proof already → going", () => {
+    expect(state(today)).toBe("going");
+  });
+  it("every task done → done", () => {
+    expect(state(today.map(done))).toBe("done");
+  });
+  it("the rest skipped → done (nothing left to start)", () => {
+    expect(state(today.map((t) => (t.done ? t : skip(t))))).toBe("done");
+  });
+  it("everything skipped → done, never fresh", () => {
+    expect(state(today.map((t) => skip(open(t))))).toBe("done");
   });
 });

@@ -620,7 +620,8 @@ test("morning briefing: real numbers once a day, skippable, preference persisted
   const a = await open(browser, users.a, "/today");
   const brief = a.page.getByRole("region", { name: t.morning.aria });
   await expect(brief).toBeVisible({ timeout: LIVE });
-  await expect(brief.getByText(/ONTEM 50%/)).toBeVisible(); // yesterday 1 / 2
+  // V3.2 Morning Ritual: forward-looking — yesterday is not repeated.
+  await expect(brief).not.toContainText("ONTEM");
   await expect(brief.getByText("BRUNO")).toBeVisible();
   await expect(a.page.getByRole("dialog")).toHaveCount(0);
   await brief.getByRole("button", { name: t.morning.close }).click();

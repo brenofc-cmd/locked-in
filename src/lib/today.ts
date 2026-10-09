@@ -118,3 +118,19 @@ export function dayPills(tasks: Task[], nextId: string | null): Pill[] {
     ),
   );
 }
+
+/**
+ * V3.2 Morning Ritual — what the day looks like when it opens: nothing
+ * planned, nothing left open (all done or skipped), not begun, or begun.
+ * Decides the ritual's words and its one action (docs/MORNING_RITUAL.md).
+ */
+export type RitualState = "fresh" | "going" | "done" | "empty";
+
+export function ritualState(
+  stats: TodayStats,
+  next: Task | undefined,
+): RitualState {
+  if (stats.total === 0) return "empty";
+  if (!next) return "done";
+  return stats.done === 0 ? "fresh" : "going";
+}

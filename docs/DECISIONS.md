@@ -726,3 +726,21 @@ end the duo like `leave_duo`, then delete the auth user; every table cascades), 
 reviewed DEFINER set (`stage9_integrity.test.sql`, docs/SECURITY.md) and must be applied to DEV and
 production — waiting for the owner's go-ahead on the database.
 Status: Accepted (2026-10-08).
+
+# ADR-110 — The Morning Ritual is Today's header in its morning state
+
+Decision: the V2 Phase 4 morning card becomes the **Morning Ritual** (docs/MORNING_RITUAL.md). On the
+first open of the local day it takes the place of the header's numbers (%, count, streak, bar) under
+the greeting and Rook, instead of a second card below them: a lead sentence, one surface with the
+first step (`nextTaskId`), the day's Proof Pills and one action whose words follow the real state
+(`ritualState`: COMEÇAR / CONTINUAR O DIA, VER MEU DIA, PLANEJAR MEU DIA), then quiet fact rows
+(standard, streak only when > 0, next event, partner, one North Star line). Starting closes it,
+Rook `ack`s, the numbers return, "Pronto. Agora é executar." shows for a moment and focus lands on the
+first step's check — nothing is written. Yesterday's % and the Top 3 count are dropped (backward-looking
+/ already below). Once-per-user-and-day marks, `show_morning_briefing`, the DEV shortcut and every
+rule are unchanged; no SQL, API or dependency.
+Rook: while the ritual is open he hosts it (slightly larger, lands, `watching` → `ready`); the start
+is a real user event, so it may get his `ack` (docs/ROOK.md). Still one Rook on the screen.
+Alternatives: a redesigned card below the header (kept the 0 % and a second greeting), a bottom sheet
+or an immersive moment (intrusive for a daily, 3-second routine).
+Status: Accepted (2026-10-09). Owner's explicit instruction (V3.2 Morning Ritual brief).

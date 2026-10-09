@@ -464,14 +464,24 @@ test("7: the morning card shows once per day, closes, and comes back the next da
   const a = await open(browser, users.a);
   const card = morning(a.page);
   await expect(card).toBeVisible();
-  await expect(card).toContainText(t.northStar.title);
-  await expect(card).toContainText("Ter independência financeira");
-  await expect(card).toContainText("DE SEQUÊNCIA");
-  // Real Top 3 status (1 of 3 done).
-  await expect(card).toContainText(`${t.top3.title} · 1 / 3`);
+  // V3.2 Morning Ritual: one "why" line — the current goal (the vision
+  // is the fallback) — and the first step is the best-ranked open Top 3
+  // task (the Top 3 itself is right below, not repeated).
+  await expect(card).toContainText(t.morning.whyKey);
+  await expect(card).toContainText("Lançar um produto pago");
+  await expect(card).toContainText(t.morning.standardKey);
+  const nextRank = a.page.locator(
+    '[data-next="true"] [data-testid="task-rank"]',
+  );
+  await expect(nextRank).toHaveCount(1);
+  await expect(card.getByTestId("morning-step")).toHaveText(
+    (await a.page
+      .locator('[data-next="true"] [role="checkbox"]')
+      .getAttribute("aria-label"))!,
+  );
   // Not a modal: Today stays usable behind it.
   await expect(a.page.getByRole("dialog")).toHaveCount(0);
-  await card.getByRole("button", { name: t.morning.start }).click();
+  await card.getByTestId("morning-start").click();
   await expect(card).toHaveCount(0);
 
   await a.page.reload();
@@ -514,9 +524,7 @@ test("8: same browser — A saw it, signs out; B still gets B's morning card", a
   expect(
     await app.page.evaluate(() => localStorage.getItem("li:briefing-shown")),
   ).toBeNull();
-  await morning(app.page)
-    .getByRole("button", { name: t.morning.start })
-    .click();
+  await morning(app.page).getByTestId("morning-start").click();
 
   await app.page.goto("/settings");
   await app.page
@@ -599,7 +607,7 @@ test("11: mobile — the task list starts within the first screen, even with the
   // The tasks begin within about two screens with everything open, and
   // within the first screen once the morning card is closed.
   expect(box!.y).toBeLessThan(viewport.height * 2);
-  await morning(a.page).getByRole("button", { name: t.morning.start }).click();
+  await morning(a.page).getByTestId("morning-start").click();
   const closed = (await tasks.boundingBox())!;
   expect(closed.y).toBeLessThan(viewport.height);
   // No horizontal scroll.

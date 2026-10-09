@@ -237,7 +237,7 @@ Details in [NORTH_STAR.md](NORTH_STAR.md), ADR-060…062. `/today` became an asy
 `pickNorthStar()` picks on the server and `TodayScreen` receives at most three short items (never the
 lists; not part of the layout load; no realtime). The Top 3 is `daily_tasks.priority_rank`, carried
 by the existing task state (`Task.priority`) and written through `setDailyPriorities` →
-`set_my_priorities`. The Stage 8 briefing overlay is gone: `MorningCard` is inline on Today.
+`set_my_priorities`. The Stage 8 briefing overlay is gone: the Morning Ritual (`MorningRitual`, V3.2) is part of Today's header.
 
 ## V2 Phase 3 — goals, vision and the mirror
 

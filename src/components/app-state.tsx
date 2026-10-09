@@ -576,7 +576,7 @@ function useAppStateValue(
     return () => timers.forEach(clearTimeout);
   }, [settings.notifyTaskReminders, tasks, timeZone, clockNow, notify]);
 
-  // Morning briefing: V2 Phase 4 moved it into Today (MorningCard), once per
+  // Morning briefing: V2 Phase 4 moved it into Today (now MorningRitual), once per
   // user and local day (docs/NORTH_STAR.md).
 
   // A new week: offer last week's result once (in-app toast).

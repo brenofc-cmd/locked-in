@@ -81,6 +81,11 @@ short items to `TodayScreen`. Not in the app layout; no realtime (private data) 
 
 ## The morning (evolves the Stage 8 briefing)
 
+> **Superseded in presentation by the V3.2 Morning Ritual** (docs/MORNING_RITUAL.md, ADR-110): the
+> same once-per-day rules and setting, now in Today's header in place of the numbers. The content
+> list below is the V2 card; the ritual keeps the North Star (one line), the next event and the
+> partner, and drops yesterday's % and the Top 3 count.
+
 - **Inline card** at the top of Today (`MorningCard`), on the **first open of the local day**, per
   user; never a modal, never full screen, never over onboarding, never restored once closed (it is not
   a route and not in Resume State).
