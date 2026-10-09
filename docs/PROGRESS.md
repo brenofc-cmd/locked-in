@@ -10,6 +10,15 @@ GitHub deployment "Production" for that SHA, 2026-09-28). The V1 record below is
 
 # LOCKED IN V2
 
+## V3.3 PROOF MOTION — IMPLEMENTED (DEV, 2026-10-09)
+
+Branch `v3-proof-motion`. UI only (ADR-111): the check presses and springs back with one ring and the
+name's strike draws; Today's bar is the **Proof Track** (segmented, fill order via `trackOrder`,
+standard tick, the fill slides in, one light over the proved segments). Task rows use `overflow:
+clip` so a focused check no longer scrolls the row sideways. E2E `tests/e2e/proof.spec.ts` (in
+project `ritual-390`; `LI_SHOTS` captures a completion frame by frame); design.spec follows the new
+light.
+
 ## V3.2 MORNING RITUAL — IMPLEMENTED (DEV, 2026-10-09)
 
 Branch `v3-morning-ritual`. UI only: the V2 morning card becomes the Morning Ritual in Today's

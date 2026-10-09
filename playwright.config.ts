@@ -42,7 +42,7 @@ export default defineConfig({
     {
       name: "mobile-390",
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec|proof\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: { ...phone(390, 844), ...state("brendon") },
@@ -50,7 +50,7 @@ export default defineConfig({
     {
       name: "desktop-1440",
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec|proof\.spec/,
       grepInvert: /@focus/,
       dependencies: ["setup"],
       use: desk,
@@ -61,7 +61,7 @@ export default defineConfig({
       name: "focus-390",
       grep: /@focus/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec|proof\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: { ...phone(390, 844), ...state("brendon") },
     },
@@ -69,7 +69,7 @@ export default defineConfig({
       name: "focus-1440",
       grep: /@focus/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec|proof\.spec/,
       dependencies: ["mobile-390", "desktop-1440"],
       use: desk,
     },
@@ -77,7 +77,7 @@ export default defineConfig({
       name: "mobile-375",
       grep: /@layout/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec|proof\.spec/,
       dependencies: ["setup"],
       use: { ...phone(375, 812), ...state("layout") },
     },
@@ -85,7 +85,7 @@ export default defineConfig({
       name: "mobile-430",
       grep: /@layout/,
       testIgnore:
-        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec/,
+        /stage\d|v2-|issue-|ia\.spec|design\.spec|account\.spec|visual\.spec|ritual\.spec|proof\.spec/,
       dependencies: ["setup"],
       use: { ...phone(430, 932), ...state("layout") },
     },
@@ -256,7 +256,7 @@ export default defineConfig({
     // day, its states and the hand-off to execution. Serial, after Account.
     {
       name: "ritual-390",
-      testMatch: /ritual\.spec\.ts/,
+      testMatch: /(ritual|proof)\.spec\.ts/,
       dependencies: ["account-390"],
       use: { ...phone(390, 844), channel: "chromium" },
     },

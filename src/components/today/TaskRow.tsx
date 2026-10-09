@@ -101,7 +101,7 @@ export function TaskRow({
   return (
     <div
       data-next={next || undefined}
-      className="relative overflow-hidden border-b border-line"
+      className="relative overflow-clip border-b border-line [overflow-clip-margin:12px]"
     >
       <div aria-hidden="true" className="absolute inset-0 flex justify-between">
         <div
@@ -181,12 +181,22 @@ export function TaskRow({
               )}
               <span
                 className={cx(
-                  "text-lead font-medium [overflow-wrap:anywhere] decoration-strike transition-colors duration-300",
+                  "text-lead font-medium [overflow-wrap:anywhere] transition-colors duration-300",
                   muted ? "text-dim" : "text-text",
-                  task.done && "line-through",
                 )}
               >
-                {task.name}
+                {/* V3.3: the strike draws across the name (per line) as the
+                    proof lands, and retracts on undo; instant on load. */}
+                <span
+                  className={cx(
+                    "bg-[linear-gradient(var(--color-strike),var(--color-strike))] bg-no-repeat [background-position:0_55%] box-decoration-clone transition-[background-size] duration-300 ease-[var(--ease-out-quick)] motion-reduce:transition-none",
+                    task.done
+                      ? "[background-size:100%_1.5px]"
+                      : "[background-size:0%_1.5px]",
+                  )}
+                >
+                  {task.name}
+                </span>
               </span>
             </span>
             <TaskMeta task={task} />
@@ -233,17 +243,18 @@ export function TaskRow({
             if (!task.done) tick();
             onToggle();
           }}
-          className="-mr-2.5 flex size-[52px] shrink-0 items-center justify-center"
+          className="relative -mr-2.5 flex size-[52px] shrink-0 items-center justify-center"
         >
           <span
             aria-hidden="true"
             className={cx(
-              "flex size-8 items-center justify-center rounded-[11px] border-[1.5px] transition-[background-color,border-color,scale] duration-200 ease-[var(--ease-spring)]",
+              "flex size-8 items-center justify-center rounded-[11px] border-[1.5px] transition-[background-color,border-color] duration-200 ease-[var(--ease-spring)]",
               skipped ? "border-dashed" : "border-solid",
-              // Completing: a bright beat of lime, then it settles to a
-              // quiet done state so open work stays the loudest thing.
+              // Completing: the box presses and springs back in a bright
+              // beat of lime, then settles to a quiet done state so open
+              // work stays the loudest thing (V3.3, docs/MOTION.md).
               task.done && popping
-                ? "scale-[.9] border-accent bg-accent"
+                ? "border-accent bg-accent motion-safe:animate-[li-check-pop_.42s_var(--ease-out-quick)]"
                 : task.done
                   ? "border-accent-done bg-accent-strong"
                   : skipped
@@ -260,6 +271,14 @@ export function TaskRow({
               />
             </svg>
           </span>
+          {task.done && popping && (
+            // One ring leaves the check (motion only; nothing without it).
+            <span
+              aria-hidden="true"
+              data-testid="check-ring"
+              className="pointer-events-none absolute size-8 rounded-[11px] border-2 border-accent opacity-0 motion-safe:animate-[li-check-ring_.5s_var(--ease-out-quick)]"
+            />
+          )}
         </button>
       </div>
     </div>

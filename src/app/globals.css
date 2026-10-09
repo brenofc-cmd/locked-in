@@ -74,6 +74,9 @@
   /* Small marks that used to be inline values (audit F8). */
   --color-strike: rgb(245 243 236 / 0.3); /* line-through on done work */
   --color-marker: rgb(245 243 236 / 0.35); /* the standard's tick on a bar */
+  --color-sheen: rgb(
+    255 255 255 / 0.55
+  ); /* light passing over fresh proof (V3.3) */
   --color-rook-glow: rgb(0 230 118 / 0.55); /* Rook's emerald (ROOK.md) */
 
   /* Type scale (rem: follows the user's font size). */
@@ -324,6 +327,40 @@
   100% {
     opacity: 0;
     transform: scaleY(1);
+  }
+}
+/* V3.3 Proof motion (docs/MOTION.md → Task completion). The check: a press
+   that springs back, and one ring leaving it. */
+@keyframes li-check-pop {
+  0% {
+    transform: scale(0.78);
+  }
+  45% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes li-check-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+/* The Proof Track: one light passes over the proved segments, left to right. */
+@keyframes li-sheen {
+  0% {
+    opacity: 1;
+    transform: translateX(-110%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(110%);
   }
 }
 /* A number that just changed lands in place (score, totals). */

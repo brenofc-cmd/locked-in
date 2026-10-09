@@ -104,10 +104,12 @@ const box = (page: Page, name: string) =>
   checkbox(page, name).locator("span[aria-hidden='true']").first();
 const bg = (page: Page, name: string) =>
   box(page, name).evaluate((el) => getComputedStyle(el).backgroundColor);
+/** V3.3 Proof Track: the light over the proved segments (one per segment). */
 const pulse = (page: Page) =>
   page
     .getByRole("progressbar", { name: t.todayScreen.completionLabel })
-    .locator("span.bg-accent");
+    .getByTestId("track-sheen")
+    .first();
 
 test.beforeAll(async () => {
   test.setTimeout(180_000);
@@ -137,11 +139,11 @@ test("1: completing a task — instant state, a bright beat, then a quiet done; 
   await expect.poll(() => bg(a.page, name), { intervals: [20] }).toBe(ACCENT);
   // The beat settles to the quiet done state (open work stays loudest).
   await expect.poll(() => bg(a.page, name)).not.toBe(ACCENT);
-  // Progress moved up: one glow over the bar, with motion allowed.
+  // Progress moved up: one light passes over the proof, with motion allowed.
   await expect(pulse(a.page)).toHaveCount(1);
   expect(
     await pulse(a.page).evaluate((el) => getComputedStyle(el).animationName),
-  ).toBe("li-bar-pulse");
+  ).toBe("li-sheen");
   // Undo: back to open, and the bar never glows when it goes down.
   await tap(checkbox(a.page, name));
   await expect(checkbox(a.page, name)).toHaveAttribute("aria-checked", "false");

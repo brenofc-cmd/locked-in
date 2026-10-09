@@ -8,6 +8,7 @@ import {
   routinesOn,
   scheduleLabel,
   todayStats,
+  trackOrder,
 } from "@/lib/today";
 import type { RoutineItem, Task } from "@/types";
 import { DESIGN_DAY } from "../fixtures/design-day";
@@ -236,5 +237,21 @@ describe("ritualState (V3.2 Morning Ritual)", () => {
   });
   it("everything skipped → done, never fresh", () => {
     expect(state(today.map((t) => skip(open(t))))).toBe("done");
+  });
+});
+
+describe("trackOrder (V3.3 Proof Track)", () => {
+  it("fills from the left: proof, PRÓXIMA, open, then skipped", () => {
+    expect(
+      trackOrder(["open", "done", "skip", "next", "done", "open"]),
+    ).toEqual(["done", "done", "next", "open", "open", "skip"]);
+  });
+  it("keeps the count and the kinds, and does not touch its input", () => {
+    const pills = dayPills(today, nextTaskId(today));
+    const copy = [...pills];
+    const out = trackOrder(pills);
+    expect(out).toHaveLength(pills.length);
+    expect([...out].sort()).toEqual([...pills].sort());
+    expect(pills).toEqual(copy);
   });
 });
